@@ -1,0 +1,83 @@
+name: Deploy
+ 
+on:
+  push:
+    branches: [main]
+ 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+ 
+jobs:
+  build-frontend:
+    name: Build frontend image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+ 
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+ 
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/frontend
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest
+ 
+      - name: Build & push
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+ 
+  build-backend:
+    name: Build backend image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+ 
+    steps:
+      - uses: actions/checkout@v4
+ 
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+ 
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/backend
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest
+ 
+      - name: Build & push
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+ 
