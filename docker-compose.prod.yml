@@ -1,0 +1,22 @@
+services:
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/theelse2098/composmart/frontend:latest}
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - composmart
+
+  backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/theelse2098/composmart/backend:latest}
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    networks:
+      - composmart
+
+networks:
+  composmart:
+    driver: bridge
