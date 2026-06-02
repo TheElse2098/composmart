@@ -1,9 +1,9 @@
--- phpMyAdmin SQL Dump
+﻿-- phpMyAdmin SQL Dump
 -- version 5.2.1deb3
 -- https://www.phpmyadmin.net/
 --
--- Hôte : localhost:3306
--- Généré le : jeu. 05 fév. 2026 à 11:01
+-- Hote : localhost:3306
+-- Genere le : jeu. 05 fev. 2026 a  11:01
 -- Version du serveur : 8.0.45-0ubuntu0.24.04.1
 -- Version de PHP : 8.3.30
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de données : `Composmart`
+-- Base de donnees : `Composmart`
 --
 
 -- --------------------------------------------------------
@@ -31,14 +31,14 @@ CREATE TABLE `composts` (
   `id` int NOT NULL,
   `latitude` double NOT NULL,
   `longitude` double NOT NULL,
-  `type` text CHARACTER ,
-  `publique` text CHARACTER ,
+  `type` text,
+  `publique` text,
   `gestion` text,
   `info_gestion` text
 );
 
 --
--- Déchargement des données de la table `composts`
+-- Dechargement des donnees de la table `composts`
 --
 
 INSERT INTO `composts` (`id`, `latitude`, `longitude`, `type`, `publique`, `gestion`, `info_gestion`) VALUES
@@ -3896,7 +3896,7 @@ CREATE TABLE `elements` (
 );
 
 --
--- Déchargement des données de la table `elements`
+-- Dechargement des donnees de la table `elements`
 --
 
 INSERT INTO `elements` (`id`, `nom`) VALUES
@@ -3905,12 +3905,12 @@ INSERT INTO `elements` (`id`, `nom`) VALUES
 (11, 'essuie-tout'),
 (12, 'fromage'),
 (8, 'huile'),
-(9, 'marc de café'),
+(9, 'marc de cafe'),
 (5, 'os'),
 (3, 'poisson'),
 (4, 'produits laitiers'),
 (1, 'reste de repas'),
-(7, 'sac biodégradable'),
+(7, 'sac biodegradable'),
 (6, 'tonte de pelouse'),
 (2, 'viande');
 
@@ -3927,7 +3927,7 @@ CREATE TABLE `regles` (
 );
 
 --
--- Déchargement des données de la table `regles`
+-- Dechargement des donnees de la table `regles`
 --
 
 INSERT INTO `regles` (`id_compost`, `id_element`, `autorise`) VALUES
@@ -6316,7 +6316,7 @@ INSERT INTO `regles` (`id_compost`, `id_element`, `autorise`) VALUES
 (23702, 13, 1);
 
 --
--- Index pour les tables déchargées
+-- Index pour les tables dÃ©chargÃ©es
 --
 
 --
@@ -6340,7 +6340,7 @@ ALTER TABLE `regles`
   ADD KEY `id_element` (`id_element`);
 
 --
--- AUTO_INCREMENT pour les tables déchargées
+-- AUTO_INCREMENT pour les tables dechargees
 --
 
 --
@@ -6356,7 +6356,7 @@ ALTER TABLE `elements`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
--- Contraintes pour les tables déchargées
+-- Contraintes pour les tables dechargees
 --
 
 --
@@ -6370,3 +6370,4 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
