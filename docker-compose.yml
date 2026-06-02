@@ -1,30 +1,39 @@
 services:
-  frontend:
-    build:
-      context: ./app/frontend
-      target: dev
+  web:
+    build: ./app/web
     ports:
-      - "5173:5173"
+      - "80:80"
     volumes:
-      - ./app/frontend:/app
-      - /app/node_modules
+      - ./app/web:/var/www/html
+    env_file:
+      - .env
     depends_on:
-      - backend
+      db:
+        condition: service_healthy
     networks:
       - composmart
 
-  backend:
-    build:
-      context: ./app/backend
-    ports:
-      - "8000:8000"
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - ./app/backend:/app
-    env_file:
-      - .env
+      - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - composmart
 
 networks:
   composmart:
     driver: bridge
+
+volumes:
+  db_data:

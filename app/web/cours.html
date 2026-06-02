@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CompoSmart – Les Cours</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding-bottom: 70px; }
+
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
+    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .burger.open span:nth-child(2) { opacity: 0; }
+    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
+    .drawer.open { right: 0; }
+    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
+    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
+    .drawer-logo span { color: #a8e6bf; }
+    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
+    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
+    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
+    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
+    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
+    .drawer-footer { padding: 16px 24px; border-top: 1px solid #e5ede8; }
+    .drawer-footer a { display: flex; align-items: center; gap: 14px; font-size: 0.95rem; font-weight: 700; color: #1e6e3e; text-decoration: none; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    /* PAGE */
+    .hero { text-align: center; padding: 28px 20px 16px; }
+    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.82rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.4rem); font-weight: 900; color: #1a3a25; }
+    .hero-sub { font-size: 0.95rem; color: #4a7a5a; margin-top: 6px; font-weight: 600; }
+
+    /* CATEGORY SECTIONS */
+    .page-content { width: 100%; max-width: 600px; padding: 0 16px; }
+
+    .cat-section { margin-bottom: 28px; }
+    .cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 0 4px; }
+    .cat-icon { font-size: 1.6rem; }
+    .cat-title { font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 900; color: #1a3a25; }
+    .cat-badge { margin-left: auto; background: #c8e6c9; color: #1a3a25; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; }
+
+    /* Horizontal scroll cards */
+    .cards-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .cards-scroll::-webkit-scrollbar { display: none; }
+
+    .cours-card { flex-shrink: 0; width: 150px; border-radius: 18px; padding: 16px 12px 18px; display: flex; flex-direction: column; align-items: center; text-decoration: none; scroll-snap-align: start; transition: transform 0.18s ease, box-shadow 0.18s ease; position: relative; }
+    .cours-card:hover { transform: translateY(-3px) scale(1.03); }
+    .cours-card:active { transform: scale(0.97); }
+
+    .cours-card .c-emoji { font-size: 2.4rem; margin-bottom: 10px; }
+    .cours-card .c-title { font-family: 'Baloo 2', cursive; font-size: 0.88rem; font-weight: 900; color: #fff; text-align: center; line-height: 1.25; }
+    .cours-card .c-level { font-size: 0.68rem; color: rgba(255,255,255,0.8); font-weight: 700; margin-top: 5px; text-align: center; }
+    .cours-card .c-stars { font-size: 0.7rem; margin-top: 4px; }
+    .cours-card .c-locked { position: absolute; top: 8px; right: 8px; font-size: 0.8rem; }
+
+    /* Pratique */
+    .cc-1a { background: linear-gradient(135deg, #1e6e3e, #2d9959); box-shadow: 0 4px 14px rgba(30,110,62,0.3); }
+    .cc-1b { background: linear-gradient(135deg, #2d6a4f, #40916c); box-shadow: 0 4px 14px rgba(45,106,79,0.3); }
+    .cc-1c { background: linear-gradient(135deg, #386641, #6a994e); box-shadow: 0 4px 14px rgba(56,102,65,0.3); }
+    .cc-1d { background: linear-gradient(135deg, #588157, #a7c957); box-shadow: 0 4px 14px rgba(88,129,87,0.3); }
+    /* Science */
+    .cc-2a { background: linear-gradient(135deg, #1565c0, #1e88e5); box-shadow: 0 4px 14px rgba(21,101,192,0.3); }
+    .cc-2b { background: linear-gradient(135deg, #0277bd, #29b6f6); box-shadow: 0 4px 14px rgba(2,119,189,0.3); }
+    .cc-2c { background: linear-gradient(135deg, #4a148c, #7b1fa2); box-shadow: 0 4px 14px rgba(74,20,140,0.3); }
+    .cc-2d { background: linear-gradient(135deg, #283593, #3f51b5); box-shadow: 0 4px 14px rgba(40,53,147,0.3); }
+    .cc-2e { background: linear-gradient(135deg, #004d40, #00897b); box-shadow: 0 4px 14px rgba(0,77,64,0.3); }
+
+    /* Locked style */
+    .cc-locked { background: linear-gradient(135deg, #9e9e9e, #bdbdbd) !important; box-shadow: 0 4px 14px rgba(0,0,0,0.12) !important; filter: grayscale(0.3); }
+
+    /* Daily challenge banner */
+    .challenge-banner { background: linear-gradient(135deg, #f9a825, #ff8f00); border-radius: 20px; padding: 16px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 14px rgba(249,168,37,0.35); }
+    .ch-emoji { font-size: 2.2rem; }
+    .ch-text { flex: 1; }
+    .ch-title { font-family: 'Baloo 2', cursive; color: #fff; font-weight: 900; font-size: 0.95rem; }
+    .ch-sub { font-size: 0.75rem; color: rgba(255,255,255,0.85); font-weight: 700; margin-top: 2px; }
+    .ch-btn { background: #fff; color: #f9a825; font-weight: 900; font-size: 0.8rem; padding: 8px 14px; border-radius: 12px; white-space: nowrap; font-family: 'Baloo 2', cursive; cursor: pointer; border: none; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
+    <button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="overlay" id="overlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-logo">Compos<span>mart</span></div>
+      <button class="drawer-close" id="closeBtn">&#x2715;</button>
+    </div>
+    <ul class="drawer-menu">
+      <li><a href="compte.html"><span class="menu-icon">👤</span> Mon compte</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="index.html"><span class="menu-icon">🏠</span> Accueil</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="parcours.html"><span class="menu-icon">🌿</span> Mes parcours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="carte.html"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="cours.html" class="active"><span class="menu-icon">📚</span> Les cours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="materiel.html"><span class="menu-icon">🧰</span> Le matériel</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="achat.html"><span class="menu-icon">🛒</span> Achat</a></li>
+    </ul>
+    <div class="drawer-footer"><a href="compte.html"><span>👤</span> Se connecter</a></div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-badge">📚 Apprends</div>
+    <h1>Les Cours</h1>
+    <p class="hero-sub">Explore, apprends, deviens expert ! 🎓</p>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Défi du jour -->
+    <div class="challenge-banner">
+      <div class="ch-emoji">⚡</div>
+      <div class="ch-text">
+        <div class="ch-title">Défi du jour !</div>
+        <div class="ch-sub">Pourquoi les vers aèrent-ils la terre ?</div>
+      </div>
+      <button class="ch-btn">Jouer</button>
+    </div>
+
+    <!-- SECTION 1 : Parcours pratiques -->
+    <div class="cat-section">
+      <div class="cat-header">
+        <div class="cat-icon">🌿</div>
+        <div class="cat-title">Parcours pratiques</div>
+        <div class="cat-badge">4 cours</div>
+      </div>
+      <div class="cards-scroll">
+        <a href="#" class="cours-card cc-1a">
+          <div class="c-emoji">🪣</div>
+          <div class="c-title">Compost en bac</div>
+          <div class="c-level">Débutant · 8 leçons</div>
+          <div class="c-stars">⭐⭐⭐</div>
+        </a>
+        <a href="#" class="cours-card cc-1b">
+          <div class="c-emoji">🪱</div>
+          <div class="c-title">Lombricomposteur</div>
+          <div class="c-level">Intermédiaire · 10 leçons</div>
+          <div class="c-stars">⭐⭐☆</div>
+        </a>
+        <a href="#" class="cours-card cc-1c">
+          <div class="c-emoji">🗑️</div>
+          <div class="c-title">Points d'apport volontaire</div>
+          <div class="c-level">Avancé · 7 leçons</div>
+          <div class="c-stars">☆☆☆</div>
+        </a>
+        <a href="#" class="cours-card cc-1d">
+          <div class="c-emoji">🧒</div>
+          <div class="c-title">Parcours Enfants</div>
+          <div class="c-level">Tous niveaux · 5 leçons</div>
+          <div class="c-stars">⭐⭐⭐</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- SECTION 2 : Sciences du compost -->
+    <div class="cat-section">
+      <div class="cat-header">
+        <div class="cat-icon">🔬</div>
+        <div class="cat-title">Sciences du compost</div>
+        <div class="cat-badge">5 cours</div>
+      </div>
+      <div class="cards-scroll">
+        <a href="#" class="cours-card cc-2a">
+          <div class="c-emoji">🪲</div>
+          <div class="c-title">Animaux du compost</div>
+          <div class="c-level">Intermédiaire · 9 leçons</div>
+          <div class="c-stars">⭐☆☆</div>
+        </a>
+        <a href="#" class="cours-card cc-2b">
+          <div class="c-emoji">🦠</div>
+          <div class="c-title">Le monde des bactéries</div>
+          <div class="c-level">Avancé · 8 leçons</div>
+          <div class="c-stars">☆☆☆</div>
+        </a>
+        <a href="#" class="cours-card cc-2c">
+          <div class="c-locked">🔒</div>
+          <div class="c-emoji">⚖️</div>
+          <div class="c-title">Les lois & règlements</div>
+          <div class="c-level">Expert · 6 leçons</div>
+          <div class="c-stars">☆☆☆</div>
+        </a>
+        <a href="#" class="cours-card cc-2d">
+          <div class="c-locked">🔒</div>
+          <div class="c-emoji">🏙️</div>
+          <div class="c-title">Solutions en ville</div>
+          <div class="c-level">Intermédiaire · 7 leçons</div>
+          <div class="c-stars">☆☆☆</div>
+        </a>
+        <a href="#" class="cours-card cc-2e">
+          <div class="c-locked">🔒</div>
+          <div class="c-emoji">🌍</div>
+          <div class="c-title">Impact environnemental</div>
+          <div class="c-level">Expert · 10 leçons</div>
+          <div class="c-stars">☆☆☆</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Stats rapides -->
+    <div style="background:#fff; border-radius:18px; padding:16px 18px; display:flex; gap:0; margin-bottom:10px; box-shadow:0 2px 12px rgba(30,110,62,0.1);">
+      <div style="flex:1; text-align:center; border-right:1px solid #e5ede8;">
+        <div style="font-family:'Baloo 2',cursive; font-size:1.6rem; font-weight:900; color:#1e6e3e;">3</div>
+        <div style="font-size:0.72rem; color:#4a7a5a; font-weight:700;">cours finis</div>
+      </div>
+      <div style="flex:1; text-align:center; border-right:1px solid #e5ede8;">
+        <div style="font-family:'Baloo 2',cursive; font-size:1.6rem; font-weight:900; color:#f9a825;">350</div>
+        <div style="font-size:0.72rem; color:#4a7a5a; font-weight:700;">XP gagnés</div>
+      </div>
+      <div style="flex:1; text-align:center;">
+        <div style="font-family:'Baloo 2',cursive; font-size:1.6rem; font-weight:900; color:#1e6e3e;">🔥 5</div>
+        <div style="font-size:0.72rem; color:#4a7a5a; font-weight:700;">jours de suite</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    const burger = document.getElementById('burgerBtn');
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('closeBtn');
+    function openMenu() { drawer.classList.add('open'); overlay.classList.add('open'); burger.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeMenu() { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); document.body.style.overflow = ''; }
+    burger.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    overlay.addEventListener('click', closeMenu);
+  </script>
+</body>
+</html>

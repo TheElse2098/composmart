@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CompoSmart – Le Matériel</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding-bottom: 70px; }
+
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
+    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .burger.open span:nth-child(2) { opacity: 0; }
+    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
+    .drawer.open { right: 0; }
+    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
+    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
+    .drawer-logo span { color: #a8e6bf; }
+    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
+    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
+    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
+    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
+    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
+    .drawer-footer { padding: 16px 24px; border-top: 1px solid #e5ede8; }
+    .drawer-footer a { display: flex; align-items: center; gap: 14px; font-size: 0.95rem; font-weight: 700; color: #1e6e3e; text-decoration: none; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .hero { text-align: center; padding: 28px 20px 16px; }
+    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.82rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.4rem); font-weight: 900; color: #1a3a25; }
+    .hero-sub { font-size: 0.95rem; color: #4a7a5a; margin-top: 6px; font-weight: 600; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 8px; padding: 0 16px 16px; width: 100%; max-width: 600px; overflow-x: auto; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { flex-shrink: 0; padding: 8px 16px; border-radius: 20px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.88rem; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; background: #fff; color: #4a7a5a; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .tab.active { background: #1e6e3e; color: #fff; border-color: #1e6e3e; }
+    .tab:hover:not(.active) { border-color: #1e6e3e; color: #1e6e3e; }
+
+    /* CONTENT */
+    .page-content { width: 100%; max-width: 600px; padding: 0 16px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Section header */
+    .sec-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; margin-top: 6px; }
+    .sec-icon { font-size: 1.8rem; }
+    .sec-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; }
+    .sec-badge-oblig { background: #ffccbc; color: #bf360c; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; margin-left: auto; }
+    .sec-badge-opt { background: #dcedc8; color: #33691e; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; margin-left: auto; }
+
+    /* Item cards */
+    .item-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+    .item-card { background: #fff; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); transition: transform 0.15s; }
+    .item-card:hover { transform: translateX(4px); }
+    .item-emoji { font-size: 2rem; flex-shrink: 0; }
+    .item-info { flex: 1; }
+    .item-name { font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 900; color: #1a3a25; }
+    .item-desc { font-size: 0.75rem; color: #4a7a5a; font-weight: 600; margin-top: 2px; line-height: 1.35; }
+    .item-tag { display: inline-block; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 8px; margin-top: 5px; }
+    .tag-oblig { background: #ffccbc; color: #bf360c; }
+    .tag-opt { background: #dcedc8; color: #33691e; }
+    .tag-conseil { background: #fff9c4; color: #f57f17; }
+    .item-price { font-family: 'Baloo 2', cursive; font-size: 0.9rem; font-weight: 900; color: #1e6e3e; flex-shrink: 0; white-space: nowrap; }
+
+    /* Tip box */
+    .tip-box { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-radius: 16px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px; border-left: 4px solid #1e6e3e; }
+    .tip-emoji { font-size: 1.4rem; flex-shrink: 0; }
+    .tip-text { font-size: 0.8rem; color: #1a3a25; font-weight: 700; line-height: 1.4; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
+    <button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="overlay" id="overlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-logo">Compos<span>mart</span></div>
+      <button class="drawer-close" id="closeBtn">&#x2715;</button>
+    </div>
+    <ul class="drawer-menu">
+      <li><a href="compte.html"><span class="menu-icon">👤</span> Mon compte</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="index.html"><span class="menu-icon">🏠</span> Accueil</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="parcours.html"><span class="menu-icon">🌿</span> Mes parcours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="carte.html"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="cours.html"><span class="menu-icon">📚</span> Les cours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="materiel.html" class="active"><span class="menu-icon">🧰</span> Le matériel</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="achat.html"><span class="menu-icon">🛒</span> Achat</a></li>
+    </ul>
+    <div class="drawer-footer"><a href="compte.html"><span>👤</span> Se connecter</a></div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-badge">🧰 Équipement</div>
+    <h1>Le Matériel</h1>
+    <p class="hero-sub">Tout ce qu'il te faut pour bien composter !</p>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" data-tab="bac">🪣 Compost en bac</div>
+    <div class="tab" data-tab="lombri">🪱 Lombricomposteur</div>
+    <div class="tab" data-tab="apport">🗑️ Point d'apport</div>
+    <div class="tab" data-tab="commun">🌿 Commun</div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- TAB BAC -->
+    <div class="tab-content active" id="tab-bac">
+
+      <div class="tip-box">
+        <div class="tip-emoji">💡</div>
+        <div class="tip-text">Le compost en bac est idéal si tu as un jardin ou une terrasse. Il est simple à mettre en place et peu coûteux !</div>
+      </div>
+
+      <div class="sec-header">
+        <div class="sec-icon">⚠️</div>
+        <div class="sec-title">Indispensables</div>
+        <div class="sec-badge-oblig">Obligatoire</div>
+      </div>
+      <div class="item-list">
+        <div class="item-card">
+          <div class="item-emoji">🪣</div>
+          <div class="item-info">
+            <div class="item-name">Bac à compost</div>
+            <div class="item-desc">Contenant de 300 à 600L, couvercle indispensable pour conserver l'humidité et éviter les nuisibles.</div>
+            <span class="item-tag tag-oblig">Obligatoire</span>
+          </div>
+          <div class="item-price">15–50€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">🍂</div>
+          <div class="item-info">
+            <div class="item-name">Matière carbonée (brune)</div>
+            <div class="item-desc">Feuilles mortes, carton déchiré, copeaux de bois. Essentiel pour l'équilibre carbone/azote.</div>
+            <span class="item-tag tag-oblig">Obligatoire</span>
+          </div>
+          <div class="item-price">Gratuit</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">🥦</div>
+          <div class="item-info">
+            <div class="item-name">Matière azotée (verte)</div>
+            <div class="item-desc">Épluchures, restes de cuisine, tonte de pelouse. Source principale de nutriments.</div>
+            <span class="item-tag tag-oblig">Obligatoire</span>
+          </div>
+          <div class="item-price">Gratuit</div>
+        </div>
+      </div>
+
+      <div class="sec-header">
+        <div class="sec-icon">✨</div>
+        <div class="sec-title">Recommandés</div>
+        <div class="sec-badge-opt">Conseillé</div>
+      </div>
+      <div class="item-list">
+        <div class="item-card">
+          <div class="item-emoji">🌡️</div>
+          <div class="item-info">
+            <div class="item-name">Thermomètre à compost</div>
+            <div class="item-desc">Surveille la montée en température (idéal 55–65°C). Signe que tout fonctionne bien !</div>
+            <span class="item-tag tag-conseil">Conseillé</span>
+          </div>
+          <div class="item-price">10–20€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">🔱</div>
+          <div class="item-info">
+            <div class="item-name">Aérateur / brasseur</div>
+            <div class="item-desc">Tige hélicoïdale pour retourner le compost sans effort et apporter de l'oxygène.</div>
+            <span class="item-tag tag-conseil">Conseillé</span>
+          </div>
+          <div class="item-price">8–15€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">🪣</div>
+          <div class="item-info">
+            <div class="item-name">Seau de collecte cuisine</div>
+            <div class="item-desc">Petit seau hermétique (5–10L) pour collecter les déchets avant de les déposer dans le bac.</div>
+            <span class="item-tag tag-conseil">Conseillé</span>
+          </div>
+          <div class="item-price">5–12€</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB LOMBRI -->
+    <div class="tab-content" id="tab-lombri">
+
+      <div class="tip-box">
+        <div class="tip-emoji">🪱</div>
+        <div class="tip-text">Le lombricomposteur fonctionne avec des vers de terre. Parfait pour les appartements ! Zéro odeur si bien géré.</div>
+      </div>
+
+      <div class="sec-header">
+        <div class="sec-icon">⚠️</div>
+        <div class="sec-title">Indispensables</div>
+        <div class="sec-badge-oblig">Obligatoire</div>
+      </div>
+      <div class="item-list">
+        <div class="item-card">
+          <div class="item-emoji">📦</div>
+          <div class="item-info">
+            <div class="item-name">Lombricomposteur</div>
+            <div class="item-desc">Bac à plusieurs étages avec robinet de récupération du jus (thé de compost). Choisir en plastique recyclé.</div>
+            <span class="item-tag tag-oblig">Obligatoire</span>
+          </div>
+          <div class="item-price">40–90€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">🪱</div>
+          <div class="item-info">
+            <div class="item-name">Vers de compost (Eisenia fetida)</div>
+            <div class="item-desc">Minimum 500g de vers rouges. Ce ne sont pas des vers de terre ordinaires !</div>
+            <span class="item-tag tag-oblig">Obligatoire</span>
+          </div>
+          <div class="item-price">10–20€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">📰</div>
+          <div class="item-info">
+            <div class="item-name">Litière (carton/papier journal)</div>
+            <div class="item-desc">Carton humidifié ou papier journal déchiré pour le lit de départ des vers. À renouveler régulièrement.</div>
+            <span class="item-tag tag-oblig">Obligatoire</span>
+          </div>
+          <div class="item-price">Gratuit</div>
+        </div>
+      </div>
+
+      <div class="sec-header">
+        <div class="sec-icon">✨</div>
+        <div class="sec-title">Recommandés</div>
+        <div class="sec-badge-opt">Conseillé</div>
+      </div>
+      <div class="item-list">
+        <div class="item-card">
+          <div class="item-emoji">💧</div>
+          <div class="item-info">
+            <div class="item-name">Spray d'eau</div>
+            <div class="item-desc">Pour maintenir l'humidité idéale (60–80%). La litière doit ressembler à une éponge essorée.</div>
+            <span class="item-tag tag-conseil">Conseillé</span>
+          </div>
+          <div class="item-price">2–5€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">🧴</div>
+          <div class="item-info">
+            <div class="item-name">Poudre de roche volcanique</div>
+            <div class="item-desc">Régule l'acidité du bac et évite les odeurs. Une pincée par semaine suffit.</div>
+            <span class="item-tag tag-conseil">Conseillé</span>
+          </div>
+          <div class="item-price">5–10€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">🌡️</div>
+          <div class="item-info">
+            <div class="item-name">Thermomètre d'ambiance</div>
+            <div class="item-desc">Les vers travaillent entre 15 et 25°C. En dessous de 10°C ils ralentissent fortement.</div>
+            <span class="item-tag tag-conseil">Conseillé</span>
+          </div>
+          <div class="item-price">5–10€</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB APPORT -->
+    <div class="tab-content" id="tab-apport">
+
+      <div class="tip-box">
+        <div class="tip-emoji">🗑️</div>
+        <div class="tip-text">Les points d'apport volontaire permettent de composter même sans espace chez soi. Tu déposes, la communauté gère !</div>
+      </div>
+
+      <div class="sec-header">
+        <div class="sec-icon">⚠️</div>
+        <div class="sec-title">Ce qu'il te faut</div>
+        <div class="sec-badge-oblig">Essentiel</div>
+      </div>
+      <div class="item-list">
+        <div class="item-card">
+          <div class="item-emoji">🪣</div>
+          <div class="item-info">
+            <div class="item-name">Seau de collecte hermétique</div>
+            <div class="item-desc">Pour transporter tes déchets organiques jusqu'au point d'apport. Avec couvercle à joint.</div>
+            <span class="item-tag tag-oblig">Indispensable</span>
+          </div>
+          <div class="item-price">5–15€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">🗺️</div>
+          <div class="item-info">
+            <div class="item-name">Application CompoSmart</div>
+            <div class="item-desc">Utilise la carte interactive pour trouver le point d'apport le plus proche de chez toi !</div>
+            <span class="item-tag tag-oblig">Gratuit</span>
+          </div>
+          <div class="item-price">Gratuit</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">📋</div>
+          <div class="item-info">
+            <div class="item-name">Liste des déchets acceptés</div>
+            <div class="item-desc">Chaque point d'apport a ses propres règles. Vérifie avant de déposer : pas de viande, pas de produits cuits dans certains sites.</div>
+            <span class="item-tag tag-oblig">À vérifier</span>
+          </div>
+          <div class="item-price">—</div>
+        </div>
+      </div>
+
+      <div class="sec-header">
+        <div class="sec-icon">✨</div>
+        <div class="sec-title">Pour aller plus loin</div>
+        <div class="sec-badge-opt">Optionnel</div>
+      </div>
+      <div class="item-list">
+        <div class="item-card">
+          <div class="item-emoji">🧤</div>
+          <div class="item-info">
+            <div class="item-name">Gants de jardinage</div>
+            <div class="item-desc">Si tu es référent·e d'un point d'apport et que tu aides à le gérer.</div>
+            <span class="item-tag tag-opt">Optionnel</span>
+          </div>
+          <div class="item-price">3–8€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">📦</div>
+          <div class="item-info">
+            <div class="item-name">Sac compostable certifié</div>
+            <div class="item-desc">Certains sites acceptent les sacs compostables NF T 51-800. Pratique pour éviter de nettoyer le seau.</div>
+            <span class="item-tag tag-opt">Optionnel</span>
+          </div>
+          <div class="item-price">4–8€</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB COMMUN -->
+    <div class="tab-content" id="tab-commun">
+
+      <div class="tip-box">
+        <div class="tip-emoji">🌿</div>
+        <div class="tip-text">Ces accessoires sont utiles pour tous les types de compostage. Un bon investissement pour débuter !</div>
+      </div>
+
+      <div class="sec-header">
+        <div class="sec-icon">🧰</div>
+        <div class="sec-title">Accessoires universels</div>
+        <div class="sec-badge-opt">Tous types</div>
+      </div>
+      <div class="item-list">
+        <div class="item-card">
+          <div class="item-emoji">✂️</div>
+          <div class="item-info">
+            <div class="item-name">Cisailles / broyeur manuel</div>
+            <div class="item-desc">Découper les déchets en petits morceaux accélère la décomposition. Surtout pour les branches et épluchures épaisses.</div>
+            <span class="item-tag tag-conseil">Conseillé</span>
+          </div>
+          <div class="item-price">15–35€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">📊</div>
+          <div class="item-info">
+            <div class="item-name">pH-mètre ou bandelettes</div>
+            <div class="item-desc">Le pH idéal est entre 6 et 8. Surveille pour éviter les problèmes d'acidité ou de putréfaction.</div>
+            <span class="item-tag tag-conseil">Avancé</span>
+          </div>
+          <div class="item-price">5–20€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">📚</div>
+          <div class="item-info">
+            <div class="item-name">Guide du compostage</div>
+            <div class="item-desc">Un livre de référence pour comprendre les bases et résoudre les problèmes courants.</div>
+            <span class="item-tag tag-opt">Optionnel</span>
+          </div>
+          <div class="item-price">10–18€</div>
+        </div>
+        <div class="item-card">
+          <div class="item-emoji">🔦</div>
+          <div class="item-info">
+            <div class="item-name">Lampe frontale</div>
+            <div class="item-desc">Pour inspecter ton bac ou lombricomposteur le soir sans déranger les habitants !</div>
+            <span class="item-tag tag-opt">Optionnel</span>
+          </div>
+          <div class="item-price">8–15€</div>
+        </div>
+      </div>
+
+      <!-- À ne PAS mettre -->
+      <div style="background:linear-gradient(135deg,#ffebee,#ffcdd2); border-radius:16px; padding:16px; margin-bottom:10px; border-left:4px solid #e53935;">
+        <div style="font-family:'Baloo 2',cursive; font-weight:900; color:#c62828; margin-bottom:10px; font-size:1rem;">🚫 À ne jamais composter</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">🥩 Viande & poisson</span>
+          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">🧀 Produits laitiers</span>
+          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">🛢️ Huile de cuisson</span>
+          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">💊 Médicaments</span>
+          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">🐾 Excréments d'animaux</span>
+          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">🔋 Piles & plastiques</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- end page-content -->
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    // Drawer
+    const burger = document.getElementById('burgerBtn');
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('closeBtn');
+    function openMenu() { drawer.classList.add('open'); overlay.classList.add('open'); burger.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeMenu() { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); document.body.style.overflow = ''; }
+    burger.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    overlay.addEventListener('click', closeMenu);
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

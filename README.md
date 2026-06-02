@@ -1,28 +1,30 @@
 # Composmart
 
-Site web de sensibilisation écologique avec mini-jeux, cours et carte interactive.
+Site web de sensibilisation écologique avec carte interactive des composteurs, mini-jeux et cours.
 
 ## Stack
 
-- **Frontend** : React + Vite
-- **Backend** : Python + FastAPI
+- **Frontend** : HTML / CSS / JavaScript + Leaflet.js
+- **Backend** : PHP 8.3 (Apache)
+- **Base de données** : MariaDB 11
 - **CI/CD** : GitHub Actions → GHCR
 
 ## Lancer en développement
 
 ```bash
 cp .env.example .env
+# Éditer .env si besoin
 docker compose up --build
 ```
 
-- Frontend : http://localhost:5173
-- Backend API : http://localhost:8000
-- Docs API (Swagger) : http://localhost:8000/docs
+- Site : http://localhost
+
+> La base de données est initialisée automatiquement depuis `db/init.sql` au premier démarrage.
 
 ## Lancer en production (sur une machine cible)
 
 ```bash
-# Copier docker-compose.prod.yml et .env sur la machine
+# Copier docker-compose.prod.yml, db/init.sql et .env sur la machine
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
@@ -31,16 +33,17 @@ docker compose -f docker-compose.prod.yml up -d
 
 ```
 app/
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Layout/     # Navbar, Footer…
-│   │   │   └── Map/        # Intégration carte externe
-│   │   └── pages/          # Home, Carte, Jeux, Cours
-│   └── Dockerfile
-└── backend/
-    ├── app/
-    │   ├── main.py
-    │   └── routers/        # courses, games, map
+└── web/
+    ├── index.html       # Accueil
+    ├── carte.html       # Carte interactive (Leaflet)
+    ├── cours.html       # Les cours
+    ├── parcours.html    # Mes parcours
+    ├── compte.html      # Mon compte
+    ├── materiel.html    # Le matériel
+    ├── achat.html       # Achat
+    ├── sites1.php       # API PHP (CRUD composts ↔ MariaDB)
+    ├── leaflet/         # Plugins Leaflet locaux (fullscreen, shpfile)
     └── Dockerfile
+db/
+└── init.sql             # Schéma + données initiales
 ```

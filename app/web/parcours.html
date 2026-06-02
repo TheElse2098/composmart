@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CompoSmart – Mes Parcours</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding-bottom: 60px; }
+
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; position: relative; z-index: 100; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
+    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .burger.open span:nth-child(2) { opacity: 0; }
+    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
+    .drawer.open { right: 0; }
+    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
+    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
+    .drawer-logo span { color: #a8e6bf; }
+    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
+    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
+    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
+    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
+    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
+    .drawer-footer { padding: 16px 24px; border-top: 1px solid #e5ede8; }
+    .drawer-footer a { display: flex; align-items: center; gap: 14px; font-size: 0.95rem; font-weight: 700; color: #1e6e3e; text-decoration: none; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    /* PAGE */
+    .hero { text-align: center; padding: 30px 20px 10px; }
+    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.82rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.4rem); font-weight: 900; color: #1a3a25; line-height: 1.2; }
+
+    /* WORLD MAP STYLE PATH */
+    .path-container { width: 100%; max-width: 480px; padding: 20px 20px 10px; position: relative; }
+
+    /* Decorative background dots */
+    .path-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+    .dot { position: absolute; border-radius: 50%; opacity: 0.08; background: #1e6e3e; }
+
+    .path-track { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+    /* Connector line */
+    .connector { width: 4px; height: 36px; background: repeating-linear-gradient(to bottom, #1e6e3e 0, #1e6e3e 8px, transparent 8px, transparent 16px); border-radius: 2px; margin: 0 auto; }
+    .connector.done { background: #1e6e3e; }
+
+    /* Step node */
+    .step { display: flex; align-items: center; gap: 16px; width: 100%; padding: 0 10px; cursor: pointer; text-decoration: none; }
+    .step.left { flex-direction: row; }
+    .step.right { flex-direction: row-reverse; }
+
+    .step-bubble { flex-shrink: 0; width: 76px; height: 76px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 2.2rem; line-height: 1; position: relative; transition: transform 0.2s ease; box-shadow: 0 6px 18px rgba(0,0,0,0.18); border: 4px solid #fff; }
+    .step:hover .step-bubble { transform: scale(1.1) rotate(-3deg); }
+    .step-bubble.done { background: linear-gradient(135deg, #1e6e3e, #52b788); }
+    .step-bubble.active { background: linear-gradient(135deg, #f9a825, #ffcc02); animation: pulse 2s infinite; }
+    .step-bubble.locked { background: linear-gradient(135deg, #b0c4b1, #d4e8d4); filter: grayscale(0.4); }
+
+    @keyframes pulse { 0%,100%{ box-shadow: 0 6px 18px rgba(249,168,37,0.4), 0 0 0 0 rgba(249,168,37,0.3);} 50%{ box-shadow: 0 6px 18px rgba(249,168,37,0.5), 0 0 0 12px rgba(249,168,37,0);} }
+
+    .step-badge { position: absolute; top: -6px; right: -6px; background: #fff; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+    .step-badge.done { color: #1e6e3e; }
+    .step-badge.locked { color: #aaa; }
+
+    .step-info { flex: 1; }
+    .step.right .step-info { text-align: right; }
+    .step-label { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #1a3a25; line-height: 1.2; }
+    .step-sub { font-size: 0.78rem; color: #4a7a5a; font-weight: 700; margin-top: 3px; }
+    .step-progress { margin-top: 7px; }
+    .progress-bar { height: 8px; background: #c8e6c9; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #1e6e3e, #52b788); transition: width 0.5s ease; }
+    .progress-text { font-size: 0.72rem; color: #4a7a5a; font-weight: 700; margin-top: 3px; }
+    .step.right .progress-text { text-align: right; }
+
+    .locked-msg { font-size: 0.75rem; color: #999; font-weight: 700; margin-top: 4px; }
+
+    /* Star rating */
+    .stars { font-size: 0.85rem; margin-top: 3px; }
+
+    /* XP banner */
+    .xp-banner { background: linear-gradient(135deg, #1e6e3e, #2d9959); border-radius: 20px; padding: 16px 22px; margin: 24px 20px 8px; max-width: 480px; width: calc(100% - 40px); display: flex; align-items: center; gap: 16px; box-shadow: 0 4px 16px rgba(30,110,62,0.3); }
+    .xp-avatar { font-size: 2.4rem; }
+    .xp-info { flex: 1; }
+    .xp-name { font-family: 'Baloo 2', cursive; color: #fff; font-weight: 900; font-size: 1rem; }
+    .xp-bar-wrap { background: rgba(255,255,255,0.25); border-radius: 10px; height: 10px; margin-top: 6px; overflow: hidden; }
+    .xp-bar { height: 100%; width: 35%; background: #a8e6bf; border-radius: 10px; }
+    .xp-pts { font-size: 0.78rem; color: rgba(255,255,255,0.85); font-weight: 700; margin-top: 4px; }
+    .xp-badge { background: #a8e6bf; color: #1a3a25; font-weight: 900; font-size: 0.82rem; padding: 6px 12px; border-radius: 12px; white-space: nowrap; }
+
+    .section-title { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #1a3a25; text-align: center; margin: 28px 0 4px; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
+    <button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="overlay" id="overlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-logo">Compos<span>mart</span></div>
+      <button class="drawer-close" id="closeBtn">&#x2715;</button>
+    </div>
+    <ul class="drawer-menu">
+      <li><a href="compte.html"><span class="menu-icon">👤</span> Mon compte</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="index.html"><span class="menu-icon">🏠</span> Accueil</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="parcours.html" class="active"><span class="menu-icon">🌿</span> Mes parcours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="carte.html"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="cours.html"><span class="menu-icon">📚</span> Les cours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="materiel.html"><span class="menu-icon">🧰</span> Le matériel</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="achat.html"><span class="menu-icon">🛒</span> Achat</a></li>
+    </ul>
+    <div class="drawer-footer"><a href="compte.html"><span>👤</span> Se connecter</a></div>
+  </div>
+
+  <div class="hero">
+    <div class="hero-badge">🗺️ Aventure</div>
+    <h1>Mes Parcours</h1>
+  </div>
+
+  <!-- XP Banner -->
+  <div class="xp-banner">
+    <div class="xp-avatar">🌱</div>
+    <div class="xp-info">
+      <div class="xp-name">Composteur débutant</div>
+      <div class="xp-bar-wrap"><div class="xp-bar"></div></div>
+      <div class="xp-pts">350 / 1000 XP · Niveau 2</div>
+    </div>
+    <div class="xp-badge">⭐ 3 étoiles</div>
+  </div>
+
+  <div class="section-title">Choisis ton parcours !</div>
+
+  <div class="path-container">
+    <div class="path-track">
+
+      <!-- STEP 1 - DONE -->
+      <a href="compost-en-bac.html" class="step left">
+        <div class="step-bubble done">
+          🪣
+          <div class="step-badge done">✓</div>
+        </div>
+        <div class="step-info">
+          <div class="step-label">Compost en bac</div>
+          <div class="step-sub">Débutant · 5 étapes</div>
+          <div class="step-progress">
+            <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+            <div class="progress-text">Terminé ! 🎉</div>
+          </div>
+          <div class="stars">⭐⭐⭐</div>
+        </div>
+      </a>
+
+      <div class="connector done"></div>
+
+      <!-- STEP 2 - ACTIVE -->
+      <a href="lombricomposteur.html" class="step right">
+        <div class="step-bubble active">
+          🪱
+          <div class="step-badge done" style="background:#f9a825; color:#fff;">▶</div>
+        </div>
+        <div class="step-info" style="text-align:right">
+          <div class="step-label">Lombricomposteur</div>
+          <div class="step-sub">Intermédiaire · 7 étapes</div>
+          <div class="step-progress">
+            <div class="progress-bar"><div class="progress-fill" style="width:43%"></div></div>
+            <div class="progress-text" style="text-align:right">3 / 7 étapes</div>
+          </div>
+          <div class="stars">⭐⭐☆</div>
+        </div>
+      </a>
+
+      <div class="connector"></div>
+
+      <!-- STEP 3 - LOCKED -->
+      <a href="points-apports.html" class="step left" style="opacity:0.7; pointer-events:none;">
+        <div class="step-bubble locked">
+          🗑️
+          <div class="step-badge locked">🔒</div>
+        </div>
+        <div class="step-info">
+          <div class="step-label">Points d'apport volontaire</div>
+          <div class="step-sub">Avancé · 6 étapes</div>
+          <div class="locked-msg">🔒 Termine le lombricomposteur d'abord !</div>
+        </div>
+      </a>
+
+      <div class="connector"></div>
+
+      <!-- STEP 4 - LOCKED -->
+      <a href="enfants.html" class="step right" style="opacity:0.7; pointer-events:none;">
+        <div class="step-bubble locked" style="font-size:2rem;">
+          🧒
+          <div class="step-badge locked">🔒</div>
+        </div>
+        <div class="step-info" style="text-align:right">
+          <div class="step-label">Parcours Enfants</div>
+          <div class="step-sub">Tous niveaux · 4 étapes</div>
+          <div class="locked-msg" style="text-align:right">🔒 Débloque avec 500 XP</div>
+        </div>
+      </a>
+
+      <div class="connector"></div>
+
+      <!-- FINISH LINE -->
+      <div style="text-align:center; padding: 16px 0 8px; width:100%;">
+        <div style="display:inline-flex; flex-direction:column; align-items:center; gap:6px;">
+          <div style="font-size:3rem; filter:grayscale(0.6);">🏆</div>
+          <div style="font-family:'Baloo 2',cursive; font-weight:900; color:#bbb; font-size:0.9rem;">Expert composteur</div>
+          <div style="font-size:0.75rem; color:#aaa; font-weight:700;">Complète tous les parcours !</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    const burger = document.getElementById('burgerBtn');
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('closeBtn');
+    function openMenu() { drawer.classList.add('open'); overlay.classList.add('open'); burger.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeMenu() { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); document.body.style.overflow = ''; }
+    burger.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    overlay.addEventListener('click', closeMenu);
+  </script>
+</body>
+</html>
