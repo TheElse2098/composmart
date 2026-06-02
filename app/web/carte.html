@@ -106,63 +106,90 @@
             position: absolute;
             z-index: 1000;
             background: #fff;
-            border: 2px solid #1e6e3e;
-            border-radius: 16px;
-            padding: 14px;
-            font-size: 0.88rem;
-            color: #1a3a25;
-            box-shadow: 0 4px 20px rgba(30,110,62,0.18);
-
-            /* Mobile : panneau bas pleine largeur */
-            bottom: 0;
-            left: 0;
-            right: 0;
-            width: 100%;
-            border-radius: 16px 16px 0 0;
-            max-height: 55vh;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 24px rgba(30,110,62,0.2);
+            bottom: 0; left: 0; right: 0; width: 100%;
+            max-height: 60vh;
             overflow-y: auto;
+            padding-bottom: 12px;
         }
-
-        .tabl table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.82rem; }
-        .tabl table td { border: 1px solid #c8dfc8; padding: 4px 6px; vertical-align: top; }
-        .tabl table tr:first-child td { background: #eef4ec; font-weight: 700; color: #1e6e3e; }
-
-        .supprimer_compost {
-            background: #c0392b;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 0.82rem;
-            cursor: pointer;
+        .tabl-handle {
+            width: 36px; height: 4px; background: #d0e8d8;
+            border-radius: 2px; margin: 10px auto 4px;
         }
-        .fiche-row {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-            margin-bottom: 5px;
-            flex-wrap: wrap;
+        .tabl-header {
+            display: flex; gap: 8px; align-items: center;
+            padding: 8px 16px 0; flex-wrap: wrap;
         }
-        .fiche-label {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: #1e6e3e;
-            white-space: nowrap;
-            min-width: 52px;
+        .badge-type {
+            background: #1e6e3e; color: #fff;
+            font-size: 0.75rem; font-weight: 800;
+            padding: 4px 12px; border-radius: 20px;
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
-        .fiche-val {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #1a3a25;
-            flex: 1;
+        .badge-acces {
+            background: #eef4ec; color: #2c6e49;
+            font-size: 0.75rem; font-weight: 700;
+            padding: 4px 10px; border-radius: 20px;
+            border: 1px solid #c8dfc8;
         }
-        .fiche-actions {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 10px;
-            gap: 8px;
+        .tabl-adresse {
+            font-size: 0.75rem; color: #7aaa8a;
+            padding: 5px 16px 0; font-style: italic;
         }
+        .tabl-rules {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 8px; padding: 10px 16px 0;
+        }
+        .rules-title {
+            font-size: 0.7rem; font-weight: 800; margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .rules-title.ok { color: #1e6e3e; }
+        .rules-title.nok { color: #c0392b; }
+        .rules-list { display: flex; flex-wrap: wrap; gap: 4px; }
+        .chip {
+            font-size: 0.65rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 12px;
+        }
+        .chip-ok  { background: #e8f5e9; color: #2d6a4f; border: 1px solid #b7dfc4; }
+        .chip-nok { background: #fdecea; color: #c0392b; border: 1px solid #f5bdb9; }
+        .no-data  { font-size: 0.72rem; color: #bbb; font-style: italic; }
+        .tabl-info {
+            padding: 10px 16px 0;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+        .info-row { display: flex; align-items: flex-start; gap: 8px; }
+        .info-icon { font-size: 0.85rem; flex-shrink: 0; margin-top: 1px; }
+        .info-val  { font-size: 0.8rem; color: #1a3a25; font-weight: 600; flex: 1; }
+        .tabl-trajet {
+            display: flex; gap: 6px; align-items: center;
+            padding: 10px 16px 0; flex-wrap: wrap;
+        }
+        .btn-trajet {
+            background: #eef4ec; color: #1e6e3e;
+            border: 1.5px solid #c8dfc8; border-radius: 20px;
+            padding: 6px 12px; font-size: 0.76rem; font-weight: 700;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .btn-trajet:hover { background: #d4edda; }
+        .tabl-actions {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 16px 0; gap: 8px;
+        }
+        .tabl-actions button, .tabl-actions input[type=submit] {
+            border-radius: 20px; padding: 8px 18px;
+            font-size: 0.82rem; font-weight: 700; cursor: pointer; border: none;
+        }
+        .btn-modifier, .tabl-actions button:not(.btn-supprimer), .tabl-actions input[type=submit] {
+            background: #1e6e3e; color: #fff;
+        }
+        .btn-supprimer {
+            background: #fff; color: #c0392b;
+            border: 1.5px solid #c0392b !important;
+        }
+        .tabl select { border: 1px solid #c8dfc8; border-radius: 6px; padding: 3px 6px; color: #1a3a25; font-size: 0.82rem; }
+        .tabl a { color: #1e6e3e; font-weight: 600; font-size: 0.8rem; }
 
         /* ── BOUTON RAJOUTER ── */
         .rajouter {
@@ -233,14 +260,12 @@
             #map { height: calc(100vh - 52px); }
 
             .tabl {
-                bottom: auto;
-                top: 70px;
-                right: 16px;
-                left: auto;
-                width: 260px;
-                border-radius: 16px;
+                bottom: auto; top: 70px; right: 16px; left: auto;
+                width: 290px; border-radius: 16px;
                 max-height: calc(100vh - 120px);
+                box-shadow: 0 4px 20px rgba(30,110,62,0.18);
             }
+            .tabl-handle { display: none; }
 
             .info_compost {
                 top: 10px;
@@ -319,42 +344,35 @@
         <div id="rajouter_compost" class="rajouter" style="visibility:hidden"></div>
 
         <div id="tableau" style="display:none" class="tabl">
+            <div class="tabl-handle"></div>
+            <div class="tabl-header">
+                <div id="type" class="badge-type"></div>
+                <div id="acces" class="badge-acces"></div>
+            </div>
+            <div id="adresse" class="tabl-adresse"></div>
             <form action="sites1.php" method="post" id="formulaire_changer">
-                <div class="fiche-row">
-                    <span class="fiche-label">Type</span>
-                    <div id="type" class="fiche-val"></div>
-                    <span class="fiche-label" style="margin-left:10px">Accès</span>
-                    <div id="acces" class="fiche-val"></div>
-                </div>
-                <table>
-                    <tr>
-                        <td><b>✅ Autorisé</b></td>
-                        <td><b>❌ Interdit</b></td>
-                    </tr>
-                    <tr>
-                        <td><div id="Autor"></div></td>
-                        <td><div id="Inter"></div></td>
-                    </tr>
-                </table>
-                <div class="fiche-row" style="margin-top:8px">
-                    <span class="fiche-label">Gestion</span>
-                    <div id="gestion" class="fiche-val"></div>
-                </div>
-                <div class="fiche-row">
-                    <span class="fiche-label">Contact</span>
-                    <div id="infos_gestion" class="fiche-val"></div>
-                </div>
-                <div class="fiche-row" style="margin-top:8px">
-                    <span class="fiche-label">Trajet</span>
-                    <div class="fiche-val" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
-                        <button type="button" id="foot" class="trajet">🚶 Pied</button>
-                        <button type="button" id="car" class="trajet">🚗 Voiture</button>
-                        <div id="waze"></div>
+                <div class="tabl-rules">
+                    <div>
+                        <div class="rules-title ok">✅ Autorisé</div>
+                        <div id="Autor" class="rules-list"></div>
+                    </div>
+                    <div>
+                        <div class="rules-title nok">❌ Interdit</div>
+                        <div id="Inter" class="rules-list"></div>
                     </div>
                 </div>
-                <div class="fiche-actions">
-                    <div id="boutton"><button id="modifier_compost">✏️ Modifier</button></div>
-                    <button type="button" id="supprimer_compost" class="supprimer_compost" style="visibility:hidden">🗑 Supprimer</button>
+                <div class="tabl-info">
+                    <div class="info-row"><span class="info-icon">🏢</span><div id="gestion" class="info-val"></div></div>
+                    <div class="info-row"><span class="info-icon">📞</span><div id="infos_gestion" class="info-val"></div></div>
+                </div>
+                <div class="tabl-trajet">
+                    <button type="button" id="foot" class="trajet btn-trajet">🚶 Pied</button>
+                    <button type="button" id="car" class="trajet btn-trajet">🚗 Voiture</button>
+                    <div id="waze"></div>
+                </div>
+                <div class="tabl-actions">
+                    <div id="boutton"><button id="modifier_compost" class="btn-modifier">✏️ Modifier</button></div>
+                    <button type="button" id="supprimer_compost" class="btn-supprimer" style="visibility:hidden">🗑 Supprimer</button>
                 </div>
             </form>
         </div>
@@ -446,8 +464,20 @@
             document.getElementById("formulaire_changer").style.visibility = "visible";
             if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); }
             current_compost_id = compost_id; current_lat = lat; current_lon = lon;
-            document.getElementById("boutton").innerHTML = '<button id="modifier_compost">✏️ Modifier</button>';
+            document.getElementById("boutton").innerHTML = '<button id="modifier_compost" class="btn-modifier">✏️ Modifier</button>';
             document.getElementById("tableau").style.display = "block";
+            document.getElementById("adresse").textContent = '📍 Chargement...';
+            fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=fr')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var a = data.address || {};
+                var rue = a.road || a.pedestrian || a.path || a.cycleway || '';
+                var ville = a.city || a.town || a.village || a.municipality || '';
+                var cp = a.postcode || '';
+                var txt = [rue, cp + ' ' + ville].filter(function(s){ return s.trim(); }).join(', ');
+                document.getElementById("adresse").textContent = txt ? '📍 ' + txt : '';
+            })
+            .catch(function() { document.getElementById("adresse").textContent = ''; });
             let trajet = document.getElementsByClassName("trajet");
             Array.from(trajet).forEach((element => {
                 if (trajetHandlers.has(element.id)) { element.removeEventListener("click", trajetHandlers.get(element.id)); trajetHandlers.delete(element.id); }
@@ -491,12 +521,14 @@
                             }
                         }
                         Info_gestion.innerHTML = ig_html;
-                        let Autorise = "<ul>"; let donnees_autor = donnees[0]["autor"];
-                        if (!donnees_autor) { Autorise = "Pas de données"; } else { donnees_autor.forEach((a) => { Autorise += "<li>" + a + "</li>"; }); }
-                        Autorise += "</ul>"; Autor.innerHTML = Autorise;
-                        let Interdit = "<ul>"; const donnees_inter = donnees[0]["inter"];
-                        if (!donnees_inter) { Interdit = "Pas de données"; } else { donnees_inter.forEach((i) => { Interdit += "<li>" + i + "</li>"; }); }
-                        Interdit += "</ul>"; Inter.innerHTML = Interdit;
+                        let donnees_autor = donnees[0]["autor"];
+                        const donnees_inter = donnees[0]["inter"];
+                        Autor.innerHTML = donnees_autor && donnees_autor.length
+                            ? donnees_autor.map(function(a){ return '<span class="chip chip-ok">' + a + '</span>'; }).join('')
+                            : '<span class="no-data">Pas de données</span>';
+                        Inter.innerHTML = donnees_inter && donnees_inter.length
+                            ? donnees_inter.map(function(i){ return '<span class="chip chip-nok">' + i + '</span>'; }).join('')
+                            : '<span class="no-data">Pas de données</span>';
                         let modif_compost = document.getElementById("modifier_compost");
                         if (modifierCompostHandler) { modif_compost.removeEventListener("click", modifierCompostHandler); }
                         modifierCompostHandler = function () { modifier_compost(compost_id, Autorise, Interdit, acces, Acces, type, Type, donnees_autor, donnees_inter) };
@@ -556,33 +588,47 @@
             }, (error) => { console.error("Géolocalisation:", error.message); });
         }
 
-        function lieu() {
-            nb_compost.textContent = "Recherche du compost le plus proche...";
-            navigator.geolocation.getCurrentPosition((position) => {
-                const lat_pos = position.coords.latitude; const long_pos = position.coords.longitude;
-                var pt = L.latLng(lat_pos, long_pos);
-                var greenIcon = L.icon({ iconUrl: './bleu.png', iconSize: [30, 30], iconAnchor: [120, 0] });
-                L.marker(pt, {icon: greenIcon}).addTo(map);
-                fetch("sites1.php", { method: "POST", body: new URLSearchParams({france: "france"}) })
-                .then((response) => response.json())
-                .then((data) => {
-                    try {
-                        if (Array.isArray(data)) {
-                            let d_min = 99999999999999, long_min = 0, lat_min = 0, id = 0;
-                            data.forEach((compost) => {
-                                const dLat = ((lat_pos - compost.lat) * Math.PI) / 180;
-                                const dLon = ((long_pos - compost.lon) * Math.PI) / 180;
-                                const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos((compost.lat*Math.PI)/180)*Math.cos((lat_pos*Math.PI)/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-                                const distance = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 1000;
-                                if (distance < d_min) { d_min = distance; long_min = compost.lon; lat_min = compost.lat; id = compost.id; }
-                            });
-                            map.flyTo([lat_pos, long_pos], 13);
-                            nb_compost.textContent = "Le compost le plus proche est à " + Math.round(d_min) + "m.";
-                            info_compost(id, lat_min, long_min);
-                        }
-                    } catch(e) { console.error("Erreur JSON:", e); }
+        function trouverPlusProche(lat_pos, long_pos) {
+            var posIcon = L.icon({ iconUrl: './bleu.png', iconSize: [30, 30], iconAnchor: [15, 15] });
+            L.marker([lat_pos, long_pos], { icon: posIcon }).addTo(map);
+            fetch('sites1.php', { method: 'POST', body: new URLSearchParams({ france: 'france' }) })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!Array.isArray(data)) return;
+                var d_min = 99999999999999, long_min = 0, lat_min = 0, id = 0;
+                data.forEach(function(compost) {
+                    var dLat = ((lat_pos - compost.lat) * Math.PI) / 180;
+                    var dLon = ((long_pos - compost.lon) * Math.PI) / 180;
+                    var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos((compost.lat*Math.PI)/180)*Math.cos((lat_pos*Math.PI)/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+                    var distance = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 1000;
+                    if (distance < d_min) { d_min = distance; long_min = compost.lon; lat_min = compost.lat; id = compost.id; }
                 });
+                map.flyTo([lat_min, long_min], 15);
+                nb_compost.textContent = 'Le compost le plus proche est a ' + Math.round(d_min) + 'm.';
+                info_compost(id, lat_min, long_min);
             });
+        }
+
+        function afficherRechercheVille() {
+            nb_compost.innerHTML = '<form id="form-ville" style="display:inline-flex;gap:6px;align-items:center"><input id="input-ville" type="text" placeholder="Adresse, quartier, ville..." style="padding:4px 8px;border:1px solid #1e6e3e;border-radius:8px;font-size:0.85rem"/><button type="submit" style="background:#1e6e3e;color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:0.85rem;cursor:pointer">Rechercher<\/button><\/form>';
+            document.getElementById('form-ville').addEventListener('submit', function(e) {
+                e.preventDefault();
+                var ville = document.getElementById('input-ville').value.trim();
+                if (!ville) return;
+                nb_compost.textContent = 'Recherche de ' + ville + '...';
+                fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(ville) + '&format=json&limit=1', { headers: { 'Accept-Language': 'fr' } })
+                .then(function(r) { return r.json(); })
+                .then(function(results) {
+                    if (!results.length) { nb_compost.textContent = 'Ville introuvable, reessayez.'; afficherRechercheVille(); return; }
+                    nb_compost.textContent = 'Recherche du compost le plus proche...';
+                    trouverPlusProche(parseFloat(results[0].lat), parseFloat(results[0].lon));
+                })
+                .catch(function() { nb_compost.textContent = 'Erreur reseau, reessayez.'; afficherRechercheVille(); });
+            });
+        }
+
+        function lieu() {
+            afficherRechercheVille();
         }
 
         currentMarker_click = null;
