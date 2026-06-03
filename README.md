@@ -1,6 +1,6 @@
 # Composmart
 
-Site web de sensibilisation écologique avec carte interactive des composteurs, mini-jeux et cours.
+Site web de sensibilisation écologique au compostage : carte interactive des composteurs, mini-jeux et cours.
 
 ## Stack
 
@@ -13,18 +13,17 @@ Site web de sensibilisation écologique avec carte interactive des composteurs, 
 
 ```bash
 cp .env.example .env
-# Éditer .env si besoin
 docker compose up --build
 ```
 
 - Site : http://localhost
+- Au premier démarrage, la DB est peuplée automatiquement (~45s) : villes open data (Montpellier, Rennes, Marseille) + OSM France (~5 800 composteurs)
+- Les redémarrages suivants sont immédiats (données déjà en base)
 
-> La base de données est initialisée automatiquement depuis `db/init.sql` au premier démarrage.
-
-## Lancer en production (sur une machine cible)
+## Lancer en production
 
 ```bash
-# Copier docker-compose.prod.yml, db/init.sql et .env sur la machine
+# Copier docker-compose.prod.yml, db/schema.sql et .env sur la machine cible
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
@@ -32,18 +31,40 @@ docker compose -f docker-compose.prod.yml up -d
 ## Structure
 
 ```
-app/
-└── web/
-    ├── index.html       # Accueil
-    ├── carte.html       # Carte interactive (Leaflet)
-    ├── cours.html       # Les cours
-    ├── parcours.html    # Mes parcours
-    ├── compte.html      # Mon compte
-    ├── materiel.html    # Le matériel
-    ├── achat.html       # Achat
-    ├── sites1.php       # API PHP (CRUD composts ↔ MariaDB)
-    ├── leaflet/         # Plugins Leaflet locaux (fullscreen, shpfile)
-    └── Dockerfile
-db/
-└── init.sql             # Schéma + données initiales
+composmart/
+├── front/                  ← Frontend (HTML, CSS, JS, images)
+│   ├── *.html              ← Pages (URLs propres via .htaccess)
+│   ├── assets/
+│   │   ├── img/            ← Icônes et images
+│   │   ├── css/
+│   │   └── libs/           ← Plugins Leaflet locaux
+│   └── Dockerfile
+│
+├── api/                    ← Backend PHP
+│   └── carte/
+│       └── sites.php       ← API CRUD des composteurs
+│
+├── db/
+│   ├── schema.sql          ← Schéma : composts, users, progression, scores
+│   └── seeds/
+│       ├── seed.php        ← Script lancé au démarrage (import auto)
+│       ├── import_osm.php  ← Import OpenStreetMap (Overpass API)
+│       ├── import_city.php ← Import open data villes (formats hétérogènes)
+│       ├── montpellier.json
+│       ├── rennes.json
+│       └── marseille.json
+│
+└── content/                ← Données éditoriales (cours, jeux) — à alimenter
+    ├── cours/
+    └── jeux/
 ```
+
+## Sources de données
+
+| Source | Contenu | Mise à jour |
+|---|---|---|
+| OpenStreetMap (Overpass) | ~4 500 composteurs France | Automatique au 1er démarrage |
+| Open data Montpellier | ~420 points d'apport | Automatique au 1er démarrage |
+| Open data Rennes Métropole | ~590 composteurs | Automatique au 1er démarrage |
+| Open data Marseille | ~320 composteurs | Automatique au 1er démarrage |
+| Ajouts manuels (carte) | Points ajoutés via l'interface | Persistés en base |
