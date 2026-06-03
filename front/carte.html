@@ -9,10 +9,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
-    <link rel="stylesheet" href="leaflet/fullscreen/Control.FullScreen.css"/>
-    <script src="leaflet/fullscreen/Control.FullScreen.js"></script>
-    <script src="leaflet/shp/dist/shp.js"></script>
-    <script src="leaflet/leaflet-shpfile/leaflet.shpfile.js"></script>
+    <link rel="stylesheet" href="/assets/libs/fullscreen/Control.FullScreen.css"/>
+    <script src="/assets/libs/fullscreen/Control.FullScreen.js"></script>
+    <script src="/assets/libs/shp/dist/shp.js"></script>
+    <script src="/assets/libs/leaflet-shpfile/leaflet.shpfile.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous"/>
 
@@ -352,7 +352,7 @@
                 <div id="acces" class="badge-acces"></div>
             </div>
             <div id="adresse" class="tabl-adresse"></div>
-            <form action="sites1.php" method="post" id="formulaire_changer">
+            <form action="/api/carte/sites.php" method="post" id="formulaire_changer">
                 <div class="tabl-rules">
                     <div>
                         <div class="rules-title ok">✅ Autorisé</div>
@@ -417,7 +417,7 @@
 
         nb_compost.textContent = "Recherche des compost en France...";
 
-        fetch("sites1.php", {
+        fetch("/api/carte/sites.php", {
             method: "POST",
             body: new URLSearchParams({france: "france"})
         })
@@ -435,12 +435,12 @@
                         let lat = compost.lat;
                         let type = compost.type;
                         if (type === "Conteneur") {
-                            var grayIcon = L.icon({ iconUrl: 'marker-bleu.png', iconSize: [20, 38], iconAnchor: [10, 38], popupAnchor: [0, -38] });
+                            var grayIcon = L.icon({ iconUrl: '/assets/img/marker-bleu.png', iconSize: [20, 38], iconAnchor: [10, 38], popupAnchor: [0, -38] });
                             marker = L.marker([lat, lon], {icon: grayIcon});
                             marker.options.id = i;
                             conteneursLayer.addLayer(marker);
                         } else {
-                            var greenIcon = L.icon({ iconUrl: 'icon_vert.png', iconSize: [25, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] });
+                            var greenIcon = L.icon({ iconUrl: '/assets/img/icon_vert.png', iconSize: [25, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] });
                             marker = L.marker([lat, lon], {icon: greenIcon});
                             marker.options.id = i;
                             composteursLayer.addLayer(marker);
@@ -489,7 +489,7 @@
             }));
             let Autor = document.getElementById("Autor");
             let Inter = document.getElementById("Inter");
-            fetch("sites1.php", { method: "POST", body: new URLSearchParams({autorinter: compost_id}) })
+            fetch("/api/carte/sites.php", { method: "POST", body: new URLSearchParams({autorinter: compost_id}) })
             .then((response) => response.text())
             .then((data) => {
                 try {
@@ -593,7 +593,7 @@
         function trouverPlusProche(lat_pos, long_pos) {
             var posIcon = L.icon({ iconUrl: './bleu.png', iconSize: [30, 30], iconAnchor: [15, 15] });
             L.marker([lat_pos, long_pos], { icon: posIcon }).addTo(map);
-            fetch('sites1.php', { method: 'POST', body: new URLSearchParams({ france: 'france' }) })
+            fetch('/api/carte/sites.php', { method: 'POST', body: new URLSearchParams({ france: 'france' }) })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (!Array.isArray(data)) return;
@@ -648,7 +648,7 @@
             document.getElementById("rajouter_compost").style.visibility = "visible";
             document.getElementById("tableau").style.display = "none";
             document.getElementById('valid_rajout').addEventListener('click', function () {
-                fetch("sites1.php", { method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({lat_click: current_lat_click, lon_click: current_lon_click}) })
+                fetch("/api/carte/sites.php", { method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({lat_click: current_lat_click, lon_click: current_lon_click}) })
                 .then((response) => response.text())
                 .then((data) => {
                     document.getElementById("tableau").style.display = "block";
@@ -670,7 +670,7 @@
             supprimer.innerHTML = "Êtes-vous sûr de vouloir supprimer ce compost ? <button id='oui'>Oui</button><button id='non'>Non</button>";
             document.getElementById("non").addEventListener('click', () => location.reload());
             document.getElementById("oui").addEventListener('click', () => {
-                fetch("sites1.php", { method: "POST", body: new URLSearchParams({supprimer: current_compost_id}) })
+                fetch("/api/carte/sites.php", { method: "POST", body: new URLSearchParams({supprimer: current_compost_id}) })
                 .then((response) => response.text()).then((data) => { console.log(data); });
                 alert("Le compost a bien été supprimé !");
                 location.reload();

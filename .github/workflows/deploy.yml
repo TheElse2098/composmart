@@ -43,7 +43,8 @@ jobs:
       - name: Build & push
         uses: docker/build-push-action@v6
         with:
-          context: app/web
+          context: .
+          file: front/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
