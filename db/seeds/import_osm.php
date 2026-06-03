@@ -30,6 +30,8 @@ curl_setopt_array($ch, [
     CURLOPT_POSTFIELDS     => 'data=' . urlencode($query),
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_TIMEOUT        => 180,
+    CURLOPT_USERAGENT      => 'CompoSmart/1.0',
+    CURLOPT_HTTPHEADER     => ['Accept: application/json', 'Content-Type: application/x-www-form-urlencoded'],
 ]);
 $response = curl_exec($ch);
 $err      = curl_error($ch);

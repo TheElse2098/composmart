@@ -8,4 +8,10 @@ RUN docker-php-ext-install mysqli \
 COPY front/ /var/www/html/
 COPY api/   /var/www/html/api/
 
-RUN chown -R www-data:www-data /var/www/html
+# Seeds (import initial de la DB)
+COPY db/seeds/ /docker-seeds/
+
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod +x /var/www/html/docker-entrypoint.sh
+
+ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
