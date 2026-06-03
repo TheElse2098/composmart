@@ -41,8 +41,9 @@ composmart/
 │   └── Dockerfile
 │
 ├── api/                    ← Backend PHP
-│   └── carte/
-│       └── sites.php       ← API CRUD des composteurs
+│   ├── carte/
+│   │   └── sites.php       ← API CRUD des composteurs
+│   └── auth/               ← Authentification (à venir)
 │
 ├── db/
 │   ├── schema.sql          ← Schéma : composts, users, progression, scores
