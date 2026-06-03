@@ -62,8 +62,10 @@
 
     /* Item cards */
     .item-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
-    .item-card { background: #fff; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); transition: transform 0.15s; }
-    .item-card:hover { transform: translateX(4px); }
+    .item-card { background: #fff; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); transition: transform 0.15s, box-shadow 0.15s; }
+    .item-card:hover { transform: translateX(4px); box-shadow: 0 4px 16px rgba(30,110,62,0.18); }
+    .item-card.achetable:hover .item-name::after { content: ' 🛒'; font-size: 0.8em; }
+    .item-card.achetable { cursor: pointer; }
     .item-emoji { font-size: 2rem; flex-shrink: 0; }
     .item-info { flex: 1; }
     .item-name { font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 900; color: #1a3a25; }
@@ -186,7 +188,7 @@
         <div class="item-card">
           <div class="item-emoji">🔱</div>
           <div class="item-info">
-            <div class="item-name">Aérateur / brasseur</div>
+            <div class="item-name">Aérateur / brasseur à compost</div>
             <div class="item-desc">Tige hélicoïdale pour retourner le compost sans effort et apporter de l'oxygène.</div>
             <span class="item-tag tag-conseil">Conseillé</span>
           </div>
@@ -195,7 +197,7 @@
         <div class="item-card">
           <div class="item-emoji">🪣</div>
           <div class="item-info">
-            <div class="item-name">Seau de collecte cuisine</div>
+            <div class="item-name">Seau de collecte cuisine (5-10L)</div>
             <div class="item-desc">Petit seau hermétique (5–10L) pour collecter les déchets avant de les déposer dans le bac.</div>
             <span class="item-tag tag-conseil">Conseillé</span>
           </div>
@@ -274,7 +276,7 @@
         <div class="item-card">
           <div class="item-emoji">🌡️</div>
           <div class="item-info">
-            <div class="item-name">Thermomètre d'ambiance</div>
+            <div class="item-name">Thermomètre à lombricompost</div>
             <div class="item-desc">Les vers travaillent entre 15 et 25°C. En dessous de 10°C ils ralentissent fortement.</div>
             <span class="item-tag tag-conseil">Conseillé</span>
           </div>
@@ -435,6 +437,17 @@
     burger.addEventListener('click', openMenu);
     closeBtn.addEventListener('click', closeMenu);
     overlay.addEventListener('click', closeMenu);
+
+    // Ecosia shopping on item click
+    document.querySelectorAll('.item-card').forEach(function(card) {
+      var price = card.querySelector('.item-price').textContent.trim();
+      if (price === 'Gratuit' || price === '—') return;
+      card.classList.add('achetable');
+      card.addEventListener('click', function() {
+        var name = card.querySelector('.item-name').textContent.trim();
+        window.open('https://www.ecosia.org/shopping?q=' + encodeURIComponent(name), '_blank');
+      });
+    });
 
     // Tabs
     document.querySelectorAll('.tab').forEach(tab => {
