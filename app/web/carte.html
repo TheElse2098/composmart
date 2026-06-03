@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8"/>
@@ -43,6 +43,9 @@
         }
         .nav-logo { font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
         .nav-logo span { color: #a8e6bf; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; transition: color 0.15s; }
+    .nav-profil:hover { color: #fff; }
         .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
         .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
         .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
@@ -298,11 +301,9 @@
 
     <!-- NAV -->
     <nav>
-        <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
-        <button class="burger" id="burgerBtn" aria-label="Menu">
-            <span></span><span></span><span></span>
-        </button>
-    </nav>
+    <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
+    <div class="nav-right"><a href="compte" class="nav-profil">&#128100;</a><button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button></div>
+  </nav>
 
     <!-- OVERLAY -->
     <div class="overlay" id="overlay"></div>
@@ -314,8 +315,6 @@
             <button class="drawer-close" id="closeBtn">&#x2715;</button>
         </div>
         <ul class="drawer-menu">
-            <li><a href="compte.html"><span class="menu-icon">👤</span> Mon compte</a></li>
-            <div class="drawer-divider"></div>
             <li><a href="index.html"><span class="menu-icon">🌿</span> Les parcours</a></li>
             <div class="drawer-divider"></div>
             <li><a href="carte.html" class="active"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
@@ -324,9 +323,6 @@
             <div class="drawer-divider"></div>
             <li><a href="achat.html"><span class="menu-icon">🛒</span> Achat</a></li>
         </ul>
-        <div class="drawer-footer">
-            <a href="compte.html"><span>👤</span> Se connecter</a>
-        </div>
     </div>
 
     <!-- MAP -->
