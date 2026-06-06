@@ -1,0 +1,32 @@
+[
+  {
+    "question": "Quelle loi française a rendu le tri des biodéchets obligatoire pour tous les ménages ?",
+    "options": [
+      "Loi Grenelle II (2010)",
+      "Loi de Transition Énergétique (2015)",
+      "Loi AGEC — Anti-Gaspillage pour une Économie Circulaire (2020)",
+      "Loi Biodiversité (2016)"
+    ],
+    "correct": 2
+  },
+  {
+    "question": "Depuis quelle date le tri des biodéchets est-il obligatoire pour tous les ménages en France ?",
+    "options": ["1er janvier 2020", "1er janvier 2022", "1er janvier 2024", "1er janvier 2025"],
+    "correct": 2
+  },
+  {
+    "question": "À partir de quel seuil un restaurant est-il soumis à l'obligation de tri de ses biodéchets ?",
+    "options": ["1 tonne/an", "5 tonnes/an", "10 tonnes/an", "50 tonnes/an"],
+    "correct": 1
+  },
+  {
+    "question": "Quelle instance est responsable de proposer des solutions de compostage aux habitants ?",
+    "options": [
+      "L'État central uniquement",
+      "Les entreprises privées de collecte",
+      "Les collectivités territoriales (communes, intercommunalités)",
+      "Les associations de consommateurs"
+    ],
+    "correct": 2
+  }
+]

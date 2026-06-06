@@ -1,0 +1,32 @@
+[
+  {
+    "question": "Quel groupe de vers de terre est le plus actif dans un composteur en bac ?",
+    "options": [
+      "Les vers anéciques, qui creusent des galeries verticales profondes",
+      "Les vers endogés, qui vivent dans la couche superficielle du sol",
+      "Les vers épigés, qui vivent dans la litière organique en surface",
+      "Les vers marins, adaptés aux milieux très humides"
+    ],
+    "correct": 2
+  },
+  {
+    "question": "Les réactions au sein d'un compost en bac sont-elles aérobies ou anaérobies ?",
+    "options": [
+      "Anaérobies uniquement",
+      "Aérobies principalement — le compost a besoin d'oxygène",
+      "Les deux en proportions égales",
+      "Ni l'un ni l'autre, ce sont des réactions chimiques pures"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "Combien de fois le phosphore disponible est-il plus concentré dans les turricules de vers que dans le sol environnant ?",
+    "options": ["2 fois", "4 fois", "7 fois", "15 fois"],
+    "correct": 2
+  },
+  {
+    "question": "Quel scientifique célèbre a consacré son dernier livre aux vers de terre ?",
+    "options": ["Louis Pasteur", "Charles Darwin", "Antoine Lavoisier", "Claude Bernard"],
+    "correct": 1
+  }
+]

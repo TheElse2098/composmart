@@ -1,0 +1,32 @@
+[
+  {
+    "question": "Quelle espèce de ver est la plus couramment utilisée en lombricompostage ?",
+    "options": [
+      "Lumbricus terrestris (ver de terre commun)",
+      "Eisenia fetida (ver rouge de fumier)",
+      "Tubifex tubifex (ver aquatique)",
+      "Nereis virens (ver marin)"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "À quelle température les vers de lombricomposteur sont-ils les plus actifs ?",
+    "options": ["0 à 10°C", "15 à 25°C", "30 à 40°C", "Plus de 50°C"],
+    "correct": 1
+  },
+  {
+    "question": "Qu'est-ce que le 'thé de lombricompost' ?",
+    "options": [
+      "Une infusion de plantes pour nourrir les vers",
+      "Le liquide récupéré dans le bac inférieur, utilisé comme engrais liquide",
+      "Un amendement solide riche en nutriments",
+      "Une boisson traditionnelle à base de compost"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "À quelle dilution utilise-t-on le thé de lombricompost pour arroser ses plantes ?",
+    "options": ["Pur, sans dilution", "Dilué à 50 %", "Dilué à 10 %", "Dilué à 1 %"],
+    "correct": 2
+  }
+]

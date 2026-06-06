@@ -1,0 +1,42 @@
+[
+  {
+    "question": "Quel ver est utilisé dans un lombricomposteur ?",
+    "options": [
+      "Lumbricus terrestris (ver de terre commun)",
+      "Eisenia fetida (ver rouge de fumier)",
+      "Tubifex tubifex (ver aquatique)",
+      "Nereis virens (ver marin)"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "Que signifie PAV ?",
+    "options": [
+      "Point Automatique de Valorisation",
+      "Point d'Apport Volontaire",
+      "Procédé d'Amendement Vert",
+      "Plateforme d'Apport et de Valorisation"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "Quelle solution est la plus adaptée à quelqu'un habitant en appartement sans balcon ?",
+    "options": [
+      "Le compost en bac",
+      "Le lombricomposteur",
+      "Les points d'apports volontaires",
+      "Le lombricomposteur ou les PAV"
+    ],
+    "correct": 3
+  },
+  {
+    "question": "Peut-on mettre de la viande dans un lombricomposteur ?",
+    "options": [
+      "Oui, sans restriction",
+      "Oui, en petite quantité seulement",
+      "Non, cela perturbe l'équilibre et crée des nuisibles",
+      "Uniquement si elle est cuite"
+    ],
+    "correct": 2
+  }
+]

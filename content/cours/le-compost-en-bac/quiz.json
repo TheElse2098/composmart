@@ -1,0 +1,42 @@
+[
+  {
+    "question": "Quelle est la taille recommandée pour un bac à compost ?",
+    "options": ["50 à 100 litres", "300 à 800 litres", "1 000 à 2 000 litres", "La taille n'a pas d'importance"],
+    "correct": 1
+  },
+  {
+    "question": "Pourquoi le fond du bac à compost doit-il être ouvert ?",
+    "options": [
+      "Pour faciliter le vidage du compost fini",
+      "Pour permettre le drainage et l'arrivée des vers de terre",
+      "Pour éviter que le bac ne soit trop lourd",
+      "C'est purement esthétique"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "Vrai ou faux ? Les agrumes sont totalement interdits dans le compost.",
+    "options": [
+      "Vrai, ils sont toxiques pour les micro-organismes",
+      "Faux, en petite quantité ils ne posent pas de problème",
+      "Vrai, ils attirent les nuisibles",
+      "Faux, ils accélèrent la décomposition"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "Mon compost dégage des mauvaises odeurs. Quelle est la cause la plus probable ?",
+    "options": [
+      "Trop de matières carbonées (sèches)",
+      "Trop de matières azotées (humides) ou manque d'aération",
+      "Le bac est trop grand",
+      "La présence de vers de terre"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "Quel est le ratio carbone/azote idéal dans un compost ?",
+    "options": ["1 pour 1", "5 pour 1", "25 à 30 pour 1", "100 pour 1"],
+    "correct": 2
+  }
+]

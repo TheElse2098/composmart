@@ -1,0 +1,37 @@
+[
+  {
+    "question": "Comment reconnaît-on un compost mûr prêt à l'emploi ?",
+    "options": [
+      "Il est chaud et fumant",
+      "Il est brun-noir, friable et sent la terre de forêt",
+      "Il contient encore des morceaux d'épluchures reconnaissables",
+      "Il est de couleur verte"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "Quelle proportion de compost est recommandée pour enrichir un terreau en pot ?",
+    "options": ["1/10 de compost", "1/3 de compost", "1/2 de compost", "2/3 de compost"],
+    "correct": 1
+  },
+  {
+    "question": "Que produit la méthanisation en plus de l'énergie (biogaz) ?",
+    "options": [
+      "Du plastique recyclé",
+      "De l'eau distillée",
+      "Du digestat, utilisable comme amendement agricole",
+      "De la cendre"
+    ],
+    "correct": 2
+  },
+  {
+    "question": "Pourquoi ne faut-il pas utiliser un compost immature directement dans le jardin ?",
+    "options": [
+      "Il fertilise trop rapidement",
+      "Il peut brûler les racines et nuire aux cultures",
+      "Il repousse les insectes pollinisateurs",
+      "Il n'a aucun effet — c'est inutile mais pas nocif"
+    ],
+    "correct": 1
+  }
+]

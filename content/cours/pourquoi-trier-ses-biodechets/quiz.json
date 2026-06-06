@@ -1,0 +1,27 @@
+[
+  {
+    "question": "Quelle proportion environ des poubelles grises françaises est composée de biodéchets ?",
+    "options": ["Environ 10 %", "Environ 30 %", "Environ 50 %", "Environ 70 %"],
+    "correct": 1
+  },
+  {
+    "question": "Qu'est-ce qu'un biodéchet ?",
+    "options": [
+      "Tout déchet qui peut être brûlé",
+      "Un déchet d'origine biologique capable de se décomposer naturellement",
+      "Un déchet provenant uniquement des industries alimentaires",
+      "Un déchet recyclable comme le papier ou le verre"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "Quel gaz à effet de serre dangereux est produit par les biodéchets qui se décomposent en décharge ?",
+    "options": ["CO₂ uniquement", "Méthane (CH₄)", "Dioxyde de soufre (SO₂)", "Ozone (O₃)"],
+    "correct": 1
+  },
+  {
+    "question": "Depuis quelle date le tri des biodéchets est-il obligatoire pour tous les ménages français ?",
+    "options": ["1er janvier 2020", "1er janvier 2022", "1er janvier 2024", "1er janvier 2026"],
+    "correct": 2
+  }
+]
