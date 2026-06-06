@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CompoSmart – Mon compte</title>
   <style>
@@ -50,7 +52,7 @@
 
   <nav>
     <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
-    <div class="nav-right"><a href="compte" class="nav-profil">&#128100;</a><button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button></div>
+    <div class="nav-right"><a href="compte" class="nav-profil">&#128100;</a><button id="themeToggle" aria-label="Thème">🌙</button><button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button></div>
   </nav>
   <div class="overlay" id="overlay"></div>
   <div class="drawer" id="drawer">
@@ -98,5 +100,6 @@
     overlay.addEventListener('click', closeMenu);
   </script>
 
+  <script src="/assets/js/theme.js"></script>
 </body>
 </html>
