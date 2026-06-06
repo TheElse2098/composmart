@@ -32,6 +32,9 @@ html.dark .hero-badge, html.dark .cat-badge { background: #243328; color: #7ab88
 /* ── Index — cartes gradient : ok telles quelles ── */
 
 /* ── Cours — cards gradient : ok telles quelles ── */
+html.dark .stats-box { background: #1e2d22; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+html.dark .stats-cell-border { border-right-color: #2a3d2e; }
+html.dark .stats-label { color: #7ab88e; }
 
 /* ── Parcours ── */
 html.dark .step-label { color: #c8e6d4; }

@@ -83,6 +83,13 @@
     /* Locked style */
     .cc-locked { background: linear-gradient(135deg, #9e9e9e, #bdbdbd) !important; box-shadow: 0 4px 14px rgba(0,0,0,0.12) !important; filter: grayscale(0.3); }
 
+    /* Stats box */
+    .stats-box { background: #fff; border-radius: 18px; padding: 16px 18px; display: flex; gap: 0; margin-bottom: 10px; box-shadow: 0 2px 12px rgba(30,110,62,0.1); }
+    .stats-cell { flex: 1; text-align: center; }
+    .stats-cell-border { border-right: 1px solid #e5ede8; }
+    .stats-val { font-family: 'Baloo 2', cursive; font-size: 1.6rem; font-weight: 900; }
+    .stats-label { font-size: 0.72rem; color: #4a7a5a; font-weight: 700; }
+
     /* Daily challenge banner */
     .challenge-banner { background: linear-gradient(135deg, #f9a825, #ff8f00); border-radius: 20px; padding: 16px 18px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 14px rgba(249,168,37,0.35); }
     .ch-emoji { font-size: 2.2rem; }
@@ -221,18 +228,18 @@
     </div>
 
     <!-- Stats rapides -->
-    <div style="background:#fff; border-radius:18px; padding:16px 18px; display:flex; gap:0; margin-bottom:10px; box-shadow:0 2px 12px rgba(30,110,62,0.1);">
-      <div style="flex:1; text-align:center; border-right:1px solid #e5ede8;">
-        <div style="font-family:'Baloo 2',cursive; font-size:1.6rem; font-weight:900; color:#1e6e3e;">3</div>
-        <div style="font-size:0.72rem; color:#4a7a5a; font-weight:700;">cours finis</div>
+    <div class="stats-box">
+      <div class="stats-cell stats-cell-border">
+        <div class="stats-val" style="color:#1e6e3e;">3</div>
+        <div class="stats-label">cours finis</div>
       </div>
-      <div style="flex:1; text-align:center; border-right:1px solid #e5ede8;">
-        <div style="font-family:'Baloo 2',cursive; font-size:1.6rem; font-weight:900; color:#f9a825;">350</div>
-        <div style="font-size:0.72rem; color:#4a7a5a; font-weight:700;">XP gagnés</div>
+      <div class="stats-cell stats-cell-border">
+        <div class="stats-val" style="color:#f9a825;">350</div>
+        <div class="stats-label">XP gagnés</div>
       </div>
-      <div style="flex:1; text-align:center;">
-        <div style="font-family:'Baloo 2',cursive; font-size:1.6rem; font-weight:900; color:#1e6e3e;">🔥 5</div>
-        <div style="font-size:0.72rem; color:#4a7a5a; font-weight:700;">jours de suite</div>
+      <div class="stats-cell">
+        <div class="stats-val" style="color:#1e6e3e;">🔥 5</div>
+        <div class="stats-label">jours de suite</div>
       </div>
     </div>
 
