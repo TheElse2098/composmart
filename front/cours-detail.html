@@ -11,7 +11,7 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding-bottom: 70px; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; padding-bottom: 70px; }
 
     nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
     .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
@@ -38,25 +38,29 @@
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .overlay.open { opacity: 1; pointer-events: all; }
 
-    /* PAGE */
-    .page { width: 100%; max-width: 680px; padding: 0 16px; }
-
     /* Hero cours */
-    .cours-hero { background: #1e6e3e; width: 100%; padding: 28px 24px 48px; text-align: center; }
-    .cours-hero-emoji { font-size: 3rem; display: block; margin-bottom: 10px; }
-    .cours-hero h1 { font-family: 'Baloo 2', cursive; color: #fff; font-size: clamp(1.4rem,5vw,2rem); font-weight: 900; line-height: 1.2; }
-    .cours-hero-meta { font-size: 0.82rem; color: rgba(255,255,255,0.8); font-weight: 700; margin-top: 8px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-    .cours-hero-meta span { background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 20px; }
+    .cours-hero { background: linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2a9450 100%); width: 100%; padding: 32px 20px 28px; text-align: center; position: relative; overflow: hidden; }
+    .cours-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 78% 8%, rgba(255,255,255,0.09) 0%, transparent 52%), radial-gradient(ellipse at 14% 88%, rgba(0,0,0,0.08) 0%, transparent 42%); pointer-events: none; }
+    .back-link { position: absolute; top: 18px; left: 20px; color: rgba(255,255,255,0.7); font-size: 0.82rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: color 0.15s; z-index: 1; }
+    .back-link:hover { color: #fff; }
+    .cours-hero-emoji { font-size: 3.5rem; display: block; margin-bottom: 12px; position: relative; z-index: 1; filter: drop-shadow(0 4px 14px rgba(0,0,0,0.2)); }
+    .cours-hero h1 { font-family: 'Baloo 2', cursive; color: #fff; font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; line-height: 1.2; position: relative; z-index: 1; text-shadow: 0 2px 14px rgba(0,0,0,0.18); }
+    .cours-hero-meta { font-size: 0.82rem; color: rgba(255,255,255,0.88); font-weight: 700; margin-top: 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+    .cours-hero-meta span { background: rgba(255,255,255,0.18); padding: 4px 13px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); }
+
+    /* Card principale */
+    .cours-card { width: calc(100% - 32px); max-width: 720px; margin: -14px auto 48px; background: #fff; border-radius: 24px; box-shadow: 0 12px 50px rgba(30,110,62,0.13), 0 2px 12px rgba(0,0,0,0.07); position: relative; z-index: 10; overflow: hidden; }
 
     /* Tabs médias */
-    .media-tabs { background: #fff; border-radius: 20px 20px 0 0; margin-top: -20px; padding: 20px 20px 0; display: flex; gap: 8px; flex-wrap: wrap; position: relative; z-index: 1; width: 100%; max-width: 680px; }
-    .media-btn { flex: 1; min-width: 90px; padding: 10px 8px; border-radius: 12px; border: 2px solid transparent; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.18s; background: #eef4ec; color: #1e6e3e; }
-    .media-btn.active { background: #1e6e3e; color: #fff; border-color: #1e6e3e; }
-    .media-btn.disabled { background: #e0e0e0; color: #aaa; cursor: not-allowed; border-color: transparent; filter: grayscale(1); }
-    .media-btn:not(.disabled):hover { border-color: #1e6e3e; }
+    .media-tabs { background: #f4faf6; padding: 14px 16px 0; display: flex; gap: 4px; border-bottom: 1px solid #daeee2; overflow-x: auto; scrollbar-width: none; }
+    .media-tabs::-webkit-scrollbar { display: none; }
+    .media-btn { flex: 1; min-width: 80px; padding: 10px 10px 13px; border-radius: 10px 10px 0 0; border: none; border-bottom: 3px solid transparent; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.18s; background: transparent; color: #5a8a6a; white-space: nowrap; }
+    .media-btn.active { background: #fff; color: #1e6e3e; border-bottom-color: #1e6e3e; margin-bottom: -1px; }
+    .media-btn.disabled { color: #b8ccbe; cursor: not-allowed; }
+    .media-btn:not(.disabled):not(.active):hover { background: rgba(255,255,255,0.55); color: #1e6e3e; }
 
     /* Contenu */
-    .media-panel { background: #fff; width: 100%; max-width: 680px; padding: 20px; border-radius: 0 0 20px 20px; display: none; }
+    .media-panel { background: #fff; padding: 24px; display: none; min-height: 200px; }
     .media-panel.active { display: block; }
 
     /* Texte Markdown */
@@ -105,6 +109,36 @@
     .quiz-retry { margin-top: 12px; background: #eef4ec; color: #1e6e3e; border: 2px solid #1e6e3e; border-radius: 12px; padding: 10px 24px; font-family: 'Baloo 2', cursive; font-weight: 900; cursor: pointer; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg,#1e6e3e,#52b788,#a7c957,#52b788,#1e6e3e); }
+
+    /* Dark mode — cours-detail */
+    html.dark body { background-color: #121c14; }
+    html.dark .cours-card { background: #1a2b1e !important; box-shadow: 0 12px 50px rgba(0,0,0,0.4); }
+    html.dark .media-tabs { background: #1e2d22; border-bottom-color: #2a3d2e; }
+    html.dark .media-btn { color: #7ab88e; }
+    html.dark .media-btn.active { background: #1a2b1e; color: #a8e6bf; border-bottom-color: #52b788; }
+    html.dark .media-btn.disabled { color: #3a5042; }
+    html.dark .media-btn:not(.disabled):not(.active):hover { background: rgba(255,255,255,0.05); color: #a8e6bf; }
+    html.dark .media-panel { background: #1a2b1e !important; }
+    html.dark .md-content { color: #c8e6d4; }
+    html.dark .md-content h1 { color: #a8e6bf; }
+    html.dark .md-content h2 { color: #c8e6d4; }
+    html.dark .md-content h3 { color: #a8e6bf; }
+    html.dark .md-content strong { color: #a8e6bf; }
+    html.dark .md-content blockquote { background: #1e2d22; border-left-color: #52b788; color: #7ab88e; }
+    html.dark .md-content code { background: #1e2d22; color: #a8e6bf; }
+    html.dark .md-content th { background: #243328; }
+    html.dark .md-content td { border-bottom-color: #2a3d2e; color: #b0d4be; }
+    html.dark .media-title { color: #c8e6d4; }
+    html.dark .media-author { color: #7ab88e; }
+    html.dark .media-duration { background: #243328; color: #52b788; }
+    html.dark .media-desc { color: #7ab88e; }
+    html.dark .podcast-card { background: #1e2d22; }
+    html.dark .quiz-opt { background: #1e2d22; border-color: #2a4d35; color: #c8e6d4; }
+    html.dark .quiz-opt:hover { border-color: #52b788; background: #243328; }
+    html.dark .quiz-opt.selected { border-color: #52b788; background: #1e3326; color: #a8e6bf; }
+    html.dark .quiz-result .score { color: #52b788; }
+    html.dark .quiz-retry { background: #1e2d22; color: #52b788; border-color: #52b788; }
+    html.dark .quiz-q-text { color: #c8e6d4; }
   </style>
 </head>
 <body>
@@ -137,35 +171,39 @@
 
   <!-- Hero dynamique -->
   <div class="cours-hero" id="coursHero" style="display:none">
+    <a href="/cours" class="back-link">← Retour aux cours</a>
     <span class="cours-hero-emoji" id="heroEmoji"></span>
     <h1 id="heroTitre"></h1>
     <div class="cours-hero-meta" id="heroMeta"></div>
   </div>
 
-  <!-- Tabs médias -->
-  <div class="media-tabs" id="mediaTabs" style="display:none">
-    <button class="media-btn" id="btnTexte" onclick="showPanel('texte')">📄 Texte</button>
-    <button class="media-btn" id="btnVideo" onclick="showPanel('video')">▶️ Vidéo</button>
-    <button class="media-btn" id="btnPodcast" onclick="showPanel('podcast')">🎧 Podcast</button>
-    <button class="media-btn" id="btnQuiz" onclick="showPanel('quiz')">✏️ Quiz</button>
-  </div>
+  <!-- Card contenu -->
+  <div class="cours-card" id="coursCard" style="display:none">
+    <!-- Tabs médias -->
+    <div class="media-tabs" id="mediaTabs">
+      <button class="media-btn" id="btnTexte" onclick="showPanel('texte')">📄 Texte</button>
+      <button class="media-btn" id="btnVideo" onclick="showPanel('video')">▶️ Vidéo</button>
+      <button class="media-btn" id="btnPodcast" onclick="showPanel('podcast')">🎧 Podcast</button>
+      <button class="media-btn" id="btnQuiz" onclick="showPanel('quiz')">✏️ Quiz</button>
+    </div>
 
-  <!-- Panneaux -->
-  <div class="media-panel" id="panelTexte">
-    <div class="md-content" id="mdContent"></div>
-  </div>
+    <!-- Panneaux -->
+    <div class="media-panel" id="panelTexte">
+      <div class="md-content" id="mdContent"></div>
+    </div>
 
-  <div class="media-panel" id="panelVideo">
-    <div class="video-info" id="videoInfo"></div>
-    <div class="video-wrapper" id="videoWrapper"></div>
-  </div>
+    <div class="media-panel" id="panelVideo">
+      <div class="video-info" id="videoInfo"></div>
+      <div class="video-wrapper" id="videoWrapper"></div>
+    </div>
 
-  <div class="media-panel" id="panelPodcast">
-    <div class="podcast-card" id="podcastCard"></div>
-  </div>
+    <div class="media-panel" id="panelPodcast">
+      <div class="podcast-card" id="podcastCard"></div>
+    </div>
 
-  <div class="media-panel" id="panelQuiz">
-    <div id="quizContent"></div>
+    <div class="media-panel" id="panelQuiz">
+      <div id="quizContent"></div>
+    </div>
   </div>
 
   <div class="bottom-leaf"></div>
@@ -194,7 +232,7 @@
           (meta.xp ? '<span>+' + meta.xp + ' XP</span>' : '') +
           (data.quiz ? '<span>' + data.quiz.length + ' questions</span>' : '');
         document.getElementById('coursHero').style.display = '';
-        document.getElementById('mediaTabs').style.display = '';
+        document.getElementById('coursCard').style.display = '';
 
         // Configurer les boutons
         var hasTexte   = !!data.texte;

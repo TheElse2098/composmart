@@ -89,3 +89,33 @@ html.dark .leaflet-control-layers { background: #1e2d22 !important; color: #c8e6
 html.dark .leaflet-control-layers-separator { border-color: #2a3d2e !important; }
 html.dark .leaflet-popup-content-wrapper,
 html.dark .leaflet-popup-tip { background: #1e2d22 !important; color: #c8e6d4 !important; }
+
+/* ── Cours-detail — card & tabs ── */
+html.dark .cours-card { background: #1a2b1e; box-shadow: 0 12px 50px rgba(0,0,0,0.4), 0 2px 12px rgba(0,0,0,0.25); }
+html.dark .media-tabs { background: #1e2d22; border-bottom-color: #2a3d2e; }
+html.dark .media-btn { color: #7ab88e; }
+html.dark .media-btn.active { background: #1a2b1e; color: #a8e6bf; border-bottom-color: #52b788; }
+html.dark .media-btn.disabled { color: #3a5a42; }
+html.dark .media-btn:not(.disabled):not(.active):hover { background: rgba(255,255,255,0.05); color: #a8e6bf; }
+html.dark .media-panel { background: #1a2b1e; }
+html.dark .back-link { color: rgba(255,255,255,0.55); }
+html.dark .back-link:hover { color: #fff; }
+html.dark .md-content { color: #c8e6d4; }
+html.dark .md-content h1 { color: #a8e6bf; }
+html.dark .md-content h2 { color: #c8e6d4; }
+html.dark .md-content h3 { color: #a8e6bf; }
+html.dark .md-content strong { color: #a8e6bf; }
+html.dark .md-content blockquote { background: #1e2d22; border-left-color: #52b788; color: #7ab88e; }
+html.dark .md-content code { background: #1e2d22; color: #a8e6bf; }
+html.dark .md-content th { background: #243328; }
+html.dark .md-content td { border-bottom-color: #2a3d2e; color: #b0d4be; }
+html.dark .media-title { color: #c8e6d4; }
+html.dark .media-author { color: #7ab88e; }
+html.dark .media-duration { background: #243328; color: #52b788; }
+html.dark .media-desc { color: #7ab88e; }
+html.dark .podcast-card { background: #1e2d22; }
+html.dark .quiz-opt { background: #1e2d22; border-color: #2a4d35; color: #c8e6d4; }
+html.dark .quiz-opt:hover { border-color: #52b788; background: #243328; }
+html.dark .quiz-opt.selected { border-color: #52b788; background: #1e3326; color: #a8e6bf; }
+html.dark .quiz-result .score { color: #52b788; }
+html.dark .quiz-retry { background: #1e2d22; color: #52b788; border-color: #52b788; }
