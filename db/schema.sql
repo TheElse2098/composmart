@@ -49,6 +49,41 @@ CREATE TABLE `regles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ─────────────────────────────────────────
+-- COURS
+-- ─────────────────────────────────────────
+
+CREATE TABLE `themes` (
+  `id`     int          NOT NULL AUTO_INCREMENT,
+  `slug`   varchar(80)  NOT NULL,
+  `nom`    varchar(120) NOT NULL,
+  `emoji`  varchar(10)  DEFAULT NULL,
+  `couleur` varchar(80) DEFAULT NULL,
+  `ordre`  int          NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `cours` (
+  `id`           int          NOT NULL AUTO_INCREMENT,
+  `slug`         varchar(80)  NOT NULL,
+  `theme_id`     int          NOT NULL,
+  `titre`        varchar(200) NOT NULL,
+  `description`  text         DEFAULT NULL,
+  `emoji`        varchar(10)  DEFAULT NULL,
+  `niveau`       enum('debutant','intermediaire','expert') NOT NULL DEFAULT 'debutant',
+  `xp_reward`    int          NOT NULL DEFAULT 50,
+  `has_text`     tinyint(1)   NOT NULL DEFAULT 0,
+  `has_video`    tinyint(1)   NOT NULL DEFAULT 0,
+  `has_podcast`  tinyint(1)   NOT NULL DEFAULT 0,
+  `nb_questions` int          NOT NULL DEFAULT 0,
+  `ordre`        int          NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `slug` (`slug`),
+  KEY `theme_id` (`theme_id`),
+  CONSTRAINT `cours_ibfk_1` FOREIGN KEY (`theme_id`) REFERENCES `themes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ─────────────────────────────────────────
 -- UTILISATEURS
 -- ─────────────────────────────────────────
 

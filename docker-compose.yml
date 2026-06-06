@@ -8,6 +8,7 @@ services:
     volumes:
       - ./front:/var/www/html
       - ./api:/var/www/html/api
+      - ./content:/var/www/html/content
     env_file:
       - .env
     depends_on:

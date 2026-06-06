@@ -42,4 +42,5 @@ foreach ($villes as $v) {
 }
 
 passthru("php $seeds/import_osm.php");
+passthru("php $seeds/import_cours.php");
 echo "=== Import terminé ===\n";

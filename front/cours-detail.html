@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>CompoSmart – Cours</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding-bottom: 70px; }
+
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; transition: color 0.15s; }
+    .nav-profil:hover { color: #fff; }
+    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
+    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .burger.open span:nth-child(2) { opacity: 0; }
+    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
+    .drawer.open { right: 0; }
+    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
+    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
+    .drawer-logo span { color: #a8e6bf; }
+    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
+    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
+    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
+    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
+    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    /* PAGE */
+    .page { width: 100%; max-width: 680px; padding: 0 16px; }
+
+    /* Hero cours */
+    .cours-hero { background: #1e6e3e; width: 100%; padding: 28px 24px 48px; text-align: center; }
+    .cours-hero-emoji { font-size: 3rem; display: block; margin-bottom: 10px; }
+    .cours-hero h1 { font-family: 'Baloo 2', cursive; color: #fff; font-size: clamp(1.4rem,5vw,2rem); font-weight: 900; line-height: 1.2; }
+    .cours-hero-meta { font-size: 0.82rem; color: rgba(255,255,255,0.8); font-weight: 700; margin-top: 8px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .cours-hero-meta span { background: rgba(255,255,255,0.15); padding: 3px 10px; border-radius: 20px; }
+
+    /* Tabs médias */
+    .media-tabs { background: #fff; border-radius: 20px 20px 0 0; margin-top: -20px; padding: 20px 20px 0; display: flex; gap: 8px; flex-wrap: wrap; position: relative; z-index: 1; width: 100%; max-width: 680px; }
+    .media-btn { flex: 1; min-width: 90px; padding: 10px 8px; border-radius: 12px; border: 2px solid transparent; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.18s; background: #eef4ec; color: #1e6e3e; }
+    .media-btn.active { background: #1e6e3e; color: #fff; border-color: #1e6e3e; }
+    .media-btn.disabled { background: #e0e0e0; color: #aaa; cursor: not-allowed; border-color: transparent; filter: grayscale(1); }
+    .media-btn:not(.disabled):hover { border-color: #1e6e3e; }
+
+    /* Contenu */
+    .media-panel { background: #fff; width: 100%; max-width: 680px; padding: 20px; border-radius: 0 0 20px 20px; display: none; }
+    .media-panel.active { display: block; }
+
+    /* Texte Markdown */
+    .md-content { line-height: 1.7; color: #1a3a25; font-size: 0.95rem; }
+    .md-content h1 { font-family: 'Baloo 2', cursive; font-size: 1.5rem; color: #1e6e3e; margin: 0 0 16px; }
+    .md-content h2 { font-family: 'Baloo 2', cursive; font-size: 1.15rem; color: #1a3a25; margin: 22px 0 10px; }
+    .md-content h3 { font-size: 1rem; font-weight: 700; color: #2d6a4f; margin: 16px 0 8px; }
+    .md-content p { margin-bottom: 12px; }
+    .md-content ul, .md-content ol { padding-left: 20px; margin-bottom: 12px; }
+    .md-content li { margin-bottom: 4px; }
+    .md-content table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 0.85rem; }
+    .md-content th { background: #1e6e3e; color: #fff; padding: 8px 12px; text-align: left; }
+    .md-content td { border-bottom: 1px solid #e5ede8; padding: 8px 12px; }
+    .md-content blockquote { border-left: 4px solid #1e6e3e; background: #eef4ec; padding: 10px 14px; border-radius: 0 10px 10px 0; margin: 14px 0; color: #2d6a4f; font-style: italic; }
+    .md-content strong { color: #1e6e3e; }
+    .md-content code { background: #eef4ec; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+
+    /* Vidéo */
+    .video-info { margin-bottom: 14px; }
+    .media-title { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #1a3a25; }
+    .media-author { font-size: 0.8rem; color: #4a7a5a; font-weight: 700; margin-top: 2px; }
+    .media-duration { display: inline-block; background: #eef4ec; color: #1e6e3e; font-size: 0.75rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; margin-top: 5px; }
+    .media-desc { font-size: 0.82rem; color: #4a7a5a; margin-top: 8px; line-height: 1.5; }
+    .video-wrapper { position: relative; padding-bottom: 56.25%; height: 0; border-radius: 12px; overflow: hidden; margin-top: 12px; }
+    .video-wrapper iframe, .video-wrapper video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+
+    /* Podcast */
+    .podcast-card { background: #eef4ec; border-radius: 16px; padding: 16px; margin-top: 12px; }
+    audio { width: 100%; margin-top: 12px; border-radius: 8px; }
+
+    /* Quiz */
+    .quiz-question { margin-bottom: 20px; }
+    .quiz-q-text { font-weight: 700; color: #1a3a25; margin-bottom: 10px; font-size: 0.95rem; }
+    .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+    .quiz-opt { padding: 10px 14px; border-radius: 12px; border: 2px solid #c8e6c9; background: #fff; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: #1a3a25; transition: all 0.15s; text-align: left; }
+    .quiz-opt:hover { border-color: #1e6e3e; background: #eef4ec; }
+    .quiz-opt.selected { border-color: #1e6e3e; background: #eef4ec; color: #1e6e3e; font-weight: 700; }
+    .quiz-opt.correct { border-color: #2d9959; background: #e8f5e9; color: #1e6e3e; }
+    .quiz-opt.wrong { border-color: #e53935; background: #fdecea; color: #c0392b; }
+    .quiz-submit { width: 100%; padding: 14px; background: #1e6e3e; color: #fff; border: none; border-radius: 14px; font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; cursor: pointer; margin-top: 8px; transition: opacity 0.15s; }
+    .quiz-submit:hover { opacity: 0.88; }
+    .quiz-result { text-align: center; padding: 20px; }
+    .quiz-result .score { font-family: 'Baloo 2', cursive; font-size: 2.5rem; font-weight: 900; color: #1e6e3e; }
+    .quiz-result .xp-badge { display: inline-block; background: linear-gradient(135deg,#f9a825,#ff8f00); color: #fff; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 1.1rem; padding: 10px 24px; border-radius: 20px; margin-top: 12px; }
+    .quiz-result .fail-msg { color: #c0392b; font-weight: 700; margin-top: 8px; }
+    .quiz-retry { margin-top: 12px; background: #eef4ec; color: #1e6e3e; border: 2px solid #1e6e3e; border-radius: 12px; padding: 10px 24px; font-family: 'Baloo 2', cursive; font-weight: 900; cursor: pointer; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg,#1e6e3e,#52b788,#a7c957,#52b788,#1e6e3e); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-logo">Compos<span>mart</span></a>
+    <div class="nav-right"><a href="/compte" class="nav-profil">&#128100;</a><button id="themeToggle" aria-label="Thème">🌙</button><button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button></div>
+  </nav>
+  <div class="overlay" id="overlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-logo">Compos<span>mart</span></div>
+      <button class="drawer-close" id="closeBtn">&#x2715;</button>
+    </div>
+    <ul class="drawer-menu">
+      <li><a href="/"><span class="menu-icon">🏠</span> Accueil</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="/parcours"><span class="menu-icon">🌿</span> Mes parcours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="/carte"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="/cours" class="active"><span class="menu-icon">📚</span> Les cours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="/materiel"><span class="menu-icon">🧰</span> Le matériel</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="/achat"><span class="menu-icon">🛒</span> Achat</a></li>
+      <div class="drawer-divider"></div>
+    </ul>
+  </div>
+
+  <!-- Hero dynamique -->
+  <div class="cours-hero" id="coursHero" style="display:none">
+    <span class="cours-hero-emoji" id="heroEmoji"></span>
+    <h1 id="heroTitre"></h1>
+    <div class="cours-hero-meta" id="heroMeta"></div>
+  </div>
+
+  <!-- Tabs médias -->
+  <div class="media-tabs" id="mediaTabs" style="display:none">
+    <button class="media-btn" id="btnTexte" onclick="showPanel('texte')">📄 Texte</button>
+    <button class="media-btn" id="btnVideo" onclick="showPanel('video')">▶️ Vidéo</button>
+    <button class="media-btn" id="btnPodcast" onclick="showPanel('podcast')">🎧 Podcast</button>
+    <button class="media-btn" id="btnQuiz" onclick="showPanel('quiz')">✏️ Quiz</button>
+  </div>
+
+  <!-- Panneaux -->
+  <div class="media-panel" id="panelTexte">
+    <div class="md-content" id="mdContent"></div>
+  </div>
+
+  <div class="media-panel" id="panelVideo">
+    <div class="video-info" id="videoInfo"></div>
+    <div class="video-wrapper" id="videoWrapper"></div>
+  </div>
+
+  <div class="media-panel" id="panelPodcast">
+    <div class="podcast-card" id="podcastCard"></div>
+  </div>
+
+  <div class="media-panel" id="panelQuiz">
+    <div id="quizContent"></div>
+  </div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    var coursData = null;
+    var userAnswers = {};
+
+    // Extraire le slug depuis l'URL : /cours/les-bases-du-compostage
+    var slug = location.pathname.replace(/^\/cours\//, '').replace(/\/$/, '');
+    if (!slug) { document.body.innerHTML = '<p style="padding:40px;color:#c0392b">Cours introuvable.</p>'; }
+
+    fetch('/api/cours/get.php?slug=' + encodeURIComponent(slug))
+      .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(data) {
+        coursData = data;
+        var meta = data.meta || {};
+
+        // Hero
+        document.title = 'CompoSmart – ' + (meta.titre || slug);
+        document.getElementById('heroEmoji').textContent = meta.emoji || '📖';
+        document.getElementById('heroTitre').textContent = meta.titre || slug;
+        var niveaux = { debutant: 'Débutant', intermediaire: 'Intermédiaire', expert: 'Expert' };
+        document.getElementById('heroMeta').innerHTML =
+          '<span>' + (niveaux[meta.niveau] || meta.niveau || '') + '</span>' +
+          (meta.xp ? '<span>+' + meta.xp + ' XP</span>' : '') +
+          (data.quiz ? '<span>' + data.quiz.length + ' questions</span>' : '');
+        document.getElementById('coursHero').style.display = '';
+        document.getElementById('mediaTabs').style.display = '';
+
+        // Configurer les boutons
+        var hasTexte   = !!data.texte;
+        var hasVideo   = !!data.video;
+        var hasPodcast = !!data.podcast;
+        var hasQuiz    = !!data.quiz;
+
+        setupBtn('btnTexte',   hasTexte,   'texte');
+        setupBtn('btnVideo',   hasVideo,   'video');
+        setupBtn('btnPodcast', hasPodcast, 'podcast');
+        setupBtn('btnQuiz',    hasQuiz,    'quiz');
+
+        // Rendre le texte si disponible
+        if (hasTexte) {
+          document.getElementById('mdContent').innerHTML = marked.parse(data.texte);
+        }
+
+        // Rendre la vidéo
+        if (hasVideo) {
+          var v = data.video;
+          document.getElementById('videoInfo').innerHTML =
+            '<div class="media-title">' + esc(v.titre) + '</div>' +
+            '<div class="media-author">' + esc(v.auteur) + '</div>' +
+            '<span class="media-duration">⏱ ' + esc(v.duree) + '</span>' +
+            (v.description ? '<div class="media-desc">' + esc(v.description) + '</div>' : '');
+          document.getElementById('videoWrapper').innerHTML = buildVideoPlayer(v.url);
+        }
+
+        // Rendre le podcast
+        if (hasPodcast) {
+          var p = data.podcast;
+          document.getElementById('podcastCard').innerHTML =
+            '<div class="media-title">' + esc(p.titre) + '</div>' +
+            '<div class="media-author">' + esc(p.auteur) + '</div>' +
+            '<span class="media-duration">⏱ ' + esc(p.duree) + '</span>' +
+            (p.description ? '<div class="media-desc">' + esc(p.description) + '</div>' : '') +
+            '<audio controls src="' + esc(p.url) + '"><p>Votre navigateur ne supporte pas l\'audio.</p></audio>';
+        }
+
+        // Rendre le quiz
+        if (hasQuiz) { renderQuiz(data.quiz); }
+
+        // Afficher le premier panneau disponible
+        var first = hasTexte ? 'texte' : hasVideo ? 'video' : hasPodcast ? 'podcast' : hasQuiz ? 'quiz' : null;
+        if (first) showPanel(first);
+      })
+      .catch(function(e) {
+        document.body.innerHTML = '<div style="padding:40px;color:#c0392b;text-align:center"><h2>Cours introuvable</h2><p><a href="/cours">← Retour aux cours</a></p></div>';
+      });
+
+    function setupBtn(id, available, panel) {
+      var btn = document.getElementById(id);
+      if (!available) { btn.classList.add('disabled'); btn.onclick = null; }
+    }
+
+    function showPanel(name) {
+      ['texte','video','podcast','quiz'].forEach(function(n) {
+        document.getElementById('panel' + cap(n)).classList.remove('active');
+        var b = document.getElementById('btn' + cap(n));
+        if (b && !b.classList.contains('disabled')) b.classList.remove('active');
+      });
+      document.getElementById('panel' + cap(name)).classList.add('active');
+      var btn = document.getElementById('btn' + cap(name));
+      if (btn && !btn.classList.contains('disabled')) btn.classList.add('active');
+    }
+
+    function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function buildVideoPlayer(url) {
+      var ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
+      var viMatch = url.match(/vimeo\.com\/(\d+)/);
+      if (ytMatch) {
+        return '<iframe src="https://www.youtube.com/embed/' + ytMatch[1] + '" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>';
+      } else if (viMatch) {
+        return '<iframe src="https://player.vimeo.com/video/' + viMatch[1] + '" allowfullscreen></iframe>';
+      } else {
+        return '<video controls src="' + esc(url) + '"></video>';
+      }
+    }
+
+    function renderQuiz(questions) {
+      var html = questions.map(function(q, qi) {
+        var opts = q.options.map(function(o, oi) {
+          return '<button class="quiz-opt" onclick="selectOpt(' + qi + ',' + oi + ',this)">' + esc(o) + '</button>';
+        }).join('');
+        return '<div class="quiz-question"><div class="quiz-q-text">' + (qi+1) + '. ' + esc(q.question) + '</div><div class="quiz-options" id="opts-' + qi + '">' + opts + '</div></div>';
+      }).join('');
+      html += '<button class="quiz-submit" onclick="submitQuiz()">Valider le quiz</button>';
+      html += '<div id="quizResult" class="quiz-result" style="display:none"></div>';
+      document.getElementById('quizContent').innerHTML = html;
+    }
+
+    function selectOpt(qi, oi, btn) {
+      var opts = document.querySelectorAll('#opts-' + qi + ' .quiz-opt');
+      opts.forEach(function(b) { b.classList.remove('selected'); });
+      btn.classList.add('selected');
+      userAnswers[qi] = oi;
+    }
+
+    function submitQuiz() {
+      if (!coursData || !coursData.quiz) return;
+      var questions = coursData.quiz;
+      var correct = 0;
+      questions.forEach(function(q, qi) {
+        var sel = userAnswers[qi];
+        var opts = document.querySelectorAll('#opts-' + qi + ' .quiz-opt');
+        opts.forEach(function(b) { b.disabled = true; });
+        if (sel === undefined) return;
+        if (sel === q.correct) {
+          correct++;
+          opts[sel].classList.add('correct');
+        } else {
+          opts[sel].classList.add('wrong');
+          opts[q.correct].classList.add('correct');
+        }
+      });
+      var total = questions.length;
+      var pct = Math.round(correct / total * 100);
+      var passed = correct / total >= 0.5;
+      var result = document.getElementById('quizResult');
+      result.style.display = '';
+      if (passed) {
+        var xp = (coursData.meta || {}).xp || 50;
+        result.innerHTML = '<div class="score">' + correct + '/' + total + '</div>' +
+          '<div style="color:#1e6e3e;font-weight:700;margin-top:6px">Bravo ! ' + pct + '% de bonnes réponses</div>' +
+          '<div class="xp-badge">+' + xp + ' XP gagnés 🎉</div>';
+        document.querySelector('.quiz-submit').style.display = 'none';
+      } else {
+        result.innerHTML = '<div class="score" style="color:#c0392b">' + correct + '/' + total + '</div>' +
+          '<div class="fail-msg">Score insuffisant (' + pct + '%). Il faut 50% pour valider.</div>' +
+          '<button class="quiz-retry" onclick="retryQuiz()">Réessayer</button>';
+        document.querySelector('.quiz-submit').style.display = 'none';
+      }
+    }
+
+    function retryQuiz() {
+      userAnswers = {};
+      renderQuiz(coursData.quiz);
+    }
+
+    // Drawer
+    const burger = document.getElementById('burgerBtn');
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('closeBtn');
+    function openMenu() { drawer.classList.add('open'); overlay.classList.add('open'); burger.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeMenu() { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); document.body.style.overflow = ''; }
+    burger.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    overlay.addEventListener('click', closeMenu);
+  </script>
+  <script src="/assets/js/theme.js"></script>
+</body>
+</html>

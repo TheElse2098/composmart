@@ -5,8 +5,9 @@ RUN docker-php-ext-install mysqli \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
 # front/ → racine web, api/ → /var/www/html/api/
-COPY front/ /var/www/html/
-COPY api/   /var/www/html/api/
+COPY front/   /var/www/html/
+COPY api/     /var/www/html/api/
+COPY content/ /var/www/html/content/
 
 # Seeds (import initial de la DB)
 COPY db/seeds/ /docker-seeds/

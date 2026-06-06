@@ -1,0 +1,22 @@
+[
+  {
+    "question": "Quel pourcentage de déchets ménagers peut-on réduire grâce au compostage ?",
+    "options": ["10 à 15 %", "30 à 40 %", "60 à 70 %", "Moins de 5 %"],
+    "correct": 1
+  },
+  {
+    "question": "Lequel de ces déchets NE doit PAS aller dans le composteur ?",
+    "options": ["Marc de café", "Épluchures de carottes", "Viande et poisson", "Feuilles mortes"],
+    "correct": 2
+  },
+  {
+    "question": "Quelle est la bonne proportion bruns/verts dans un composteur ?",
+    "options": ["Moitié-moitié", "2/3 verts + 1/3 bruns", "2/3 bruns + 1/3 verts", "100 % verts"],
+    "correct": 2
+  },
+  {
+    "question": "Quelle astuce permet d'accélérer la décomposition de 50 % ?",
+    "options": ["Arroser abondamment", "Hacher les déchets en petits morceaux", "Ajouter du sel", "Fermer hermétiquement le composteur"],
+    "correct": 1
+  }
+]
