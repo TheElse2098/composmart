@@ -597,7 +597,7 @@
         }
 
         function trouverPlusProche(lat_pos, long_pos) {
-            var posIcon = L.icon({ iconUrl: './bleu.png', iconSize: [30, 30], iconAnchor: [15, 15] });
+            var posIcon = L.icon({ iconUrl: '/assets/img/bleu.png', iconSize: [30, 30], iconAnchor: [15, 15] });
             L.marker([lat_pos, long_pos], { icon: posIcon }).addTo(map);
             fetch('/api/carte/sites.php', { method: 'POST', body: new URLSearchParams({ france: 'france' }) })
             .then(function(r) { return r.json(); })
