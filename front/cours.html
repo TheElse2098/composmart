@@ -5,6 +5,7 @@
   <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
   <link rel="stylesheet" href="/assets/css/dark.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>CompoSmart – Les Cours</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
@@ -54,7 +55,7 @@
     .cat-badge { margin-left: auto; background: #c8e6c9; color: #1a3a25; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; }
 
     /* Horizontal scroll cards */
-    .cards-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .cards-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 8px 4px 12px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .cards-scroll::-webkit-scrollbar { display: none; }
 
     .cours-card { flex-shrink: 0; width: 150px; border-radius: 18px; padding: 16px 12px 18px; display: flex; flex-direction: column; align-items: center; text-decoration: none; scroll-snap-align: start; transition: transform 0.18s ease, box-shadow 0.18s ease; position: relative; }
