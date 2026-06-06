@@ -18,6 +18,9 @@
 
     <title>CompoSmart – Carte interactive</title>
     <style>
+        .marker-cluster-small       { background-color: rgba(100, 175, 75, 0.5); }
+        .marker-cluster-small div   { background-color: rgba(50, 135, 70, 0.75); color: #fff; }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
@@ -427,8 +430,8 @@
                 let donnees = JSON.parse(data);
                 if (Array.isArray(donnees)) {
                     let i = 0;
-                    var composteursLayer = L.markerClusterGroup();
-                    var conteneursLayer = L.markerClusterGroup();
+                    var composteursLayer = L.markerClusterGroup({ maxClusterRadius: 50 });
+                    var conteneursLayer = L.markerClusterGroup({ maxClusterRadius: 50 });
                     donnees.forEach((compost) => {
                         let compost_id = compost.id;
                         let lon = compost.lon;
@@ -642,7 +645,7 @@
             contenu_modi.innerHTML = '<button type="button" id="valid_rajout">📍 Cliquez ici pour rajouter le compost</button>';
             current_lat_click = e.latlng.lat; current_lon_click = e.latlng.lng;
             if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); }
-            var greenIcon = L.icon({ iconUrl: './compost_proche.png', iconSize: [30, 30], iconAnchor: [12, 20] });
+            var greenIcon = L.icon({ iconUrl: '/assets/img/compost_proche.png', iconSize: [30, 30], iconAnchor: [12, 20] });
             currentMarker_click = L.marker(L.latLng(current_lat_click, current_lon_click), {icon: greenIcon});
             currentMarker_click.addTo(map);
             document.getElementById("rajouter_compost").style.visibility = "visible";
