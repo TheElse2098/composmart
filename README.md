@@ -1,6 +1,6 @@
 # Composmart
 
-Site web de sensibilisation écologique au compostage : carte interactive des composteurs, système de cours avec quiz, dark mode.
+Site web de sensibilisation écologique au compostage : carte interactive des composteurs, système de cours avec quiz, jeux et dark mode.
 
 ## Stack
 
