@@ -438,6 +438,13 @@
             if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); currentMarker_click = null; }
         });
 
+        // ── ADMIN : modifier/supprimer réservés aux admins ──
+        let isAdmin = false;
+        fetch('/api/auth/me.php')
+            .then(r => r.json())
+            .then(d => { isAdmin = !!(d && d.logged_in && d.isAdmin); })
+            .catch(() => {});
+
         let current_compost_id = null;
         let current_lat = null;
         let current_lon = null;
@@ -492,12 +499,14 @@
         const trajetHandlers = new Map();
 
         function info_compost(compost_id, lat, lon) {
-            document.getElementById("supprimer_compost").style.visibility = "visible";
+            document.getElementById("supprimer_compost").style.visibility = isAdmin ? "visible" : "hidden";
             document.getElementById("rajouter_compost").style.visibility = "hidden";
             document.getElementById("formulaire_changer").style.visibility = "visible";
             if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); }
             current_compost_id = compost_id; current_lat = lat; current_lon = lon;
-            document.getElementById("boutton").innerHTML = '<button type="button" id="modifier_compost" class="btn-modifier">✏️ Modifier</button>';
+            document.getElementById("boutton").innerHTML = isAdmin
+                ? '<button type="button" id="modifier_compost" class="btn-modifier">✏️ Modifier</button>'
+                : '';
             document.getElementById("tableau").style.display = "block";
             document.getElementById("adresse").textContent = '📍 Chargement...';
             fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=fr')
@@ -563,9 +572,11 @@
                             ? donnees_inter.map(function(i){ return '<span class="chip chip-nok">' + i + '</span>'; }).join('')
                             : '<span class="no-data">Pas de données</span>';
                         let modif_compost = document.getElementById("modifier_compost");
-                        if (modifierCompostHandler) { modif_compost.removeEventListener("click", modifierCompostHandler); }
-                        modifierCompostHandler = function () { modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter) };
-                        modif_compost.addEventListener("click", modifierCompostHandler);
+                        if (modif_compost) {
+                            if (modifierCompostHandler) { modif_compost.removeEventListener("click", modifierCompostHandler); }
+                            modifierCompostHandler = function () { modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter) };
+                            modif_compost.addEventListener("click", modifierCompostHandler);
+                        }
                     }
                 } catch(e) { console.error("Erreur JSON:", e); }
             });
@@ -610,7 +621,7 @@
         });
 
         function modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter) {
-            document.getElementById("supprimer_compost").style.visibility = "visible";
+            document.getElementById("supprimer_compost").style.visibility = isAdmin ? "visible" : "hidden";
             let liste_type = ["Conteneur", "Compost bois", "Compost plastique"];
             let contenu_changer = '<select name="type" id="type_change" class="edit-select" form="formulaire_changer">';
             liste_type.forEach((t) => { contenu_changer += '<option value="' + t + '"' + (t === type ? ' selected' : '') + '>' + t + '</option>'; });

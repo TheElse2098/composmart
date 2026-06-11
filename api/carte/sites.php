@@ -7,7 +7,17 @@ header("Access-Control-Allow-Credentials: true");
 ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+session_start();
 header('Content-Type: application/json');
+
+function is_admin($connexion) {
+    if (empty($_SESSION['user_id'])) return false;
+    $stmt = mysqli_prepare($connexion, 'SELECT isAdmin FROM users WHERE id = ?');
+    $stmt->bind_param('i', $_SESSION['user_id']);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return $row && (int)$row['isAdmin'] === 1;
+}
 
 $URL      = getenv('DB_HOST')     ?: 'db';
 $user     = getenv('DB_USER')     ?: 'composmart';
@@ -125,9 +135,15 @@ elseif (isset($_POST['autorinter'])) {
     $response[] = ["autor" => $liste_autor, "inter" => $liste_inter, "donnees" => $donnees];
 }
 
-// ── MODIFIER UN COMPOST ────────────────────────────────────────────────────
+// ── MODIFIER UN COMPOST (admin, ou créateur du point dans cette session) ───
 elseif (isset($_POST['type'])) {
-    $id         = intval($_POST['id']);
+    $id = intval($_POST['id']);
+    $cree_par_session = in_array($id, $_SESSION['created_composts'] ?? [], true);
+    if (!is_admin($connexion) && !$cree_par_session) {
+        http_response_code(403);
+        echo json_encode(["error" => "Action réservée aux administrateurs."]);
+        exit();
+    }
     $type       = $_POST['type']      ?? '';
     $acces      = $_POST['acces']     ?? '';
     $mettre     = $_POST['mettre']    ?? [];
@@ -173,13 +189,20 @@ if (isset($_POST['lat_click']) && isset($_POST['lon_click'])) {
         $res = mysqli_query($connexion, "SELECT id FROM composts WHERE latitude=$lat AND longitude=$lon ORDER BY id DESC LIMIT 1");
         $row = $res->fetch_array(MYSQLI_ASSOC);
         $response = (int)$row["id"];
+        if (!isset($_SESSION['created_composts'])) $_SESSION['created_composts'] = [];
+        $_SESSION['created_composts'][] = (int)$row["id"];
     } else {
         $response = ["error" => $stmt->error];
     }
 }
 
-// ── SUPPRIMER UN COMPOST ───────────────────────────────────────────────────
+// ── SUPPRIMER UN COMPOST (admin uniquement) ────────────────────────────────
 if (isset($_POST['supprimer'])) {
+    if (!is_admin($connexion)) {
+        http_response_code(403);
+        echo json_encode(["error" => "Action réservée aux administrateurs."]);
+        exit();
+    }
     $id = intval($_POST['supprimer']);
     mysqli_query($connexion, "DELETE FROM regles WHERE id_compost=$id");
     mysqli_query($connexion, "DELETE FROM composts WHERE id=$id");
