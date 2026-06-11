@@ -1,13 +1,12 @@
 (function () {
-  var CACHE_KEY = 'cs_me';
-  var CACHE_TTL = 5 * 60 * 1000;
-
   function injectBadge() {
     if (document.getElementById('adminBadge')) return;
     var badge = document.createElement('span');
     badge.id = 'adminBadge';
     badge.textContent = 'ADMIN';
     badge.style.cssText = [
+      'display:inline-flex',
+      'align-items:center',
       'background:#e53935',
       'color:#fff',
       'font-size:0.58rem',
@@ -17,12 +16,11 @@
       'letter-spacing:1.2px',
       'font-family:sans-serif',
       'text-transform:uppercase',
-      'vertical-align:middle',
       'flex-shrink:0',
       'box-shadow:0 1px 4px rgba(229,57,53,0.4)',
+      'cursor:default',
     ].join(';');
 
-    // Insérer avant l'icône profil, ou au début de nav-right
     var profil = document.querySelector('.nav-profil');
     var navRight = document.querySelector('.nav-right');
     if (profil && profil.parentNode) {
@@ -32,24 +30,11 @@
     }
   }
 
-  function check(data) {
-    if (data && data.logged_in && data.isAdmin) injectBadge();
-  }
-
-  // Cache sessionStorage
-  try {
-    var raw = sessionStorage.getItem(CACHE_KEY);
-    if (raw) {
-      var cached = JSON.parse(raw);
-      if (Date.now() - cached.ts < CACHE_TTL) { check(cached.data); return; }
-    }
-  } catch (e) {}
-
+  // Pas de cache — appel direct à chaque page pour toujours avoir l'état réel
   fetch('/api/auth/me.php')
     .then(function (r) { return r.json(); })
     .then(function (d) {
-      try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: d, ts: Date.now() })); } catch (e) {}
-      check(d);
+      if (d && d.logged_in && d.isAdmin) injectBadge();
     })
     .catch(function () {});
 })();
