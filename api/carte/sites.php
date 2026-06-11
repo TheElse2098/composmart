@@ -119,6 +119,7 @@ elseif (isset($_POST['autorinter'])) {
 
     $res = mysqli_query($connexion, "SELECT type,publique,gestion,info_gestion FROM composts WHERE id=$id");
     $row = $res->fetch_array(MYSQLI_ASSOC);
+    if (!$row) { echo json_encode([]); exit(); }
     $donnees = ["type" => $row["type"], "acces" => $row["publique"], "gestion" => $row["gestion"], "info_gestion" => $row["info_gestion"]];
 
     $response[] = ["autor" => $liste_autor, "inter" => $liste_inter, "donnees" => $donnees];

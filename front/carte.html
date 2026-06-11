@@ -200,6 +200,24 @@
         .tabl select { border: 1px solid #c8dfc8; border-radius: 6px; padding: 3px 6px; color: #1a3a25; font-size: 0.82rem; }
         .tabl a { color: #1e6e3e; font-weight: 600; font-size: 0.8rem; }
 
+        /* ── FORMULAIRE MODIFICATION ── */
+        .edit-select {
+            display: block; width: 100%;
+            background: #eef4ec; color: #1a3a25;
+            border: 1.5px solid #c8dfc8; border-radius: 8px;
+            padding: 5px 8px; font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; outline: none;
+        }
+        .edit-check {
+            display: flex; align-items: center; gap: 7px;
+            padding: 3px 0; font-size: 0.78rem; color: #1a3a25;
+            cursor: pointer; width: 100%; line-height: 1.4;
+        }
+        .edit-check input[type=checkbox] {
+            accent-color: #1e6e3e; width: 15px; height: 15px;
+            flex-shrink: 0; cursor: pointer;
+        }
+
         /* ── BOUTON RAJOUTER ── */
         .rajouter {
             position: absolute;
@@ -301,6 +319,9 @@
                 transform: translateX(-50%);
             }
         }
+
+        html.dark .edit-check { color: #e8f5ee !important; }
+        html.dark .edit-select { background: #1e2d22 !important; color: #e8f5ee !important; border-color: #3a5c42 !important; }
     </style>
 </head>
 <body>
@@ -379,7 +400,7 @@
                     <div id="waze"></div>
                 </div>
                 <div class="tabl-actions">
-                    <div id="boutton"><button id="modifier_compost" class="btn-modifier">✏️ Modifier</button></div>
+                    <div id="boutton"><button type="button" id="modifier_compost" class="btn-modifier">✏️ Modifier</button></div>
                     <button type="button" id="supprimer_compost" class="btn-supprimer" style="visibility:hidden">🗑 Supprimer</button>
                 </div>
             </form>
@@ -420,6 +441,9 @@
         let current_compost_id = null;
         let current_lat = null;
         let current_lon = null;
+        const markerMap = new Map();
+        let composteursLayer = null;
+        let conteneursLayer = null;
 
         nb_compost.textContent = "Recherche des compost en France...";
 
@@ -433,8 +457,8 @@
                 let donnees = JSON.parse(data);
                 if (Array.isArray(donnees)) {
                     let i = 0;
-                    var composteursLayer = L.markerClusterGroup({ maxClusterRadius: 50 });
-                    var conteneursLayer = L.markerClusterGroup({ maxClusterRadius: 50 });
+                    composteursLayer = L.markerClusterGroup({ maxClusterRadius: 50 });
+                    conteneursLayer = L.markerClusterGroup({ maxClusterRadius: 50 });
                     donnees.forEach((compost) => {
                         let compost_id = compost.id;
                         let lon = compost.lon;
@@ -451,6 +475,7 @@
                             marker.options.id = i;
                             composteursLayer.addLayer(marker);
                         }
+                        markerMap.set(compost_id, marker);
                         i += 1;
                         L.DomEvent.on(marker, 'click', function () { info_compost(compost_id, lat, lon) });
                     });
@@ -472,7 +497,7 @@
             document.getElementById("formulaire_changer").style.visibility = "visible";
             if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); }
             current_compost_id = compost_id; current_lat = lat; current_lon = lon;
-            document.getElementById("boutton").innerHTML = '<button id="modifier_compost" class="btn-modifier">✏️ Modifier</button>';
+            document.getElementById("boutton").innerHTML = '<button type="button" id="modifier_compost" class="btn-modifier">✏️ Modifier</button>';
             document.getElementById("tableau").style.display = "block";
             document.getElementById("adresse").textContent = '📍 Chargement...';
             fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=fr')
@@ -539,7 +564,7 @@
                             : '<span class="no-data">Pas de données</span>';
                         let modif_compost = document.getElementById("modifier_compost");
                         if (modifierCompostHandler) { modif_compost.removeEventListener("click", modifierCompostHandler); }
-                        modifierCompostHandler = function () { modifier_compost(compost_id, Autorise, Interdit, acces, Acces, type, Type, donnees_autor, donnees_inter) };
+                        modifierCompostHandler = function () { modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter) };
                         modif_compost.addEventListener("click", modifierCompostHandler);
                     }
                 } catch(e) { console.error("Erreur JSON:", e); }
@@ -553,6 +578,13 @@
             const compost_id = current_compost_id; const lat = current_lat; const lon = current_lon;
             if (!compost_id) { return; }
             const formData = new FormData(form);
+            const typeSelect = document.getElementById('type_change');
+            const accesSelect = document.getElementById('acces_change');
+            const idInput = document.querySelector('[name="id"][form="formulaire_changer"]');
+            const newType = typeSelect ? typeSelect.value : null;
+            if (typeSelect) formData.set('type', typeSelect.value);
+            if (accesSelect) formData.set('acces', accesSelect.value);
+            if (idInput) formData.set('id', idInput.value);
             let enregistrer = document.getElementById("boutton");
             fetch(form.getAttribute('action'), { method: 'POST', body: formData })
             .then(response => { if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`); return response.text(); })
@@ -561,28 +593,40 @@
                     enregistrer.innerHTML = '<div style="color:red">' + data + '</div><input type="submit" value="Enregistrer">';
                 } else {
                     if (nouv === 1) { alert("Compost créé !"); location.reload(); }
+                    if (newType && markerMap.has(compost_id) && composteursLayer && conteneursLayer) {
+                        const marker = markerMap.get(compost_id);
+                        if (conteneursLayer.hasLayer(marker)) conteneursLayer.removeLayer(marker);
+                        if (composteursLayer.hasLayer(marker)) composteursLayer.removeLayer(marker);
+                        const updatedIcon = newType === "Conteneur"
+                            ? L.icon({ iconUrl: '/assets/img/marker-bleu.png', iconSize: [20, 38], iconAnchor: [10, 38], popupAnchor: [0, -38] })
+                            : L.icon({ iconUrl: '/assets/img/icon_vert.png', iconSize: [25, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] });
+                        marker.setIcon(updatedIcon);
+                        if (newType === "Conteneur") { conteneursLayer.addLayer(marker); }
+                        else { composteursLayer.addLayer(marker); }
+                    }
                     info_compost(compost_id, lat, lon);
                 }
             }).catch(error => { console.error("Erreur:", error); });
         });
 
-        function modifier_compost(compost_id, Autorise, Interdit, acces, Acces, type, Type, donnees_autor, donnees_inter) {
+        function modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter) {
             document.getElementById("supprimer_compost").style.visibility = "visible";
             let liste_type = ["Conteneur", "Compost bois", "Compost plastique"];
-            let contenu_changer = '<select name="type" id="type_change">';
+            let contenu_changer = '<select name="type" id="type_change" class="edit-select" form="formulaire_changer">';
             liste_type.forEach((t) => { contenu_changer += '<option value="' + t + '"' + (t === type ? ' selected' : '') + '>' + t + '</option>'; });
-            contenu_changer += '<input type="hidden" name="id" value="' + compost_id + '">';
+            contenu_changer += '</select><input type="hidden" name="id" value="' + compost_id + '" form="formulaire_changer">';
             Type.innerHTML = contenu_changer;
-            let acces_changer = '<select name="acces" id="acces_change">';
+            let acces_changer = '<select name="acces" id="acces_change" class="edit-select" form="formulaire_changer">';
             ["public", "privé", "institution"].forEach((a) => { acces_changer += '<option value="' + a + '"' + (a === acces ? ' selected' : '') + '>' + a + '</option>'; });
+            acces_changer += '</select>';
             Acces.innerHTML = acces_changer;
             let Tout_elt = ["produits laitiers", "tonte de pelouse", "reste de repas", "os", "poisson", "huile", "sac biodégradable", "viande", "cendres", "essuie-tout", "marc de café"];
             let Autorise_changer = ""; let Interdit_changer = "";
             Tout_elt.forEach((elt) => {
-                if (!donnees_autor) donnees_autor = "reste de repas";
-                Autorise_changer += '<label><input type="checkbox" name="mettre[]" value="' + elt + '"' + (donnees_autor.includes(elt) ? ' checked' : '') + '/> ' + elt + '</label><br>';
-                if (!donnees_inter) donnees_inter = "tonte de pelouse";
-                Interdit_changer += '<label><input type="checkbox" name="pas_mettre[]" value="' + elt + '"' + (donnees_inter.includes(elt) ? ' checked' : '') + '/> ' + elt + '</label><br>';
+                const chk_a = donnees_autor && donnees_autor.includes(elt) ? ' checked' : '';
+                Autorise_changer += '<label class="edit-check"><input type="checkbox" name="mettre[]" value="' + elt + '"' + chk_a + '/> ' + elt + '</label>';
+                const chk_i = donnees_inter && donnees_inter.includes(elt) ? ' checked' : '';
+                Interdit_changer += '<label class="edit-check"><input type="checkbox" name="pas_mettre[]" value="' + elt + '"' + chk_i + '/> ' + elt + '</label>';
             });
             Inter.innerHTML = Interdit_changer; Autor.innerHTML = Autorise_changer;
             document.getElementById("boutton").innerHTML = '<input type="submit" value="💾 Enregistrer">';
