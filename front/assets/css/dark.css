@@ -71,6 +71,8 @@ html.dark .btn-trajet:hover { background: #2d4030; }
 html.dark .chip-ok  { background: #1a2f20; color: #52b788; border-color: #2a4d35; }
 html.dark .chip-nok { background: #2d1a1a; color: #e57373; border-color: #4d2a2a; }
 html.dark .no-data  { color: #4a7a5a; }
+html.dark .edit-select { background: #1e2d22; color: #e8f5ee; border-color: #3a5c42; }
+html.dark .edit-check { color: #e8f5ee; }
 html.dark #nb_compost { background: #1a2b1e; color: #c8e6d4; }
 html.dark #input-ville {
     background: #1e2d22; color: #c8e6d4;
