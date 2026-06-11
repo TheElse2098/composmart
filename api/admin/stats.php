@@ -86,4 +86,9 @@ if (table_exists($c, 'audit_log')) {
 }
 
 mysqli_close($c);
-echo json_encode(['stats' => $stats, 'users' => $users, 'audit' => $audit], JSON_UNESCAPED_UNICODE);
+echo json_encode([
+    'me'    => (int)$_SESSION['user_id'],
+    'stats' => $stats,
+    'users' => $users,
+    'audit' => $audit,
+], JSON_UNESCAPED_UNICODE);

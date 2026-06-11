@@ -69,6 +69,13 @@
     td { padding: 9px 12px; border-top: 1px solid #f0f4f0; color: #1a3a25; white-space: nowrap; }
     .badge-admin { background: #e53935; color: #fff; font-size: 0.62rem; font-weight: 900; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.5px; }
     .lvl-pill { background: #fff9c4; color: #b26a00; font-weight: 800; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; }
+    .act-cell { white-space: nowrap; }
+    .act-btn { border: none; border-radius: 12px; padding: 4px 10px; font-size: 0.7rem; font-weight: 800; cursor: pointer; transition: opacity 0.12s; }
+    .act-btn:hover { opacity: 0.82; }
+    .act-promote { background: #e8f5e9; color: #1e6e3e; }
+    .act-demote { background: #fff3e0; color: #b26a00; }
+    .act-delete { background: #fdecea; color: #c0392b; }
+    .act-self { color: #bbb; font-size: 0.72rem; font-style: italic; }
 
     /* Journal d'audit */
     .audit-item { background: #fff; border-radius: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.04); margin-bottom: 7px; overflow: hidden; }
@@ -107,6 +114,9 @@
     html.dark .audit-row { border-top-color: #243a2c; }
     html.dark .audit-chip { background: #1e2d22; color: #7fc99a; }
     html.dark .audit-chip.nok { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .act-promote { background: #16291c; color: #7fc99a; }
+    html.dark .act-demote { background: #2e2410; color: #e8b931; }
+    html.dark .act-delete { background: #3d1a1a; color: #ef9a9a; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
   </style>
@@ -152,7 +162,7 @@
     <div class="section-title">👥 Utilisateurs <span id="userCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
     <div class="user-table-wrap">
       <table>
-        <thead><tr><th>Pseudo</th><th>Niveau</th><th>XP</th><th>Inscrit le</th><th>Rôle</th></tr></thead>
+        <thead><tr><th>Pseudo</th><th>Niveau</th><th>XP</th><th>Inscrit le</th><th>Rôle</th><th>Actions</th></tr></thead>
         <tbody id="userRows"></tbody>
       </table>
     </div>
@@ -195,7 +205,7 @@
       .then(d => {
         if (!d || d.error) { showDenied(); return; }
         renderStats(d.stats);
-        renderUsers(d.users);
+        renderUsers(d.users, d.me);
         renderAudit(d.audit || []);
         document.getElementById('loader').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
@@ -217,16 +227,78 @@
       ).join('');
     }
 
-    function renderUsers(users) {
+    let currentUserId = 0;
+
+    function renderUsers(users, me) {
+      currentUserId = me || 0;
       document.getElementById('userCount').textContent = '(' + users.length + ')';
-      const rows = users.map(u =>
-        '<tr><td><b>' + echap(u.username) + '</b></td>'
-        + '<td><span class="lvl-pill">Niv. ' + u.niveau + '</span></td>'
-        + '<td>' + u.xp + '</td>'
-        + '<td>' + (u.date || '').slice(0, 10) + '</td>'
-        + '<td>' + (u.isAdmin ? '<span class="badge-admin">ADMIN</span>' : '—') + '</td></tr>'
-      ).join('');
-      document.getElementById('userRows').innerHTML = rows;
+      const tbody = document.getElementById('userRows');
+      tbody.innerHTML = '';
+      users.forEach(u => {
+        const tr = document.createElement('tr');
+        const isMe = u.id === currentUserId;
+        let actions;
+        if (isMe) {
+          actions = '<span class="act-self">moi</span>';
+        } else {
+          const roleBtn = u.isAdmin
+            ? '<button class="act-btn act-demote" data-act="set_admin" data-val="0" data-id="' + u.id + '" data-name="' + echap(u.username) + '">Rétrograder</button>'
+            : '<button class="act-btn act-promote" data-act="set_admin" data-val="1" data-id="' + u.id + '" data-name="' + echap(u.username) + '">Promouvoir</button>';
+          const delBtn = '<button class="act-btn act-delete" data-act="delete" data-id="' + u.id + '" data-name="' + echap(u.username) + '">🗑</button>';
+          actions = roleBtn + ' ' + delBtn;
+        }
+        tr.innerHTML =
+          '<td><b>' + echap(u.username) + '</b></td>'
+          + '<td><span class="lvl-pill">Niv. ' + u.niveau + '</span></td>'
+          + '<td>' + u.xp + '</td>'
+          + '<td>' + (u.date || '').slice(0, 10) + '</td>'
+          + '<td>' + (u.isAdmin ? '<span class="badge-admin">ADMIN</span>' : '—') + '</td>'
+          + '<td class="act-cell">' + actions + '</td>';
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('.act-btn').forEach(btn => {
+        btn.addEventListener('click', () => userAction(btn.dataset));
+      });
+    }
+
+    function userAction(d) {
+      const name = d.name || 'cet utilisateur';
+      let confirmMsg;
+      if (d.act === 'delete') {
+        confirmMsg = 'Supprimer définitivement « ' + name + ' » ?\nSa progression et ses scores seront perdus.';
+      } else if (d.val === '1') {
+        confirmMsg = 'Promouvoir « ' + name + ' » administrateur ?';
+      } else {
+        confirmMsg = 'Retirer les droits admin à « ' + name + ' » ?';
+      }
+      if (!confirm(confirmMsg)) return;
+
+      const body = { action: d.act, user_id: d.id };
+      if (d.act === 'set_admin') body.value = d.val;
+
+      fetch('/api/admin/users.php', { method: 'POST', body: new URLSearchParams(body) })
+        .then(r => r.json())
+        .then(res => {
+          if (res.ok) {
+            reloadDashboard();
+          } else {
+            alert(res.error || 'Action impossible.');
+          }
+        })
+        .catch(() => alert('Erreur réseau.'));
+    }
+
+    function reloadDashboard() {
+      fetch('/api/admin/stats.php')
+        .then(r => r.json())
+        .then(d => {
+          if (d && d.stats) {
+            renderStats(d.stats);
+            renderUsers(d.users, d.me);
+            renderAudit(d.audit || []);
+          }
+        })
+        .catch(() => {});
     }
 
     // ── Journal d'audit ──
@@ -234,7 +306,10 @@
       compost_modifie:     { icon: '✏️', txt: 'Composteur modifié' },
       compost_supprime:    { icon: '🗑️', txt: 'Composteur supprimé' },
       signalement_resolu:  { icon: '✓', txt: 'Signalement résolu' },
-      signalement_rejete:  { icon: '✗', txt: 'Signalement rejeté' }
+      signalement_rejete:  { icon: '✗', txt: 'Signalement rejeté' },
+      user_promu:          { icon: '⬆️', txt: 'Utilisateur promu admin' },
+      user_retrograde:     { icon: '⬇️', txt: 'Admin rétrogradé' },
+      user_supprime:       { icon: '🚫', txt: 'Utilisateur supprimé' }
     };
 
     function row(key, val, isEmpty) {
@@ -269,6 +344,10 @@
         const ok = chips(s.mettre); const nok = chips(s.pas_mettre, 'nok');
         if (ok)  rows += row('Autorisé', ok);
         if (nok) rows += row('Interdit', nok);
+      } else if (a.target_type === 'user') {
+        rows += row('Utilisateur', echap(s.username || ('#' + a.target_id)));
+        if (s.admin !== undefined) rows += row('Nouveau rôle', s.admin ? 'Administrateur' : 'Utilisateur');
+        if (s.etait_admin !== undefined) rows += row('Était admin', s.etait_admin ? 'oui' : 'non');
       } else if (a.details) {
         rows += row('Détails', echap(a.details));
       }
