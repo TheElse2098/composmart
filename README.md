@@ -102,7 +102,7 @@ Pour ajouter un cours, créer un dossier dans `content/cours/` et redémarrer �
 
 ## TODO LIST
 
-- User system
-- isAdmin dans la table des users
-- modifier/supprimer un composter que pour les admins
-- système de signalement d'erreur : mauvaise position/mauvais paramètres pour les composters, pour les utilisateurs classiques, et retour visible pour les comptes admins.
+[ ] User system
+[x] isAdmin dans la table des users
+[ ] modifier/supprimer un composter que pour les admins
+[ ] système de signalement d'erreur : mauvaise position/mauvais paramètres pour les composters, pour les utilisateurs classiques, et retour visible pour les comptes admins.
