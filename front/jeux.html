@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>CompoSmart – Jeux</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding-bottom: 70px; }
+
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; transition: color 0.15s; }
+    .nav-profil:hover { color: #fff; }
+    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
+    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .burger.open span:nth-child(2) { opacity: 0; }
+    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
+    .drawer.open { right: 0; }
+    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
+    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
+    .drawer-logo span { color: #a8e6bf; }
+    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
+    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
+    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
+    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
+    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .hero { text-align: center; padding: 28px 20px 16px; }
+    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.82rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.4rem); font-weight: 900; color: #1a3a25; }
+    .hero-sub { font-size: 0.95rem; color: #4a7a5a; margin-top: 6px; font-weight: 600; }
+
+    .page-content { width: 100%; max-width: 600px; padding: 0 16px; }
+
+    .jeu-card {
+      background: #fff; border-radius: 18px; padding: 18px;
+      display: flex; align-items: center; gap: 16px;
+      box-shadow: 0 2px 10px rgba(30,110,62,0.08);
+      margin-bottom: 14px; text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .jeu-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(30,110,62,0.18); }
+    .jeu-emoji { font-size: 2.6rem; flex-shrink: 0; }
+    .jeu-info { flex: 1; min-width: 0; }
+    .jeu-nom { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #1a3a25; }
+    .jeu-desc { font-size: 0.78rem; color: #4a7a5a; font-weight: 600; margin-top: 3px; line-height: 1.4; }
+    .jeu-best { display: inline-block; background: #fff9c4; color: #b26a00; font-size: 0.68rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; margin-top: 7px; }
+    .jeu-jouer {
+      background: #1e6e3e; color: #fff; border: none; border-radius: 20px;
+      padding: 9px 18px; font-family: 'Baloo 2', cursive; font-size: 0.88rem;
+      font-weight: 900; cursor: pointer; flex-shrink: 0;
+    }
+
+    .login-invite {
+      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+      border-radius: 16px; padding: 14px 16px; margin-bottom: 18px;
+      display: flex; gap: 12px; align-items: center;
+      border-left: 4px solid #1e6e3e;
+      font-size: 0.82rem; color: #1a3a25; font-weight: 700; line-height: 1.4;
+    }
+    .login-invite a { color: #1e6e3e; }
+
+    html.dark .jeu-card { background: #16211a; }
+    html.dark .jeu-nom { color: #e8f5ee; }
+    html.dark .jeu-best { background: #2e2410; color: #e8b931; }
+    html.dark .login-invite { background: linear-gradient(135deg, #16291c, #1e3a26); color: #cfe8d8; }
+    html.dark .login-invite a { color: #7fc99a; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
+    <div class="nav-right"><a href="compte" class="nav-profil">&#128100;</a><button id="themeToggle" aria-label="Thème">🌙</button><button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button></div>
+  </nav>
+  <div class="overlay" id="overlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-logo">Compos<span>mart</span></div>
+      <button class="drawer-close" id="closeBtn">&#x2715;</button>
+    </div>
+    <ul class="drawer-menu">
+      <li><a href="index.html"><span class="menu-icon">🏠</span> Accueil</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="parcours.html"><span class="menu-icon">🌿</span> Mes parcours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="carte.html"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="cours.html"><span class="menu-icon">📚</span> Les cours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="jeux" class="active"><span class="menu-icon">🎮</span> Jeux</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="materiel.html"><span class="menu-icon">🧰</span> Le matériel</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="achat.html"><span class="menu-icon">🛒</span> Achat</a></li>
+      <div class="drawer-divider"></div>
+    </ul>
+  </div>
+
+  <div class="hero">
+    <div class="hero-badge">🎮 Jeux</div>
+    <h1>Apprends en t'amusant</h1>
+    <div class="hero-sub">Des mini-jeux sur le compostage, avec records et classements</div>
+  </div>
+
+  <div class="page-content">
+    <div id="loginInvite" class="login-invite" style="display:none">
+      <span style="font-size:1.4rem">🏆</span>
+      <span><a href="/compte">Connecte-toi</a> pour sauvegarder tes scores et apparaître dans les classements !</span>
+    </div>
+    <div id="jeuxList"></div>
+  </div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    // ── BURGER ──
+    const burger = document.getElementById('burgerBtn');
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('closeBtn');
+    burger.addEventListener('click', () => { drawer.classList.add('open'); overlay.classList.add('open'); burger.classList.add('open'); });
+    closeBtn.addEventListener('click', () => { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); });
+    overlay.addEventListener('click', () => { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); });
+
+    // ── REGISTRE DES JEUX ──
+    // Pour ajouter un jeu : créer front/jeu-<slug>.html, ajouter le slug
+    // dans api/jeux/score.php ($JEUX_VALIDES) et une entrée ici.
+    const JEUX = [
+      {
+        slug: 'mot-mystere',
+        emoji: '🔤',
+        nom: 'Mot mystère',
+        desc: 'Reconstitue les mots du compostage à partir de lettres mélangées.',
+        url: '/jeu-mot-mystere',
+        scoreMax: 80
+      },
+      {
+        slug: 'compost-ou-pas',
+        emoji: '♻️',
+        nom: 'Compost ou pas ?',
+        desc: 'Décide si chaque déchet va au compost ou à la poubelle.',
+        url: '/jeu-compost-ou-pas',
+        scoreMax: 12
+      }
+    ];
+
+    function renderJeux(bests) {
+      const list = document.getElementById('jeuxList');
+      list.innerHTML = '';
+      JEUX.forEach(j => {
+        const a = document.createElement('a');
+        a.className = 'jeu-card';
+        a.href = j.url;
+        const best = bests && bests[j.slug] !== undefined
+          ? '<div><span class="jeu-best">🏆 Record : ' + bests[j.slug] + ' / ' + j.scoreMax + '</span></div>'
+          : '';
+        a.innerHTML =
+          '<div class="jeu-emoji">' + j.emoji + '</div>'
+          + '<div class="jeu-info"><div class="jeu-nom">' + j.nom + '</div>'
+          + '<div class="jeu-desc">' + j.desc + '</div>' + best + '</div>'
+          + '<button type="button" class="jeu-jouer">Jouer</button>';
+        list.appendChild(a);
+      });
+    }
+
+    renderJeux(null);
+    fetch('/api/jeux/score.php?action=bests')
+      .then(r => r.json())
+      .then(d => {
+        if (!d.logged_in) { document.getElementById('loginInvite').style.display = 'flex'; return; }
+        renderJeux(d.bests || {});
+      })
+      .catch(() => {});
+  </script>
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/admin-badge.js"></script>
+</body>
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>CompoSmart – Mot mystère</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding-bottom: 70px; }
+
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; }
+
+    .hero { text-align: center; padding: 24px 20px 10px; }
+    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.82rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 900; color: #1a3a25; }
+
+    .page-content { width: 100%; max-width: 520px; padding: 0 16px; }
+
+    .game-status {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.82rem; font-weight: 800; color: #4a7a5a; padding: 10px 4px;
+    }
+    .game-card {
+      background: #fff; border-radius: 18px; padding: 22px 18px;
+      box-shadow: 0 2px 12px rgba(30,110,62,0.1); text-align: center;
+    }
+    .indice { font-size: 0.9rem; color: #4a7a5a; font-weight: 700; line-height: 1.45; min-height: 42px; }
+    .indice b { color: #1e6e3e; }
+
+    .slots { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 20px 0 16px; }
+    .slot {
+      width: 38px; height: 44px; border-radius: 10px;
+      border: 2px dashed #c8dfc8; background: #f6faf6;
+      font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #1a3a25;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .slot.filled { border-style: solid; border-color: #1e6e3e; background: #e8f5e9; }
+    .slots.good .slot { border-color: #1e6e3e; background: #c8e6c9; }
+    .slots.bad .slot { border-color: #e53935; background: #ffebee; animation: shake 0.4s; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+    .tiles { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; }
+    .tile {
+      width: 42px; height: 48px; border-radius: 10px; border: none;
+      background: #1e6e3e; color: #fff;
+      font-family: 'Baloo 2', cursive; font-size: 1.35rem; font-weight: 900;
+      cursor: pointer; transition: all 0.15s;
+      box-shadow: 0 3px 0 #14502c;
+    }
+    .tile:hover:not(:disabled) { transform: translateY(-2px); }
+    .tile:disabled { opacity: 0.25; cursor: default; box-shadow: none; }
+
+    .game-actions { display: flex; justify-content: center; gap: 10px; margin-top: 18px; }
+    .game-actions button {
+      border: none; border-radius: 20px; padding: 8px 16px;
+      font-size: 0.8rem; font-weight: 800; cursor: pointer;
+    }
+    .btn-effacer { background: #eef4ec; color: #1e6e3e; }
+    .btn-passer { background: #fff8e1; color: #b26a00; }
+
+    /* Écran de fin */
+    .end-screen { display: none; text-align: center; }
+    .end-emoji { font-size: 3.2rem; margin: 8px 0; }
+    .end-score { font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 900; color: #1e6e3e; }
+    .end-msg { font-size: 0.9rem; color: #4a7a5a; font-weight: 700; margin: 6px 0 14px; }
+    .end-record { display: inline-block; background: #fff9c4; color: #b26a00; font-size: 0.78rem; font-weight: 800; padding: 5px 14px; border-radius: 14px; margin-bottom: 12px; }
+    .leaderboard { text-align: left; margin: 14px auto 0; max-width: 300px; }
+    .lb-title { font-family: 'Baloo 2', cursive; font-size: 0.9rem; font-weight: 900; color: #1a3a25; margin-bottom: 8px; text-align: center; }
+    .lb-row { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; color: #1a3a25; padding: 5px 10px; border-radius: 8px; }
+    .lb-row:nth-child(even) { background: #f6faf6; }
+    .end-actions { display: flex; justify-content: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+    .end-actions a, .end-actions button {
+      border: none; border-radius: 20px; padding: 10px 20px; text-decoration: none;
+      font-family: 'Baloo 2', cursive; font-size: 0.88rem; font-weight: 900; cursor: pointer;
+    }
+    .btn-rejouer { background: #1e6e3e; color: #fff; }
+    .btn-retour { background: #eef4ec; color: #1e6e3e; }
+    .save-info { font-size: 0.76rem; color: #4a7a5a; font-weight: 700; margin-top: 12px; }
+    .save-info a { color: #1e6e3e; }
+
+    html.dark .game-card { background: #16211a; }
+    html.dark .slot { background: #1e2d22; border-color: #3a5c42; color: #e8f5ee; }
+    html.dark .slot.filled { background: #1e3a26; }
+    html.dark .slots.bad .slot { background: #3d1a1a; }
+    html.dark .btn-effacer, html.dark .btn-retour { background: #1e2d22; color: #7fc99a; }
+    html.dark .btn-passer { background: #2e2410; color: #e8b931; }
+    html.dark .lb-row { color: #e8f5ee; }
+    html.dark .lb-row:nth-child(even) { background: #1e2d22; }
+    html.dark .lb-title { color: #e8f5ee; }
+    html.dark .end-record { background: #2e2410; color: #e8b931; }
+    html.dark h1 { color: #e8f5ee; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
+    <div class="nav-right"><a href="compte" class="nav-profil">&#128100;</a><button id="themeToggle" aria-label="Thème">🌙</button><a href="/jeux" style="color:#fff;font-size:0.82rem;font-weight:800;text-decoration:none">✕ Quitter</a></div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-badge">🔤 Mot mystère</div>
+    <h1>Retrouve le mot caché</h1>
+  </div>
+
+  <div class="page-content">
+    <div class="game-status">
+      <span id="statusMot">Mot 1/8</span>
+      <span id="statusScore">Score : 0</span>
+    </div>
+
+    <div class="game-card">
+      <div id="gameZone">
+        <div class="indice" id="indice"></div>
+        <div class="slots" id="slots"></div>
+        <div class="tiles" id="tiles"></div>
+        <div class="game-actions">
+          <button type="button" class="btn-effacer" id="btnEffacer">⌫ Effacer</button>
+          <button type="button" class="btn-passer" id="btnPasser">⏭ Passer</button>
+        </div>
+      </div>
+
+      <div class="end-screen" id="endScreen">
+        <div class="end-emoji" id="endEmoji">🏆</div>
+        <div class="end-score" id="endScore"></div>
+        <div class="end-msg" id="endMsg"></div>
+        <div class="end-record" id="endRecord" style="display:none">🎉 Nouveau record perso !</div>
+        <div class="leaderboard" id="leaderboard" style="display:none">
+          <div class="lb-title">🏅 Top 5</div>
+          <div id="lbRows"></div>
+        </div>
+        <div class="save-info" id="saveInfo" style="display:none"><a href="/compte">Connecte-toi</a> pour sauvegarder ton score !</div>
+        <div class="end-actions">
+          <button type="button" class="btn-rejouer" id="btnRejouer">🔄 Rejouer</button>
+          <a href="/jeux" class="btn-retour">🎮 Autres jeux</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    const JEU_ID = 'mot-mystere';
+    const NB_MOTS = 8;
+    const POOL = [
+      { mot: 'COMPOST',  indice: 'Le résultat de la décomposition des biodéchets' },
+      { mot: 'LOMBRIC',  indice: 'Le ver de terre, grand allié du composteur' },
+      { mot: 'EISENIA',  indice: 'Le nom scientifique du ver de compost' },
+      { mot: 'HUMUS',    indice: 'Matière sombre et fertile issue de la décomposition' },
+      { mot: 'AZOTE',    indice: 'Élément apporté par les matières vertes et humides' },
+      { mot: 'CARBONE',  indice: 'Élément apporté par les matières brunes et sèches' },
+      { mot: 'TERREAU',  indice: 'Support de culture riche, parfait pour les semis' },
+      { mot: 'PAILLAGE', indice: 'Couverture protectrice du sol au jardin' },
+      { mot: 'BACTERIE', indice: 'Micro-organisme décomposeur invisible à l\'œil nu' },
+      { mot: 'CLOPORTE', indice: 'Petit crustacé terrestre qui vit dans le compost' },
+      { mot: 'DECHET',   indice: 'Ce que le compostage transforme en ressource' },
+      { mot: 'ENGRAIS',  indice: 'Le compost en est un, 100% naturel et gratuit' }
+    ];
+
+    let mots = [], round = 0, score = 0, erreurs = 0, reponse = [], lettres = [];
+
+    function melanger(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function demarrer() {
+      mots = melanger(POOL).slice(0, NB_MOTS);
+      round = 0; score = 0;
+      document.getElementById('endScreen').style.display = 'none';
+      document.getElementById('gameZone').style.display = 'block';
+      afficherRound();
+    }
+
+    function afficherRound() {
+      erreurs = 0;
+      reponse = [];
+      const mot = mots[round].mot;
+      let tuiles = melanger(mot.split(''));
+      // éviter que les lettres mélangées affichent directement le mot
+      if (tuiles.join('') === mot && mot.length > 1) tuiles = [tuiles[1], tuiles[0]].concat(tuiles.slice(2));
+      lettres = tuiles;
+
+      document.getElementById('statusMot').textContent = 'Mot ' + (round + 1) + '/' + NB_MOTS;
+      document.getElementById('statusScore').textContent = 'Score : ' + score;
+      document.getElementById('indice').innerHTML = '💡 <b>Indice :</b> ' + mots[round].indice;
+
+      const slots = document.getElementById('slots');
+      slots.className = 'slots';
+      slots.innerHTML = '';
+      for (let i = 0; i < mot.length; i++) {
+        const s = document.createElement('div');
+        s.className = 'slot';
+        s.dataset.pos = i;
+        s.addEventListener('click', () => retirerLettre(i));
+        slots.appendChild(s);
+      }
+
+      const tiles = document.getElementById('tiles');
+      tiles.innerHTML = '';
+      lettres.forEach((l, idx) => {
+        const t = document.createElement('button');
+        t.type = 'button';
+        t.className = 'tile';
+        t.textContent = l;
+        t.dataset.idx = idx;
+        t.addEventListener('click', () => ajouterLettre(idx));
+        tiles.appendChild(t);
+      });
+    }
+
+    function ajouterLettre(idx) {
+      const mot = mots[round].mot;
+      if (reponse.length >= mot.length) return;
+      const tile = document.querySelector('.tile[data-idx="' + idx + '"]');
+      if (tile.disabled) return;
+      tile.disabled = true;
+      reponse.push({ lettre: lettres[idx], idx: idx });
+      majSlots();
+      if (reponse.length === mot.length) verifier();
+    }
+
+    function retirerLettre(pos) {
+      if (pos >= reponse.length) return;
+      const retiree = reponse.splice(pos, 1)[0];
+      document.querySelector('.tile[data-idx="' + retiree.idx + '"]').disabled = false;
+      majSlots();
+    }
+
+    function majSlots() {
+      document.querySelectorAll('.slot').forEach((s, i) => {
+        s.textContent = reponse[i] ? reponse[i].lettre : '';
+        s.classList.toggle('filled', !!reponse[i]);
+      });
+    }
+
+    function verifier() {
+      const mot = mots[round].mot;
+      const essai = reponse.map(r => r.lettre).join('');
+      const slots = document.getElementById('slots');
+      if (essai === mot) {
+        slots.classList.add('good');
+        const points = erreurs === 0 ? 10 : (erreurs === 1 ? 6 : 3);
+        score += points;
+        document.getElementById('statusScore').textContent = 'Score : ' + score;
+        setTimeout(suivant, 900);
+      } else {
+        erreurs++;
+        slots.classList.add('bad');
+        setTimeout(() => {
+          slots.classList.remove('bad');
+          reponse.forEach(r => { document.querySelector('.tile[data-idx="' + r.idx + '"]').disabled = false; });
+          reponse = [];
+          majSlots();
+        }, 600);
+      }
+    }
+
+    document.getElementById('btnEffacer').addEventListener('click', () => {
+      reponse.forEach(r => { document.querySelector('.tile[data-idx="' + r.idx + '"]').disabled = false; });
+      reponse = [];
+      majSlots();
+    });
+
+    document.getElementById('btnPasser').addEventListener('click', () => {
+      // révèle le mot puis passe (0 point)
+      const mot = mots[round].mot;
+      document.querySelectorAll('.slot').forEach((s, i) => { s.textContent = mot[i]; s.classList.add('filled'); });
+      document.querySelectorAll('.tile').forEach(t => t.disabled = true);
+      setTimeout(suivant, 1100);
+    });
+
+    function suivant() {
+      round++;
+      if (round >= NB_MOTS) { finJeu(); return; }
+      afficherRound();
+    }
+
+    function finJeu() {
+      document.getElementById('gameZone').style.display = 'none';
+      document.getElementById('endScreen').style.display = 'block';
+      const max = NB_MOTS * 10;
+      document.getElementById('endScore').textContent = score + ' / ' + max;
+      const pct = score / max;
+      const emoji = pct >= 0.9 ? '🏆' : (pct >= 0.6 ? '🌟' : (pct >= 0.3 ? '🌱' : '🪱'));
+      const msg = pct >= 0.9 ? 'Incroyable, tu es un maître du compost !'
+                : pct >= 0.6 ? 'Très beau score, le vocabulaire est presque maîtrisé !'
+                : pct >= 0.3 ? 'Pas mal ! Va relire les cours pour progresser.'
+                : 'Les vers de compost te conseillent un petit tour par les cours 😉';
+      document.getElementById('endEmoji').textContent = emoji;
+      document.getElementById('endMsg').textContent = msg;
+      sauvegarderEtClasser();
+    }
+
+    function sauvegarderEtClasser() {
+      fetch('/api/jeux/score.php', {
+        method: 'POST',
+        body: new URLSearchParams({ action: 'save', jeu_id: JEU_ID, score: score })
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (d.error === 'not_logged_in') {
+          document.getElementById('saveInfo').style.display = 'block';
+        } else if (d.ok && d.record && score > 0) {
+          document.getElementById('endRecord').style.display = 'inline-block';
+        }
+        return fetch('/api/jeux/score.php?action=infos&jeu_id=' + JEU_ID);
+      })
+      .then(r => r.json())
+      .then(d => {
+        if (!d || !d.top || !d.top.length) return;
+        const rows = document.getElementById('lbRows');
+        rows.innerHTML = '';
+        const medailles = ['🥇', '🥈', '🥉', '4.', '5.'];
+        d.top.forEach((t, i) => {
+          const row = document.createElement('div');
+          row.className = 'lb-row';
+          const nom = document.createElement('span');
+          nom.textContent = medailles[i] + ' ' + t.username;
+          const sc = document.createElement('span');
+          sc.textContent = t.score;
+          row.appendChild(nom); row.appendChild(sc);
+          rows.appendChild(row);
+        });
+        document.getElementById('leaderboard').style.display = 'block';
+      })
+      .catch(() => {});
+    }
+
+    document.getElementById('btnRejouer').addEventListener('click', () => {
+      document.getElementById('endRecord').style.display = 'none';
+      document.getElementById('leaderboard').style.display = 'none';
+      document.getElementById('saveInfo').style.display = 'none';
+      demarrer();
+    });
+
+    demarrer();
+  </script>
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/admin-badge.js"></script>
+</body>
+</html>

@@ -52,7 +52,9 @@ composmart/
 │   │   ├── list.php        ← Retourne thèmes + cours (depuis DB)
 │   │   ├── get.php         ← Retourne contenu d'un cours (depuis content/)
 │   │   └── complete.php    ← Valide quiz, enregistre progression, crédite XP
-│   └── auth/               ← Authentification (à venir)
+│   ├── jeux/
+│   │   └── score.php       ← Scores des mini-jeux (save, records, top 5)
+│   └── auth/               ← Authentification (login, signin, me, launchpad)
 │
 ├── db/
 │   ├── schema.sql          ← Schéma : themes, cours, composts, users, progression
@@ -106,7 +108,7 @@ Pour ajouter un cours, créer un dossier dans `content/cours/` et redémarrer �
 - [x] isAdmin dans la table des users
 - [x] modifier/supprimer un composter que pour les admins
 - [x] système de signalement d'erreur : mauvaise position/mauvais paramètres pour les composters, pour les utilisateurs classiques, et retour visible pour les comptes admins.
-- [ ] crée une infra pour les jeux
-- [ ] rajoute un ou plusieurs jeux simples : mot croisés sur le thème du compostage, ou autre facile et accessible (lettres à clicker pour faire un mot genre le nom des vers de compostage)
+- [x] crée une infra pour les jeux
+- [x] rajoute un ou plusieurs jeux simples : mot croisés sur le thème du compostage, ou autre facile et accessible (lettres à clicker pour faire un mot genre le nom des vers de compostage)
 - [ ] rajoute le bloc jeu dans la page principale ainsi que le bloc compte
 - [ ] fais la liste des potentiels problèmes de cybersécu et l'écrire dans README.md dans une nouvelle section 

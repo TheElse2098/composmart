@@ -1,0 +1,99 @@
+<?php
+ob_start();
+error_reporting(0);
+ini_set('display_errors', 0);
+session_start();
+header('Content-Type: application/json; charset=utf-8');
+ob_clean();
+
+$conn = mysqli_connect(
+    getenv('DB_HOST') ?: 'db',
+    getenv('DB_USER') ?: 'composmart',
+    getenv('DB_PASSWORD') ?: '',
+    getenv('DB_NAME') ?: 'Composmart'
+);
+if (!$conn) { echo json_encode(['error' => 'Connexion DB échouée']); exit; }
+
+// Registre des jeux : ajouter le slug ici quand on crée un nouveau jeu
+$JEUX_VALIDES = ['mot-mystere', 'compost-ou-pas'];
+
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
+
+// ── ENREGISTRER UN SCORE (connecté uniquement) ─────────────────────────────
+if ($action === 'save') {
+    if (empty($_SESSION['user_id'])) { echo json_encode(['error' => 'not_logged_in']); exit; }
+    $jeu_id = trim($_POST['jeu_id'] ?? '');
+    $score  = intval($_POST['score'] ?? -1);
+    if (!in_array($jeu_id, $JEUX_VALIDES, true) || $score < 0 || $score > 1000) {
+        echo json_encode(['error' => 'Données invalides']);
+        exit;
+    }
+    $uid = (int)$_SESSION['user_id'];
+    $stmt = mysqli_prepare($conn, 'INSERT INTO scores (user_id, jeu_id, score) VALUES (?, ?, ?)');
+    $stmt->bind_param('isi', $uid, $jeu_id, $score);
+    $stmt->execute();
+
+    $stmt = mysqli_prepare($conn, 'SELECT MAX(score) AS best FROM scores WHERE user_id = ? AND jeu_id = ?');
+    $stmt->bind_param('is', $uid, $jeu_id);
+    $stmt->execute();
+    $best = (int)($stmt->get_result()->fetch_assoc()['best'] ?? 0);
+
+    echo json_encode(['ok' => true, 'best' => $best, 'record' => $best === $score]);
+    exit;
+}
+
+// ── INFOS D'UN JEU : record perso + top 5 global ───────────────────────────
+if ($action === 'infos') {
+    $jeu_id = trim($_GET['jeu_id'] ?? $_POST['jeu_id'] ?? '');
+    if (!in_array($jeu_id, $JEUX_VALIDES, true)) { echo json_encode(['error' => 'Jeu inconnu']); exit; }
+
+    $best = null;
+    if (!empty($_SESSION['user_id'])) {
+        $uid = (int)$_SESSION['user_id'];
+        $stmt = mysqli_prepare($conn, 'SELECT MAX(score) AS best FROM scores WHERE user_id = ? AND jeu_id = ?');
+        $stmt->bind_param('is', $uid, $jeu_id);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        if ($row && $row['best'] !== null) $best = (int)$row['best'];
+    }
+
+    $stmt = mysqli_prepare($conn,
+        'SELECT u.username, MAX(s.score) AS best
+         FROM scores s JOIN users u ON u.id = s.user_id
+         WHERE s.jeu_id = ?
+         GROUP BY s.user_id, u.username
+         ORDER BY best DESC, MIN(s.played_at) ASC
+         LIMIT 5');
+    $stmt->bind_param('s', $jeu_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $top = [];
+    while ($row = $res->fetch_assoc()) {
+        $top[] = ['username' => $row['username'], 'score' => (int)$row['best']];
+    }
+
+    echo json_encode([
+        'logged_in' => !empty($_SESSION['user_id']),
+        'best'      => $best,
+        'top'       => $top,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ── RECORDS PERSO POUR TOUS LES JEUX (page hub) ────────────────────────────
+if ($action === 'bests') {
+    if (empty($_SESSION['user_id'])) { echo json_encode(['logged_in' => false, 'bests' => new stdClass()]); exit; }
+    $uid = (int)$_SESSION['user_id'];
+    $stmt = mysqli_prepare($conn, 'SELECT jeu_id, MAX(score) AS best FROM scores WHERE user_id = ? GROUP BY jeu_id');
+    $stmt->bind_param('i', $uid);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $bests = [];
+    while ($row = $res->fetch_assoc()) {
+        $bests[$row['jeu_id']] = (int)$row['best'];
+    }
+    echo json_encode(['logged_in' => true, 'bests' => (object)$bests]);
+    exit;
+}
+
+echo json_encode(['error' => 'Action inconnue']);
