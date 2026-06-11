@@ -45,11 +45,19 @@
     .hero-sub { font-size: 0.95rem; color: #4a7a5a; margin-top: 6px; font-weight: 600; }
 
     /* TABS */
-    .tabs { display: flex; gap: 8px; padding: 0 16px 16px; width: 100%; max-width: 600px; overflow-x: auto; scrollbar-width: none; }
+    .tabs { display: flex; gap: 8px; padding: 0 16px 16px; width: 100%; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .tabs::-webkit-scrollbar { display: none; }
-    .tab { flex-shrink: 0; padding: 8px 16px; border-radius: 20px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.88rem; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; background: #fff; color: #4a7a5a; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    /* dernier onglet : marge droite pour ne pas être collé au bord lors du scroll */
+    .tabs > .tab:last-child { margin-right: 16px; }
+    .tab { flex-shrink: 0; white-space: nowrap; padding: 10px 16px; border-radius: 20px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.88rem; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; background: #fff; color: #4a7a5a; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .tab.active { background: #1e6e3e; color: #fff; border-color: #1e6e3e; }
     .tab:hover:not(.active) { border-color: #1e6e3e; color: #1e6e3e; }
+    /* Desktop : onglets s'étalent sur toute la largeur */
+    @media (min-width: 520px) {
+      .tabs { padding: 0 24px 16px; }
+      .tabs > .tab:last-child { margin-right: 0; }
+      .tab { flex: 1; text-align: center; }
+    }
 
     /* CONTENT */
     .page-content { width: 100%; max-width: 600px; padding: 0 16px; }
@@ -83,6 +91,19 @@
     .tip-box { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-radius: 16px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px; border-left: 4px solid #1e6e3e; }
     .tip-emoji { font-size: 1.4rem; flex-shrink: 0; }
     .tip-text { font-size: 0.8rem; color: #1a3a25; font-weight: 700; line-height: 1.4; }
+
+    /* Boîte "à ne pas composter" */
+    .no-compost-box { background: linear-gradient(135deg, #ffebee, #ffcdd2); border-radius: 16px; padding: 16px; margin-bottom: 10px; border-left: 4px solid #e53935; }
+    .no-compost-title { font-family: 'Baloo 2', cursive; font-weight: 900; color: #c62828; margin-bottom: 10px; font-size: 1rem; }
+    .no-compost-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .no-compost-tag { background: #fff; border-radius: 10px; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; color: #c62828; }
+
+    html.dark .tab { background: #1e2d22; color: #5a8a6a; }
+    html.dark .tab.active { background: #1e6e3e; color: #fff; }
+    html.dark .tab:hover:not(.active) { border-color: #52b788; color: #52b788; }
+    html.dark .no-compost-box { background: linear-gradient(135deg, #2d1515, #3d1a1a); border-left-color: #e53935; }
+    html.dark .no-compost-title { color: #ef9a9a; }
+    html.dark .no-compost-tag { background: #1a0e0e; color: #ef9a9a; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
   </style>
@@ -413,15 +434,15 @@
       </div>
 
       <!-- À ne PAS mettre -->
-      <div style="background:linear-gradient(135deg,#ffebee,#ffcdd2); border-radius:16px; padding:16px; margin-bottom:10px; border-left:4px solid #e53935;">
-        <div style="font-family:'Baloo 2',cursive; font-weight:900; color:#c62828; margin-bottom:10px; font-size:1rem;">🚫 À ne jamais composter</div>
-        <div style="display:flex; flex-wrap:wrap; gap:8px;">
-          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">🥩 Viande & poisson</span>
-          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">🧀 Produits laitiers</span>
-          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">🛢️ Huile de cuisson</span>
-          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">💊 Médicaments</span>
-          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">🐾 Excréments d'animaux</span>
-          <span style="background:#fff; border-radius:10px; padding:5px 10px; font-size:0.75rem; font-weight:700; color:#c62828;">🔋 Piles & plastiques</span>
+      <div class="no-compost-box">
+        <div class="no-compost-title">🚫 À ne jamais composter</div>
+        <div class="no-compost-tags">
+          <span class="no-compost-tag">🥩 Viande &amp; poisson</span>
+          <span class="no-compost-tag">🧀 Produits laitiers</span>
+          <span class="no-compost-tag">🛢️ Huile de cuisson</span>
+          <span class="no-compost-tag">💊 Médicaments</span>
+          <span class="no-compost-tag">🐾 Excréments d'animaux</span>
+          <span class="no-compost-tag">🔋 Piles &amp; plastiques</span>
         </div>
       </div>
 
