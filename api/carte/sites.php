@@ -37,6 +37,10 @@ if (mysqli_connect_errno()) {
 
 // ── IMPORT DEPUIS OSM ──────────────────────────────────────────────────────
 if (isset($_POST['osm'])) {
+    if (!rate_limit('add_compost', 15, 3600)) {
+        echo json_encode(["error" => "Trop d'ajouts récents. Réessaie plus tard."]);
+        exit();
+    }
     $osm  = json_decode($_POST['osm'], true);
     $lon  = (double)$osm['longitude'];
     $lat  = (double)$osm['latitude'];
@@ -64,15 +68,19 @@ if (isset($_POST['osm'])) {
 
 // ── IMPORT DEPUIS JSON ─────────────────────────────────────────────────────
 elseif (isset($_POST['donnees_json'])) {
+    if (!rate_limit('add_compost', 15, 3600)) {
+        echo json_encode(["error" => "Trop d'ajouts récents. Réessaie plus tard."]);
+        exit();
+    }
     $d           = json_decode($_POST['donnees_json'], true);
     $lon         = (double)$d['longitude'];
     $lat         = (double)$d['latitude'];
-    $type        = $d['type'];
-    $pub         = $d['public'];
+    $type        = $d['type'] ?? '';
+    $pub         = $d['public'] ?? '';
     $gestion     = mb_substr(strip_tags((string)($d['gestion'] ?? '')), 0, 300);
     $info_gest   = mb_substr(strip_tags((string)($d['info_gestion'] ?? '')), 0, 300);
-    $mettre      = $d['mettre'];
-    $pas_mettre  = $d['pas_mettre'];
+    $mettre      = is_array($d['mettre'] ?? null) ? $d['mettre'] : [];
+    $pas_mettre  = is_array($d['pas_mettre'] ?? null) ? $d['pas_mettre'] : [];
 
     if (!in_array($type, TYPES_VALIDES, true) || !in_array($pub, ACCES_VALIDES, true)) {
         echo json_encode(["error" => "Type ou accès invalide."]);

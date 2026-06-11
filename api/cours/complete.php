@@ -35,17 +35,25 @@ $score   = null;
 $total   = 0;
 $correct = 0;
 $quiz_file = "/var/www/html/content/cours/$slug/quiz.json";
-if (file_exists($quiz_file) && !empty($answers)) {
+if (file_exists($quiz_file)) {
     $quiz  = json_decode(file_get_contents($quiz_file), true);
-    $total = count($quiz);
-    foreach ($quiz as $i => $q) {
-        if (isset($answers[$i]) && intval($answers[$i]) === intval($q['correct'])) $correct++;
-    }
-    $score = ['correct' => $correct, 'total' => $total];
-    if ($total > 0 && $correct / $total < 0.5) {
-        mysqli_close($c);
-        echo json_encode(['success' => false, 'score' => $score, 'message' => 'Score insuffisant (minimum 50%)']);
-        exit;
+    $total = is_array($quiz) ? count($quiz) : 0;
+    if ($total > 0) {
+        // Un cours avec quiz exige des réponses : pas de validation « à vide »
+        if (!is_array($answers) || empty($answers)) {
+            mysqli_close($c);
+            echo json_encode(['success' => false, 'message' => 'Réponses du quiz manquantes']);
+            exit;
+        }
+        foreach ($quiz as $i => $q) {
+            if (isset($answers[$i]) && intval($answers[$i]) === intval($q['correct'])) $correct++;
+        }
+        $score = ['correct' => $correct, 'total' => $total];
+        if ($correct / $total < 0.5) {
+            mysqli_close($c);
+            echo json_encode(['success' => false, 'score' => $score, 'message' => 'Score insuffisant (minimum 50%)']);
+            exit;
+        }
     }
 }
 
