@@ -2,12 +2,12 @@
 ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
-session_start();
+require_once __DIR__ . '/../_guard.php';
+secure_session_start();
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
 ob_clean();
+csrf_check();
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
 
 $body    = json_decode(file_get_contents('php://input'), true) ?? [];

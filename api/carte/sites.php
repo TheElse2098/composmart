@@ -1,14 +1,16 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-header("Access-Control-Allow-Credentials: true");
-
 ob_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-session_start();
+error_reporting(0);
+ini_set('display_errors', 0);
+require_once __DIR__ . '/../_guard.php';
+secure_session_start();
 header('Content-Type: application/json');
+ob_clean();
+csrf_check();
+
+// Valeurs autorisées pour les champs libres des composteurs
+const TYPES_VALIDES = ['Conteneur', 'Compost bois', 'Compost plastique'];
+const ACCES_VALIDES = ['public', 'privé', 'institution'];
 
 function is_admin($connexion) {
     if (empty($_SESSION['user_id'])) return false;
@@ -67,10 +69,15 @@ elseif (isset($_POST['donnees_json'])) {
     $lat         = (double)$d['latitude'];
     $type        = $d['type'];
     $pub         = $d['public'];
-    $gestion     = $d['gestion'];
-    $info_gest   = $d['info_gestion'];
+    $gestion     = mb_substr(strip_tags((string)($d['gestion'] ?? '')), 0, 300);
+    $info_gest   = mb_substr(strip_tags((string)($d['info_gestion'] ?? '')), 0, 300);
     $mettre      = $d['mettre'];
     $pas_mettre  = $d['pas_mettre'];
+
+    if (!in_array($type, TYPES_VALIDES, true) || !in_array($pub, ACCES_VALIDES, true)) {
+        echo json_encode(["error" => "Type ou accès invalide."]);
+        exit();
+    }
 
     $sql_check = "SELECT id, (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance FROM composts HAVING distance < 0.02 LIMIT 1";
     $stmt = mysqli_prepare($connexion, $sql_check);
@@ -149,10 +156,15 @@ elseif (isset($_POST['type'])) {
     $mettre     = $_POST['mettre']    ?? [];
     $pas_mettre = $_POST['pas_mettre'] ?? [];
 
+    if (!in_array($type, TYPES_VALIDES, true) || !in_array($acces, ACCES_VALIDES, true)) {
+        echo json_encode(["error" => "Type ou accès invalide."]);
+        exit();
+    }
+
     foreach ($mettre as $m) {
         foreach ($pas_mettre as $p) {
             if ($m === $p) {
-                die("\"$m\" ne peut pas être à la fois autorisé et interdit");
+                die("Un élément ne peut pas être à la fois autorisé et interdit");
             }
         }
     }
@@ -182,6 +194,20 @@ elseif (isset($_POST['type'])) {
 if (isset($_POST['lat_click']) && isset($_POST['lon_click'])) {
     $lat = (double)$_POST['lat_click'];
     $lon = (double)$_POST['lon_click'];
+
+    if (!rate_limit('add_compost', 15, 3600)) {
+        echo json_encode(["error" => "Trop d'ajouts récents. Réessaie plus tard."]);
+        exit();
+    }
+
+    $sql_check = "SELECT id, (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance FROM composts HAVING distance < 0.02 LIMIT 1";
+    $stmt = mysqli_prepare($connexion, $sql_check);
+    $stmt->bind_param("ddd", $lat, $lon, $lat);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        echo json_encode(["error" => "Un point existe déjà à moins de 20 m."]);
+        exit();
+    }
 
     $stmt = mysqli_prepare($connexion, "INSERT INTO composts (longitude, latitude) VALUES (?, ?)");
     $stmt->bind_param("dd", $lon, $lat);

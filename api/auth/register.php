@@ -2,11 +2,19 @@
 ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
-session_start();
+require_once __DIR__ . '/../_guard.php';
+secure_session_start();
 header('Content-Type: application/json; charset=utf-8');
 ob_clean();
+csrf_check();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Méthode non autorisée']); exit; }
+
+if (!rate_limit('register', 5, 3600)) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Trop de comptes créés récemment. Réessaie plus tard.']);
+    exit;
+}
 
 $username = trim($_POST['username'] ?? '');
 $password = $_POST['password'] ?? '';
@@ -35,6 +43,7 @@ $stmt = mysqli_prepare($conn, 'INSERT INTO users (username, password_hash) VALUE
 $stmt->bind_param('ss', $username, $hash);
 if (!$stmt->execute()) { echo json_encode(['error' => "Erreur lors de l'inscription"]); exit; }
 
+session_regenerate_id(true);
 $_SESSION['user_id'] = $conn->insert_id;
 $_SESSION['username'] = $username;
 

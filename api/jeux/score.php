@@ -2,9 +2,11 @@
 ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
-session_start();
+require_once __DIR__ . '/../_guard.php';
+secure_session_start();
 header('Content-Type: application/json; charset=utf-8');
 ob_clean();
+csrf_check();
 
 $conn = mysqli_connect(
     getenv('DB_HOST') ?: 'db',
@@ -14,8 +16,10 @@ $conn = mysqli_connect(
 );
 if (!$conn) { echo json_encode(['error' => 'Connexion DB échouée']); exit; }
 
-// Registre des jeux : ajouter le slug ici quand on crée un nouveau jeu
-$JEUX_VALIDES = ['mot-mystere', 'compost-ou-pas'];
+// Registre des jeux : slug => score maximum atteignable.
+// Ajouter une entrée ici quand on crée un nouveau jeu.
+$JEUX_MAX = ['mot-mystere' => 80, 'compost-ou-pas' => 12];
+$JEUX_VALIDES = array_keys($JEUX_MAX);
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
@@ -24,7 +28,7 @@ if ($action === 'save') {
     if (empty($_SESSION['user_id'])) { echo json_encode(['error' => 'not_logged_in']); exit; }
     $jeu_id = trim($_POST['jeu_id'] ?? '');
     $score  = intval($_POST['score'] ?? -1);
-    if (!in_array($jeu_id, $JEUX_VALIDES, true) || $score < 0 || $score > 1000) {
+    if (!in_array($jeu_id, $JEUX_VALIDES, true) || $score < 0 || $score > $JEUX_MAX[$jeu_id]) {
         echo json_encode(['error' => 'Données invalides']);
         exit;
     }

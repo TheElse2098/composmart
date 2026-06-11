@@ -630,21 +630,21 @@
                         let gestion = donnees[0]["donnees"]["gestion"] || "Pas de données";
                         let info_gestion = donnees[0]["donnees"]["info_gestion"] || "Pas de données";
                         Waze.innerHTML = "<a href='https://www.waze.com/ul?ll=" + lat + "%2C" + lon + "&navigate=yes&zoom=17' target='_blank' rel='noopener' style='display:inline-flex;align-items:center;gap:4px;background:#1e6e3e;color:#fff;text-decoration:none;border-radius:8px;padding:5px 10px;font-size:0.82rem;font-weight:700;'>🗺 Waze</a>";
-                        Type.innerHTML = type;
-                        Acces.innerHTML = acces;
-                        Gestion.innerHTML = gestion;
-                        // Render contact as clickable link if URL or phone
-                        let ig_html = info_gestion;
+                        Type.textContent = type;
+                        Acces.textContent = acces;
+                        Gestion.textContent = gestion;
+                        // Render contact as clickable link if URL or phone (texte échappé avant insertion)
+                        let ig_html = echap(info_gestion);
                         if (info_gestion && info_gestion !== "Pas de données") {
                             if (/https?:\/\//.test(info_gestion)) {
-                                ig_html = info_gestion.replace(/(https?:\/\/[^\s]+)/g, function(url) {
+                                ig_html = ig_html.replace(/(https?:\/\/[^\s]+)/g, function(url) {
                                     try {
-                                        const display = new URL(url).hostname.replace(/^www\./, '');
+                                        const display = new URL(url.replace(/&amp;/g, '&')).hostname.replace(/^www\./, '');
                                         return '<a href="' + url + '" target="_blank" rel="noopener">🔗 ' + display + '</a>';
                                     } catch(e) { return url; }
                                 });
                             } else if (/^[\d\s\+\.\-\(\)]{7,}$/.test(info_gestion.trim())) {
-                                ig_html = '<a href="tel:' + info_gestion.replace(/\s/g,'') + '">📞 ' + info_gestion + '</a>';
+                                ig_html = '<a href="tel:' + info_gestion.replace(/[^\d\+]/g,'') + '">📞 ' + echap(info_gestion) + '</a>';
                             }
                         }
                         Info_gestion.innerHTML = ig_html;
@@ -797,9 +797,16 @@
                 fetch("/api/carte/sites.php", { method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({lat_click: current_lat_click, lon_click: current_lon_click}) })
                 .then((response) => response.text())
                 .then((data) => {
+                    const number = parseInt(data.replace(/"/g, '').trim(), 10);
+                    if (!Number.isFinite(number)) {
+                        let msg = "Ajout impossible pour le moment.";
+                        try { const d = JSON.parse(data); if (d && d.error) msg = d.error; } catch(e) {}
+                        document.getElementById("rajouter_compost").innerHTML = '';
+                        document.getElementById("rajouter_compost").textContent = '⚠️ ' + msg;
+                        return;
+                    }
                     document.getElementById("tableau").style.display = "block";
                     document.getElementById("rajouter_compost").style.visibility = "hidden";
-                    const number = parseInt(data.replace(/"/g, '').trim(), 10);
                     let Acces = document.getElementById("acces"); let Type = document.getElementById("type");
                     current_compost_id = number; nouv = 1;
                     modifier_compost(number, "", "", "", Acces, "", Type, null, null);

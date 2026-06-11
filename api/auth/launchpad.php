@@ -2,9 +2,11 @@
 ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
-session_start();
+require_once __DIR__ . '/../_guard.php';
+secure_session_start();
 header('Content-Type: application/json; charset=utf-8');
 ob_clean();
+csrf_check();
 
 $c = mysqli_connect(
     getenv('DB_HOST') ?: 'db',
@@ -55,6 +57,7 @@ if (!$ok) {
 }
 
 $admin_id = mysqli_insert_id($c);
+session_regenerate_id(true);
 $_SESSION['user_id']  = $admin_id;
 $_SESSION['username'] = $username;
 

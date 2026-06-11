@@ -60,6 +60,8 @@
     .card-2 { background: linear-gradient(145deg, #2d6a4f, #52b788); box-shadow: 0 6px 20px rgba(45,106,79,0.35); }
     .card-3 { background: linear-gradient(145deg, #386641, #6a994e); box-shadow: 0 6px 20px rgba(56,102,65,0.35); }
     .card-4 { background: linear-gradient(145deg, #588157, #a7c957); box-shadow: 0 6px 20px rgba(88,129,87,0.35); }
+    .card-5 { background: linear-gradient(145deg, #5a3d8a, #8e6cc9); box-shadow: 0 6px 20px rgba(90,61,138,0.35); }
+    .card-6 { background: linear-gradient(145deg, #b87900, #e0a800); box-shadow: 0 6px 20px rgba(184,121,0,0.35); }
 
     .card-emoji { font-size: clamp(54px, 12vw, 80px); line-height: 1; margin-bottom: 14px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); }
     .card-title { font-family: 'Baloo 2', cursive; font-size: clamp(0.95rem, 2.5vw, 1.15rem); font-weight: 900; color: #fff; text-align: center; line-height: 1.25; }
@@ -130,6 +132,16 @@
       <div class="card-title">Le matériel</div>
       <div class="card-sub">Tout ce qu'il faut</div>
     </a>
+    <a href="jeux" class="card card-5">
+      <div class="card-emoji">🎮</div>
+      <div class="card-title">Jeux</div>
+      <div class="card-sub">Joue & bats des records</div>
+    </a>
+    <a href="compte" class="card card-6">
+      <div class="card-emoji">👤</div>
+      <div class="card-title">Mon compte</div>
+      <div class="card-sub" id="compteSub">Connexion & progression</div>
+    </a>
   </div>
 
   <div class="bottom-leaf"></div>
@@ -144,6 +156,16 @@
     burger.addEventListener('click', openMenu);
     closeBtn.addEventListener('click', closeMenu);
     overlay.addEventListener('click', closeMenu);
+
+    // Carte "Mon compte" : affiche le pseudo et le niveau si connecté
+    fetch('/api/auth/me.php')
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.logged_in) {
+          document.getElementById('compteSub').textContent = d.username + ' · Niveau ' + d.niveau;
+        }
+      })
+      .catch(() => {});
   </script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/admin-badge.js"></script>
