@@ -105,7 +105,7 @@ Pour ajouter un cours, créer un dossier dans `content/cours/` et redémarrer �
 - [x] User system
 - [x] isAdmin dans la table des users
 - [x] modifier/supprimer un composter que pour les admins
-- [ ] système de signalement d'erreur : mauvaise position/mauvais paramètres pour les composters, pour les utilisateurs classiques, et retour visible pour les comptes admins.
+- [x] système de signalement d'erreur : mauvaise position/mauvais paramètres pour les composters, pour les utilisateurs classiques, et retour visible pour les comptes admins.
 - [ ] crée une infra pour les jeux
 - [ ] rajoute un ou plusieurs jeux simples : mot croisés sur le thème du compostage, ou autre facile et accessible (lettres à clicker pour faire un mot genre le nom des vers de compostage)
 - [ ] rajoute le bloc jeu dans la page principale ainsi que le bloc compte

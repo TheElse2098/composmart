@@ -320,8 +320,67 @@
             }
         }
 
+        /* ── SIGNALEMENT (formulaire utilisateur) ── */
+        .btn-signaler {
+            background: #fff8e1 !important; color: #b26a00 !important;
+            border: 1.5px solid #e8b931 !important;
+        }
+        .signal-zone { display: none; flex-direction: column; gap: 7px; padding: 10px 16px 0; }
+        .signal-zone select, .signal-zone textarea {
+            width: 100%; border: 1.5px solid #e0d4b0; border-radius: 8px;
+            padding: 6px 8px; font-size: 0.8rem; font-family: inherit;
+            background: #fffdf5; color: #1a3a25; outline: none;
+        }
+        .signal-zone textarea { resize: vertical; min-height: 52px; }
+        .signal-zone button {
+            background: #b26a00 !important; color: #fff !important;
+            border: none; border-radius: 20px; padding: 7px 14px;
+            font-size: 0.8rem; font-weight: 700; cursor: pointer;
+        }
+        .signal-msg { font-size: 0.76rem; font-weight: 700; }
+        .signal-msg.ok { color: #1e6e3e; }
+        .signal-msg.err { color: #c0392b; }
+
+        /* ── PANNEAU ADMIN SIGNALEMENTS ── */
+        #signalAdminBtn {
+            position: absolute; bottom: 12px; right: 12px; z-index: 1000;
+            background: #e53935; color: #fff; border: none; border-radius: 50px;
+            padding: 10px 16px; font-size: 0.85rem; font-weight: 800; cursor: pointer;
+            box-shadow: 0 3px 10px rgba(229,57,53,0.4); display: none;
+        }
+        #signalAdminPanel {
+            position: absolute; bottom: 60px; right: 12px; z-index: 1001;
+            width: 300px; max-width: calc(100% - 24px); max-height: 55vh;
+            background: #fff; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+            display: none; flex-direction: column; overflow: hidden;
+        }
+        .signal-panel-head {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #e53935; color: #fff; font-weight: 800; font-size: 0.85rem;
+            padding: 9px 14px;
+        }
+        .signal-panel-head button { background: none; border: none; color: #fff; font-size: 0.95rem; cursor: pointer; }
+        #signalAdminList { overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .signal-item { border: 1px solid #eee; border-radius: 10px; padding: 8px 10px; font-size: 0.76rem; color: #1a3a25; }
+        .signal-item-motif { font-weight: 800; margin-bottom: 2px; }
+        .signal-item-meta { color: #888; font-size: 0.68rem; margin-bottom: 4px; }
+        .signal-item-comment { font-style: italic; margin-bottom: 6px; word-break: break-word; }
+        .signal-item-actions { display: flex; gap: 5px; }
+        .signal-item-actions button { border: none; border-radius: 14px; padding: 4px 10px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
+        .sig-voir { background: #eef4ec; color: #1e6e3e; }
+        .sig-ok { background: #1e6e3e; color: #fff; }
+        .sig-rej { background: #fdecea; color: #c0392b; }
+        .signal-vide { text-align: center; color: #999; font-size: 0.78rem; padding: 14px 0; }
+
         html.dark .edit-check { color: #e8f5ee !important; }
         html.dark .edit-select { background: #1e2d22 !important; color: #e8f5ee !important; border-color: #3a5c42 !important; }
+        html.dark .btn-signaler { background: #2e2410 !important; color: #e8b931 !important; border-color: #7a6320 !important; }
+        html.dark .signal-zone select, html.dark .signal-zone textarea { background: #1e2d22 !important; color: #e8f5ee !important; border-color: #3a5c42 !important; }
+        html.dark #signalAdminPanel { background: #16211a; }
+        html.dark .signal-item { border-color: #2b3c30; color: #e8f5ee; }
+        html.dark .signal-item-meta { color: #9bb3a3; }
+        html.dark .sig-voir { background: #1e2d22; color: #7fc99a; }
+        html.dark .sig-rej { background: #3d1a1a; color: #ef9a9a; }
     </style>
 </head>
 <body>
@@ -372,6 +431,12 @@
 
         <div id="rajouter_compost" class="rajouter" style="visibility:hidden"></div>
 
+        <button type="button" id="signalAdminBtn">🚩 <span id="signalCount">0</span></button>
+        <div id="signalAdminPanel">
+            <div class="signal-panel-head">🚩 Signalements ouverts <button type="button" id="signalPanelClose">✕</button></div>
+            <div id="signalAdminList"></div>
+        </div>
+
         <div id="tableau" style="display:none" class="tabl">
             <div class="tabl-handle"></div>
             <div class="tabl-header">
@@ -401,7 +466,20 @@
                 </div>
                 <div class="tabl-actions">
                     <div id="boutton"><button type="button" id="modifier_compost" class="btn-modifier">✏️ Modifier</button></div>
+                    <button type="button" id="signaler_compost" class="btn-signaler">⚠️ Signaler</button>
                     <button type="button" id="supprimer_compost" class="btn-supprimer" style="visibility:hidden">🗑 Supprimer</button>
+                </div>
+                <div id="signal_zone" class="signal-zone">
+                    <select id="signal_motif">
+                        <option value="position">📍 Mauvaise position</option>
+                        <option value="type_acces">🏷️ Mauvais type ou accès</option>
+                        <option value="regles">📋 Règles incorrectes</option>
+                        <option value="inexistant">❌ N'existe plus</option>
+                        <option value="autre">💬 Autre</option>
+                    </select>
+                    <textarea id="signal_comment" maxlength="500" placeholder="Précisions (optionnel)..."></textarea>
+                    <button type="button" id="signal_envoyer">Envoyer le signalement</button>
+                    <div id="signal_msg" class="signal-msg"></div>
                 </div>
             </form>
         </div>
@@ -442,7 +520,10 @@
         let isAdmin = false;
         fetch('/api/auth/me.php')
             .then(r => r.json())
-            .then(d => { isAdmin = !!(d && d.logged_in && d.isAdmin); })
+            .then(d => {
+                isAdmin = !!(d && d.logged_in && d.isAdmin);
+                if (isAdmin) chargerSignalements();
+            })
             .catch(() => {});
 
         let current_compost_id = null;
@@ -500,6 +581,8 @@
 
         function info_compost(compost_id, lat, lon) {
             document.getElementById("supprimer_compost").style.visibility = isAdmin ? "visible" : "hidden";
+            document.getElementById("signal_zone").style.display = "none";
+            document.getElementById("signal_msg").textContent = "";
             document.getElementById("rajouter_compost").style.visibility = "hidden";
             document.getElementById("formulaire_changer").style.visibility = "visible";
             if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); }
@@ -721,6 +804,109 @@
                 });
             });
         }
+
+        // ── SIGNALEMENT (utilisateurs) ──
+        const MOTIF_LABELS = {
+            position: '📍 Mauvaise position',
+            type_acces: '🏷️ Mauvais type ou accès',
+            regles: '📋 Règles incorrectes',
+            inexistant: "❌ N'existe plus",
+            autre: '💬 Autre'
+        };
+        const signalZone = document.getElementById('signal_zone');
+        const signalMsg = document.getElementById('signal_msg');
+
+        document.getElementById('signaler_compost').addEventListener('click', function () {
+            signalZone.style.display = signalZone.style.display === 'flex' ? 'none' : 'flex';
+            signalMsg.textContent = '';
+            signalMsg.className = 'signal-msg';
+        });
+
+        document.getElementById('signal_envoyer').addEventListener('click', function () {
+            if (!current_compost_id) return;
+            fetch('/api/carte/signalement.php', {
+                method: 'POST',
+                body: new URLSearchParams({
+                    action: 'creer',
+                    compost_id: current_compost_id,
+                    motif: document.getElementById('signal_motif').value,
+                    commentaire: document.getElementById('signal_comment').value
+                })
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.ok) {
+                    signalMsg.textContent = '✓ Merci, ton signalement a bien été envoyé !';
+                    signalMsg.className = 'signal-msg ok';
+                    document.getElementById('signal_comment').value = '';
+                    setTimeout(() => { signalZone.style.display = 'none'; }, 2500);
+                } else {
+                    signalMsg.textContent = d.error || 'Erreur, réessaie plus tard.';
+                    signalMsg.className = 'signal-msg err';
+                }
+            })
+            .catch(() => { signalMsg.textContent = 'Erreur réseau.'; signalMsg.className = 'signal-msg err'; });
+        });
+
+        // ── PANNEAU ADMIN SIGNALEMENTS ──
+        function echap(t) { const d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+
+        function chargerSignalements() {
+            fetch('/api/carte/signalement.php?action=liste')
+            .then(r => r.json())
+            .then(d => { if (d && d.signalements) renderSignalements(d.signalements); })
+            .catch(() => {});
+        }
+
+        function renderSignalements(liste) {
+            const btn = document.getElementById('signalAdminBtn');
+            const list = document.getElementById('signalAdminList');
+            document.getElementById('signalCount').textContent = liste.length;
+            btn.style.display = 'block';
+            if (!liste.length) {
+                list.innerHTML = '<div class="signal-vide">Aucun signalement ouvert 🎉</div>';
+                return;
+            }
+            list.innerHTML = '';
+            liste.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'signal-item';
+                const com = s.commentaire ? '<div class="signal-item-comment">« ' + echap(s.commentaire) + ' »</div>' : '';
+                item.innerHTML =
+                    '<div class="signal-item-motif">' + (MOTIF_LABELS[s.motif] || s.motif) + '</div>'
+                    + '<div class="signal-item-meta">Compost #' + s.compost_id + ' · par ' + echap(s.par) + ' · ' + (s.date || '').slice(0, 10) + '</div>'
+                    + com
+                    + '<div class="signal-item-actions">'
+                    + '<button type="button" class="sig-voir">📍 Voir</button>'
+                    + '<button type="button" class="sig-ok">✓ Résolu</button>'
+                    + '<button type="button" class="sig-rej">✗ Rejeter</button></div>';
+                item.querySelector('.sig-voir').addEventListener('click', function () {
+                    map.flyTo([s.lat, s.lon], 17);
+                    info_compost(s.compost_id, s.lat, s.lon);
+                });
+                item.querySelector('.sig-ok').addEventListener('click', function () { traiterSignalement(s.id, 'resolu'); });
+                item.querySelector('.sig-rej').addEventListener('click', function () { traiterSignalement(s.id, 'rejete'); });
+                list.appendChild(item);
+            });
+        }
+
+        function traiterSignalement(id, statut) {
+            fetch('/api/carte/signalement.php', {
+                method: 'POST',
+                body: new URLSearchParams({ action: 'traiter', id: id, statut: statut })
+            })
+            .then(r => r.json())
+            .then(d => { if (d.ok) chargerSignalements(); })
+            .catch(() => {});
+        }
+
+        document.getElementById('signalAdminBtn').addEventListener('click', function () {
+            const p = document.getElementById('signalAdminPanel');
+            p.style.display = p.style.display === 'flex' ? 'none' : 'flex';
+        });
+        document.getElementById('signalPanelClose').addEventListener('click', function () {
+            document.getElementById('signalAdminPanel').style.display = 'none';
+        });
 
         supp = document.getElementById("supprimer_compost");
         supp.addEventListener('click', function () {

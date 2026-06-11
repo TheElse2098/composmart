@@ -116,6 +116,24 @@ CREATE TABLE `user_progress` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ─────────────────────────────────────────
+-- SIGNALEMENTS (erreurs sur les composteurs)
+-- ─────────────────────────────────────────
+
+CREATE TABLE `signalements` (
+  `id`          int      NOT NULL AUTO_INCREMENT,
+  `compost_id`  int      NOT NULL,
+  `user_id`     int      DEFAULT NULL,
+  `motif`       enum('position','type_acces','regles','inexistant','autre') NOT NULL,
+  `commentaire` text     DEFAULT NULL,
+  `statut`      enum('ouvert','resolu','rejete') NOT NULL DEFAULT 'ouvert',
+  `created_at`  datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `compost_statut` (`compost_id`, `statut`),
+  CONSTRAINT `signal_ibfk_1` FOREIGN KEY (`compost_id`) REFERENCES `composts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `signal_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ─────────────────────────────────────────
 -- SCORES (mini-jeux)
 -- ─────────────────────────────────────────
 
