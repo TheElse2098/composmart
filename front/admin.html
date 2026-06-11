@@ -76,6 +76,9 @@
     .act-demote { background: #fff3e0; color: #b26a00; }
     .act-delete { background: #fdecea; color: #c0392b; }
     .act-self { color: #bbb; font-size: 0.72rem; font-style: italic; }
+    .user-search { width: 100%; border: 1.5px solid #d7e6da; border-radius: 12px; padding: 9px 13px; font-size: 0.85rem; font-family: inherit; background: #fff; color: #1a3a25; outline: none; margin-bottom: 10px; }
+    .user-search:focus { border-color: #1e6e3e; }
+    .user-empty { text-align: center; color: #999; font-size: 0.82rem; padding: 16px; }
 
     /* Journal d'audit */
     .audit-item { background: #fff; border-radius: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.04); margin-bottom: 7px; overflow: hidden; }
@@ -117,6 +120,8 @@
     html.dark .act-promote { background: #16291c; color: #7fc99a; }
     html.dark .act-demote { background: #2e2410; color: #e8b931; }
     html.dark .act-delete { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .user-search { background: #16211a; border-color: #2b3c30; color: #e8f5ee; }
+    html.dark .user-search:focus { border-color: #52b788; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
   </style>
@@ -160,6 +165,7 @@
     <div id="signalList"></div>
 
     <div class="section-title">👥 Utilisateurs <span id="userCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
+    <input id="userSearch" class="user-search" type="search" placeholder="🔍 Rechercher un utilisateur par pseudo…" autocomplete="off" />
     <div class="user-table-wrap">
       <table>
         <thead><tr><th>Pseudo</th><th>Niveau</th><th>XP</th><th>Inscrit le</th><th>Rôle</th><th>Actions</th></tr></thead>
@@ -205,7 +211,7 @@
       .then(d => {
         if (!d || d.error) { showDenied(); return; }
         renderStats(d.stats);
-        renderUsers(d.users, d.me);
+        loadUsers('');
         renderAudit(d.audit || []);
         document.getElementById('loader').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
@@ -229,11 +235,20 @@
 
     let currentUserId = 0;
 
-    function renderUsers(users, me) {
+    function renderUsers(users, me, total) {
       currentUserId = me || 0;
-      document.getElementById('userCount').textContent = '(' + users.length + ')';
+      const countEl = document.getElementById('userCount');
+      if (total && total > users.length) {
+        countEl.textContent = '(' + users.length + ' affichés sur ' + total + ')';
+      } else {
+        countEl.textContent = '(' + users.length + ')';
+      }
       const tbody = document.getElementById('userRows');
       tbody.innerHTML = '';
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="user-empty">Aucun utilisateur trouvé.</td></tr>';
+        return;
+      }
       users.forEach(u => {
         const tr = document.createElement('tr');
         const isMe = u.id === currentUserId;
@@ -288,17 +303,32 @@
         .catch(() => alert('Erreur réseau.'));
     }
 
+    // ── Recherche d'utilisateurs (côté serveur, débouncée) ──
+    let userSearchTimer;
+    function loadUsers(q) {
+      fetch('/api/admin/users.php?q=' + encodeURIComponent(q || ''))
+        .then(r => r.json())
+        .then(d => { if (d && d.users) renderUsers(d.users, d.me, d.total); })
+        .catch(() => {});
+    }
+    document.getElementById('userSearch').addEventListener('input', e => {
+      clearTimeout(userSearchTimer);
+      const q = e.target.value;
+      userSearchTimer = setTimeout(() => loadUsers(q), 250);
+    });
+
     function reloadDashboard() {
+      // Rafraîchit stats + audit, et ré-applique la recherche courante sur la table
       fetch('/api/admin/stats.php')
         .then(r => r.json())
         .then(d => {
           if (d && d.stats) {
             renderStats(d.stats);
-            renderUsers(d.users, d.me);
             renderAudit(d.audit || []);
           }
         })
         .catch(() => {});
+      loadUsers(document.getElementById('userSearch').value);
     }
 
     // ── Journal d'audit ──

@@ -8,8 +8,6 @@ header('Content-Type: application/json; charset=utf-8');
 ob_clean();
 csrf_check();
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Méthode non autorisée']); exit; }
-
 $c = mysqli_connect(
     getenv('DB_HOST') ?: 'db',
     getenv('DB_USER') ?: 'composmart',
@@ -33,6 +31,37 @@ if (!$is_admin) {
     echo json_encode(['error' => 'Accès réservé aux administrateurs.']);
     exit;
 }
+
+// ── RECHERCHE (GET) ────────────────────────────────────────────────────────
+// Filtrage côté serveur + LIMIT : tient même avec un très grand nombre d'users.
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $q = trim($_GET['q'] ?? '');
+    if ($q !== '') {
+        $like = '%' . addcslashes($q, '%_\\') . '%';
+        $stmt = mysqli_prepare($c, 'SELECT id, username, xp, niveau, isAdmin, created_at FROM users WHERE username LIKE ? ORDER BY username LIMIT 50');
+        $stmt->bind_param('s', $like);
+    } else {
+        $stmt = mysqli_prepare($c, 'SELECT id, username, xp, niveau, isAdmin, created_at FROM users ORDER BY created_at DESC, id DESC LIMIT 50');
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $users = [];
+    while ($row = $res->fetch_assoc()) {
+        $users[] = [
+            'id'       => (int)$row['id'],
+            'username' => $row['username'],
+            'xp'       => (int)$row['xp'],
+            'niveau'   => (int)$row['niveau'],
+            'isAdmin'  => (bool)$row['isAdmin'],
+            'date'     => $row['created_at'],
+        ];
+    }
+    $total = (int) (mysqli_fetch_row(mysqli_query($c, 'SELECT COUNT(*) FROM users'))[0] ?? 0);
+    echo json_encode(['users' => $users, 'me' => $me, 'total' => $total], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error' => 'Méthode non autorisée']); exit; }
 
 $action  = $_POST['action']  ?? '';
 $user_id = (int)($_POST['user_id'] ?? 0);
