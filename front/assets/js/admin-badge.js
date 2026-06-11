@@ -1,9 +1,11 @@
 (function () {
   function injectBadge() {
     if (document.getElementById('adminBadge')) return;
-    var badge = document.createElement('span');
+    var badge = document.createElement('a');
     badge.id = 'adminBadge';
+    badge.href = '/admin';
     badge.textContent = 'ADMIN';
+    badge.title = 'Tableau de bord admin';
     badge.style.cssText = [
       'display:inline-flex',
       'align-items:center',
@@ -18,7 +20,8 @@
       'text-transform:uppercase',
       'flex-shrink:0',
       'box-shadow:0 1px 4px rgba(229,57,53,0.4)',
-      'cursor:default',
+      'cursor:pointer',
+      'text-decoration:none',
     ].join(';');
 
     var profil = document.querySelector('.nav-profil');

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>CompoSmart – Admin</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding-bottom: 70px; }
+
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; }
+    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
+    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .burger.open span:nth-child(2) { opacity: 0; }
+    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
+    .drawer.open { right: 0; }
+    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
+    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
+    .drawer-logo span { color: #a8e6bf; }
+    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
+    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
+    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
+    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
+    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .hero { text-align: center; padding: 26px 20px 12px; }
+    .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; color: #1a3a25; }
+
+    .page-content { width: 100%; max-width: 760px; padding: 0 16px; }
+    .section-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin: 24px 4px 12px; display: flex; align-items: center; gap: 8px; }
+
+    /* Cartes de stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+    .stat-card { background: #fff; border-radius: 16px; padding: 16px 14px; text-align: center; box-shadow: 0 2px 10px rgba(30,110,62,0.08); }
+    .stat-num { font-family: 'Baloo 2', cursive; font-size: 1.7rem; font-weight: 900; color: #1e6e3e; line-height: 1; }
+    .stat-lbl { font-size: 0.72rem; color: #4a7a5a; font-weight: 700; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card.alert .stat-num { color: #e53935; }
+
+    /* Signalements */
+    .signal-item { background: #fff; border-radius: 12px; padding: 12px 14px; font-size: 0.82rem; color: #1a3a25; box-shadow: 0 1px 6px rgba(0,0,0,0.05); margin-bottom: 10px; }
+    .signal-item-motif { font-weight: 800; margin-bottom: 2px; }
+    .signal-item-meta { color: #888; font-size: 0.7rem; margin-bottom: 5px; }
+    .signal-item-comment { font-style: italic; margin-bottom: 8px; word-break: break-word; }
+    .signal-item-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .signal-item-actions button, .signal-item-actions a { border: none; border-radius: 14px; padding: 5px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; }
+    .sig-voir { background: #eef4ec; color: #1e6e3e; }
+    .sig-ok { background: #1e6e3e; color: #fff; }
+    .sig-rej { background: #fdecea; color: #c0392b; }
+    .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 18px; background: #fff; border-radius: 12px; }
+
+    /* Table utilisateurs */
+    .user-table-wrap { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 10px rgba(30,110,62,0.08); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th { background: #eef4ec; color: #1a3a25; font-weight: 800; text-align: left; padding: 10px 12px; white-space: nowrap; }
+    td { padding: 9px 12px; border-top: 1px solid #f0f4f0; color: #1a3a25; white-space: nowrap; }
+    .badge-admin { background: #e53935; color: #fff; font-size: 0.62rem; font-weight: 900; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.5px; }
+    .lvl-pill { background: #fff9c4; color: #b26a00; font-weight: 800; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; }
+
+    .loader { text-align: center; padding: 40px; color: #4a7a5a; font-weight: 700; }
+
+    html.dark .stat-card, html.dark .signal-item, html.dark .user-table-wrap, html.dark .empty-msg { background: #16211a; }
+    html.dark .section-title, html.dark h1, html.dark td { color: #e8f5ee; }
+    html.dark th { background: #1e2d22; color: #e8f5ee; }
+    html.dark td { border-top-color: #243a2c; }
+    html.dark .sig-voir { background: #1e2d22; color: #7fc99a; }
+    html.dark .sig-rej { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .signal-item, html.dark .stat-lbl { color: #cfe8d8; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
+    <div class="nav-right"><a href="compte" class="nav-profil">&#128100;</a><button id="themeToggle" aria-label="Thème">🌙</button><button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button></div>
+  </nav>
+  <div class="overlay" id="overlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-logo">Compos<span>mart</span></div>
+      <button class="drawer-close" id="closeBtn">&#x2715;</button>
+    </div>
+    <ul class="drawer-menu">
+      <li><a href="index.html"><span class="menu-icon">🏠</span> Accueil</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="carte.html"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="cours.html"><span class="menu-icon">📚</span> Les cours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="jeux"><span class="menu-icon">🎮</span> Jeux</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="compte"><span class="menu-icon">👤</span> Mon compte</a></li>
+      <div class="drawer-divider"></div>
+    </ul>
+  </div>
+
+  <div class="hero">
+    <div class="hero-badge">🔧 Administration</div>
+    <h1>Tableau de bord</h1>
+  </div>
+
+  <div class="page-content" id="dashboard" style="display:none">
+    <div class="section-title">📊 Vue d'ensemble</div>
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="section-title">🚩 Signalements ouverts</div>
+    <div id="signalList"></div>
+
+    <div class="section-title">👥 Utilisateurs <span id="userCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
+    <div class="user-table-wrap">
+      <table>
+        <thead><tr><th>Pseudo</th><th>Niveau</th><th>XP</th><th>Inscrit le</th><th>Rôle</th></tr></thead>
+        <tbody id="userRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="loader" id="loader">Chargement…</div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    // ── BURGER ──
+    const burger = document.getElementById('burgerBtn');
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('closeBtn');
+    burger.addEventListener('click', () => { drawer.classList.add('open'); overlay.classList.add('open'); burger.classList.add('open'); });
+    closeBtn.addEventListener('click', () => { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); });
+    overlay.addEventListener('click', () => { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); });
+
+    function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+
+    const MOTIF_LABELS = {
+      position: '📍 Mauvaise position',
+      type_acces: '🏷️ Mauvais type ou accès',
+      regles: '📋 Règles incorrectes',
+      inexistant: "❌ N'existe plus",
+      autre: '💬 Autre'
+    };
+
+    function showDenied() {
+      window.location.replace('/');
+    }
+
+    // ── Charge le dashboard (l'API est gardée côté serveur) ──
+    fetch('/api/admin/stats.php')
+      .then(r => { if (r.status === 403) { showDenied(); throw new Error('forbidden'); } return r.json(); })
+      .then(d => {
+        if (!d || d.error) { showDenied(); return; }
+        renderStats(d.stats);
+        renderUsers(d.users);
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        chargerSignalements();
+      })
+      .catch(() => {});
+
+    function renderStats(s) {
+      const cards = [
+        { n: s.users, l: 'Utilisateurs' },
+        { n: s.composts, l: 'Composteurs' },
+        { n: s.completions, l: 'Cours validés' },
+        { n: s.parties, l: 'Parties jouées' },
+        { n: s.admins, l: 'Admins' },
+        { n: s.signalements == null ? '—' : s.signalements, l: 'Signalements', alert: s.signalements > 0 }
+      ];
+      document.getElementById('statsGrid').innerHTML = cards.map(c =>
+        '<div class="stat-card' + (c.alert ? ' alert' : '') + '"><div class="stat-num">' + c.n + '</div><div class="stat-lbl">' + c.l + '</div></div>'
+      ).join('');
+    }
+
+    function renderUsers(users) {
+      document.getElementById('userCount').textContent = '(' + users.length + ')';
+      const rows = users.map(u =>
+        '<tr><td><b>' + echap(u.username) + '</b></td>'
+        + '<td><span class="lvl-pill">Niv. ' + u.niveau + '</span></td>'
+        + '<td>' + u.xp + '</td>'
+        + '<td>' + (u.date || '').slice(0, 10) + '</td>'
+        + '<td>' + (u.isAdmin ? '<span class="badge-admin">ADMIN</span>' : '—') + '</td></tr>'
+      ).join('');
+      document.getElementById('userRows').innerHTML = rows;
+    }
+
+    // ── Signalements (réutilise l'API existante) ──
+    function chargerSignalements() {
+      fetch('/api/carte/signalement.php?action=liste')
+        .then(r => r.json())
+        .then(d => renderSignalements(d && d.signalements ? d.signalements : []))
+        .catch(() => renderSignalements([]));
+    }
+
+    function renderSignalements(liste) {
+      const box = document.getElementById('signalList');
+      if (!liste.length) {
+        box.innerHTML = '<div class="empty-msg">Aucun signalement ouvert 🎉</div>';
+        return;
+      }
+      box.innerHTML = '';
+      liste.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'signal-item';
+        const com = s.commentaire ? '<div class="signal-item-comment">« ' + echap(s.commentaire) + ' »</div>' : '';
+        item.innerHTML =
+          '<div class="signal-item-motif">' + (MOTIF_LABELS[s.motif] || echap(s.motif)) + '</div>'
+          + '<div class="signal-item-meta">Composteur #' + s.compost_id + ' · par ' + echap(s.par) + ' · ' + (s.date || '').slice(0, 10) + '</div>'
+          + com
+          + '<div class="signal-item-actions">'
+          + '<a class="sig-voir" href="/carte" title="Ouvre la carte">📍 Carte</a>'
+          + '<button type="button" class="sig-ok">✓ Résolu</button>'
+          + '<button type="button" class="sig-rej">✗ Rejeter</button></div>';
+        item.querySelector('.sig-ok').addEventListener('click', () => traiter(s.id, 'resolu'));
+        item.querySelector('.sig-rej').addEventListener('click', () => traiter(s.id, 'rejete'));
+        box.appendChild(item);
+      });
+    }
+
+    function traiter(id, statut) {
+      fetch('/api/carte/signalement.php', {
+        method: 'POST',
+        body: new URLSearchParams({ action: 'traiter', id: id, statut: statut })
+      })
+      .then(r => r.json())
+      .then(d => { if (d.ok) { chargerSignalements(); refreshSignalCount(); } })
+      .catch(() => {});
+    }
+
+    function refreshSignalCount() {
+      fetch('/api/admin/stats.php')
+        .then(r => r.json())
+        .then(d => { if (d && d.stats) renderStats(d.stats); })
+        .catch(() => {});
+    }
+  </script>
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/admin-badge.js?v=2"></script>
+</body>
+</html>
