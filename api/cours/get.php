@@ -1,6 +1,5 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
 
 $slug = preg_replace('/[^a-z0-9\-]/', '', strtolower($_GET['slug'] ?? ''));
 if (!$slug) { http_response_code(400); echo json_encode(['error' => 'slug manquant']); exit; }

@@ -26,13 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 // POST : créer le premier compte admin
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
 
-// Vérification serveur : si un admin existe déjà, on refuse
-$res = mysqli_query($c, 'SELECT id FROM users WHERE isAdmin = 1 LIMIT 1');
-if (mysqli_num_rows($res) > 0) {
-    echo json_encode(['error' => 'Un compte admin existe déjà.']);
-    exit;
-}
-
 $username = trim($_POST['username'] ?? '');
 $password = $_POST['password']  ?? '';
 
@@ -42,14 +35,25 @@ if (strlen($username) < 3 || strlen($username) > 30) {
 if (!preg_match('/^[a-zA-Z0-9_\-.]+$/', $username)) {
     echo json_encode(['error' => 'Caractères autorisés : lettres, chiffres, _ - .']); exit;
 }
-if (strlen($password) < 6) {
-    echo json_encode(['error' => 'Mot de passe trop court (6 caractères minimum).']); exit;
+$pwd_err = password_policy_error($password);
+if ($pwd_err) { echo json_encode(['error' => $pwd_err]); exit; }
+
+// Verrou nommé : rend le « check admin existe ? » + INSERT atomique,
+// empêche deux requêtes simultanées de créer deux admins.
+mysqli_query($c, "SELECT GET_LOCK('composmart_launchpad', 5)");
+
+$res = mysqli_query($c, 'SELECT id FROM users WHERE isAdmin = 1 LIMIT 1');
+if (mysqli_num_rows($res) > 0) {
+    mysqli_query($c, "SELECT RELEASE_LOCK('composmart_launchpad')");
+    echo json_encode(['error' => 'Un compte admin existe déjà.']);
+    exit;
 }
 
 $hash = password_hash($password, PASSWORD_BCRYPT);
 $u    = mysqli_real_escape_string($c, $username);
 
 $ok = mysqli_query($c, "INSERT INTO users (username, password_hash, isAdmin) VALUES ('$u', '$hash', 1)");
+mysqli_query($c, "SELECT RELEASE_LOCK('composmart_launchpad')");
 if (!$ok) {
     $errno = mysqli_errno($c);
     echo json_encode(['error' => $errno === 1062 ? 'Ce nom d\'utilisateur est déjà pris.' : 'Erreur base de données.']);

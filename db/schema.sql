@@ -134,6 +134,24 @@ CREATE TABLE `signalements` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ─────────────────────────────────────────
+-- JOURNAL D'AUDIT (actions admin)
+-- ─────────────────────────────────────────
+
+CREATE TABLE `audit_log` (
+  `id`          int          NOT NULL AUTO_INCREMENT,
+  `user_id`     int          DEFAULT NULL,
+  `username`    varchar(100) DEFAULT NULL,
+  `action`      varchar(60)  NOT NULL,
+  `details`     varchar(255) DEFAULT NULL,
+  `target_type` varchar(30)  DEFAULT NULL,
+  `target_id`   int          DEFAULT NULL,
+  `snapshot`    text         DEFAULT NULL,
+  `created_at`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ─────────────────────────────────────────
 -- SCORES (mini-jeux)
 -- ─────────────────────────────────────────
 

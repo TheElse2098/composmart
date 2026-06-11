@@ -70,6 +70,27 @@
     .badge-admin { background: #e53935; color: #fff; font-size: 0.62rem; font-weight: 900; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.5px; }
     .lvl-pill { background: #fff9c4; color: #b26a00; font-weight: 800; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; }
 
+    /* Journal d'audit */
+    .audit-item { background: #fff; border-radius: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.04); margin-bottom: 7px; overflow: hidden; }
+    .audit-head { display: flex; align-items: center; gap: 10px; padding: 9px 13px; font-size: 0.8rem; color: #1a3a25; cursor: pointer; transition: background 0.12s; }
+    .audit-head:hover { background: #f3f8f3; }
+    .audit-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .audit-main { flex: 1; min-width: 0; }
+    .audit-action { font-weight: 800; }
+    .audit-meta { color: #888; font-size: 0.7rem; }
+    .audit-date { color: #999; font-size: 0.68rem; white-space: nowrap; flex-shrink: 0; }
+    .audit-chevron { color: #bbb; font-size: 0.8rem; flex-shrink: 0; transition: transform 0.18s; }
+    .audit-item.open .audit-chevron { transform: rotate(90deg); }
+    .audit-detail { display: none; padding: 0 13px 12px 36px; font-size: 0.8rem; color: #1a3a25; }
+    .audit-item.open .audit-detail { display: block; }
+    .audit-row { display: flex; gap: 8px; padding: 3px 0; border-top: 1px solid #f0f4f0; }
+    .audit-row:first-child { border-top: none; }
+    .audit-key { color: #4a7a5a; font-weight: 800; min-width: 110px; flex-shrink: 0; }
+    .audit-val { color: #1a3a25; word-break: break-word; }
+    .audit-val.empty { color: #aaa; font-style: italic; }
+    .audit-chip { display: inline-block; background: #eef4ec; color: #2d6a4f; border-radius: 8px; padding: 1px 7px; font-size: 0.72rem; font-weight: 700; margin: 1px 2px 1px 0; }
+    .audit-chip.nok { background: #fdecea; color: #c0392b; }
+
     .loader { text-align: center; padding: 40px; color: #4a7a5a; font-weight: 700; }
 
     html.dark .stat-card, html.dark .signal-item, html.dark .user-table-wrap, html.dark .empty-msg { background: #16211a; }
@@ -79,6 +100,13 @@
     html.dark .sig-voir { background: #1e2d22; color: #7fc99a; }
     html.dark .sig-rej { background: #3d1a1a; color: #ef9a9a; }
     html.dark .signal-item, html.dark .stat-lbl { color: #cfe8d8; }
+    html.dark .audit-item { background: #16211a; }
+    html.dark .audit-head { color: #e8f5ee; }
+    html.dark .audit-head:hover { background: #1e2d22; }
+    html.dark .audit-detail, html.dark .audit-val { color: #e8f5ee; }
+    html.dark .audit-row { border-top-color: #243a2c; }
+    html.dark .audit-chip { background: #1e2d22; color: #7fc99a; }
+    html.dark .audit-chip.nok { background: #3d1a1a; color: #ef9a9a; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
   </style>
@@ -128,6 +156,9 @@
         <tbody id="userRows"></tbody>
       </table>
     </div>
+
+    <div class="section-title">📜 Journal d'activité</div>
+    <div id="auditList"></div>
   </div>
 
   <div class="loader" id="loader">Chargement…</div>
@@ -165,6 +196,7 @@
         if (!d || d.error) { showDenied(); return; }
         renderStats(d.stats);
         renderUsers(d.users);
+        renderAudit(d.audit || []);
         document.getElementById('loader').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         chargerSignalements();
@@ -195,6 +227,78 @@
         + '<td>' + (u.isAdmin ? '<span class="badge-admin">ADMIN</span>' : '—') + '</td></tr>'
       ).join('');
       document.getElementById('userRows').innerHTML = rows;
+    }
+
+    // ── Journal d'audit ──
+    const AUDIT_LABELS = {
+      compost_modifie:     { icon: '✏️', txt: 'Composteur modifié' },
+      compost_supprime:    { icon: '🗑️', txt: 'Composteur supprimé' },
+      signalement_resolu:  { icon: '✓', txt: 'Signalement résolu' },
+      signalement_rejete:  { icon: '✗', txt: 'Signalement rejeté' }
+    };
+
+    function row(key, val, isEmpty) {
+      return '<div class="audit-row"><span class="audit-key">' + key + '</span>'
+        + '<span class="audit-val' + (isEmpty ? ' empty' : '') + '">' + val + '</span></div>';
+    }
+
+    function chips(arr, cls) {
+      if (!arr || !arr.length) return null;
+      return arr.map(x => '<span class="audit-chip' + (cls ? ' ' + cls : '') + '">' + echap(x) + '</span>').join('');
+    }
+
+    function auditDetailHtml(a) {
+      const s = a.snapshot || {};
+      let rows = '';
+      // Toujours : qui a fait l'action (l'admin) et quand
+      rows += row('Traité par', '<b>' + echap(a.username) + '</b>');
+      rows += row('Date', (a.date || '').replace('T', ' ').slice(0, 19));
+
+      if (a.target_type === 'signalement') {
+        rows += row('Signalé par', echap(s.reporter || 'Anonyme'));
+        rows += row('Motif', echap(MOTIF_LABELS[s.motif] || s.motif || '—'));
+        rows += s.commentaire
+          ? row('Commentaire', '« ' + echap(s.commentaire) + ' »')
+          : row('Commentaire', 'aucun', true);
+        rows += row('Composteur', s.compost_id != null ? '#' + s.compost_id : '—');
+      } else if (a.target_type === 'compost') {
+        rows += row('Composteur', '#' + (a.target_id != null ? a.target_id : (s.id != null ? s.id : '—')));
+        if (s.type)  rows += row('Type', echap(s.type));
+        if (s.acces) rows += row('Accès', echap(s.acces));
+        if (s.lat != null && s.lon != null) rows += row('Position', s.lat.toFixed(5) + ', ' + s.lon.toFixed(5));
+        const ok = chips(s.mettre); const nok = chips(s.pas_mettre, 'nok');
+        if (ok)  rows += row('Autorisé', ok);
+        if (nok) rows += row('Interdit', nok);
+      } else if (a.details) {
+        rows += row('Détails', echap(a.details));
+      }
+      return rows;
+    }
+
+    function renderAudit(liste) {
+      const box = document.getElementById('auditList');
+      if (!liste.length) {
+        box.innerHTML = '<div class="empty-msg">Aucune action enregistrée pour l\'instant.</div>';
+        return;
+      }
+      box.innerHTML = '';
+      liste.forEach(a => {
+        const meta = AUDIT_LABELS[a.action] || { icon: '•', txt: a.action };
+        const item = document.createElement('div');
+        item.className = 'audit-item';
+        const summary = a.details ? ' <span class="audit-meta">(' + echap(a.details) + ')</span>' : '';
+        item.innerHTML =
+          '<div class="audit-head">'
+          + '<div class="audit-icon">' + meta.icon + '</div>'
+          + '<div class="audit-main"><span class="audit-action">' + echap(meta.txt) + '</span>' + summary
+          + '<div class="audit-meta">par ' + echap(a.username) + '</div></div>'
+          + '<div class="audit-date">' + (a.date || '').replace('T', ' ').slice(0, 16) + '</div>'
+          + '<div class="audit-chevron">▶</div>'
+          + '</div>'
+          + '<div class="audit-detail">' + auditDetailHtml(a) + '</div>';
+        item.querySelector('.audit-head').addEventListener('click', () => item.classList.toggle('open'));
+        box.appendChild(item);
+      });
     }
 
     // ── Signalements (réutilise l'API existante) ──

@@ -120,9 +120,28 @@ if ($action === 'traiter') {
         echo json_encode(['error' => 'Données invalides']);
         exit;
     }
+    // Instantané du signalement avant traitement (auteur, contenu)
+    $snap = ['id' => $id];
+    $qs = mysqli_prepare($conn,
+        'SELECT s.compost_id, s.motif, s.commentaire, u.username AS reporter
+         FROM signalements s LEFT JOIN users u ON u.id = s.user_id WHERE s.id = ?');
+    $qs->bind_param('i', $id);
+    $qs->execute();
+    if ($rs = $qs->get_result()->fetch_assoc()) {
+        $snap['reporter']    = $rs['reporter'] ?: 'Anonyme';
+        $snap['motif']       = $rs['motif'];
+        $snap['commentaire'] = $rs['commentaire'];
+        $snap['compost_id']  = (int)$rs['compost_id'];
+    }
+
     $stmt = mysqli_prepare($conn, 'UPDATE signalements SET statut = ? WHERE id = ?');
     $stmt->bind_param('si', $statut, $id);
     $stmt->execute();
+    audit_log($conn, 'signalement_' . $statut, "id=$id", [
+        'target_type' => 'signalement',
+        'target_id'   => $id,
+        'snapshot'    => $snap,
+    ]);
     echo json_encode(['ok' => true]);
     exit;
 }

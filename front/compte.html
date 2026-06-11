@@ -60,6 +60,34 @@
     .btn-logout { display: block; width: 100%; background: #fff; color: #c0392b; border: 1.5px solid #c0392b; border-radius: 50px; padding: 12px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
     .btn-logout:hover { background: #fdecea; }
 
+    /* ── Sections enrichies ── */
+    .sec-head { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 800; color: #1a3a25; margin: 26px 0 12px; }
+    .sec-head .sec-count { margin-left: auto; font-size: 0.78rem; font-weight: 700; color: #7aaa8a; }
+
+    /* Badges */
+    .badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .badge { text-align: center; padding: 12px 6px; border-radius: 14px; background: #f4f9f4; border: 1.5px solid #e3efe5; transition: transform 0.15s; }
+    .badge.locked { opacity: 0.4; filter: grayscale(0.8); }
+    .badge:not(.locked) { box-shadow: 0 2px 8px rgba(30,110,62,0.12); }
+    .badge:not(.locked):hover { transform: translateY(-2px); }
+    .badge-emoji { font-size: 1.7rem; line-height: 1; }
+    .badge-label { font-size: 0.68rem; font-weight: 800; color: #1a3a25; margin-top: 5px; line-height: 1.2; }
+    .badge-desc { font-size: 0.6rem; color: #7aaa8a; margin-top: 2px; line-height: 1.2; }
+
+    /* Records de jeux */
+    .game-row { display: flex; align-items: center; gap: 12px; background: #f4f9f4; border-radius: 14px; padding: 11px 14px; margin-bottom: 9px; text-decoration: none; }
+    .game-row:hover { background: #eef4ec; }
+    .game-row-emoji { font-size: 1.6rem; flex-shrink: 0; }
+    .game-row-info { flex: 1; min-width: 0; }
+    .game-row-name { font-size: 0.88rem; font-weight: 800; color: #1a3a25; }
+    .game-row-sub { font-size: 0.7rem; color: #7aaa8a; font-weight: 600; margin-top: 1px; }
+    .game-row-best { font-size: 0.95rem; font-weight: 900; color: #1e6e3e; white-space: nowrap; flex-shrink: 0; }
+    .game-row-best.none { color: #bbb; font-size: 0.78rem; font-weight: 700; }
+
+    /* Cours terminés */
+    .course-chip { display: inline-flex; align-items: center; gap: 6px; background: #e8f5e9; color: #1b5e20; border-radius: 20px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; margin: 0 6px 8px 0; }
+    .course-empty { font-size: 0.82rem; color: #7aaa8a; font-style: italic; }
+
     /* ── Non connecté ── */
     .guest-title { font-size: 1.2rem; font-weight: 800; color: #1a3a25; margin-bottom: 8px; text-align: center; }
     .guest-sub { font-size: 0.9rem; color: #7aaa8a; text-align: center; margin-bottom: 32px; line-height: 1.5; }
@@ -84,6 +112,15 @@
     html.dark .drawer-menu li a { color: #b0d4be; }
     html.dark .drawer-menu li a:hover, html.dark .drawer-menu li a.active { background: #243328; color: #52b788; border-left-color: #52b788; }
     html.dark .drawer-divider { background: #2a3d2e; }
+    html.dark .sec-head { color: #c8e6d4; }
+    html.dark .badge { background: #16241a; border-color: #243a2c; }
+    html.dark .badge-label { color: #c8e6d4; }
+    html.dark .badge-desc, html.dark .sec-head .sec-count, html.dark .game-row-sub { color: #5a8a6a; }
+    html.dark .game-row { background: #16241a; }
+    html.dark .game-row:hover { background: #1e2d22; }
+    html.dark .game-row-name { color: #c8e6d4; }
+    html.dark .game-row-best { color: #52b788; }
+    html.dark .course-chip { background: #16291c; color: #7fc99a; }
   </style>
 </head>
 <body>
@@ -141,7 +178,9 @@
     closeBtn.addEventListener('click', closeMenu);
     overlay.addEventListener('click', closeMenu);
 
-    fetch('/api/auth/me.php')
+    function esc(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+
+    fetch('/api/auth/profile.php')
       .then(r => r.json())
       .then(data => {
         if (data.logged_in) {
@@ -155,22 +194,61 @@
     function renderProfile(u) {
       const initial = u.username.charAt(0).toUpperCase();
       document.getElementById('heroAvatar').textContent = initial;
-      document.getElementById('heroTitle').textContent = 'Bonjour, ' + u.username + ' !';
+      document.getElementById('heroTitle').textContent = 'Bonjour, ' + esc(u.username) + ' !';
       document.getElementById('heroSub').textContent = 'Niveau ' + u.niveau + ' · ' + u.xp + ' XP';
 
-      const xpInLevel  = u.xp % 100;
-      const xpToNext   = 100;
-      const pct        = Math.min(100, Math.round(xpInLevel / xpToNext * 100));
+      const xpInLevel = u.xp % 100;
+      const xpToNext  = 100;
+      const pct       = Math.min(100, Math.round(xpInLevel / xpToNext * 100));
 
-      document.getElementById('cardContent').innerHTML = `
+      // Stats : niveau, XP, cours finis, parties
+      const statsHtml = `
         <div class="stat-row">
           <div class="stat-cell"><div class="stat-val">${u.niveau}</div><div class="stat-lbl">Niveau</div></div>
           <div class="stat-cell"><div class="stat-val">${u.xp}</div><div class="stat-lbl">XP total</div></div>
+          <div class="stat-cell"><div class="stat-val">${u.cours.done}</div><div class="stat-lbl">Cours finis</div></div>
+          <div class="stat-cell"><div class="stat-val">${u.parties}</div><div class="stat-lbl">Parties</div></div>
         </div>
         <div class="xp-bar-wrap"><div class="xp-bar" style="width:${pct}%"></div></div>
-        <div class="xp-label">${xpInLevel} / ${xpToNext} XP pour le niveau ${u.niveau + 1}</div>
-        <button class="btn-logout" id="btnLogout">Se déconnecter</button>
-      `;
+        <div class="xp-label">${xpInLevel} / ${xpToNext} XP pour le niveau ${u.niveau + 1}</div>`;
+
+      // Badges
+      const badgesHtml = `
+        <div class="sec-head">🎖️ Badges <span class="sec-count">${u.badges.filter(b => b.unlocked).length} / ${u.badges.length}</span></div>
+        <div class="badge-grid">
+          ${u.badges.map(b => `
+            <div class="badge ${b.unlocked ? '' : 'locked'}" title="${esc(b.desc)}">
+              <div class="badge-emoji">${b.emoji}</div>
+              <div class="badge-label">${esc(b.label)}</div>
+              <div class="badge-desc">${esc(b.desc)}</div>
+            </div>`).join('')}
+        </div>`;
+
+      // Records de jeux
+      const recordsHtml = `
+        <div class="sec-head">🎮 Records de jeux</div>
+        ${u.records.map(r => `
+          <a href="/jeu-${r.slug}" class="game-row">
+            <div class="game-row-emoji">${r.emoji}</div>
+            <div class="game-row-info">
+              <div class="game-row-name">${esc(r.nom)}</div>
+              <div class="game-row-sub">${r.parties > 0 ? r.parties + ' partie' + (r.parties > 1 ? 's' : '') + ' jouée' + (r.parties > 1 ? 's' : '') : 'Pas encore joué'}</div>
+            </div>
+            ${r.best !== null
+              ? `<div class="game-row-best">🏆 ${r.best} / ${r.max}</div>`
+              : `<div class="game-row-best none">Jouer →</div>`}
+          </a>`).join('')}`;
+
+      // Cours terminés
+      const coursHtml = `
+        <div class="sec-head">📚 Cours terminés <span class="sec-count">${u.cours.done} / ${u.cours.total}</span></div>
+        ${u.cours.liste.length
+          ? `<div>${u.cours.liste.map(c => `<a href="/cours/${esc(c.slug)}" class="course-chip">${c.emoji} ${esc(c.titre)}</a>`).join('')}</div>`
+          : `<div class="course-empty">Aucun cours terminé pour l'instant. <a href="/cours">Commence ici !</a></div>`}`;
+
+      document.getElementById('cardContent').innerHTML =
+        statsHtml + badgesHtml + recordsHtml + coursHtml +
+        `<button class="btn-logout" id="btnLogout" style="margin-top:28px">Se déconnecter</button>`;
 
       document.getElementById('btnLogout').addEventListener('click', () => {
         fetch('/api/auth/logout.php', { method: 'POST' })

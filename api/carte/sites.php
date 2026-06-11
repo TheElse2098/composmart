@@ -31,7 +31,8 @@ $response = [];
 $connexion = mysqli_connect($URL, $user, $password, $db_name);
 
 if (mysqli_connect_errno()) {
-    echo json_encode(["error" => "Failed to connect to MySQL: " . mysqli_connect_error()]);
+    http_response_code(500);
+    echo json_encode(["error" => "Service indisponible."]);
     exit();
 }
 
@@ -195,6 +196,16 @@ elseif (isset($_POST['type'])) {
         $ins->execute();
     }
 
+    audit_log($connexion, 'compost_modifie', "id=$id", [
+        'target_type' => 'compost',
+        'target_id'   => $id,
+        'snapshot'    => [
+            'type'    => $type,
+            'acces'   => $acces,
+            'mettre'      => array_values($mettre),
+            'pas_mettre'  => array_values($pas_mettre),
+        ],
+    ]);
     $response = "Modification enregistrée.";
 }
 
@@ -238,8 +249,24 @@ if (isset($_POST['supprimer'])) {
         exit();
     }
     $id = intval($_POST['supprimer']);
+
+    // Instantané du composteur avant suppression
+    $snap = ['id' => $id];
+    $resSnap = mysqli_query($connexion, "SELECT type, publique, latitude, longitude FROM composts WHERE id=$id");
+    if ($rowSnap = mysqli_fetch_assoc($resSnap)) {
+        $snap['type']  = $rowSnap['type'];
+        $snap['acces'] = $rowSnap['publique'];
+        $snap['lat']   = (double)$rowSnap['latitude'];
+        $snap['lon']   = (double)$rowSnap['longitude'];
+    }
+
     mysqli_query($connexion, "DELETE FROM regles WHERE id_compost=$id");
     mysqli_query($connexion, "DELETE FROM composts WHERE id=$id");
+    audit_log($connexion, 'compost_supprime', "id=$id", [
+        'target_type' => 'compost',
+        'target_id'   => $id,
+        'snapshot'    => $snap,
+    ]);
     $response = "Compost supprimé.";
 }
 

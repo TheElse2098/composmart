@@ -6,6 +6,38 @@
  *  - rate_limit()           : limite d'appels par IP (fenêtre glissante, stockage fichier)
  */
 
+/**
+ * Journalise une action sensible (admin) dans la table audit_log.
+ * $extra peut contenir : target_type, target_id, snapshot (array → JSON).
+ * Silencieux si la table n'existe pas encore (migration non appliquée).
+ */
+function audit_log($conn, $action, $details = '', $extra = []) {
+    $uid   = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+    $uname = $_SESSION['username'] ?? '';
+    $details = mb_substr((string)$details, 0, 255);
+    $ttype = isset($extra['target_type']) ? mb_substr((string)$extra['target_type'], 0, 30) : null;
+    $tid   = isset($extra['target_id']) ? (int)$extra['target_id'] : null;
+    $snap  = isset($extra['snapshot']) ? json_encode($extra['snapshot'], JSON_UNESCAPED_UNICODE) : null;
+    $stmt = @mysqli_prepare($conn, 'INSERT INTO audit_log (user_id, username, action, details, target_type, target_id, snapshot) VALUES (?,?,?,?,?,?,?)');
+    if (!$stmt) return;
+    $stmt->bind_param('issssis', $uid, $uname, $action, $details, $ttype, $tid, $snap);
+    @$stmt->execute();
+}
+
+/**
+ * Renvoie un message d'erreur si le mot de passe est trop faible, '' sinon.
+ * Règle : 8 caractères min, au moins une lettre et un chiffre.
+ */
+function password_policy_error($password) {
+    if (strlen($password) < 8) {
+        return 'Mot de passe trop court (8 caractères minimum).';
+    }
+    if (!preg_match('/[A-Za-z]/', $password) || !preg_match('/[0-9]/', $password)) {
+        return 'Le mot de passe doit contenir au moins une lettre et un chiffre.';
+    }
+    return '';
+}
+
 function secure_session_start() {
     if (session_status() === PHP_SESSION_ACTIVE) return;
     $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';

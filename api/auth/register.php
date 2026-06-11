@@ -22,7 +22,8 @@ $password = $_POST['password'] ?? '';
 if (!$username || !$password) { echo json_encode(['error' => 'Champs manquants']); exit; }
 if (strlen($username) < 3 || strlen($username) > 30) { echo json_encode(['error' => "Nom d'utilisateur : 3 à 30 caractères"]); exit; }
 if (!preg_match('/^[a-zA-Z0-9_\-\.]+$/', $username)) { echo json_encode(['error' => "Nom d'utilisateur : lettres, chiffres, _ - . uniquement"]); exit; }
-if (strlen($password) < 6) { echo json_encode(['error' => 'Mot de passe : 6 caractères minimum']); exit; }
+$pwd_err = password_policy_error($password);
+if ($pwd_err) { echo json_encode(['error' => $pwd_err]); exit; }
 
 $conn = mysqli_connect(
     getenv('DB_HOST') ?: 'db',

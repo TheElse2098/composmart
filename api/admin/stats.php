@@ -68,5 +68,22 @@ while ($row = mysqli_fetch_assoc($res)) {
     ];
 }
 
+// Journal d'audit (30 dernières actions) — défensif si table absente
+$audit = [];
+if (table_exists($c, 'audit_log')) {
+    $res = mysqli_query($c, 'SELECT username, action, details, target_type, target_id, snapshot, created_at FROM audit_log ORDER BY id DESC LIMIT 30');
+    while ($row = mysqli_fetch_assoc($res)) {
+        $audit[] = [
+            'username'    => $row['username'] ?: 'inconnu',
+            'action'      => $row['action'],
+            'details'     => $row['details'],
+            'target_type' => $row['target_type'],
+            'target_id'   => $row['target_id'] !== null ? (int)$row['target_id'] : null,
+            'snapshot'    => $row['snapshot'] ? json_decode($row['snapshot'], true) : null,
+            'date'        => $row['created_at'],
+        ];
+    }
+}
+
 mysqli_close($c);
-echo json_encode(['stats' => $stats, 'users' => $users], JSON_UNESCAPED_UNICODE);
+echo json_encode(['stats' => $stats, 'users' => $users, 'audit' => $audit], JSON_UNESCAPED_UNICODE);

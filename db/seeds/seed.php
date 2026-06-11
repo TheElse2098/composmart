@@ -23,6 +23,22 @@ if (!$c) die("Impossible de se connecter à la DB.\n");
 mysqli_query($c, "ALTER TABLE users MODIFY COLUMN email varchar(255) DEFAULT NULL");
 mysqli_query($c, "ALTER TABLE users MODIFY COLUMN isAdmin tinyint(1) NOT NULL DEFAULT 0");
 mysqli_query($c, "ALTER TABLE users ADD UNIQUE IF NOT EXISTS username_uniq (username)");
+mysqli_query($c, "CREATE TABLE IF NOT EXISTS audit_log (
+  id INT NOT NULL AUTO_INCREMENT,
+  user_id INT DEFAULT NULL,
+  username VARCHAR(100) DEFAULT NULL,
+  action VARCHAR(60) NOT NULL,
+  details VARCHAR(255) DEFAULT NULL,
+  target_type VARCHAR(30) DEFAULT NULL,
+  target_id INT DEFAULT NULL,
+  snapshot TEXT DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id), KEY created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+// Migration des colonnes pour les tables audit_log déjà créées
+mysqli_query($c, "ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS target_type VARCHAR(30) DEFAULT NULL");
+mysqli_query($c, "ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS target_id INT DEFAULT NULL");
+mysqli_query($c, "ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS snapshot TEXT DEFAULT NULL");
 echo "Migrations schema appliquées.\n";
 
 $count = (int)mysqli_fetch_row(mysqli_query($c, 'SELECT COUNT(*) FROM composts'))[0];
