@@ -54,8 +54,29 @@ if (!$ok) {
     exit;
 }
 
-$_SESSION['user_id']  = mysqli_insert_id($c);
+$admin_id = mysqli_insert_id($c);
+$_SESSION['user_id']  = $admin_id;
 $_SESSION['username'] = $username;
+
+// Récupérer tous les cours et leur XP
+$total_xp  = 0;
+$res_cours = mysqli_query($c, 'SELECT slug, xp_reward FROM cours');
+$values    = [];
+while ($row = mysqli_fetch_assoc($res_cours)) {
+    $slug      = mysqli_real_escape_string($c, $row['slug']);
+    $total_xp += (int)$row['xp_reward'];
+    $values[]  = "($admin_id, '$slug')";
+}
+
+// Marquer tous les cours comme complétés
+if (!empty($values)) {
+    mysqli_query($c, 'INSERT IGNORE INTO user_progress (user_id, cours_id) VALUES ' . implode(',', $values));
+}
+
+// Mettre à jour XP et niveau
+$niveau = floor($total_xp / 100) + 1;
+mysqli_query($c, "UPDATE users SET xp = $total_xp, niveau = $niveau WHERE id = $admin_id");
+
 mysqli_close($c);
 
-echo json_encode(['ok' => true, 'username' => $username]);
+echo json_encode(['ok' => true, 'username' => $username, 'xp' => $total_xp, 'niveau' => $niveau]);
