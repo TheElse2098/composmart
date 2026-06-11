@@ -19,6 +19,12 @@ for ($i = 0; $i < 15; $i++) {
 }
 if (!$c) die("Impossible de se connecter à la DB.\n");
 
+// ── Migrations schema ──────────────────────────────────────────────────────
+mysqli_query($c, "ALTER TABLE users MODIFY COLUMN email varchar(255) DEFAULT NULL");
+mysqli_query($c, "ALTER TABLE users MODIFY COLUMN isAdmin tinyint(1) NOT NULL DEFAULT 0");
+mysqli_query($c, "ALTER TABLE users ADD UNIQUE IF NOT EXISTS username_uniq (username)");
+echo "Migrations schema appliquées.\n";
+
 $count = (int)mysqli_fetch_row(mysqli_query($c, 'SELECT COUNT(*) FROM composts'))[0];
 mysqli_close($c);
 

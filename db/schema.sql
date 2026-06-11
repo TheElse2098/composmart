@@ -89,14 +89,16 @@ CREATE TABLE `cours` (
 
 CREATE TABLE `users` (
   `id`            int          NOT NULL AUTO_INCREMENT,
-  `email`         varchar(255) NOT NULL,
+  `email`         varchar(255) DEFAULT NULL,
   `username`      varchar(100) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `created_at`    datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `xp`            int          NOT NULL DEFAULT 0,
   `niveau`        int          NOT NULL DEFAULT 1,
+  `isAdmin`       tinyint(1)   NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`)
+  UNIQUE KEY `email` (`email`),
+  UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ─────────────────────────────────────────

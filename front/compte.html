@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -9,7 +9,7 @@
   <title>CompoSmart – Mon compte</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background-color: #eef4ec; font-family: 'Segoe UI', Arial, sans-serif; min-height: 100vh; }
+    body { background-color: #eef4ec; font-family: 'Segoe UI', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
 
     nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; position: sticky; top: 0; z-index: 100; }
     .nav-logo { font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
@@ -38,22 +38,63 @@
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .overlay.open { opacity: 1; pointer-events: all; }
 
-    .hero { background: #1e6e3e; padding: 30px 24px 50px; text-align: center; }
-    .hero-emoji { font-size: 80px; display: block; margin-bottom: 16px; }
-    .hero h1 { font-size: clamp(1.4rem, 4vw, 2rem); color: #fff; font-weight: 900; text-transform: uppercase; line-height: 1.2; }
-    .content { background: #fff; border-radius: 24px 24px 0 0; margin-top: -20px; padding: 32px 24px 48px; max-width: 700px; margin-left: auto; margin-right: auto; position: relative; }
-    .content p { font-size: 1rem; color: #2c4a34; line-height: 1.7; margin-bottom: 28px; }
-    .tips-title { font-size: 1.1rem; font-weight: 700; color: #1e6e3e; margin-bottom: 16px; }
-    .tip { background: #eef4ec; border-left: 4px solid #1e6e3e; border-radius: 0 12px 12px 0; padding: 14px 16px; margin-bottom: 12px; font-size: 0.95rem; color: #1a3a25; line-height: 1.5; }
-    .back-btn { display: inline-block; margin-top: 32px; background: #1e6e3e; color: #fff; font-weight: 700; font-size: 1rem; padding: 14px 28px; border-radius: 50px; text-decoration: none; transition: opacity 0.2s; }
-    .back-btn:hover { opacity: 0.85; }
+    /* ── Hero ── */
+    .hero { background: linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2a9450 100%); padding: 36px 24px 52px; text-align: center; }
+    .hero h1 { font-size: clamp(1.3rem, 4vw, 1.8rem); color: #fff; font-weight: 900; margin-top: 14px; }
+    .hero-sub { font-size: 0.9rem; color: #a8e6bf; margin-top: 6px; }
+
+    /* Avatar cercle avec initiale */
+    .avatar { width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,0.18); border: 3px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; color: #fff; margin: 0 auto; letter-spacing: 0; }
+
+    /* ── Card ── */
+    .card { background: #fff; border-radius: 24px; margin-top: -20px; padding: 32px 24px 40px; max-width: 520px; margin-left: auto; margin-right: auto; position: relative; }
+
+    /* ── Profil connecté ── */
+    .stat-row { display: flex; justify-content: space-around; margin-bottom: 28px; }
+    .stat-cell { text-align: center; }
+    .stat-val { font-size: 1.6rem; font-weight: 900; color: #1e6e3e; line-height: 1; }
+    .stat-lbl { font-size: 0.72rem; font-weight: 700; color: #7aaa8a; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+    .xp-bar-wrap { background: #eef4ec; border-radius: 20px; height: 10px; margin-bottom: 6px; overflow: hidden; }
+    .xp-bar { height: 100%; background: linear-gradient(90deg, #1e6e3e, #2a9450); border-radius: 20px; transition: width 0.6s ease; }
+    .xp-label { font-size: 0.72rem; color: #7aaa8a; text-align: right; margin-bottom: 28px; }
+    .btn-logout { display: block; width: 100%; background: #fff; color: #c0392b; border: 1.5px solid #c0392b; border-radius: 50px; padding: 12px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+    .btn-logout:hover { background: #fdecea; }
+
+    /* ── Non connecté ── */
+    .guest-title { font-size: 1.2rem; font-weight: 800; color: #1a3a25; margin-bottom: 8px; text-align: center; }
+    .guest-sub { font-size: 0.9rem; color: #7aaa8a; text-align: center; margin-bottom: 32px; line-height: 1.5; }
+    .btn-primary { display: block; width: 100%; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 14px; font-size: 1rem; font-weight: 700; text-decoration: none; text-align: center; margin-bottom: 12px; cursor: pointer; transition: opacity 0.15s; }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { display: block; width: 100%; background: #fff; color: #1e6e3e; border: 1.5px solid #1e6e3e; border-radius: 50px; padding: 14px; font-size: 1rem; font-weight: 700; text-decoration: none; text-align: center; cursor: pointer; transition: background 0.15s; }
+    .btn-secondary:hover { background: #eef4ec; }
+
+    /* dark mode */
+    html.dark .card { background: #1a2b1e; }
+    html.dark .guest-title { color: #c8e6d4; }
+    html.dark .guest-sub { color: #5a8a6a; }
+    html.dark .stat-val { color: #52b788; }
+    html.dark .stat-lbl { color: #4a7a5a; }
+    html.dark .xp-bar-wrap { background: #243328; }
+    html.dark .xp-label { color: #4a7a5a; }
+    html.dark .btn-secondary { background: #1a2b1e; color: #52b788; border-color: #2d4030; }
+    html.dark .btn-secondary:hover { background: #243328; }
+    html.dark .btn-logout { background: #1a2b1e; color: #e57373; border-color: #4d2a2a; }
+    html.dark .btn-logout:hover { background: #2d1a1a; }
+    html.dark .drawer { background: #1a2b1e; }
+    html.dark .drawer-menu li a { color: #b0d4be; }
+    html.dark .drawer-menu li a:hover, html.dark .drawer-menu li a.active { background: #243328; color: #52b788; border-left-color: #52b788; }
+    html.dark .drawer-divider { background: #2a3d2e; }
   </style>
 </head>
 <body>
 
   <nav>
     <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
-    <div class="nav-right"><a href="compte" class="nav-profil">&#128100;</a><button id="themeToggle" aria-label="Thème">🌙</button><button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button></div>
+    <div class="nav-right">
+      <a href="compte" class="nav-profil">&#128100;</a>
+      <button id="themeToggle" aria-label="Thème">🌙</button>
+      <button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+    </div>
   </nav>
   <div class="overlay" id="overlay"></div>
   <div class="drawer" id="drawer">
@@ -61,7 +102,6 @@
       <div class="drawer-logo">Compos<span>mart</span></div>
       <button class="drawer-close" id="closeBtn">&#x2715;</button>
     </div>
-        
     <ul class="drawer-menu">
       <li><a href="index.html"><span class="menu-icon">🏠</span> Accueil</a></li>
       <div class="drawer-divider"></div>
@@ -78,15 +118,14 @@
     </ul>
   </div>
 
-  <div class="hero">
-    <span class="hero-emoji">👤</span>
-    <h1>Mon compte</h1>
+  <div class="hero" id="hero">
+    <div class="avatar" id="heroAvatar">👤</div>
+    <h1 id="heroTitle">Mon compte</h1>
+    <div class="hero-sub" id="heroSub"></div>
   </div>
-  <div class="content">
-    <p>Gérez votre profil, suivez votre progression et retrouvez vos parcours enregistrés.</p>
-    <div class="tips-title">À savoir</div>
-    <div class="tip">Connectez-vous pour sauvegarder votre progression.</div><div class="tip">Personnalisez votre avatar et vos préférences.</div><div class="tip">Consultez vos badges et récompenses.</div><div class="tip">Partagez vos résultats avec la communauté.</div>
-    <a href="index.html" class="back-btn">&#8592; Retour à l'accueil</a>
+
+  <div class="card" id="cardContent">
+    <!-- rempli par JS -->
   </div>
 
   <script>
@@ -99,6 +138,56 @@
     burger.addEventListener('click', openMenu);
     closeBtn.addEventListener('click', closeMenu);
     overlay.addEventListener('click', closeMenu);
+
+    fetch('/api/auth/me.php')
+      .then(r => r.json())
+      .then(data => {
+        if (data.logged_in) {
+          renderProfile(data);
+        } else {
+          renderGuest();
+        }
+      })
+      .catch(() => renderGuest());
+
+    function renderProfile(u) {
+      const initial = u.username.charAt(0).toUpperCase();
+      document.getElementById('heroAvatar').textContent = initial;
+      document.getElementById('heroTitle').textContent = 'Bonjour, ' + u.username + ' !';
+      document.getElementById('heroSub').textContent = 'Niveau ' + u.niveau + ' · ' + u.xp + ' XP';
+
+      const xpInLevel  = u.xp % 100;
+      const xpToNext   = 100;
+      const pct        = Math.min(100, Math.round(xpInLevel / xpToNext * 100));
+
+      document.getElementById('cardContent').innerHTML = `
+        <div class="stat-row">
+          <div class="stat-cell"><div class="stat-val">${u.niveau}</div><div class="stat-lbl">Niveau</div></div>
+          <div class="stat-cell"><div class="stat-val">${u.xp}</div><div class="stat-lbl">XP total</div></div>
+        </div>
+        <div class="xp-bar-wrap"><div class="xp-bar" style="width:${pct}%"></div></div>
+        <div class="xp-label">${xpInLevel} / ${xpToNext} XP pour le niveau ${u.niveau + 1}</div>
+        <button class="btn-logout" id="btnLogout">Se déconnecter</button>
+      `;
+
+      document.getElementById('btnLogout').addEventListener('click', () => {
+        fetch('/api/auth/logout.php', { method: 'POST' })
+          .then(() => location.reload());
+      });
+    }
+
+    function renderGuest() {
+      document.getElementById('heroAvatar').textContent = '🌱';
+      document.getElementById('heroTitle').textContent = 'Mon compte';
+      document.getElementById('heroSub').textContent = 'Rejoignez la communauté CompoSmart';
+
+      document.getElementById('cardContent').innerHTML = `
+        <div class="guest-title">Bienvenue !</div>
+        <div class="guest-sub">Connectez-vous pour suivre votre progression,<br>gagner de l'XP et débloquer des badges.</div>
+        <a href="/signin" class="btn-primary">Créer un compte</a>
+        <a href="/login" class="btn-secondary">Se connecter</a>
+      `;
+    }
   </script>
 
   <script src="/assets/js/theme.js"></script>
