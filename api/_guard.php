@@ -40,7 +40,8 @@ function password_policy_error($password) {
 
 function secure_session_start() {
     if (session_status() === PHP_SESSION_ACTIVE) return;
-    $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+           || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
@@ -82,7 +83,11 @@ function csrf_check() {
  * pour casser le brute force et le spam.
  */
 function rate_limit($action, $max, $window_sec) {
-    $ip  = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ips = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
+        $ip = $ips[0] ?? $ip;
+    }
     $dir = sys_get_temp_dir() . '/cs_ratelimit';
     if (!is_dir($dir)) @mkdir($dir, 0700, true);
     $file = $dir . '/' . md5($action . '|' . $ip);
