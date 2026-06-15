@@ -23,10 +23,22 @@ docker compose up --build
 ## Lancer en production
 
 ```bash
-# Copier docker-compose.prod.yml, db/schema.sql et .env sur la machine cible
+# Premier déploiement — copier docker-compose.prod.yml, Caddyfile, db/schema.sql et .env sur la machine cible
+cp .env.example .env && nano .env   # renseigner les vrais mots de passe
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
+
+### Mettre à jour en production
+
+Après un push sur `main` (GitHub Actions reconstruit l'image automatiquement) :
+
+```bash
+docker compose -f docker-compose.prod.yml pull   # télécharge la nouvelle image
+docker compose -f docker-compose.prod.yml up -d  # recrée les conteneurs
+```
+
+> ⚠️ `docker pull` seul ne suffit pas : les conteneurs en cours continuent de tourner avec l'ancienne image jusqu'au `up -d`.
 
 ## Structure
 
