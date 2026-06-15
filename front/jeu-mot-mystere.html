@@ -84,8 +84,13 @@
     }
     .btn-rejouer { background: #1e6e3e; color: #fff; }
     .btn-retour { background: #eef4ec; color: #1e6e3e; }
-    .save-info { font-size: 0.76rem; color: #4a7a5a; font-weight: 700; margin-top: 12px; }
-    .save-info a { color: #1e6e3e; }
+    .save-info { background: #eef4ec; border-radius: 16px; padding: 16px; margin-top: 14px; text-align: center; }
+    .save-info-text { font-size: 0.84rem; color: #4a7a5a; font-weight: 700; margin-bottom: 12px; }
+    .save-info-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .save-info-btn-login { display: inline-block; background: linear-gradient(135deg,#1e6e3e,#2d9959); color: #fff; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.85rem; padding: 9px 18px; border-radius: 12px; text-decoration: none; box-shadow: 0 2px 8px rgba(30,110,62,0.3); }
+    .save-info-btn-register { display: inline-block; background: #fff; color: #1e6e3e; border: 2px solid #a8e6bf; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.85rem; padding: 8px 16px; border-radius: 12px; text-decoration: none; }
+    html.dark .save-info { background: #1e2d22; }
+    html.dark .save-info-btn-register { background: #1e2d22; color: #52b788; border-color: #2d4030; }
 
     html.dark .game-card { background: #16211a; }
     html.dark .slot { background: #1e2d22; border-color: #3a5c42; color: #e8f5ee; }
@@ -140,7 +145,13 @@
           <div class="lb-title">🏅 Top 5</div>
           <div id="lbRows"></div>
         </div>
-        <div class="save-info" id="saveInfo" style="display:none"><a href="/compte">Connecte-toi</a> pour sauvegarder ton score !</div>
+        <div class="save-info" id="saveInfo" style="display:none">
+          <div class="save-info-text">Connecte-toi pour sauvegarder ton score et apparaître dans le classement !</div>
+          <div class="save-info-actions">
+            <a href="/login" class="save-info-btn-login">Se connecter</a>
+            <a href="/signin" class="save-info-btn-register">Créer un compte</a>
+          </div>
+        </div>
         <div class="end-actions">
           <button type="button" class="btn-rejouer" id="btnRejouer">🔄 Rejouer</button>
           <a href="/jeux" class="btn-retour">🎮 Autres jeux</a>

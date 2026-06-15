@@ -294,6 +294,18 @@
   <div class="bottom-leaf"></div>
   <div class="confetti-container" id="confettiContainer"></div>
 
+  <!-- Modal cours verrouillé -->
+  <div id="lockedModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:600;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#fff;border-radius:24px;padding:30px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25)">
+      <div style="font-size:2.6rem;margin-bottom:12px">🔒</div>
+      <div style="font-family:'Baloo 2',cursive;font-size:1.15rem;font-weight:900;color:#1a3a25;margin-bottom:8px">Cours réservé aux membres</div>
+      <div style="font-size:0.83rem;color:#4a7a5a;font-weight:600;margin-bottom:20px;line-height:1.5">Crée un compte gratuit pour accéder à tous les cours, suivre ta progression et gagner des badges.</div>
+      <a href="/signin" style="display:block;background:linear-gradient(135deg,#1e6e3e,#2d9959);color:#fff;font-family:'Baloo 2',cursive;font-weight:900;font-size:0.92rem;padding:12px;border-radius:14px;text-decoration:none;margin-bottom:8px;box-shadow:0 3px 10px rgba(30,110,62,0.3)">Créer un compte gratuitement</a>
+      <a href="/login" style="display:block;background:#fff;color:#1e6e3e;border:2px solid #a8e6bf;font-family:'Baloo 2',cursive;font-weight:900;font-size:0.88rem;padding:10px;border-radius:14px;text-decoration:none;margin-bottom:14px">Se connecter</a>
+      <a href="/cours" style="color:#9e9e9e;font-size:0.78rem;font-family:'Nunito',sans-serif;font-weight:700;text-decoration:none">← Retour aux cours</a>
+    </div>
+  </div>
+
   <script>
     var slug = location.pathname.replace(/^\/cours\//, '').replace(/\/$/, '');
     if (!slug) { document.body.innerHTML = '<p style="padding:40px;color:#c0392b">Cours introuvable.</p>'; }
@@ -310,20 +322,29 @@
     var userXpBase = 0;
     var userLoggedIn = false;
 
-    // Charger XP
-    fetch('/api/auth/me.php')
-      .then(function(r) { return r.json(); })
-      .then(function(d) {
-        userLoggedIn = d.logged_in;
-        userXpBase = d.logged_in ? d.xp : 0;
-        document.getElementById('navXp').textContent = d.logged_in ? ('⭐ ' + userXpBase + ' XP') : '⭐ –';
-      })
-      .catch(function() {});
+    function showLockedModal() {
+      var m = document.getElementById('lockedModal');
+      if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    }
 
-    // Charger le cours
-    fetch('/api/cours/get.php?slug=' + encodeURIComponent(slug))
-      .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function(data) {
+    // Charger XP + cours simultanément
+    Promise.all([
+      fetch('/api/auth/me.php').then(function(r) { return r.json(); }).catch(function() { return {}; }),
+      fetch('/api/cours/get.php?slug=' + encodeURIComponent(slug)).then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    ]).then(function(results) {
+      var me = results[0];
+      var data = results[1];
+
+      userLoggedIn = me.logged_in || false;
+      userXpBase = userLoggedIn ? (me.xp || 0) : 0;
+      document.getElementById('navXp').textContent = userLoggedIn ? ('⭐ ' + userXpBase + ' XP') : '⭐ –';
+
+      if (!userLoggedIn && (data.meta.ordre || 0) !== 1) {
+        showLockedModal();
+        return;
+      }
+
+    // (suite du chargement du cours)
         var meta = data.meta || {};
         document.title = 'CompoSmart – ' + (meta.titre || slug);
 
@@ -381,11 +402,10 @@
         // Build slides après avoir déterminé hasQuiz
         buildLessonSlides();
         if (hasQuiz) buildQuizSlides();
-      })
-      .catch(function() {
-        document.getElementById('lessonSlides').innerHTML =
-          '<div style="padding:40px;text-align:center;color:#c0392b"><h2>Cours introuvable</h2><a href="/cours">← Retour aux cours</a></div>';
-      });
+    }).catch(function() {
+      document.getElementById('lessonSlides').innerHTML =
+        '<div style="padding:40px;text-align:center;color:#c0392b"><h2>Cours introuvable</h2><a href="/cours">← Retour aux cours</a></div>';
+    });
 
     /* ── Tabs ── */
     var TAB_NAMES = ['Cours', 'Video', 'Podcast', 'Quiz'];

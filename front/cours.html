@@ -98,6 +98,21 @@
     /* Locked style */
     .cc-locked { background: linear-gradient(135deg, #9e9e9e, #bdbdbd) !important; box-shadow: 0 4px 14px rgba(0,0,0,0.12) !important; filter: grayscale(0.3); }
 
+    /* Auth modal */
+    .auth-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .auth-backdrop.show { opacity: 1; pointer-events: all; }
+    .auth-box { background: #fff; border-radius: 24px; padding: 28px 22px; max-width: 310px; width: 100%; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.22); transform: translateY(16px); transition: transform 0.2s; }
+    .auth-backdrop.show .auth-box { transform: translateY(0); }
+    .auth-box-icon { font-size: 2.4rem; margin-bottom: 10px; }
+    .auth-box-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin-bottom: 6px; }
+    .auth-box-sub { font-size: 0.82rem; color: #4a7a5a; font-weight: 600; margin-bottom: 18px; line-height: 1.5; }
+    .auth-btn-primary { display: block; background: linear-gradient(135deg,#1e6e3e,#2d9959); color: #fff; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.92rem; padding: 12px; border-radius: 14px; text-decoration: none; margin-bottom: 8px; box-shadow: 0 3px 10px rgba(30,110,62,0.3); }
+    .auth-btn-secondary { display: block; background: #fff; color: #1e6e3e; border: 2px solid #a8e6bf; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.88rem; padding: 10px; border-radius: 14px; text-decoration: none; margin-bottom: 12px; }
+    .auth-btn-later { background: none; border: none; color: #9e9e9e; font-size: 0.78rem; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 700; }
+    html.dark .auth-box { background: #1a2b1e; }
+    html.dark .auth-box-title { color: #c8e6d4; }
+    html.dark .auth-btn-secondary { background: #1a2b1e; color: #52b788; border-color: #2d4030; }
+
     /* Dark mode */
 
     /* Daily challenge banner */
@@ -172,6 +187,18 @@
 
   <div class="bottom-leaf"></div>
 
+  <!-- Auth modal -->
+  <div class="auth-backdrop" id="authModal" onclick="if(event.target===this)closeAuthModal()">
+    <div class="auth-box">
+      <div class="auth-box-icon">🔒</div>
+      <div class="auth-box-title">Accès membres</div>
+      <div class="auth-box-sub">Crée un compte gratuit pour accéder à tous les cours, suivre ta progression et gagner des badges.</div>
+      <a href="/signin" class="auth-btn-primary">Créer un compte gratuitement</a>
+      <a href="/login" class="auth-btn-secondary">Se connecter</a>
+      <button class="auth-btn-later" onclick="closeAuthModal()">Plus tard</button>
+    </div>
+  </div>
+
   <script>
     var PALETTES = [
       ['linear-gradient(135deg,#1e6e3e,#2d9959)','linear-gradient(135deg,#2d6a4f,#40916c)','linear-gradient(135deg,#386641,#6a994e)','linear-gradient(135deg,#588157,#a7c957)'],
@@ -180,9 +207,20 @@
     ];
     var NIVEAUX = { debutant: 'Débutant', intermediaire: 'Intermédiaire', expert: 'Expert' };
 
+    var isLoggedIn = false;
+    var firstSlug = null;
+
+    function showAuthModal() { document.getElementById('authModal').classList.add('show'); document.body.style.overflow = 'hidden'; }
+    function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); document.body.style.overflow = ''; }
+
     function renderPage(data) {
       var themes = data.themes || data; // compat si ancien format
       var user = data.user || null;
+
+      isLoggedIn = !!user;
+      if (themes.length > 0 && themes[0].cours && themes[0].cours.length > 0) {
+        firstSlug = themes[0].cours[0].slug;
+      }
 
       // ── Cours ──
       var container = document.getElementById('cours-container');
@@ -196,7 +234,7 @@
             var niveau = NIVEAUX[c.niveau] || c.niveau;
             var qs = c.nb_questions > 0 ? ' · ' + c.nb_questions + ' q.' : '';
             var doneBadge = c.completed ? '<div class="c-done">✓ fait</div>' : '';
-            return '<a href="/cours/' + c.slug + '" class="cours-card" style="background:' + grad + ';box-shadow:0 4px 14px rgba(0,0,0,0.2)">'
+            return '<a href="/cours/' + c.slug + '" class="cours-card" data-slug="' + c.slug + '" style="background:' + grad + ';box-shadow:0 4px 14px rgba(0,0,0,0.2)">'
               + doneBadge
               + '<div class="c-emoji">' + (c.emoji || '📖') + '</div>'
               + '<div class="c-title">' + c.titre + '</div>'
@@ -264,6 +302,15 @@
         document.getElementById('cours-container').innerHTML =
           '<div style="text-align:center;padding:40px;color:#c0392b;">Erreur de chargement des cours.</div>';
       });
+
+    document.getElementById('cours-container').addEventListener('click', function(e) {
+      if (isLoggedIn) return;
+      var card = e.target.closest('.cours-card');
+      if (!card) return;
+      if (card.dataset.slug === firstSlug) return;
+      e.preventDefault();
+      showAuthModal();
+    });
 
     const burger = document.getElementById('burgerBtn');
     const drawer = document.getElementById('drawer');
