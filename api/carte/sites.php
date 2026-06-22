@@ -48,7 +48,7 @@ if (isset($_POST['osm'])) {
     $type = "Conteneur";
     $pub  = "public";
 
-    $sql_check = "SELECT id, (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance FROM composts HAVING distance < 0.02 LIMIT 1";
+    $sql_check = "SELECT id, (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))) AS distance FROM composts HAVING distance < 0.005 LIMIT 1";
     $stmt = mysqli_prepare($connexion, $sql_check);
     $stmt->bind_param("ddd", $lat, $lon, $lat);
     $stmt->execute();
@@ -63,7 +63,7 @@ if (isset($_POST['osm'])) {
             echo json_encode("Erreur d'insertion : " . $stmt->error);
         }
     } else {
-        echo json_encode("Point trop proche (moins de 20m). Insertion annulée.");
+        echo json_encode("Point trop proche (moins de 5m). Insertion annulée.");
     }
 }
 
@@ -88,7 +88,7 @@ elseif (isset($_POST['donnees_json'])) {
         exit();
     }
 
-    $sql_check = "SELECT id, (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance FROM composts HAVING distance < 0.02 LIMIT 1";
+    $sql_check = "SELECT id, (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))) AS distance FROM composts HAVING distance < 0.005 LIMIT 1";
     $stmt = mysqli_prepare($connexion, $sql_check);
     $stmt->bind_param("ddd", $lat, $lon, $lat);
     $stmt->execute();
@@ -196,7 +196,12 @@ elseif (isset($_POST['type'])) {
         $ins->execute();
     }
 
-    audit_log($connexion, 'compost_modifie', "id=$id", [
+    $created_ids = $_SESSION['created_composts'] ?? [];
+    $is_new = in_array($id, $created_ids, true);
+    if ($is_new) {
+        $_SESSION['created_composts'] = array_values(array_filter($created_ids, fn($v) => $v !== $id));
+    }
+    audit_log($connexion, $is_new ? 'compost_cree' : 'compost_modifie', "id=$id", [
         'target_type' => 'compost',
         'target_id'   => $id,
         'snapshot'    => [
@@ -206,7 +211,7 @@ elseif (isset($_POST['type'])) {
             'pas_mettre'  => array_values($pas_mettre),
         ],
     ]);
-    $response = "Modification enregistrée.";
+    $response = $is_new ? "Compost créé." : "Modification enregistrée.";
 }
 
 // ── AJOUTER UN COMPOST VIA CLIC CARTE ─────────────────────────────────────
@@ -219,23 +224,22 @@ if (isset($_POST['lat_click']) && isset($_POST['lon_click'])) {
         exit();
     }
 
-    $sql_check = "SELECT id, (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) AS distance FROM composts HAVING distance < 0.02 LIMIT 1";
+    $sql_check = "SELECT id, (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))) AS distance FROM composts HAVING distance < 0.005 LIMIT 1";
     $stmt = mysqli_prepare($connexion, $sql_check);
     $stmt->bind_param("ddd", $lat, $lon, $lat);
     $stmt->execute();
     if ($stmt->get_result()->num_rows > 0) {
-        echo json_encode(["error" => "Un point existe déjà à moins de 20 m."]);
+        echo json_encode(["error" => "Un point identique existe déjà à moins de 5 m."]);
         exit();
     }
 
     $stmt = mysqli_prepare($connexion, "INSERT INTO composts (longitude, latitude) VALUES (?, ?)");
     $stmt->bind_param("dd", $lon, $lat);
     if ($stmt->execute()) {
-        $res = mysqli_query($connexion, "SELECT id FROM composts WHERE latitude=$lat AND longitude=$lon ORDER BY id DESC LIMIT 1");
-        $row = $res->fetch_array(MYSQLI_ASSOC);
-        $response = (int)$row["id"];
+        $new_id = (int)$connexion->insert_id;
         if (!isset($_SESSION['created_composts'])) $_SESSION['created_composts'] = [];
-        $_SESSION['created_composts'][] = (int)$row["id"];
+        $_SESSION['created_composts'][] = $new_id;
+        $response = $new_id;
     } else {
         $response = ["error" => $stmt->error];
     }

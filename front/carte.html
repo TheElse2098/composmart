@@ -683,7 +683,14 @@
             if (idInput) formData.set('id', idInput.value);
             let enregistrer = document.getElementById("boutton");
             fetch(form.getAttribute('action'), { method: 'POST', body: formData })
-            .then(response => { if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`); return response.text(); })
+            .then(response => {
+                if (response.status === 403) {
+                    enregistrer.innerHTML = '<div style="color:red">⚠️ Action non autorisée.</div><input type="submit" value="Enregistrer">';
+                    throw new Error('forbidden');
+                }
+                if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+                return response.text();
+            })
             .then(data => {
                 if (data.includes("ne peut pas") || data.includes("Fatal error")) {
                     enregistrer.innerHTML = '<div style="color:red">' + data + '</div><input type="submit" value="Enregistrer">';
@@ -702,7 +709,7 @@
                     }
                     info_compost(compost_id, lat, lon);
                 }
-            }).catch(error => { console.error("Erreur:", error); });
+            }).catch(error => { if (error.message !== 'forbidden') console.error("Erreur:", error); });
         });
 
         function modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter) {
