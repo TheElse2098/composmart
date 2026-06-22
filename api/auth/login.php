@@ -43,4 +43,8 @@ session_regenerate_id(true);
 $_SESSION['user_id'] = $row['id'];
 $_SESSION['username'] = $row['username'];
 
+$uid = (int)$row['id'];
+$stmt2 = mysqli_prepare($conn, 'INSERT INTO logins (user_id) VALUES (?)');
+if ($stmt2) { $stmt2->bind_param('i', $uid); $stmt2->execute(); }
+
 echo json_encode(['ok' => true, 'username' => $row['username']]);

@@ -39,6 +39,15 @@ mysqli_query($c, "CREATE TABLE IF NOT EXISTS audit_log (
 mysqli_query($c, "ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS target_type VARCHAR(30) DEFAULT NULL");
 mysqli_query($c, "ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS target_id INT DEFAULT NULL");
 mysqli_query($c, "ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS snapshot TEXT DEFAULT NULL");
+mysqli_query($c, "ALTER TABLE composts ADD COLUMN IF NOT EXISTS created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP");
+mysqli_query($c, "CREATE TABLE IF NOT EXISTS logins (
+  id        INT NOT NULL AUTO_INCREMENT,
+  user_id   INT NOT NULL,
+  logged_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_date (logged_at),
+  CONSTRAINT logins_ibfk_1 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 echo "Migrations schema appliquées.\n";
 
 $count = (int)mysqli_fetch_row(mysqli_query($c, 'SELECT COUNT(*) FROM composts'))[0];

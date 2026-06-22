@@ -124,7 +124,17 @@
     html.dark .user-search:focus { border-color: #52b788; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+
+    /* Évolution */
+    .evo-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+    .evo-btn { border: 1.5px solid #c8e6c9; border-radius: 20px; padding: 6px 16px; font-size: 0.8rem; font-weight: 800; cursor: pointer; background: #fff; color: #1e6e3e; font-family: inherit; transition: background 0.15s, color 0.15s; }
+    .evo-btn.active, .evo-btn:hover { background: #1e6e3e; color: #fff; border-color: #1e6e3e; }
+    .evo-card { background: #fff; border-radius: 16px; padding: 20px 16px 14px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); }
+    html.dark .evo-card { background: #16211a; }
+    html.dark .evo-btn { background: #16211a; color: #7fc99a; border-color: #2d4030; }
+    html.dark .evo-btn.active, html.dark .evo-btn:hover { background: #2d9959; color: #fff; border-color: #2d9959; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -160,6 +170,16 @@
   <div class="page-content" id="dashboard" style="display:none">
     <div class="section-title">📊 Vue d'ensemble</div>
     <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="section-title">📈 Évolution</div>
+    <div class="evo-bar">
+      <button class="evo-btn" data-p="7d">7 jours</button>
+      <button class="evo-btn active" data-p="30d">30 jours</button>
+      <button class="evo-btn" data-p="90d">3 mois</button>
+    </div>
+    <div class="evo-card">
+      <canvas id="evoChart"></canvas>
+    </div>
 
     <div class="section-title">🚩 Signalements ouverts</div>
     <div id="signalList"></div>
@@ -216,8 +236,73 @@
         document.getElementById('loader').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         chargerSignalements();
+        loadEvolution('30d');
       })
       .catch(() => {});
+
+    // ── Évolution ──────────────────────────────────────────────────────────────
+    let evoChart = null;
+
+    document.querySelectorAll('.evo-btn').forEach(btn => {
+      btn.addEventListener('click', () => loadEvolution(btn.dataset.p));
+    });
+
+    function loadEvolution(period) {
+      document.querySelectorAll('.evo-btn').forEach(b => b.classList.toggle('active', b.dataset.p === period));
+      fetch('/api/admin/evolution.php?period=' + period)
+        .then(r => r.json())
+        .then(d => renderEvolution(d))
+        .catch(() => {});
+    }
+
+    function renderEvolution(d) {
+      const dark = document.documentElement.classList.contains('dark');
+      const grid = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+      const text = dark ? '#7aaa8a' : '#4a7a5a';
+      const font = { family: 'Nunito, Arial, sans-serif', size: 11, weight: '700' };
+
+      const datasets = [
+        { label: 'Inscriptions', data: d.inscrits, backgroundColor: 'rgba(45,153,89,0.75)', borderColor: '#2d9959', borderWidth: 1, borderRadius: 4 },
+      ];
+      if (d.connexions) datasets.push(
+        { label: 'Connexions', data: d.connexions, backgroundColor: 'rgba(249,168,37,0.75)', borderColor: '#f9a825', borderWidth: 1, borderRadius: 4 }
+      );
+      if (d.composteurs) datasets.push(
+        { label: 'Composteurs ajoutés', data: d.composteurs, backgroundColor: 'rgba(106,153,78,0.75)', borderColor: '#6a994e', borderWidth: 1, borderRadius: 4 }
+      );
+
+      const scaleOpts = {
+        ticks: { color: text, font, maxRotation: 45 },
+        grid: { color: grid }
+      };
+
+      if (evoChart) {
+        evoChart.data.labels = d.labels;
+        evoChart.data.datasets = datasets;
+        evoChart.options.scales.x.ticks.color = text;
+        evoChart.options.scales.y.ticks.color = text;
+        evoChart.options.scales.x.grid.color = grid;
+        evoChart.options.scales.y.grid.color = grid;
+        evoChart.options.plugins.legend.labels.color = text;
+        evoChart.update();
+        return;
+      }
+
+      evoChart = new Chart(document.getElementById('evoChart'), {
+        type: 'bar',
+        data: { labels: d.labels, datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: text, font, boxWidth: 12, padding: 16 } }
+          },
+          scales: {
+            x: { ...scaleOpts, ticks: { ...scaleOpts.ticks, maxTicksLimit: 15 } },
+            y: { ...scaleOpts, beginAtZero: true, ticks: { ...scaleOpts.ticks, precision: 0 } }
+          }
+        }
+      });
+    }
 
     function renderStats(s) {
       const cards = [

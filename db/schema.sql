@@ -13,6 +13,7 @@ CREATE TABLE `composts` (
   `publique`     text,
   `gestion`      text,
   `info_gestion` text,
+  `created_at`   datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -149,6 +150,19 @@ CREATE TABLE `audit_log` (
   `created_at`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ─────────────────────────────────────────
+-- JOURNAL DE CONNEXIONS
+-- ─────────────────────────────────────────
+
+CREATE TABLE `logins` (
+  `id`        int      NOT NULL AUTO_INCREMENT,
+  `user_id`   int      NOT NULL,
+  `logged_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_date` (`logged_at`),
+  CONSTRAINT `logins_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ─────────────────────────────────────────
