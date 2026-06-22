@@ -44,14 +44,15 @@ function qs($c, $table, $col, $from) {
     if ($res) while ($r = mysqli_fetch_assoc($res)) $map[$r['d']] = (int)$r['n'];
     return $map;
 }
+function qs_audit($c, $action, $from) {
+    $a = mysqli_real_escape_string($c, $action);
+    $res = mysqli_query($c, "SELECT DATE(created_at) AS d, COUNT(*) AS n FROM audit_log WHERE action = '$a' AND created_at >= '$from' GROUP BY DATE(created_at)");
+    $map = [];
+    if ($res) while ($r = mysqli_fetch_assoc($res)) $map[$r['d']] = (int)$r['n'];
+    return $map;
+}
 function fill($map, $labels) {
     return array_map(fn($d) => $map[$d] ?? 0, $labels);
-}
-function col_exists($c, $table, $col) {
-    $t = mysqli_real_escape_string($c, $table);
-    $k = mysqli_real_escape_string($c, $col);
-    $r = mysqli_query($c, "SHOW COLUMNS FROM `$t` LIKE '$k'");
-    return $r && mysqli_num_rows($r) > 0;
 }
 function table_exists($c, $name) {
     $n = mysqli_real_escape_string($c, $name);
@@ -60,8 +61,8 @@ function table_exists($c, $name) {
 }
 
 $inscrits    = fill(qs($c, 'users', 'created_at', $from), $labels);
-$composteurs = col_exists($c, 'composts', 'created_at')
-    ? fill(qs($c, 'composts', 'created_at', $from), $labels)
+$composteurs = table_exists($c, 'audit_log')
+    ? fill(qs_audit($c, 'compost_cree', $from), $labels)
     : null;
 $connexions  = table_exists($c, 'logins')
     ? fill(qs($c, 'logins', 'logged_at', $from), $labels)

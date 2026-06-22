@@ -60,10 +60,13 @@ if (!$ok) {
     exit;
 }
 
-$admin_id = mysqli_insert_id($c);
+$admin_id = (int)mysqli_insert_id($c);
 session_regenerate_id(true);
 $_SESSION['user_id']  = $admin_id;
 $_SESSION['username'] = $username;
+
+$s = mysqli_prepare($c, 'INSERT INTO logins (user_id) VALUES (?)');
+if ($s) { $s->bind_param('i', $admin_id); $s->execute(); }
 
 // Récupérer tous les cours et leur XP
 $total_xp  = 0;

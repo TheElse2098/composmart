@@ -44,8 +44,12 @@ $stmt = mysqli_prepare($conn, 'INSERT INTO users (username, password_hash) VALUE
 $stmt->bind_param('ss', $username, $hash);
 if (!$stmt->execute()) { echo json_encode(['error' => "Erreur lors de l'inscription"]); exit; }
 
+$new_id = (int)$conn->insert_id;
 session_regenerate_id(true);
-$_SESSION['user_id'] = $conn->insert_id;
+$_SESSION['user_id'] = $new_id;
 $_SESSION['username'] = $username;
+
+$s = mysqli_prepare($conn, 'INSERT INTO logins (user_id) VALUES (?)');
+if ($s) { $s->bind_param('i', $new_id); $s->execute(); }
 
 echo json_encode(['ok' => true, 'username' => $username]);
