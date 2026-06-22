@@ -121,6 +121,24 @@
     html.dark .game-row-name { color: #c8e6d4; }
     html.dark .game-row-best { color: #52b788; }
     html.dark .course-chip { background: #16291c; color: #7fc99a; }
+
+    /* Classement */
+    .lb-row { display: flex; align-items: center; gap: 12px; background: #f4f9f4; border-radius: 14px; padding: 11px 14px; margin-bottom: 8px; }
+    .lb-rank { font-size: 1.1rem; font-weight: 900; color: #bbb; width: 32px; text-align: center; flex-shrink: 0; }
+    .lb-rank.top1 { color: #f9a825; }
+    .lb-rank.top2 { color: #9e9e9e; }
+    .lb-rank.top3 { color: #a1673a; }
+    .lb-name { flex: 1; font-size: 0.88rem; font-weight: 800; color: #1a3a25; }
+    .lb-xp { font-size: 0.88rem; font-weight: 900; color: #1e6e3e; white-space: nowrap; }
+    .lb-row.lb-me { background: #e8f5e9; border: 1.5px solid #a8e6bf; }
+    .lb-row.lb-me .lb-name { color: #1e6e3e; }
+    .lb-me-sep { text-align: center; font-size: 0.72rem; color: #7aaa8a; font-weight: 700; padding: 4px 0 2px; }
+    html.dark .lb-row { background: #16241a; }
+    html.dark .lb-name { color: #c8e6d4; }
+    html.dark .lb-xp { color: #52b788; }
+    html.dark .lb-row.lb-me { background: #1a2f1e; border-color: #2d4030; }
+    html.dark .lb-row.lb-me .lb-name { color: #52b788; }
+    html.dark .lb-me-sep { color: #4a7a5a; }
   </style>
 </head>
 <body>
@@ -142,7 +160,7 @@
     <ul class="drawer-menu">
       <li><a href="index.html"><span class="menu-icon">🏠</span> Accueil</a></li>
       <div class="drawer-divider"></div>
-      <li><a href="parcours.html"><span class="menu-icon">🌿</span> Mes parcours</a></li>
+      <li><a href="compte" class="active"><span class="menu-icon">👤</span> Mon compte</a></li>
       <div class="drawer-divider"></div>
       <li><a href="carte.html"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
       <div class="drawer-divider"></div>
@@ -180,18 +198,47 @@
 
     function esc(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
 
-    fetch('/api/auth/profile.php')
-      .then(r => r.json())
-      .then(data => {
-        if (data.logged_in) {
-          renderProfile(data);
-        } else {
-          renderGuest();
-        }
-      })
-      .catch(() => renderGuest());
+    Promise.all([
+      fetch('/api/auth/profile.php').then(r => r.json()).catch(() => ({})),
+      fetch('/api/auth/leaderboard.php').then(r => r.json()).catch(() => ({ top: [], me: null }))
+    ]).then(([profile, lb]) => {
+      if (profile.logged_in) {
+        renderProfile(profile, lb);
+      } else {
+        renderGuest(lb);
+      }
+    });
 
-    function renderProfile(u) {
+    function buildLeaderboard(lb, currentUserId) {
+      if (!lb || !lb.top || lb.top.length === 0) return '';
+      const medals = ['🥇', '🥈', '🥉'];
+      const isMe = id => lb.me && lb.me.id === id;
+      const rankClass = i => i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      const rankLabel = i => medals[i] || ('#' + (i + 1));
+
+      let html = '<div class="sec-head">🏆 Classement XP</div>';
+      const inTop = lb.me && lb.top.some(u => u.id === lb.me.id);
+
+      lb.top.forEach((u, i) => {
+        html += `<div class="lb-row${isMe(u.id) ? ' lb-me' : ''}">
+          <div class="lb-rank ${rankClass(i)}">${rankLabel(i)}</div>
+          <div class="lb-name">${esc(u.username)}${isMe(u.id) ? ' (moi)' : ''}</div>
+          <div class="lb-xp">⭐ ${u.xp} XP</div>
+        </div>`;
+      });
+
+      if (lb.me && !inTop) {
+        html += `<div class="lb-me-sep">· · ·</div>
+        <div class="lb-row lb-me">
+          <div class="lb-rank">#${lb.me.rank}</div>
+          <div class="lb-name">${esc(lb.me.username)} (moi)</div>
+          <div class="lb-xp">⭐ ${lb.me.xp} XP</div>
+        </div>`;
+      }
+      return html;
+    }
+
+    function renderProfile(u, lb) {
       const initial = u.username.charAt(0).toUpperCase();
       document.getElementById('heroAvatar').textContent = initial;
       document.getElementById('heroTitle').textContent = 'Bonjour, ' + esc(u.username) + ' !';
@@ -247,7 +294,7 @@
           : `<div class="course-empty">Aucun cours terminé pour l'instant. <a href="/cours">Commence ici !</a></div>`}`;
 
       document.getElementById('cardContent').innerHTML =
-        statsHtml + badgesHtml + recordsHtml + coursHtml +
+        statsHtml + buildLeaderboard(lb) + badgesHtml + recordsHtml + coursHtml +
         `<button class="btn-logout" id="btnLogout" style="margin-top:28px">Se déconnecter</button>`;
 
       document.getElementById('btnLogout').addEventListener('click', () => {
@@ -256,7 +303,7 @@
       });
     }
 
-    function renderGuest() {
+    function renderGuest(lb) {
       document.getElementById('heroAvatar').textContent = '🌱';
       document.getElementById('heroTitle').textContent = 'Mon compte';
       document.getElementById('heroSub').textContent = 'Rejoignez la communauté CompoSmart';
@@ -266,6 +313,7 @@
         <div class="guest-sub">Connectez-vous pour suivre votre progression,<br>gagner de l'XP et débloquer des badges.</div>
         <a href="/signin" class="btn-primary">Créer un compte</a>
         <a href="/login" class="btn-secondary">Se connecter</a>
+        ${buildLeaderboard(lb, null)}
       `;
     }
   </script>
