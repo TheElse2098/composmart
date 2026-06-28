@@ -38,8 +38,29 @@ function password_policy_error($password) {
     return '';
 }
 
+/**
+ * Renvoie l'hôte Redis si l'extension phpredis est dispo ET qu'un REDIS_HOST
+ * est configuré, sinon ''. Sert à décider du backend de session / rate-limit.
+ */
+function redis_target() {
+    $host = getenv('REDIS_HOST') ?: '';
+    if ($host === '' || !extension_loaded('redis')) return '';
+    return $host;
+}
+
 function secure_session_start() {
     if (session_status() === PHP_SESSION_ACTIVE) return;
+
+    // Sessions partagées entre pods via Redis (cf. MIGRATION-K8S.md §4).
+    // Si Redis n'est pas configuré/dispo, on retombe sur les sessions fichier
+    // (mode monolithe / dev) sans rien casser.
+    $host = redis_target();
+    if ($host !== '') {
+        $port = getenv('REDIS_PORT') ?: '6379';
+        ini_set('session.save_handler', 'redis');
+        ini_set('session.save_path', "tcp://{$host}:{$port}");
+    }
+
     $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
            || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
     session_set_cookie_params([
@@ -79,8 +100,9 @@ function csrf_check() {
 
 /**
  * Renvoie false si l'IP a dépassé $max appels pour $action dans la fenêtre.
- * Stockage dans /tmp du container : remis à zéro au redémarrage, suffisant
- * pour casser le brute force et le spam.
+ * Compteur partagé entre pods via Redis (cf. MIGRATION-K8S.md §4) ; repli sur
+ * stockage fichier /tmp si Redis indisponible (monolithe / dev). Dans les deux
+ * cas, suffisant pour casser le brute force et le spam.
  */
 function rate_limit($action, $max, $window_sec) {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
@@ -88,6 +110,23 @@ function rate_limit($action, $max, $window_sec) {
         $ips = array_map('trim', explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']));
         $ip = $ips[0] ?? $ip;
     }
+    $key = 'rl:' . $action . '|' . $ip;
+
+    // ── Backend Redis : fenêtre fixe via INCR + EXPIRE au 1er hit ──────────
+    if (redis_target() !== '') {
+        try {
+            $r = new Redis();
+            $r->connect(getenv('REDIS_HOST'), (int)(getenv('REDIS_PORT') ?: 6379), 0.5);
+            $count = $r->incr($key);
+            if ($count === 1) $r->expire($key, $window_sec);
+            $r->close();
+            return $count <= $max;
+        } catch (\Throwable $e) {
+            // Redis injoignable → on bascule sur le repli fichier ci-dessous.
+        }
+    }
+
+    // ── Repli fichier (fenêtre glissante) ──────────────────────────────────
     $dir = sys_get_temp_dir() . '/cs_ratelimit';
     if (!is_dir($dir)) @mkdir($dir, 0700, true);
     $file = $dir . '/' . md5($action . '|' . $ip);

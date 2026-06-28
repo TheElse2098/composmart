@@ -1,0 +1,54 @@
+# courses-api — api/cours/* + api/admin/* — contenu éditorial + back-office.
+# Lit/écrit db-core (cours, users, progression, audit_log). Crédite l'XP des cours.
+# content/ est embarqué dans l'image (cf. MIGRATION-K8S.md §10 — alternative : PVC).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: courses-api
+  namespace: composmart
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: courses-api }
+  template:
+    metadata:
+      labels: { app: courses-api }
+    spec:
+      containers:
+        - name: courses-api
+          image: ghcr.io/theelse2098/composmart/courses-api:latest  # ← tag SHA en prod
+          ports: [{ containerPort: 80 }]
+          envFrom:
+            - secretRef: { name: db-core-credentials }
+          env:
+            - { name: REDIS_HOST, value: redis }
+            - { name: REDIS_PORT, value: "6379" }
+          resources:
+            requests: { cpu: "50m", memory: "128Mi" }
+            limits:   { cpu: "500m", memory: "384Mi" }
+          readinessProbe:
+            httpGet: { path: /api/cours/health.php, port: 80 }  # ← endpoint health à ajouter
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: courses-api
+  namespace: composmart
+spec:
+  selector: { app: courses-api }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: courses-api
+  namespace: composmart
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: courses-api }
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }

@@ -1,6 +1,8 @@
 FROM php:8.3-apache
 
 RUN docker-php-ext-install mysqli \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && a2enmod rewrite \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 

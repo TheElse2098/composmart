@@ -1,0 +1,42 @@
+# Ingress Traefik (fourni par k3s). Routage par préfixe de chemin (cf. MIGRATION-K8S.md §5).
+# Les URLs front ne changent pas : /api/carte/... reste relatif côté navigateur.
+#
+# ORDRE IMPORTANT : Traefik matche le préfixe le plus spécifique en premier.
+# /api/carte, /api/jeux, etc. doivent passer avant le catch-all "/".
+#
+# TLS : k3s + cert-manager (Let's Encrypt) recommandé. Annotation à ajouter une fois
+# cert-manager installé. Pour un démarrage rapide, Traefik gère aussi ACME nativement.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: composmart
+  namespace: composmart
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    # cert-manager.io/cluster-issuer: letsencrypt-prod   # ← décommenter avec cert-manager
+spec:
+  # tls:
+  #   - hosts: [composmart.fr]
+  #     secretName: composmart-tls
+  rules:
+    - host: composmart.fr
+      http:
+        paths:
+          - path: /api/carte
+            pathType: Prefix
+            backend: { service: { name: map-api, port: { number: 80 } } }
+          - path: /api/jeux
+            pathType: Prefix
+            backend: { service: { name: games-api, port: { number: 80 } } }
+          - path: /api/cours
+            pathType: Prefix
+            backend: { service: { name: courses-api, port: { number: 80 } } }
+          - path: /api/admin
+            pathType: Prefix
+            backend: { service: { name: courses-api, port: { number: 80 } } }
+          - path: /api/auth
+            pathType: Prefix
+            backend: { service: { name: auth-api, port: { number: 80 } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: web, port: { number: 80 } } }
