@@ -17,4 +17,6 @@ COPY db/seeds/ /docker-seeds/
 RUN chown -R www-data:www-data /var/www/html \
     && chmod +x /var/www/html/docker-entrypoint.sh
 
-ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
+# Invoqué via `bash` explicitement : le script est bind-monté en dev depuis
+# l'hôte (Windows/WSL), où le bit exécutable n'est pas toujours honoré.
+ENTRYPOINT ["bash", "/var/www/html/docker-entrypoint.sh"]
