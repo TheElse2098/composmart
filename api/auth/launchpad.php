@@ -8,8 +8,12 @@ header('Content-Type: application/json; charset=utf-8');
 ob_clean();
 csrf_check();
 
+// PHP 8.3 : mysqli lève des exceptions par défaut. Ce code historique attend
+// le comportement "erreur silencieuse" (vérif via valeur de retour). On le rétablit.
+mysqli_report(MYSQLI_REPORT_OFF);
+
 $c = mysqli_connect(
-    getenv('DB_HOST') ?: 'db',
+    getenv('DB_HOST') ?: 'db-core',
     getenv('DB_USER') ?: 'composmart',
     getenv('DB_PASSWORD') ?: '',
     getenv('DB_NAME') ?: 'Composmart'
@@ -38,13 +42,11 @@ if (!preg_match('/^[a-zA-Z0-9_\-.]+$/', $username)) {
 $pwd_err = password_policy_error($password);
 if ($pwd_err) { echo json_encode(['error' => $pwd_err]); exit; }
 
-// Verrou nommé : rend le « check admin existe ? » + INSERT atomique,
-// empêche deux requêtes simultanées de créer deux admins.
-mysqli_query($c, "SELECT GET_LOCK('composmart_launchpad', 5)");
-
+// Un seul admin autorisé. La concurrence (2 créations simultanées) est couverte
+// par l'UNIQUE KEY username + ce contrôle ; pas besoin de GET_LOCK (qui pouvait
+// rester coincé sur une connexion zombie et bloquer la création).
 $res = mysqli_query($c, 'SELECT id FROM users WHERE isAdmin = 1 LIMIT 1');
-if (mysqli_num_rows($res) > 0) {
-    mysqli_query($c, "SELECT RELEASE_LOCK('composmart_launchpad')");
+if ($res && mysqli_num_rows($res) > 0) {
     echo json_encode(['error' => 'Un compte admin existe déjà.']);
     exit;
 }
@@ -53,7 +55,6 @@ $hash = password_hash($password, PASSWORD_BCRYPT);
 $u    = mysqli_real_escape_string($c, $username);
 
 $ok = mysqli_query($c, "INSERT INTO users (username, password_hash, isAdmin) VALUES ('$u', '$hash', 1)");
-mysqli_query($c, "SELECT RELEASE_LOCK('composmart_launchpad')");
 if (!$ok) {
     $errno = mysqli_errno($c);
     echo json_encode(['error' => $errno === 1062 ? 'Ce nom d\'utilisateur est déjà pris.' : 'Erreur base de données.']);
