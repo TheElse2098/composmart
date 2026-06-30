@@ -6,7 +6,8 @@
 #   docker build -f services/map-api/Dockerfile -t composmart/map-api .
 FROM php:8.3-apache
 
-RUN docker-php-ext-install mysqli \
+# curl : l'extension PHP est nécessaire pour envoyer l'audit à auth-api.
+RUN docker-php-ext-install mysqli curl \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && a2enmod rewrite \

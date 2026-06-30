@@ -16,13 +16,9 @@ $conn = mysqli_connect(
 );
 if (!$conn) { echo json_encode(['error' => 'Connexion DB échouée']); exit; }
 
-function is_admin($conn) {
-    if (empty($_SESSION['user_id'])) return false;
-    $stmt = mysqli_prepare($conn, 'SELECT isAdmin FROM users WHERE id = ?');
-    $stmt->bind_param('i', $_SESSION['user_id']);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    return $row && (int)$row['isAdmin'] === 1;
+// map-api n'a pas accès à users (db-core) : admin lu depuis la session.
+function is_admin($conn = null) {
+    return is_admin_session();
 }
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
@@ -59,8 +55,10 @@ if ($action === 'creer') {
     }
 
     $user_id = empty($_SESSION['user_id']) ? null : (int)$_SESSION['user_id'];
-    $stmt = mysqli_prepare($conn, 'INSERT INTO signalements (compost_id, user_id, motif, commentaire) VALUES (?, ?, ?, ?)');
-    $stmt->bind_param('iiss', $compost_id, $user_id, $motif, $commentaire);
+    // username dénormalisé (users vit dans db-core, pas joignable ici)
+    $reporter = $_SESSION['username'] ?? null;
+    $stmt = mysqli_prepare($conn, 'INSERT INTO signalements (compost_id, user_id, reporter_username, motif, commentaire) VALUES (?, ?, ?, ?, ?)');
+    $stmt->bind_param('iisss', $compost_id, $user_id, $reporter, $motif, $commentaire);
     if (!$stmt->execute()) {
         echo json_encode(['error' => 'Erreur lors de l\'enregistrement']);
         exit;
@@ -82,10 +80,9 @@ if ($action === 'liste') {
     }
     $sql = 'SELECT s.id, s.compost_id, s.motif, s.commentaire, s.created_at,
                    c.latitude, c.longitude, c.type,
-                   u.username
+                   s.reporter_username AS username
             FROM signalements s
             JOIN composts c ON c.id = s.compost_id
-            LEFT JOIN users u ON u.id = s.user_id
             WHERE s.statut = \'ouvert\'
             ORDER BY s.created_at DESC';
     $res = mysqli_query($conn, $sql);
@@ -123,8 +120,8 @@ if ($action === 'traiter') {
     // Instantané du signalement avant traitement (auteur, contenu)
     $snap = ['id' => $id];
     $qs = mysqli_prepare($conn,
-        'SELECT s.compost_id, s.motif, s.commentaire, u.username AS reporter
-         FROM signalements s LEFT JOIN users u ON u.id = s.user_id WHERE s.id = ?');
+        'SELECT s.compost_id, s.motif, s.commentaire, s.reporter_username AS reporter
+         FROM signalements s WHERE s.id = ?');
     $qs->bind_param('i', $id);
     $qs->execute();
     if ($rs = $qs->get_result()->fetch_assoc()) {

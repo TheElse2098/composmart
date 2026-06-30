@@ -7,21 +7,51 @@
  */
 
 /**
- * Journalise une action sensible (admin) dans la table audit_log.
- * $extra peut contenir : target_type, target_id, snapshot (array → JSON).
- * Silencieux si la table n'existe pas encore (migration non appliquée).
+ * Écrit une ligne d'audit dans la table locale audit_log.
+ * Silencieux si la table n'existe pas. Utilisé par les services qui ont la
+ * table (db-core) et par l'endpoint récepteur api/auth/audit.php.
  */
-function audit_log($conn, $action, $details = '', $extra = []) {
-    $uid   = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
-    $uname = $_SESSION['username'] ?? '';
+function audit_log_write($conn, $uid, $uname, $action, $details, $ttype, $tid, $snap) {
     $details = mb_substr((string)$details, 0, 255);
-    $ttype = isset($extra['target_type']) ? mb_substr((string)$extra['target_type'], 0, 30) : null;
-    $tid   = isset($extra['target_id']) ? (int)$extra['target_id'] : null;
-    $snap  = isset($extra['snapshot']) ? json_encode($extra['snapshot'], JSON_UNESCAPED_UNICODE) : null;
+    $ttype   = $ttype !== null ? mb_substr((string)$ttype, 0, 30) : null;
     $stmt = @mysqli_prepare($conn, 'INSERT INTO audit_log (user_id, username, action, details, target_type, target_id, snapshot) VALUES (?,?,?,?,?,?,?)');
     if (!$stmt) return;
     $stmt->bind_param('issssis', $uid, $uname, $action, $details, $ttype, $tid, $snap);
     @$stmt->execute();
+}
+
+/**
+ * Journalise une action sensible (admin).
+ * - Si AUDIT_REMOTE_URL est défini (services SANS table audit_log, ex. map-api),
+ *   envoie l'événement en HTTP à auth-api (db-core). Échec silencieux : l'audit
+ *   qui rate ne doit jamais casser l'action métier.
+ * - Sinon écrit directement dans la table locale (services db-core).
+ * $extra peut contenir : target_type, target_id, snapshot (array → JSON).
+ */
+function audit_log($conn, $action, $details = '', $extra = []) {
+    $uid   = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+    $uname = $_SESSION['username'] ?? '';
+    $ttype = $extra['target_type'] ?? null;
+    $tid   = isset($extra['target_id']) ? (int)$extra['target_id'] : null;
+    $snap  = isset($extra['snapshot']) ? json_encode($extra['snapshot'], JSON_UNESCAPED_UNICODE) : null;
+
+    $remote = getenv('AUDIT_REMOTE_URL') ?: '';
+    if ($remote !== '') {
+        $payload = json_encode(compact('uid', 'uname', 'action', 'details', 'ttype', 'tid', 'snap'));
+        $ch = curl_init($remote);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'X-Audit-Secret: ' . (getenv('AUDIT_SECRET') ?: '')],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 2,
+        ]);
+        @curl_exec($ch);
+        curl_close($ch);
+        return;
+    }
+
+    audit_log_write($conn, $uid, $uname, $action, $details, $ttype, $tid, $snap);
 }
 
 /**
@@ -46,6 +76,16 @@ function redis_target() {
     $host = getenv('REDIS_HOST') ?: '';
     if ($host === '' || !extension_loaded('redis')) return '';
     return $host;
+}
+
+/**
+ * Vrai si l'utilisateur connecté est admin, d'après la session (renseignée au
+ * login). Utilisé par les services qui n'ont PAS accès à la table users
+ * (map-api, games-api). Suppose secure_session_start() déjà appelé.
+ * Limite connue : un admin rétrogradé garde le flag jusqu'à sa reconnexion.
+ */
+function is_admin_session() {
+    return !empty($_SESSION['isAdmin']);
 }
 
 function secure_session_start() {

@@ -225,12 +225,25 @@
       window.location.replace('/');
     }
 
+    // Complète les compteurs cross-base (composts/signalements → db-map, parties → db-games).
+    function fillCrossBaseStats(stats) {
+      return Promise.all([
+        fetch('/api/carte/count.php').then(r => r.json()).catch(() => ({})),
+        fetch('/api/jeux/count.php').then(r => r.json()).catch(() => ({})),
+      ]).then(([carte, jeux]) => {
+        stats.composts     = carte.composts ?? stats.composts;
+        stats.signalements = carte.signalements ?? stats.signalements;
+        stats.parties      = jeux.parties ?? stats.parties;
+        return stats;
+      });
+    }
+
     // ── Charge le dashboard (l'API est gardée côté serveur) ──
     fetch('/api/admin/stats.php')
       .then(r => { if (r.status === 403) { showDenied(); throw new Error('forbidden'); } return r.json(); })
       .then(d => {
         if (!d || d.error) { showDenied(); return; }
-        renderStats(d.stats);
+        fillCrossBaseStats(d.stats).then(renderStats);
         loadUsers('');
         renderAudit(d.audit || []);
         document.getElementById('loader').style.display = 'none';
@@ -408,7 +421,7 @@
         .then(r => r.json())
         .then(d => {
           if (d && d.stats) {
-            renderStats(d.stats);
+            fillCrossBaseStats(d.stats).then(renderStats);
             renderAudit(d.audit || []);
           }
         })
@@ -542,7 +555,7 @@
     function refreshSignalCount() {
       fetch('/api/admin/stats.php')
         .then(r => r.json())
-        .then(d => { if (d && d.stats) renderStats(d.stats); })
+        .then(d => { if (d && d.stats) fillCrossBaseStats(d.stats).then(renderStats); })
         .catch(() => {});
     }
   </script>

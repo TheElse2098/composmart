@@ -53,6 +53,7 @@ CREATE TABLE `signalements` (
   `id`          int      NOT NULL AUTO_INCREMENT,
   `compost_id`  int      NOT NULL,
   `user_id`     int      DEFAULT NULL,  -- pas de FK : users vit dans db-core
+  `reporter_username` varchar(100) DEFAULT NULL,  -- dénormalisé (users en db-core)
   `motif`       enum('position','type_acces','regles','inexistant','autre') NOT NULL,
   `commentaire` text     DEFAULT NULL,
   `statut`      enum('ouvert','resolu','rejete') NOT NULL DEFAULT 'ouvert',

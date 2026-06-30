@@ -12,13 +12,10 @@ csrf_check();
 const TYPES_VALIDES = ['Conteneur', 'Compost bois', 'Compost plastique'];
 const ACCES_VALIDES = ['public', 'privé', 'institution'];
 
-function is_admin($connexion) {
-    if (empty($_SESSION['user_id'])) return false;
-    $stmt = mysqli_prepare($connexion, 'SELECT isAdmin FROM users WHERE id = ?');
-    $stmt->bind_param('i', $_SESSION['user_id']);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    return $row && (int)$row['isAdmin'] === 1;
+// map-api n'a pas accès à la table users (db-core) : l'admin est lu depuis la
+// session (renseignée au login). $connexion est ignoré, gardé pour compat.
+function is_admin($connexion = null) {
+    return is_admin_session();
 }
 
 $URL      = getenv('DB_HOST')     ?: 'db';

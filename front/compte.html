@@ -188,14 +188,23 @@
 
     function esc(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
 
-    fetch('/api/auth/profile.php').then(r => r.json()).catch(() => ({}))
-      .then(profile => {
-        if (profile.logged_in) {
-          renderProfile(profile);
-        } else {
-          renderGuest();
-        }
-      });
+    // profile.php (db-core) ne connaît pas les jeux : on agrège les records jeux
+    // depuis games-api (db-games), puis on complète badges + parties côté front.
+    Promise.all([
+      fetch('/api/auth/profile.php').then(r => r.json()).catch(() => ({})),
+      fetch('/api/jeux/score.php?action=profile').then(r => r.json()).catch(() => ({ records: [], parties: 0 })),
+    ]).then(([profile, jeux]) => {
+      if (!profile.logged_in) { renderGuest(); return; }
+      profile.records = jeux.records || [];
+      profile.parties = jeux.parties || 0;
+      // Badges jeux (db-games) injectés ici : Joueur + Touche-à-tout.
+      const nbJeux = profile.records.filter(r => r.best !== null).length;
+      const allJeux = profile.records.length > 0 && nbJeux >= profile.records.length;
+      profile.badges.splice(2, 0,
+        { emoji: '🎮', label: 'Joueur',        desc: 'Jouer à un mini-jeu',  unlocked: profile.parties >= 1 },
+        { emoji: '🏆', label: 'Touche-à-tout', desc: 'Essayer tous les jeux', unlocked: allJeux });
+      renderProfile(profile);
+    });
 
     function ordinal(n) { return n === 1 ? '1er' : n + 'e'; }
 

@@ -16,6 +16,8 @@ $c = mysqli_connect(
 if (!$c) { http_response_code(500); echo json_encode(['error' => 'DB error']); exit; }
 
 // ── Garde admin (côté serveur) ─────────────────────────────────────────────
+// courses-api a accès à users (db-core) : on revérifie en base (source de vérité),
+// au-delà du flag de session, car c'est une page sensible.
 $is_admin = false;
 if (!empty($_SESSION['user_id'])) {
     $stmt = mysqli_prepare($c, 'SELECT isAdmin FROM users WHERE id = ?');
@@ -41,17 +43,16 @@ function table_exists($c, $name) {
     return $res && mysqli_num_rows($res) > 0;
 }
 
+// composts/parties/signalements vivent dans db-map et db-games : le front admin
+// les complète via /api/carte/count.php et /api/jeux/count.php. On expose null ici.
 $stats = [
     'users'        => count_of($c, 'SELECT COUNT(*) FROM users'),
     'admins'       => count_of($c, 'SELECT COUNT(*) FROM users WHERE isAdmin = 1'),
-    'composts'     => count_of($c, 'SELECT COUNT(*) FROM composts'),
+    'composts'     => null,  // db-map (front)
     'cours'        => count_of($c, 'SELECT COUNT(*) FROM cours'),
     'completions'  => count_of($c, 'SELECT COUNT(*) FROM user_progress'),
-    'parties'      => count_of($c, 'SELECT COUNT(*) FROM scores'),
-    // La table signalements n'existe qu'après réinitialisation de la DB
-    'signalements' => table_exists($c, 'signalements')
-        ? count_of($c, "SELECT COUNT(*) FROM signalements WHERE statut = 'ouvert'")
-        : null,
+    'parties'      => null,  // db-games (front)
+    'signalements' => null,  // db-map (front)
 ];
 
 // Liste des utilisateurs (lecture seule)

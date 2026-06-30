@@ -29,7 +29,7 @@ $conn = mysqli_connect(
 );
 if (!$conn) { echo json_encode(['error' => 'Connexion DB échouée']); exit; }
 
-$stmt = mysqli_prepare($conn, 'SELECT id, username, password_hash FROM users WHERE username = ?');
+$stmt = mysqli_prepare($conn, 'SELECT id, username, password_hash, isAdmin FROM users WHERE username = ?');
 $stmt->bind_param('s', $username);
 $stmt->execute();
 $row = $stmt->get_result()->fetch_assoc();
@@ -42,6 +42,9 @@ if (!$row || !password_verify($password, $row['password_hash'])) {
 session_regenerate_id(true);
 $_SESSION['user_id'] = $row['id'];
 $_SESSION['username'] = $row['username'];
+// isAdmin mis en session : map-api/games-api (autres bases) n'ont pas accès à
+// la table users. Rafraîchi à chaque login. Voir is_admin() dans _guard.php.
+$_SESSION['isAdmin'] = (int)$row['isAdmin'] === 1;
 
 $uid = (int)$row['id'];
 $stmt2 = mysqli_prepare($conn, 'INSERT INTO logins (user_id) VALUES (?)');

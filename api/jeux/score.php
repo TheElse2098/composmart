@@ -33,8 +33,10 @@ if ($action === 'save') {
         exit;
     }
     $uid = (int)$_SESSION['user_id'];
-    $stmt = mysqli_prepare($conn, 'INSERT INTO scores (user_id, jeu_id, score) VALUES (?, ?, ?)');
-    $stmt->bind_param('isi', $uid, $jeu_id, $score);
+    // username dénormalisé (users vit dans db-core, pas joignable depuis games-api)
+    $uname = $_SESSION['username'] ?? '';
+    $stmt = mysqli_prepare($conn, 'INSERT INTO scores (user_id, username, jeu_id, score) VALUES (?, ?, ?, ?)');
+    $stmt->bind_param('issi', $uid, $uname, $jeu_id, $score);
     $stmt->execute();
 
     $stmt = mysqli_prepare($conn, 'SELECT MAX(score) AS best FROM scores WHERE user_id = ? AND jeu_id = ?');
@@ -61,11 +63,12 @@ if ($action === 'infos') {
         if ($row && $row['best'] !== null) $best = (int)$row['best'];
     }
 
+    // username dénormalisé : plus de JOIN users (table dans db-core).
     $stmt = mysqli_prepare($conn,
-        'SELECT u.username, MAX(s.score) AS best
-         FROM scores s JOIN users u ON u.id = s.user_id
+        'SELECT s.username, MAX(s.score) AS best
+         FROM scores s
          WHERE s.jeu_id = ?
-         GROUP BY s.user_id, u.username
+         GROUP BY s.user_id, s.username
          ORDER BY best DESC, MIN(s.played_at) ASC
          LIMIT 5');
     $stmt->bind_param('s', $jeu_id);
@@ -97,6 +100,42 @@ if ($action === 'bests') {
         $bests[$row['jeu_id']] = (int)$row['best'];
     }
     echo json_encode(['logged_in' => true, 'bests' => (object)$bests]);
+    exit;
+}
+
+// ── PROFIL JEUX : records + parties par jeu (page compte) ──────────────────
+// Sert à profile.php (auth-api) qui ne peut plus lire la table scores (db-games).
+// Renvoie aussi la méta (nom/emoji/max) pour que le front affiche sans dépendre d'auth.
+if ($action === 'profile') {
+    $meta = [
+        'mot-mystere'    => ['nom' => 'Mot mystère',      'emoji' => '🔤', 'max' => 80],
+        'compost-ou-pas' => ['nom' => 'Compost ou pas ?', 'emoji' => '♻️', 'max' => 12],
+    ];
+    $joues = [];
+    $parties_total = 0;
+    if (!empty($_SESSION['user_id'])) {
+        $uid = (int)$_SESSION['user_id'];
+        $stmt = mysqli_prepare($conn, 'SELECT jeu_id, MAX(score) AS best, COUNT(*) AS parties FROM scores WHERE user_id = ? GROUP BY jeu_id');
+        $stmt->bind_param('i', $uid);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) {
+            $joues[$row['jeu_id']] = ['best' => (int)$row['best'], 'parties' => (int)$row['parties']];
+            $parties_total += (int)$row['parties'];
+        }
+    }
+    $records = [];
+    foreach ($meta as $slug => $info) {
+        $records[] = [
+            'slug'    => $slug,
+            'nom'     => $info['nom'],
+            'emoji'   => $info['emoji'],
+            'max'     => $info['max'],
+            'best'    => isset($joues[$slug]) ? $joues[$slug]['best'] : null,
+            'parties' => isset($joues[$slug]) ? $joues[$slug]['parties'] : 0,
+        ];
+    }
+    echo json_encode(['records' => $records, 'parties' => $parties_total], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
