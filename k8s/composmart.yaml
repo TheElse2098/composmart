@@ -243,6 +243,35 @@ spec:
         - name: seeds
           configMap: { name: seeds }
 ---
+# ── Rafraîchissement OSM quotidien (3h15) ──────────────────────
+# Retente l'import OSM tous les jours : rattrape un échec précédent ET met à jour
+# les données (les composteurs OSM évoluent). import_osm déduplique + abandonne
+# proprement si Overpass est down. concurrencyPolicy: Forbid → pas d'empilement.
+apiVersion: batch/v1
+kind: CronJob
+metadata: { name: osm-refresh, namespace: composmart }
+spec:
+  schedule: "15 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: osm-refresh
+              image: composmart/map-api:local
+              imagePullPolicy: IfNotPresent
+              command: ["php", "/docker-seeds/import_osm.php"]
+              env:
+                - { name: DB_HOST, value: db-map }
+                - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+                - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+                - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+---
 # ════════════════════════ SERVICES API ════════════════════════
 # map-api
 apiVersion: apps/v1

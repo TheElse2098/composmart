@@ -183,6 +183,37 @@ services:
     networks: [composmart]
     restart: "no"
 
+  # Rafraîchissement OSM quotidien à 3h15 (équivalent du CronJob k8s).
+  # Boucle : dort jusqu'au prochain 3h15, lance import_osm (retries+miroirs), recommence.
+  osm-cron:
+    build:
+      context: .
+      dockerfile: services/map-api/Dockerfile
+    environment:
+      DB_HOST: db-map
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          now=$$(date +%s)
+          next=$$(date -d 'tomorrow 03:15' +%s 2>/dev/null || date -v+1d -v3H -v15M -v0S +%s)
+          today=$$(date -d 'today 03:15' +%s 2>/dev/null || date -v3H -v15M -v0S +%s)
+          [ "$$today" -gt "$$now" ] && next=$$today
+          sleep $$(( next - now ))
+          echo "[osm-cron] $$(date) — rafraîchissement OSM"
+          php /docker-seeds/import_osm.php || echo "[osm-cron] import échoué, prochain essai demain"
+        done
+    volumes:
+      - ./shared/seeds:/docker-seeds
+    depends_on:
+      db-map: { condition: service_healthy }
+    networks: [composmart]
+    restart: unless-stopped
+
 networks:
   composmart:
     driver: bridge

@@ -19,25 +19,38 @@ for ($i = 0; $i < 15; $i++) {
 }
 if (!$c) die("seed_map: impossible de se connecter à db-map.\n");
 
+// Seuil "OSM présent" : villes open data ≈ 1340 points. En dessous de
+// villes + 1000, on considère qu'OSM manque (échec d'un import précédent)
+// et on (re)tente. Au-dessus, OSM est déjà là → on ne retente pas au boot.
+const SEUIL_OSM = 2300;
+
 $count = (int)mysqli_fetch_row(mysqli_query($c, 'SELECT COUNT(*) FROM composts'))[0];
 mysqli_close($c);
 
-if ($count > 0) {
-    echo "seed_map: db-map déjà peuplée ($count composteurs). Import ignoré.\n";
-    exit(0);
-}
-
-echo "=== seed_map: import initial des composteurs ===\n";
 $seeds = '/docker-seeds';
 
-$villes = [
-    ["$seeds/montpellier.json", 'Montpellier', 'Ville de Montpellier', 'https://www.montpellier.fr/vie-quotidienne/vivre-ici/gerer-ses-dechets'],
-    ["$seeds/rennes.json",      'Rennes',       'Rennes Métropole',    ''],
-    ["$seeds/marseille.json",   'Marseille',    'Ville de Marseille',  ''],
-];
-foreach ($villes as $v) {
-    $args = implode(' ', array_map('escapeshellarg', $v));
-    passthru("php $seeds/import_city.php $args");
+// 1) Villes (idempotent : import_city déduplique par distance) — seulement si DB vide.
+if ($count === 0) {
+    echo "=== seed_map: import initial des villes ===\n";
+    $villes = [
+        ["$seeds/montpellier.json", 'Montpellier', 'Ville de Montpellier', 'https://www.montpellier.fr/vie-quotidienne/vivre-ici/gerer-ses-dechets'],
+        ["$seeds/rennes.json",      'Rennes',       'Rennes Métropole',    ''],
+        ["$seeds/marseille.json",   'Marseille',    'Ville de Marseille',  ''],
+    ];
+    foreach ($villes as $v) {
+        $args = implode(' ', array_map('escapeshellarg', $v));
+        passthru("php $seeds/import_city.php $args");
+    }
+} else {
+    echo "seed_map: $count composteurs déjà en base, villes ignorées.\n";
 }
-passthru("php $seeds/import_osm.php");
+
+// 2) OSM : tenté si manquant (sous le seuil). import_osm gère retries + miroirs
+//    et abandonne proprement si Overpass est down — sans bloquer ni boucler.
+if ($count < SEUIL_OSM) {
+    echo "=== seed_map: import OSM (composts=$count < seuil " . SEUIL_OSM . ") ===\n";
+    passthru("php $seeds/import_osm.php");
+} else {
+    echo "seed_map: OSM déjà présent ($count composteurs ≥ " . SEUIL_OSM . "), import OSM ignoré.\n";
+}
 echo "=== seed_map: terminé ===\n";
