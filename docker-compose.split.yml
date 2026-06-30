@@ -1,6 +1,10 @@
-# Étape 1 — architecture multi-services (validation locale avant k8s).
-# DB encore UNIQUE et partagée (la séparation des bases est l'étape 2).
+# Étape 2.1 — architecture multi-services + 3 bases séparées (db-map/db-games/db-core).
 # Lancer :  docker compose -f docker-compose.split.yml up --build
+# Repartir de bases vides (wipe assumé) :  docker compose -f docker-compose.split.yml down -v
+#
+# ⚠️ En 2.1 le CODE n'est pas encore adapté : map-api/games-api lisent encore `users`
+# (isAdmin, JOIN top-5) qui n'est plus dans leur base → les actions ADMIN et le top-5
+# échoueront jusqu'à l'étape 2.2. La carte, la liste, le login restent fonctionnels.
 #
 # Le compose d'origine (docker-compose.yml) reste intact comme filet de sécurité.
 services:
@@ -21,12 +25,15 @@ services:
     build:
       context: .
       dockerfile: services/map-api/Dockerfile
-    env_file: [.env]
     environment:
+      DB_HOST: db-map
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-      db: { condition: service_healthy }
+      db-map: { condition: service_healthy }
       redis: { condition: service_started }
     networks: [composmart]
 
@@ -34,12 +41,15 @@ services:
     build:
       context: .
       dockerfile: services/games-api/Dockerfile
-    env_file: [.env]
     environment:
+      DB_HOST: db-games
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-      db: { condition: service_healthy }
+      db-games: { condition: service_healthy }
       redis: { condition: service_started }
     networks: [composmart]
 
@@ -47,12 +57,15 @@ services:
     build:
       context: .
       dockerfile: services/courses-api/Dockerfile
-    env_file: [.env]
     environment:
+      DB_HOST: db-core
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-      db: { condition: service_healthy }
+      db-core: { condition: service_healthy }
       redis: { condition: service_started }
     networks: [composmart]
 
@@ -60,12 +73,15 @@ services:
     build:
       context: .
       dockerfile: services/auth-api/Dockerfile
-    env_file: [.env]
     environment:
+      DB_HOST: db-core
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
-      db: { condition: service_healthy }
+      db-core: { condition: service_healthy }
       redis: { condition: service_started }
     networks: [composmart]
 
@@ -74,7 +90,8 @@ services:
     command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
     networks: [composmart]
 
-  db:
+  # ── 3 bases séparées (variante B). Chaque base initialise son propre schéma. ──
+  db-map:
     image: mariadb:11
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
@@ -82,8 +99,8 @@ services:
       MARIADB_USER: ${DB_USER}
       MARIADB_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - db_data:/var/lib/mysql
-      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - db_map_data:/var/lib/mysql
+      - ./db/map.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -91,18 +108,73 @@ services:
       retries: 10
     networks: [composmart]
 
-  # Seed initial (composts OSM/villes + cours). En monolithe c'était l'entrypoint web ;
-  # ici on le lance une fois via un conteneur jetable qui réutilise l'image courses-api.
-  seed:
+  db-games:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_games_data:/var/lib/mysql
+      - ./db/games.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [composmart]
+
+  db-core:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_core_data:/var/lib/mysql
+      - ./db/core.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [composmart]
+
+  # ── Seeds découpés : composts → db-map, cours → db-core (deux conteneurs jetables). ──
+  seed-map:
     build:
       context: .
-      dockerfile: services/courses-api/Dockerfile
-    env_file: [.env]
-    entrypoint: ["php", "/docker-seeds/seed.php"]
+      dockerfile: services/map-api/Dockerfile
+    environment:
+      DB_HOST: db-map
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    entrypoint: ["php", "/docker-seeds/seed_map.php"]
     volumes:
       - ./db/seeds:/docker-seeds
     depends_on:
-      db: { condition: service_healthy }
+      db-map: { condition: service_healthy }
+    networks: [composmart]
+    restart: "no"
+
+  seed-core:
+    build:
+      context: .
+      dockerfile: services/courses-api/Dockerfile
+    environment:
+      DB_HOST: db-core
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    entrypoint: ["php", "/docker-seeds/seed_core.php"]
+    volumes:
+      - ./db/seeds:/docker-seeds
+      - ./content:/var/www/html/content
+    depends_on:
+      db-core: { condition: service_healthy }
     networks: [composmart]
     restart: "no"
 
@@ -111,4 +183,6 @@ networks:
     driver: bridge
 
 volumes:
-  db_data:
+  db_map_data:
+  db_games_data:
+  db_core_data:
