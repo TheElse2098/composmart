@@ -10,13 +10,29 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build-web:
-    name: Build web image
+  build:
+    name: Build ${{ matrix.service }} image
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       actions: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # service = nom de l'image GHCR ; dockerfile = chemin du Dockerfile du service.
+        include:
+          - service: web
+            dockerfile: services/web/Dockerfile
+          - service: map-api
+            dockerfile: services/map-api/Dockerfile
+          - service: games-api
+            dockerfile: services/games-api/Dockerfile
+          - service: courses-api
+            dockerfile: services/courses-api/Dockerfile
+          - service: auth-api
+            dockerfile: services/auth-api/Dockerfile
 
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +51,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/web
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
           tags: |
             type=sha,prefix=sha-
             type=raw,value=latest
@@ -44,9 +60,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: front/Dockerfile
+          file: ${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}

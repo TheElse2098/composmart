@@ -129,12 +129,17 @@ k3s utilise **containerd** (pas le démon Docker). Deux options :
 
 ### Option A — via GHCR (recommandée, colle au CI existant)
 
-Le workflow GitHub Actions build et pousse les 5 images sur GHCR à chaque push.
-Adapter `k8s/composmart.yaml` pour pointer vers ces images :
+Le workflow GitHub Actions (`.github/workflows/deploy.yml`) build et pousse les **5
+images** sur GHCR à chaque push sur `main` (job matriciel), taguées `latest` + `sha-<commit>`.
 
-```
-image: ghcr.io/theelse2098/composmart/<service>:latest
-imagePullPolicy: Always
+Le manifest utilise `composmart/<service>:local` (pour k3d). Pour le VPS, générer une
+variante pointant vers GHCR avec un `sed` :
+
+```bash
+sed -e 's#composmart/\([a-z-]*\):local#ghcr.io/theelse2098/composmart/\1:latest#' \
+    -e 's#imagePullPolicy: IfNotPresent#imagePullPolicy: Always#' \
+    k8s/composmart.yaml > k8s/composmart.prod.yaml
+kubectl apply -f k8s/composmart.prod.yaml
 ```
 
 Si le dépôt GHCR est privé, créer un secret de pull et le référencer :
