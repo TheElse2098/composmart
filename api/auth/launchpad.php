@@ -64,33 +64,41 @@ if (!$ok) {
     exit;
 }
 
+step('E_user_inserted');
 $admin_id = (int)mysqli_insert_id($c);
 session_regenerate_id(true);
+step('F_session_regenerated');
 $_SESSION['user_id']  = $admin_id;
 $_SESSION['username'] = $username;
 
 $s = mysqli_prepare($c, 'INSERT INTO logins (user_id) VALUES (?)');
 if ($s) { $s->bind_param('i', $admin_id); $s->execute(); }
+step('G_login_logged');
 
 // Récupérer tous les cours et leur XP
 $total_xp  = 0;
 $res_cours = mysqli_query($c, 'SELECT slug, xp_reward FROM cours');
+step('H_cours_query res=' . ($res_cours === false ? 'FALSE err=' . mysqli_error($c) : 'OK'));
 $values    = [];
-while ($row = mysqli_fetch_assoc($res_cours)) {
+while ($res_cours && ($row = mysqli_fetch_assoc($res_cours))) {
     $slug      = mysqli_real_escape_string($c, $row['slug']);
     $total_xp += (int)$row['xp_reward'];
     $values[]  = "($admin_id, '$slug')";
 }
+step('I_cours_loop_done xp=' . $total_xp);
 
 // Marquer tous les cours comme complétés
 if (!empty($values)) {
     mysqli_query($c, 'INSERT IGNORE INTO user_progress (user_id, cours_id) VALUES ' . implode(',', $values));
 }
+step('J_progress_inserted');
 
 // Mettre à jour XP et niveau
 $niveau = floor($total_xp / 100) + 1;
 mysqli_query($c, "UPDATE users SET xp = $total_xp, niveau = $niveau WHERE id = $admin_id");
+step('K_xp_updated niveau=' . $niveau);
 
 mysqli_close($c);
+step('Z_done');
 
 echo json_encode(['ok' => true, 'username' => $username, 'xp' => $total_xp, 'niveau' => $niveau]);
