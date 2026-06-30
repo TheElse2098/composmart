@@ -1,0 +1,19 @@
+RewriteEngine On
+
+# /index et /index.html → redirect vers /
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index(\.html)?(\s|\ ) [NC]
+RewriteRule ^ / [R=301,L]
+
+# /carte.html → redirect vers /carte (propre dans l'URL bar)
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /(.+)\.html\ HTTP/
+RewriteRule ^ /%1 [R=301,L]
+
+# /cours/{slug} → cours-detail.html (avant la règle générale)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^cours/([^./]+)$ cours-detail.html [L]
+
+# /carte → sert carte.html en interne
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^.]+)$ $1.html [L]

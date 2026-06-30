@@ -47,7 +47,7 @@ kubectl create namespace composmart
 kubectl create configmap map-schema   --from-file=schema.sql=db/map.sql   -n composmart
 kubectl create configmap games-schema --from-file=schema.sql=db/games.sql -n composmart
 kubectl create configmap core-schema  --from-file=schema.sql=db/core.sql  -n composmart
-kubectl create configmap seeds        --from-file=db/seeds/                -n composmart
+kubectl create configmap seeds        --from-file=shared/seeds/            -n composmart
 ```
 
 ## 4. Déployer
@@ -188,7 +188,7 @@ supprimer le bloc Secret du YAML en prod).
 kubectl create configmap map-schema   --from-file=schema.sql=db/map.sql   -n composmart
 kubectl create configmap games-schema --from-file=schema.sql=db/games.sql -n composmart
 kubectl create configmap core-schema  --from-file=schema.sql=db/core.sql  -n composmart
-kubectl create configmap seeds        --from-file=db/seeds/                -n composmart
+kubectl create configmap seeds        --from-file=shared/seeds/            -n composmart
 ```
 
 ## 6. Déployer

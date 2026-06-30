@@ -1,0 +1,123 @@
+/* === DARK MODE — appliqué via html.dark === */
+
+/* ── Fond & texte global ── */
+html.dark body { background-color: #121c14; color: #c8e6d4; }
+
+/* ── Bouton toggle (toutes pages) ── */
+#themeToggle {
+    background: none; border: none; cursor: pointer;
+    font-size: 1.15rem; padding: 4px; line-height: 1;
+    opacity: 0.85; transition: opacity 0.15s;
+}
+#themeToggle:hover { opacity: 1; }
+
+/* ── Nav ── */
+html.dark nav { background: #174f30; }
+
+/* ── Drawer ── */
+html.dark .drawer { background: #1a2b1e; box-shadow: -4px 0 24px rgba(0,0,0,0.5); }
+html.dark .drawer-menu li a { color: #b0d4be; }
+html.dark .drawer-menu li a:hover,
+html.dark .drawer-menu li a.active { background: #243328; color: #52b788; border-left-color: #52b788; }
+html.dark .drawer-divider { background: #2a3d2e; }
+
+/* ── Titres & textes communs ── */
+html.dark h1, html.dark h2, html.dark h3 { color: #c8e6d4; }
+html.dark .hero-sub, html.dark .step-sub, html.dark .progress-text { color: #7ab88e; }
+html.dark .cat-title, html.dark .sec-title, html.dark .section-title { color: #c8e6d4; }
+
+/* ── Badges/pills ── */
+html.dark .hero-badge, html.dark .cat-badge { background: #243328; color: #7ab88e; }
+
+/* ── Index — cartes gradient : ok telles quelles ── */
+
+/* ── Cours — cards gradient : ok telles quelles ── */
+html.dark .stats-box { background: #1e2d22; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+html.dark .stats-cell-border { border-right-color: #2a3d2e; }
+html.dark .stats-label { color: #7ab88e; }
+
+/* ── Parcours ── */
+html.dark .step-label { color: #c8e6d4; }
+html.dark .progress-bar { background: #2a3d2e; }
+html.dark .step-bubble { border-color: #243328; }
+html.dark .step-badge { background: #1e2d22; }
+html.dark .step-badge.done { color: #52b788; }
+html.dark .step-badge.locked { color: #5a7a60; }
+html.dark .locked-msg { color: #5a7a60; }
+
+/* ── Materiel ── */
+html.dark .tab { background: #1e2d22; color: #7ab88e; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+html.dark .tab:hover:not(.active) { border-color: #2d9959; color: #52b788; }
+html.dark .item-card { background: #1e2d22; box-shadow: 0 2px 10px rgba(0,0,0,0.35); }
+html.dark .item-name { color: #c8e6d4; }
+html.dark .item-desc { color: #7ab88e; }
+html.dark .tip-box { background: linear-gradient(135deg, #1e2d22, #243328); border-left-color: #2d9959; }
+html.dark .tip-text { color: #b0d4be; }
+
+/* ── Compte & Achat — contenu blanc ── */
+html.dark .content { background: #1a2b1e; }
+html.dark .content p { color: #9ec8b0; }
+html.dark .tip { background: #1e2d22; color: #b0d4be; border-left-color: #2d9959; }
+html.dark .tips-title { color: #52b788; }
+
+/* ── Carte — panneau fiche composteur ── */
+html.dark .tabl { background: #1a2b1e; box-shadow: 0 -4px 24px rgba(0,0,0,0.5); }
+html.dark .tabl-handle { background: #2a3d2e; }
+html.dark .badge-acces { background: #243328; color: #7ab88e; border-color: #2a3d2e; }
+html.dark .tabl-adresse { color: #5a8a6a; }
+html.dark .info-val { color: #c8e6d4; }
+html.dark .btn-trajet { background: #243328; color: #52b788; border-color: #2a3d2e; }
+html.dark .btn-trajet:hover { background: #2d4030; }
+html.dark .chip-ok  { background: #1a2f20; color: #52b788; border-color: #2a4d35; }
+html.dark .chip-nok { background: #2d1a1a; color: #e57373; border-color: #4d2a2a; }
+html.dark .no-data  { color: #4a7a5a; }
+html.dark .edit-select { background: #1e2d22; color: #e8f5ee; border-color: #3a5c42; }
+html.dark .edit-check { color: #e8f5ee; }
+html.dark #nb_compost { background: #1a2b1e; color: #c8e6d4; }
+html.dark #input-ville {
+    background: #1e2d22; color: #c8e6d4;
+    border-color: #2d9959 !important;
+}
+html.dark #valid_rajout { background: #1e2d22; color: #52b788; }
+
+/* ── Leaflet controls ── */
+html.dark .leaflet-bar a {
+    background: #1e2d22 !important;
+    color: #c8e6d4 !important;
+    border-color: #2a3d2e !important;
+}
+html.dark .leaflet-bar a:hover { background: #243328 !important; }
+html.dark .leaflet-control-layers { background: #1e2d22 !important; color: #c8e6d4 !important; }
+html.dark .leaflet-control-layers-separator { border-color: #2a3d2e !important; }
+html.dark .leaflet-popup-content-wrapper,
+html.dark .leaflet-popup-tip { background: #1e2d22 !important; color: #c8e6d4 !important; }
+
+/* ── Cours-detail — card & tabs ── */
+html.dark .cours-card { background: #1a2b1e; box-shadow: 0 12px 50px rgba(0,0,0,0.4), 0 2px 12px rgba(0,0,0,0.25); }
+html.dark .media-tabs { background: #1e2d22; border-bottom-color: #2a3d2e; }
+html.dark .media-btn { color: #7ab88e; }
+html.dark .media-btn.active { background: #1a2b1e; color: #a8e6bf; border-bottom-color: #52b788; }
+html.dark .media-btn.disabled { color: #3a5a42; }
+html.dark .media-btn:not(.disabled):not(.active):hover { background: rgba(255,255,255,0.05); color: #a8e6bf; }
+html.dark .media-panel { background: #1a2b1e; }
+html.dark .back-link { color: rgba(255,255,255,0.55); }
+html.dark .back-link:hover { color: #fff; }
+html.dark .md-content { color: #c8e6d4; }
+html.dark .md-content h1 { color: #a8e6bf; }
+html.dark .md-content h2 { color: #c8e6d4; }
+html.dark .md-content h3 { color: #a8e6bf; }
+html.dark .md-content strong { color: #a8e6bf; }
+html.dark .md-content blockquote { background: #1e2d22; border-left-color: #52b788; color: #7ab88e; }
+html.dark .md-content code { background: #1e2d22; color: #a8e6bf; }
+html.dark .md-content th { background: #243328; }
+html.dark .md-content td { border-bottom-color: #2a3d2e; color: #b0d4be; }
+html.dark .media-title { color: #c8e6d4; }
+html.dark .media-author { color: #7ab88e; }
+html.dark .media-duration { background: #243328; color: #52b788; }
+html.dark .media-desc { color: #7ab88e; }
+html.dark .podcast-card { background: #1e2d22; }
+html.dark .quiz-opt { background: #1e2d22; border-color: #2a4d35; color: #c8e6d4; }
+html.dark .quiz-opt:hover { border-color: #52b788; background: #243328; }
+html.dark .quiz-opt.selected { border-color: #52b788; background: #1e3326; color: #a8e6bf; }
+html.dark .quiz-result .score { color: #52b788; }
+html.dark .quiz-retry { background: #1e2d22; color: #52b788; border-color: #52b788; }

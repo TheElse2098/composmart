@@ -1,5 +1,6 @@
-# courses-api — api/cours/* + api/admin/* — contenu éditorial + back-office.
-# Embarque content/ (cours, thèmes) et les seeds cours.
+# courses-api — endpoints cours + admin + contenu éditorial.
+# Sources : services/courses-api/{cours,admin}/ + content/ + garde partagé.
+# Embarque aussi les seeds (le Job seed-core lance php /docker-seeds/seed_core.php).
 # Build depuis la racine du repo :
 #   docker build -f services/courses-api/Dockerfile -t composmart/courses-api .
 FROM php:8.3-apache
@@ -10,9 +11,10 @@ RUN docker-php-ext-install mysqli \
     && a2enmod rewrite \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
-COPY api/_guard.php   /var/www/html/api/_guard.php
-COPY api/cours/       /var/www/html/api/cours/
-COPY api/admin/       /var/www/html/api/admin/
-COPY content/         /var/www/html/content/
+COPY shared/_guard.php          /var/www/html/api/_guard.php
+COPY services/courses-api/cours/ /var/www/html/api/cours/
+COPY services/courses-api/admin/ /var/www/html/api/admin/
+COPY content/                   /var/www/html/content/
+COPY shared/seeds/              /docker-seeds/
 
 RUN chown -R www-data:www-data /var/www/html

@@ -11,7 +11,7 @@ RUN a2enmod rewrite proxy proxy_http \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
 # Front statique uniquement (pas d'API embarquée : elle vit dans les services dédiés).
-COPY front/ /var/www/html/
+COPY services/web/front/ /var/www/html/
 
 # Reverse-proxy /api/<domaine> → service correspondant.
 COPY services/web/api-proxy.conf /etc/apache2/conf-enabled/api-proxy.conf

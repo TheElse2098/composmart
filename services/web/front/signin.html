@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>CompoSmart – Créer un compte</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #eef4ec; font-family: 'Segoe UI', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; }
+
+    .auth-card { background: #fff; border-radius: 24px; box-shadow: 0 4px 32px rgba(30,110,62,0.12); width: 100%; max-width: 400px; overflow: hidden; }
+    .auth-header { background: linear-gradient(160deg, #145228 0%, #1e6e3e 60%, #2a9450 100%); padding: 28px 24px 24px; text-align: center; }
+    .auth-logo { font-size: 1.3rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; display: block; margin-bottom: 16px; }
+    .auth-logo span { color: #a8e6bf; }
+    .auth-title { font-size: 1.2rem; font-weight: 800; color: #fff; }
+    .auth-body { padding: 28px 24px 32px; }
+
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 700; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .field input { display: block; width: 100%; padding: 11px 14px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.95rem; color: #1a3a25; background: #f7fbf8; outline: none; transition: border-color 0.15s; }
+    .field input:focus { border-color: #1e6e3e; background: #fff; }
+
+    .pass-wrap { position: relative; }
+    .pass-wrap input { padding-right: 44px; }
+    .toggle-pass { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1rem; color: #7aaa8a; line-height: 1; padding: 2px; }
+
+    .error-msg { background: #fdecea; color: #c0392b; border-radius: 10px; padding: 10px 14px; font-size: 0.85rem; font-weight: 600; margin-bottom: 16px; display: none; }
+    .btn-submit { display: block; width: 100%; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 13px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; margin-top: 8px; }
+    .btn-submit:hover { opacity: 0.85; }
+    .btn-submit:disabled { opacity: 0.5; cursor: default; }
+    .auth-footer { text-align: center; margin-top: 20px; font-size: 0.88rem; color: #7aaa8a; }
+    .auth-footer a { color: #1e6e3e; font-weight: 700; text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+
+    /* dark mode */
+    html.dark body { background: #121c14; }
+    html.dark .auth-card { background: #1a2b1e; box-shadow: 0 4px 32px rgba(0,0,0,0.4); }
+    html.dark .field label { color: #7ab88e; }
+    html.dark .field input { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .field input:focus { border-color: #52b788; background: #243328; }
+    html.dark .auth-footer { color: #4a7a5a; }
+    html.dark .auth-footer a { color: #52b788; }
+    html.dark .toggle-pass { color: #4a7a5a; }
+  </style>
+</head>
+<body>
+
+  <div class="auth-card">
+    <div class="auth-header">
+      <a href="/" class="auth-logo">Compos<span>mart</span></a>
+      <div class="auth-title">Créer un compte</div>
+    </div>
+    <div class="auth-body">
+      <div class="error-msg" id="errorMsg"></div>
+
+      <form id="signupForm">
+        <div class="field">
+          <label for="username">Nom d'utilisateur</label>
+          <input type="text" id="username" name="username" placeholder="ex : composteur42" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="password">Mot de passe</label>
+          <div class="pass-wrap">
+            <input type="password" id="password" name="password" placeholder="8 caractères, lettres + chiffres" autocomplete="new-password" required />
+            <button type="button" class="toggle-pass" data-target="password">👁</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="password2">Confirmer le mot de passe</label>
+          <div class="pass-wrap">
+            <input type="password" id="password2" name="password2" placeholder="Retapez le mot de passe" autocomplete="new-password" required />
+            <button type="button" class="toggle-pass" data-target="password2">👁</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-submit" id="submitBtn">Créer mon compte</button>
+      </form>
+
+      <div class="auth-footer">
+        Déjà inscrit ? <a href="/login">Se connecter</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('.toggle-pass').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById(btn.dataset.target);
+        input.type = input.type === 'password' ? 'text' : 'password';
+      });
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const username  = document.getElementById('username').value.trim();
+      const password  = document.getElementById('password').value;
+      const password2 = document.getElementById('password2').value;
+      const errorMsg  = document.getElementById('errorMsg');
+      const submitBtn = document.getElementById('submitBtn');
+
+      errorMsg.style.display = 'none';
+
+      if (password !== password2) {
+        errorMsg.textContent = 'Les mots de passe ne correspondent pas.';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Création…';
+
+      const body = new URLSearchParams({ username, password });
+      fetch('/api/auth/register.php', { method: 'POST', body })
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) {
+            window.location.href = '/compte';
+          } else {
+            errorMsg.textContent = data.error || 'Erreur inconnue.';
+            errorMsg.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Créer mon compte';
+          }
+        })
+        .catch(() => {
+          errorMsg.textContent = 'Erreur réseau, réessayez.';
+          errorMsg.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Créer mon compte';
+        });
+    });
+  </script>
+
+  <script src="/assets/js/theme.js"></script>
+</body>
+</html>

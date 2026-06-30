@@ -1,6 +1,7 @@
-# map-api — api/carte/* (le service le plus lourd : Haversine sur ~5800 composts).
-# Reproduit la structure attendue par le code : api/carte/ + api/_guard.php un cran au-dessus,
-# donc AUCUNE modif PHP nécessaire (les endpoints font require '__DIR__/../_guard.php').
+# map-api — endpoints carte (le service le plus lourd : Haversine sur ~5800 composts).
+# Sources : services/map-api/carte/ + garde partagé shared/_guard.php.
+# Reconstitue la structure /var/www/html/api/carte/ + /var/www/html/api/_guard.php
+# attendue par les require '__DIR__/../_guard.php' (aucune modif PHP nécessaire).
 #
 # Build depuis la racine du repo :
 #   docker build -f services/map-api/Dockerfile -t composmart/map-api .
@@ -18,9 +19,11 @@ RUN apt-get update \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
 # Garde partagé (sessions Redis, rate-limit, csrf) + endpoints carte uniquement.
-COPY api/_guard.php   /var/www/html/api/_guard.php
-COPY api/carte/       /var/www/html/api/carte/
+COPY shared/_guard.php       /var/www/html/api/_guard.php
+COPY services/map-api/carte/ /var/www/html/api/carte/
+
+# Scripts seed (seed_map.php + imports) : utilisés par le Job seed-map (k8s)
+# qui lance `php /docker-seeds/seed_map.php`. Embarqués dans l'image map-api.
+COPY shared/seeds/           /docker-seeds/
 
 RUN chown -R www-data:www-data /var/www/html
-
-# Pas de seed ici : chaque base est peuplée par son propre Job (cf. étape 2).

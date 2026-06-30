@@ -159,7 +159,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
     entrypoint: ["php", "/docker-seeds/seed_map.php"]
     volumes:
-      - ./db/seeds:/docker-seeds
+      - ./shared/seeds:/docker-seeds
     depends_on:
       db-map: { condition: service_healthy }
     networks: [composmart]
@@ -176,7 +176,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
     entrypoint: ["php", "/docker-seeds/seed_core.php"]
     volumes:
-      - ./db/seeds:/docker-seeds
+      - ./shared/seeds:/docker-seeds
       - ./content:/var/www/html/content
     depends_on:
       db-core: { condition: service_healthy }

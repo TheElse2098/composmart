@@ -1,0 +1,175 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>CompoSmart</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; position: relative; z-index: 100; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; transition: color 0.15s; }
+    .nav-profil:hover { color: #fff; }
+
+    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
+    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .burger.open span:nth-child(2) { opacity: 0; }
+    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
+    .drawer.open { right: 0; }
+    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
+    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
+    .drawer-logo span { color: #a8e6bf; }
+    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
+    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
+    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
+    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
+    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
+    .drawer-footer { padding: 16px 24px; border-top: 1px solid #e5ede8; }
+    .drawer-footer a { display: flex; align-items: center; gap: 14px; font-size: 0.95rem; font-weight: 700; color: #1e6e3e; text-decoration: none; }
+
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .hero { text-align: center; padding: 36px 20px 28px; }
+    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.85rem; font-weight: 800; padding: 6px 16px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.7rem, 6vw, 2.8rem); font-weight: 900; color: #1a3a25; line-height: 1.15; }
+    h1 span { color: #1e6e3e; }
+    .hero-sub { font-size: 1rem; color: #4a7a5a; margin-top: 8px; font-weight: 600; }
+
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding: 8px 20px 50px; width: 100%; max-width: 700px; }
+
+    .card { border-radius: 24px; padding: 22px 14px 26px; display: flex; flex-direction: column; align-items: center; cursor: pointer; text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease; position: relative; overflow: hidden; }
+    .card::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.2s; background: rgba(255,255,255,0.12); }
+    .card:hover::before { opacity: 1; }
+    .card:hover { transform: translateY(-5px) scale(1.02); }
+    .card:active { transform: scale(0.97); }
+
+    .card-1 { background: linear-gradient(145deg, #1e6e3e, #2d9959); box-shadow: 0 6px 20px rgba(30,110,62,0.35); }
+    .card-2 { background: linear-gradient(145deg, #2d6a4f, #52b788); box-shadow: 0 6px 20px rgba(45,106,79,0.35); }
+    .card-3 { background: linear-gradient(145deg, #386641, #6a994e); box-shadow: 0 6px 20px rgba(56,102,65,0.35); }
+    .card-4 { background: linear-gradient(145deg, #588157, #a7c957); box-shadow: 0 6px 20px rgba(88,129,87,0.35); }
+    .card-5 { background: linear-gradient(145deg, #5a3d8a, #8e6cc9); box-shadow: 0 6px 20px rgba(90,61,138,0.35); }
+    .card-6 { background: linear-gradient(145deg, #b87900, #e0a800); box-shadow: 0 6px 20px rgba(184,121,0,0.35); }
+
+    .card-emoji { font-size: clamp(54px, 12vw, 80px); line-height: 1; margin-bottom: 14px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); }
+    .card-title { font-family: 'Baloo 2', cursive; font-size: clamp(0.95rem, 2.5vw, 1.15rem); font-weight: 900; color: #fff; text-align: center; line-height: 1.25; }
+    .card-sub { font-size: 0.75rem; color: rgba(255,255,255,0.75); margin-top: 5px; text-align: center; font-weight: 600; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+
+    @media (min-width: 640px) { .grid { gap: 22px; padding: 10px 40px 60px; } .card { padding: 28px 20px 32px; } }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
+    <div class="nav-right"><a href="compte" class="nav-profil">&#128100;</a><button id="themeToggle" aria-label="Thème">🌙</button><button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button></div>
+  </nav>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-logo">Compos<span>mart</span></div>
+      <button class="drawer-close" id="closeBtn">&#x2715;</button>
+    </div>
+        
+    <ul class="drawer-menu">
+      <li><a href="index.html" class="active"><span class="menu-icon">🏠</span> Accueil</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="compte"><span class="menu-icon">👤</span> Mon compte</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="classement"><span class="menu-icon">🏆</span> Classement</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="carte.html"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="cours.html"><span class="menu-icon">📚</span> Les cours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="jeux"><span class="menu-icon">🎮</span> Jeux</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="materiel.html"><span class="menu-icon">🧰</span> Le matériel</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="achat.html"><span class="menu-icon">🛒</span> Achat</a></li>
+      <div class="drawer-divider"></div>
+    </ul>
+  </div>
+
+  <div class="hero">
+    <div class="hero-badge">🌱 Bienvenue !</div>
+    <h1>Où veux-tu<br><span>aller aujourd'hui ?</span></h1>
+    <p class="hero-sub">Choisis ton aventure compost 🌍</p>
+  </div>
+
+  <div class="grid">
+    <a href="classement" class="card card-1">
+      <div class="card-emoji">🏆</div>
+      <div class="card-title">Classement</div>
+      <div class="card-sub">Qui est le meilleur ?</div>
+    </a>
+    <a href="cours.html" class="card card-2">
+      <div class="card-emoji">📚</div>
+      <div class="card-title">Les cours</div>
+      <div class="card-sub">Apprends & découvre</div>
+    </a>
+    <a href="carte.html" class="card card-3">
+      <div class="card-emoji">🗺️</div>
+      <div class="card-title">Carte interactive</div>
+      <div class="card-sub">Trouve près de toi</div>
+    </a>
+    <a href="materiel.html" class="card card-4">
+      <div class="card-emoji">🧰</div>
+      <div class="card-title">Le matériel</div>
+      <div class="card-sub">Tout ce qu'il faut</div>
+    </a>
+    <a href="jeux" class="card card-5">
+      <div class="card-emoji">🎮</div>
+      <div class="card-title">Jeux</div>
+      <div class="card-sub">Joue & bats des records</div>
+    </a>
+    <a href="compte" class="card card-6">
+      <div class="card-emoji">👤</div>
+      <div class="card-title">Mon compte</div>
+      <div class="card-sub" id="compteSub">Connexion & progression</div>
+    </a>
+  </div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    const burger = document.getElementById('burgerBtn');
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('closeBtn');
+    function openMenu() { drawer.classList.add('open'); overlay.classList.add('open'); burger.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeMenu() { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); document.body.style.overflow = ''; }
+    burger.addEventListener('click', openMenu);
+    closeBtn.addEventListener('click', closeMenu);
+    overlay.addEventListener('click', closeMenu);
+
+    // Carte "Mon compte" : affiche le pseudo et le niveau si connecté
+    fetch('/api/auth/me.php')
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.logged_in) {
+          document.getElementById('compteSub').textContent = d.username + ' · Niveau ' + d.niveau;
+        }
+      })
+      .catch(() => {});
+  </script>
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/admin-badge.js?v=2"></script>
+</body>
+</html>

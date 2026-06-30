@@ -1,0 +1,177 @@
+body {
+    margin-top: 10px;
+    background-color: antiquewhite;
+}
+
+.map {
+    width: 100%;
+    height: 700px;
+}
+
+
+.button {
+    text-align: center;
+}
+
+.dep {
+    text-align: center;
+}
+
+.button2 {
+    width: 40%;
+}
+
+.info_compost {
+    text-align: left;
+}
+
+.legend {
+    background-color: white;
+    box-shadow: 5px 5px 10px black;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.legend i {
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin-right: 8px;
+}
+
+.afficher_ajout {
+    background-color: red;
+    visibility: hidden;
+}
+
+.leaflet-control-layers-overlays label:first-child {
+    color: blue;
+}
+
+.leaflet-control-layers-overlays label:nth-child(2) {
+    color: green;
+}
+
+/*PETITS ÉCRANS*/
+.info_compost{
+    text-align: center;
+    background-color: grey;
+    opacity: 0.95;
+    position: relative;
+    bottom: 815px;
+    left: 1290px;
+    z-index: 10;
+
+}
+
+
+.tabl {
+    border: 1px solid black;
+    border-radius: 10px;
+    padding-top: 10px;
+    padding-right: 10px;
+    padding-left: 10px;
+    background-color: grey;
+    opacity: 0.95;
+    position: relative;
+    bottom: 500px;
+    left: 0px;
+    z-index: 10;
+
+}
+
+.rajouter{
+    background-color: grey;
+    opacity: 0.95;
+    position: relative;
+    bottom: 135px;
+    left: 0px;
+    z-index: 10;
+}
+
+.rajouter_compost{
+    background-color: grey;
+    opacity: 0.95;
+    position: relative;
+    bottom: 0px;
+    left:  0px;
+    z-index: 10;
+
+}
+
+.valid_rajout{
+    margin-left: 20%
+}
+
+.supprimer_compost{
+    position: relative;
+    bottom: 10px;
+    left: 250px;
+    z-index: 10;
+}
+
+/*ORDI*/
+@media (min-width: 600px) {
+    /*Page d'accueil */
+    .map {
+        height: 800px;
+    }
+
+    .info_compost {
+        text-align: center;
+        background-color: grey;
+        opacity: 0.95;
+        position: relative;
+        bottom: 815px;
+        left: 1290px;
+        z-index: 10;
+
+    }
+
+
+    .tabl {
+        position:relative;
+        bottom: 735px;
+        left : 1000px;
+        /* Votre style existant : */
+        background-color: grey;
+        opacity: 0.95;
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid black;
+
+    }
+
+    .rajouter {
+        background-color: grey;
+        opacity: 0.95;
+        position: relative;
+        bottom: 740px;
+        left: 1000px;
+        z-index: 10;
+    }
+
+    .rajouter_compost {
+        background-color: grey;
+        opacity: 0.95;
+        position: relative;
+        bottom: 00px;
+        left: 1000px;
+        z-index: 10;
+    }
+
+
+
+
+    .valid_rajout{
+        margin-left: 20%
+    }
+
+    .supprimer_compost{
+        position: relative;
+        bottom: 30px;
+        left: 220px;
+        z-index: 10;
+    }
+
+}

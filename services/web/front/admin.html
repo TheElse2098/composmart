@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>CompoSmart – Admin</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding-bottom: 70px; }
+
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; }
+    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
+    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+    .burger.open span:nth-child(2) { opacity: 0; }
+    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
+    .drawer.open { right: 0; }
+    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
+    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
+    .drawer-logo span { color: #a8e6bf; }
+    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
+    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
+    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
+    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
+    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    .hero { text-align: center; padding: 26px 20px 12px; }
+    .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; color: #1a3a25; }
+
+    .page-content { width: 100%; max-width: 760px; padding: 0 16px; }
+    .section-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin: 24px 4px 12px; display: flex; align-items: center; gap: 8px; }
+
+    /* Cartes de stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+    .stat-card { background: #fff; border-radius: 16px; padding: 16px 14px; text-align: center; box-shadow: 0 2px 10px rgba(30,110,62,0.08); }
+    .stat-num { font-family: 'Baloo 2', cursive; font-size: 1.7rem; font-weight: 900; color: #1e6e3e; line-height: 1; }
+    .stat-lbl { font-size: 0.72rem; color: #4a7a5a; font-weight: 700; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card.alert .stat-num { color: #e53935; }
+
+    /* Signalements */
+    .signal-item { background: #fff; border-radius: 12px; padding: 12px 14px; font-size: 0.82rem; color: #1a3a25; box-shadow: 0 1px 6px rgba(0,0,0,0.05); margin-bottom: 10px; }
+    .signal-item-motif { font-weight: 800; margin-bottom: 2px; }
+    .signal-item-meta { color: #888; font-size: 0.7rem; margin-bottom: 5px; }
+    .signal-item-comment { font-style: italic; margin-bottom: 8px; word-break: break-word; }
+    .signal-item-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .signal-item-actions button, .signal-item-actions a { border: none; border-radius: 14px; padding: 5px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; }
+    .sig-voir { background: #eef4ec; color: #1e6e3e; }
+    .sig-ok { background: #1e6e3e; color: #fff; }
+    .sig-rej { background: #fdecea; color: #c0392b; }
+    .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 18px; background: #fff; border-radius: 12px; }
+
+    /* Table utilisateurs */
+    .user-table-wrap { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 10px rgba(30,110,62,0.08); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th { background: #eef4ec; color: #1a3a25; font-weight: 800; text-align: left; padding: 10px 12px; white-space: nowrap; }
+    td { padding: 9px 12px; border-top: 1px solid #f0f4f0; color: #1a3a25; white-space: nowrap; }
+    .badge-admin { background: #e53935; color: #fff; font-size: 0.62rem; font-weight: 900; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.5px; }
+    .lvl-pill { background: #fff9c4; color: #b26a00; font-weight: 800; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; }
+    .act-cell { white-space: nowrap; }
+    .act-btn { border: none; border-radius: 12px; padding: 4px 10px; font-size: 0.7rem; font-weight: 800; cursor: pointer; transition: opacity 0.12s; }
+    .act-btn:hover { opacity: 0.82; }
+    .act-promote { background: #e8f5e9; color: #1e6e3e; }
+    .act-demote { background: #fff3e0; color: #b26a00; }
+    .act-delete { background: #fdecea; color: #c0392b; }
+    .act-self { color: #bbb; font-size: 0.72rem; font-style: italic; }
+    .user-search { width: 100%; border: 1.5px solid #d7e6da; border-radius: 12px; padding: 9px 13px; font-size: 0.85rem; font-family: inherit; background: #fff; color: #1a3a25; outline: none; margin-bottom: 10px; }
+    .user-search:focus { border-color: #1e6e3e; }
+    .user-empty { text-align: center; color: #999; font-size: 0.82rem; padding: 16px; }
+
+    /* Journal d'audit */
+    .audit-item { background: #fff; border-radius: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.04); margin-bottom: 7px; overflow: hidden; }
+    .audit-head { display: flex; align-items: center; gap: 10px; padding: 9px 13px; font-size: 0.8rem; color: #1a3a25; cursor: pointer; transition: background 0.12s; }
+    .audit-head:hover { background: #f3f8f3; }
+    .audit-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .audit-main { flex: 1; min-width: 0; }
+    .audit-action { font-weight: 800; }
+    .audit-meta { color: #888; font-size: 0.7rem; }
+    .audit-date { color: #999; font-size: 0.68rem; white-space: nowrap; flex-shrink: 0; }
+    .audit-chevron { color: #bbb; font-size: 0.8rem; flex-shrink: 0; transition: transform 0.18s; }
+    .audit-item.open .audit-chevron { transform: rotate(90deg); }
+    .audit-detail { display: none; padding: 0 13px 12px 36px; font-size: 0.8rem; color: #1a3a25; }
+    .audit-item.open .audit-detail { display: block; }
+    .audit-row { display: flex; gap: 8px; padding: 3px 0; border-top: 1px solid #f0f4f0; }
+    .audit-row:first-child { border-top: none; }
+    .audit-key { color: #4a7a5a; font-weight: 800; min-width: 110px; flex-shrink: 0; }
+    .audit-val { color: #1a3a25; word-break: break-word; }
+    .audit-val.empty { color: #aaa; font-style: italic; }
+    .audit-chip { display: inline-block; background: #eef4ec; color: #2d6a4f; border-radius: 8px; padding: 1px 7px; font-size: 0.72rem; font-weight: 700; margin: 1px 2px 1px 0; }
+    .audit-chip.nok { background: #fdecea; color: #c0392b; }
+
+    .loader { text-align: center; padding: 40px; color: #4a7a5a; font-weight: 700; }
+
+    html.dark .stat-card, html.dark .signal-item, html.dark .user-table-wrap, html.dark .empty-msg { background: #16211a; }
+    html.dark .section-title, html.dark h1, html.dark td { color: #e8f5ee; }
+    html.dark th { background: #1e2d22; color: #e8f5ee; }
+    html.dark td { border-top-color: #243a2c; }
+    html.dark .sig-voir { background: #1e2d22; color: #7fc99a; }
+    html.dark .sig-rej { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .signal-item, html.dark .stat-lbl { color: #cfe8d8; }
+    html.dark .audit-item { background: #16211a; }
+    html.dark .audit-head { color: #e8f5ee; }
+    html.dark .audit-head:hover { background: #1e2d22; }
+    html.dark .audit-detail, html.dark .audit-val { color: #e8f5ee; }
+    html.dark .audit-row { border-top-color: #243a2c; }
+    html.dark .audit-chip { background: #1e2d22; color: #7fc99a; }
+    html.dark .audit-chip.nok { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .act-promote { background: #16291c; color: #7fc99a; }
+    html.dark .act-demote { background: #2e2410; color: #e8b931; }
+    html.dark .act-delete { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .user-search { background: #16211a; border-color: #2b3c30; color: #e8f5ee; }
+    html.dark .user-search:focus { border-color: #52b788; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+
+    /* Évolution */
+    .evo-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+    .evo-btn { border: 1.5px solid #c8e6c9; border-radius: 20px; padding: 6px 16px; font-size: 0.8rem; font-weight: 800; cursor: pointer; background: #fff; color: #1e6e3e; font-family: inherit; transition: background 0.15s, color 0.15s; }
+    .evo-btn.active, .evo-btn:hover { background: #1e6e3e; color: #fff; border-color: #1e6e3e; }
+    .evo-card { background: #fff; border-radius: 16px; padding: 20px 16px 14px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); }
+    html.dark .evo-card { background: #16211a; }
+    html.dark .evo-btn { background: #16211a; color: #7fc99a; border-color: #2d4030; }
+    html.dark .evo-btn.active, html.dark .evo-btn:hover { background: #2d9959; color: #fff; border-color: #2d9959; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
+    <div class="nav-right"><a href="compte" class="nav-profil">&#128100;</a><button id="themeToggle" aria-label="Thème">🌙</button><button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button></div>
+  </nav>
+  <div class="overlay" id="overlay"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <div class="drawer-logo">Compos<span>mart</span></div>
+      <button class="drawer-close" id="closeBtn">&#x2715;</button>
+    </div>
+    <ul class="drawer-menu">
+      <li><a href="index.html"><span class="menu-icon">🏠</span> Accueil</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="carte.html"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="cours.html"><span class="menu-icon">📚</span> Les cours</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="jeux"><span class="menu-icon">🎮</span> Jeux</a></li>
+      <div class="drawer-divider"></div>
+      <li><a href="compte"><span class="menu-icon">👤</span> Mon compte</a></li>
+      <div class="drawer-divider"></div>
+    </ul>
+  </div>
+
+  <div class="hero">
+    <div class="hero-badge">🔧 Administration</div>
+    <h1>Tableau de bord</h1>
+  </div>
+
+  <div class="page-content" id="dashboard" style="display:none">
+    <div class="section-title">📊 Vue d'ensemble</div>
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="section-title">📈 Évolution</div>
+    <div class="evo-bar">
+      <button class="evo-btn" data-p="7d">7 jours</button>
+      <button class="evo-btn active" data-p="30d">30 jours</button>
+      <button class="evo-btn" data-p="90d">3 mois</button>
+    </div>
+    <div class="evo-card">
+      <canvas id="evoChart"></canvas>
+    </div>
+
+    <div class="section-title">🚩 Signalements ouverts</div>
+    <div id="signalList"></div>
+
+    <div class="section-title">👥 Utilisateurs <span id="userCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
+    <input id="userSearch" class="user-search" type="search" placeholder="🔍 Rechercher un utilisateur par pseudo…" autocomplete="off" />
+    <div class="user-table-wrap">
+      <table>
+        <thead><tr><th>Pseudo</th><th>Niveau</th><th>XP</th><th>Inscrit le</th><th>Rôle</th><th>Actions</th></tr></thead>
+        <tbody id="userRows"></tbody>
+      </table>
+    </div>
+
+    <div class="section-title">📜 Journal d'activité</div>
+    <div id="auditList"></div>
+  </div>
+
+  <div class="loader" id="loader">Chargement…</div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    // ── BURGER ──
+    const burger = document.getElementById('burgerBtn');
+    const drawer = document.getElementById('drawer');
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('closeBtn');
+    burger.addEventListener('click', () => { drawer.classList.add('open'); overlay.classList.add('open'); burger.classList.add('open'); });
+    closeBtn.addEventListener('click', () => { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); });
+    overlay.addEventListener('click', () => { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); });
+
+    function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+
+    const MOTIF_LABELS = {
+      position: '📍 Mauvaise position',
+      type_acces: '🏷️ Mauvais type ou accès',
+      regles: '📋 Règles incorrectes',
+      inexistant: "❌ N'existe plus",
+      autre: '💬 Autre'
+    };
+
+    function showDenied() {
+      window.location.replace('/');
+    }
+
+    // Complète les compteurs cross-base (composts/signalements → db-map, parties → db-games).
+    function fillCrossBaseStats(stats) {
+      return Promise.all([
+        fetch('/api/carte/count.php').then(r => r.json()).catch(() => ({})),
+        fetch('/api/jeux/count.php').then(r => r.json()).catch(() => ({})),
+      ]).then(([carte, jeux]) => {
+        stats.composts     = carte.composts ?? stats.composts;
+        stats.signalements = carte.signalements ?? stats.signalements;
+        stats.parties      = jeux.parties ?? stats.parties;
+        return stats;
+      });
+    }
+
+    // ── Charge le dashboard (l'API est gardée côté serveur) ──
+    fetch('/api/admin/stats.php')
+      .then(r => { if (r.status === 403) { showDenied(); throw new Error('forbidden'); } return r.json(); })
+      .then(d => {
+        if (!d || d.error) { showDenied(); return; }
+        fillCrossBaseStats(d.stats).then(renderStats);
+        loadUsers('');
+        renderAudit(d.audit || []);
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        chargerSignalements();
+        loadEvolution('30d');
+      })
+      .catch(() => {});
+
+    // ── Évolution ──────────────────────────────────────────────────────────────
+    let evoChart = null;
+
+    document.querySelectorAll('.evo-btn').forEach(btn => {
+      btn.addEventListener('click', () => loadEvolution(btn.dataset.p));
+    });
+
+    function loadEvolution(period) {
+      document.querySelectorAll('.evo-btn').forEach(b => b.classList.toggle('active', b.dataset.p === period));
+      fetch('/api/admin/evolution.php?period=' + period)
+        .then(r => r.json())
+        .then(d => renderEvolution(d))
+        .catch(() => {});
+    }
+
+    function renderEvolution(d) {
+      const dark = document.documentElement.classList.contains('dark');
+      const grid = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+      const text = dark ? '#7aaa8a' : '#4a7a5a';
+      const font = { family: 'Nunito, Arial, sans-serif', size: 11, weight: '700' };
+
+      const datasets = [
+        { label: 'Inscriptions', data: d.inscrits, backgroundColor: 'rgba(45,153,89,0.75)', borderColor: '#2d9959', borderWidth: 1, borderRadius: 4 },
+      ];
+      if (d.connexions) datasets.push(
+        { label: 'Connexions', data: d.connexions, backgroundColor: 'rgba(249,168,37,0.75)', borderColor: '#f9a825', borderWidth: 1, borderRadius: 4 }
+      );
+      if (d.composteurs) datasets.push(
+        { label: 'Composteurs ajoutés', data: d.composteurs, backgroundColor: 'rgba(106,153,78,0.75)', borderColor: '#6a994e', borderWidth: 1, borderRadius: 4 }
+      );
+
+      const scaleOpts = {
+        ticks: { color: text, font, maxRotation: 45 },
+        grid: { color: grid }
+      };
+
+      if (evoChart) {
+        evoChart.data.labels = d.labels;
+        evoChart.data.datasets = datasets;
+        evoChart.options.scales.x.ticks.color = text;
+        evoChart.options.scales.y.ticks.color = text;
+        evoChart.options.scales.x.grid.color = grid;
+        evoChart.options.scales.y.grid.color = grid;
+        evoChart.options.plugins.legend.labels.color = text;
+        evoChart.update();
+        return;
+      }
+
+      evoChart = new Chart(document.getElementById('evoChart'), {
+        type: 'bar',
+        data: { labels: d.labels, datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { labels: { color: text, font, boxWidth: 12, padding: 16 } }
+          },
+          scales: {
+            x: { ...scaleOpts, ticks: { ...scaleOpts.ticks, maxTicksLimit: 15 } },
+            y: { ...scaleOpts, beginAtZero: true, ticks: { ...scaleOpts.ticks, precision: 0 } }
+          }
+        }
+      });
+    }
+
+    function renderStats(s) {
+      const cards = [
+        { n: s.users, l: 'Utilisateurs' },
+        { n: s.composts, l: 'Composteurs' },
+        { n: s.completions, l: 'Cours validés' },
+        { n: s.parties, l: 'Parties jouées' },
+        { n: s.admins, l: 'Admins' },
+        { n: s.signalements == null ? '—' : s.signalements, l: 'Signalements', alert: s.signalements > 0 }
+      ];
+      document.getElementById('statsGrid').innerHTML = cards.map(c =>
+        '<div class="stat-card' + (c.alert ? ' alert' : '') + '"><div class="stat-num">' + c.n + '</div><div class="stat-lbl">' + c.l + '</div></div>'
+      ).join('');
+    }
+
+    let currentUserId = 0;
+
+    function renderUsers(users, me, total) {
+      currentUserId = me || 0;
+      const countEl = document.getElementById('userCount');
+      if (total && total > users.length) {
+        countEl.textContent = '(' + users.length + ' affichés sur ' + total + ')';
+      } else {
+        countEl.textContent = '(' + users.length + ')';
+      }
+      const tbody = document.getElementById('userRows');
+      tbody.innerHTML = '';
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="user-empty">Aucun utilisateur trouvé.</td></tr>';
+        return;
+      }
+      users.forEach(u => {
+        const tr = document.createElement('tr');
+        const isMe = u.id === currentUserId;
+        let actions;
+        if (isMe) {
+          actions = '<span class="act-self">moi</span>';
+        } else {
+          const roleBtn = u.isAdmin
+            ? '<button class="act-btn act-demote" data-act="set_admin" data-val="0" data-id="' + u.id + '" data-name="' + echap(u.username) + '">Rétrograder</button>'
+            : '<button class="act-btn act-promote" data-act="set_admin" data-val="1" data-id="' + u.id + '" data-name="' + echap(u.username) + '">Promouvoir</button>';
+          const delBtn = '<button class="act-btn act-delete" data-act="delete" data-id="' + u.id + '" data-name="' + echap(u.username) + '">🗑</button>';
+          actions = roleBtn + ' ' + delBtn;
+        }
+        tr.innerHTML =
+          '<td><b>' + echap(u.username) + '</b></td>'
+          + '<td><span class="lvl-pill">Niv. ' + u.niveau + '</span></td>'
+          + '<td>' + u.xp + '</td>'
+          + '<td>' + (u.date || '').slice(0, 10) + '</td>'
+          + '<td>' + (u.isAdmin ? '<span class="badge-admin">ADMIN</span>' : '—') + '</td>'
+          + '<td class="act-cell">' + actions + '</td>';
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('.act-btn').forEach(btn => {
+        btn.addEventListener('click', () => userAction(btn.dataset));
+      });
+    }
+
+    function userAction(d) {
+      const name = d.name || 'cet utilisateur';
+      let confirmMsg;
+      if (d.act === 'delete') {
+        confirmMsg = 'Supprimer définitivement « ' + name + ' » ?\nSa progression et ses scores seront perdus.';
+      } else if (d.val === '1') {
+        confirmMsg = 'Promouvoir « ' + name + ' » administrateur ?';
+      } else {
+        confirmMsg = 'Retirer les droits admin à « ' + name + ' » ?';
+      }
+      if (!confirm(confirmMsg)) return;
+
+      const body = { action: d.act, user_id: d.id };
+      if (d.act === 'set_admin') body.value = d.val;
+
+      fetch('/api/admin/users.php', { method: 'POST', body: new URLSearchParams(body) })
+        .then(r => r.json())
+        .then(res => {
+          if (res.ok) {
+            reloadDashboard();
+          } else {
+            alert(res.error || 'Action impossible.');
+          }
+        })
+        .catch(() => alert('Erreur réseau.'));
+    }
+
+    // ── Recherche d'utilisateurs (côté serveur, débouncée) ──
+    let userSearchTimer;
+    function loadUsers(q) {
+      fetch('/api/admin/users.php?q=' + encodeURIComponent(q || ''))
+        .then(r => r.json())
+        .then(d => { if (d && d.users) renderUsers(d.users, d.me, d.total); })
+        .catch(() => {});
+    }
+    document.getElementById('userSearch').addEventListener('input', e => {
+      clearTimeout(userSearchTimer);
+      const q = e.target.value;
+      userSearchTimer = setTimeout(() => loadUsers(q), 250);
+    });
+
+    function reloadDashboard() {
+      // Rafraîchit stats + audit, et ré-applique la recherche courante sur la table
+      fetch('/api/admin/stats.php')
+        .then(r => r.json())
+        .then(d => {
+          if (d && d.stats) {
+            fillCrossBaseStats(d.stats).then(renderStats);
+            renderAudit(d.audit || []);
+          }
+        })
+        .catch(() => {});
+      loadUsers(document.getElementById('userSearch').value);
+    }
+
+    // ── Journal d'audit ──
+    const AUDIT_LABELS = {
+      compost_cree:        { icon: '📍', txt: 'Composteur ajouté' },
+      compost_modifie:     { icon: '✏️', txt: 'Composteur modifié' },
+      compost_supprime:    { icon: '🗑️', txt: 'Composteur supprimé' },
+      signalement_resolu:  { icon: '✓', txt: 'Signalement résolu' },
+      signalement_rejete:  { icon: '✗', txt: 'Signalement rejeté' },
+      user_promu:          { icon: '⬆️', txt: 'Utilisateur promu admin' },
+      user_retrograde:     { icon: '⬇️', txt: 'Admin rétrogradé' },
+      user_supprime:       { icon: '🚫', txt: 'Utilisateur supprimé' }
+    };
+
+    function row(key, val, isEmpty) {
+      return '<div class="audit-row"><span class="audit-key">' + key + '</span>'
+        + '<span class="audit-val' + (isEmpty ? ' empty' : '') + '">' + val + '</span></div>';
+    }
+
+    function chips(arr, cls) {
+      if (!arr || !arr.length) return null;
+      return arr.map(x => '<span class="audit-chip' + (cls ? ' ' + cls : '') + '">' + echap(x) + '</span>').join('');
+    }
+
+    function auditDetailHtml(a) {
+      const s = a.snapshot || {};
+      let rows = '';
+      // Toujours : qui a fait l'action (l'admin) et quand
+      rows += row('Traité par', '<b>' + echap(a.username) + '</b>');
+      rows += row('Date', (a.date || '').replace('T', ' ').slice(0, 19));
+
+      if (a.target_type === 'signalement') {
+        rows += row('Signalé par', echap(s.reporter || 'Anonyme'));
+        rows += row('Motif', echap(MOTIF_LABELS[s.motif] || s.motif || '—'));
+        rows += s.commentaire
+          ? row('Commentaire', '« ' + echap(s.commentaire) + ' »')
+          : row('Commentaire', 'aucun', true);
+        rows += row('Composteur', s.compost_id != null ? '#' + s.compost_id : '—');
+      } else if (a.target_type === 'compost') {
+        rows += row('Composteur', '#' + (a.target_id != null ? a.target_id : (s.id != null ? s.id : '—')));
+        if (s.type)  rows += row('Type', echap(s.type));
+        if (s.acces) rows += row('Accès', echap(s.acces));
+        if (s.lat != null && s.lon != null) rows += row('Position', s.lat.toFixed(5) + ', ' + s.lon.toFixed(5));
+        const ok = chips(s.mettre); const nok = chips(s.pas_mettre, 'nok');
+        if (ok)  rows += row('Autorisé', ok);
+        if (nok) rows += row('Interdit', nok);
+      } else if (a.target_type === 'user') {
+        rows += row('Utilisateur', echap(s.username || ('#' + a.target_id)));
+        if (s.admin !== undefined) rows += row('Nouveau rôle', s.admin ? 'Administrateur' : 'Utilisateur');
+        if (s.etait_admin !== undefined) rows += row('Était admin', s.etait_admin ? 'oui' : 'non');
+      } else if (a.details) {
+        rows += row('Détails', echap(a.details));
+      }
+      return rows;
+    }
+
+    function renderAudit(liste) {
+      const box = document.getElementById('auditList');
+      if (!liste.length) {
+        box.innerHTML = '<div class="empty-msg">Aucune action enregistrée pour l\'instant.</div>';
+        return;
+      }
+      box.innerHTML = '';
+      liste.forEach(a => {
+        const meta = AUDIT_LABELS[a.action] || { icon: '•', txt: a.action };
+        const item = document.createElement('div');
+        item.className = 'audit-item';
+        const summary = a.details ? ' <span class="audit-meta">(' + echap(a.details) + ')</span>' : '';
+        item.innerHTML =
+          '<div class="audit-head">'
+          + '<div class="audit-icon">' + meta.icon + '</div>'
+          + '<div class="audit-main"><span class="audit-action">' + echap(meta.txt) + '</span>' + summary
+          + '<div class="audit-meta">par ' + echap(a.username) + '</div></div>'
+          + '<div class="audit-date">' + (a.date || '').replace('T', ' ').slice(0, 16) + '</div>'
+          + '<div class="audit-chevron">▶</div>'
+          + '</div>'
+          + '<div class="audit-detail">' + auditDetailHtml(a) + '</div>';
+        item.querySelector('.audit-head').addEventListener('click', () => item.classList.toggle('open'));
+        box.appendChild(item);
+      });
+    }
+
+    // ── Signalements (réutilise l'API existante) ──
+    function chargerSignalements() {
+      fetch('/api/carte/signalement.php?action=liste')
+        .then(r => r.json())
+        .then(d => renderSignalements(d && d.signalements ? d.signalements : []))
+        .catch(() => renderSignalements([]));
+    }
+
+    function renderSignalements(liste) {
+      const box = document.getElementById('signalList');
+      if (!liste.length) {
+        box.innerHTML = '<div class="empty-msg">Aucun signalement ouvert 🎉</div>';
+        return;
+      }
+      box.innerHTML = '';
+      liste.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'signal-item';
+        const com = s.commentaire ? '<div class="signal-item-comment">« ' + echap(s.commentaire) + ' »</div>' : '';
+        item.innerHTML =
+          '<div class="signal-item-motif">' + (MOTIF_LABELS[s.motif] || echap(s.motif)) + '</div>'
+          + '<div class="signal-item-meta">Composteur #' + s.compost_id + ' · par ' + echap(s.par) + ' · ' + (s.date || '').slice(0, 10) + '</div>'
+          + com
+          + '<div class="signal-item-actions">'
+          + '<a class="sig-voir" href="/carte" title="Ouvre la carte">📍 Carte</a>'
+          + '<button type="button" class="sig-ok">✓ Résolu</button>'
+          + '<button type="button" class="sig-rej">✗ Rejeter</button></div>';
+        item.querySelector('.sig-ok').addEventListener('click', () => traiter(s.id, 'resolu'));
+        item.querySelector('.sig-rej').addEventListener('click', () => traiter(s.id, 'rejete'));
+        box.appendChild(item);
+      });
+    }
+
+    function traiter(id, statut) {
+      fetch('/api/carte/signalement.php', {
+        method: 'POST',
+        body: new URLSearchParams({ action: 'traiter', id: id, statut: statut })
+      })
+      .then(r => r.json())
+      .then(d => { if (d.ok) { chargerSignalements(); refreshSignalCount(); } })
+      .catch(() => {});
+    }
+
+    function refreshSignalCount() {
+      fetch('/api/admin/stats.php')
+        .then(r => r.json())
+        .then(d => { if (d && d.stats) fillCrossBaseStats(d.stats).then(renderStats); })
+        .catch(() => {});
+    }
+  </script>
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/admin-badge.js?v=2"></script>
+</body>
+</html>
