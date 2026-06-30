@@ -1,16 +1,12 @@
 <?php
-// DEBUG TEMPORAIRE — diagnostic 500 launchpad. Marqueurs STEP flushés, pas de buffering.
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-header('Content-Type: text/plain; charset=utf-8');
-function step($n) { echo "STEP $n\n"; @ob_flush(); @flush(); }
-step('A_start');
+ob_start();
+error_reporting(0);
+ini_set('display_errors', 0);
 require_once __DIR__ . '/../_guard.php';
-step('B_guard_loaded');
 secure_session_start();
-step('C_session_started');
+header('Content-Type: application/json; charset=utf-8');
+ob_clean();
 csrf_check();
-step('D_csrf_ok');
 
 $c = mysqli_connect(
     getenv('DB_HOST') ?: 'db',
@@ -64,41 +60,34 @@ if (!$ok) {
     exit;
 }
 
-step('E_user_inserted');
 $admin_id = (int)mysqli_insert_id($c);
 session_regenerate_id(true);
-step('F_session_regenerated');
 $_SESSION['user_id']  = $admin_id;
 $_SESSION['username'] = $username;
+$_SESSION['isAdmin']  = true;
 
 $s = mysqli_prepare($c, 'INSERT INTO logins (user_id) VALUES (?)');
-if ($s) { $s->bind_param('i', $admin_id); $s->execute(); }
-step('G_login_logged');
+if ($s) { $s->bind_param('i', $admin_id); @$s->execute(); }
 
 // Récupérer tous les cours et leur XP
 $total_xp  = 0;
 $res_cours = mysqli_query($c, 'SELECT slug, xp_reward FROM cours');
-step('H_cours_query res=' . ($res_cours === false ? 'FALSE err=' . mysqli_error($c) : 'OK'));
 $values    = [];
 while ($res_cours && ($row = mysqli_fetch_assoc($res_cours))) {
     $slug      = mysqli_real_escape_string($c, $row['slug']);
     $total_xp += (int)$row['xp_reward'];
     $values[]  = "($admin_id, '$slug')";
 }
-step('I_cours_loop_done xp=' . $total_xp);
 
 // Marquer tous les cours comme complétés
 if (!empty($values)) {
     mysqli_query($c, 'INSERT IGNORE INTO user_progress (user_id, cours_id) VALUES ' . implode(',', $values));
 }
-step('J_progress_inserted');
 
 // Mettre à jour XP et niveau
 $niveau = floor($total_xp / 100) + 1;
 mysqli_query($c, "UPDATE users SET xp = $total_xp, niveau = $niveau WHERE id = $admin_id");
-step('K_xp_updated niveau=' . $niveau);
 
 mysqli_close($c);
-step('Z_done');
 
 echo json_encode(['ok' => true, 'username' => $username, 'xp' => $total_xp, 'niveau' => $niveau]);
