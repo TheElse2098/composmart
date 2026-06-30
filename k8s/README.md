@@ -1,64 +1,249 @@
-# k8s/ — manifests Composmart (SQUELETTE)
+# Déploiement Kubernetes — Composmart
 
-> ⚠️ Squelette de référence accompagnant `../MIGRATION-K8S.md`. Les images, endpoints
-> `health.php` et ConfigMaps d'init **n'existent pas encore** : ils sont créés aux
-> étapes 1-3 du plan de migration. Ne pas appliquer en prod tel quel.
+Manifest unique : **`composmart.yaml`** (variante B, 3 bases séparées), aligné sur
+`docker-compose.split.yml`. Conçu pour tester en local sur **k3d** (k3s dans Docker,
+même moteur que le VPS) avant tout déploiement réel.
 
-## Contenu
+> Les anciens fichiers éclatés (`web.yaml`, `map-api.yaml`, `db-per-service.yaml`, …)
+> sont conservés comme référence historique mais **`composmart.yaml` fait foi**.
 
-| Fichier | Rôle |
-|---|---|
-| `namespace.yaml` | Namespace `composmart` |
-| `secrets.example.yaml` | Modèle de secrets (1 par base) — copier en `secrets.yaml` (gitignored) |
-| `redis.yaml` | Redis (sessions + rate-limit partagés) |
-| `db-shared.yaml` | **Variante A** : 1 MariaDB, 3 bases logiques (petit VPS) |
-| `db-per-service.yaml` | **Variante B** : 3 StatefulSets MariaDB indépendants |
-| `web.yaml` | Front nginx + HPA |
-| `map-api.yaml` | `api/carte/*` + HPA (autoscaling prioritaire, max 8) |
-| `games-api.yaml` | `api/jeux/*` + HPA |
-| `courses-api.yaml` | `api/cours/*` + `api/admin/*` + HPA |
-| `auth-api.yaml` | `api/auth/*` + HPA |
-| `ingress.yaml` | Traefik, routage par chemin |
+## Prérequis (machine locale)
 
-Choisir **une seule** variante DB (A *ou* B), pas les deux.
+- Docker Desktop
+- `k3d`  : https://k3d.io  (`choco install k3d` sous Windows)
+- `kubectl` : `choco install kubernetes-cli`
 
-## Ordre d'application (une fois les images construites)
+## 1. Créer le cluster local
 
 ```bash
-kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/secrets.yaml          # copié depuis secrets.example.yaml
-# ConfigMaps d'init DB (schémas SQL découpés) :
-kubectl create configmap mariadb-init --from-file=db/ -n composmart   # variante A
-kubectl apply -f k8s/redis.yaml
-kubectl apply -f k8s/db-shared.yaml        # OU db-per-service.yaml
-kubectl apply -f k8s/web.yaml -f k8s/map-api.yaml -f k8s/games-api.yaml \
-               -f k8s/courses-api.yaml -f k8s/auth-api.yaml
-kubectl apply -f k8s/ingress.yaml
+# Cluster k3d avec le port 80 mappé vers l'Ingress Traefik (loadbalancer)
+k3d cluster create composmart -p "8080:80@loadbalancer"
+kubectl config use-context k3d-composmart
+```
+
+Le site sera accessible sur **http://localhost:8080**.
+
+## 2. Builder les 5 images et les importer dans k3d
+
+```bash
+# Depuis la racine du repo (où sont les Dockerfiles services/*)
+docker build -f services/web/Dockerfile         -t composmart/web:local .
+docker build -f services/map-api/Dockerfile      -t composmart/map-api:local .
+docker build -f services/games-api/Dockerfile    -t composmart/games-api:local .
+docker build -f services/courses-api/Dockerfile  -t composmart/courses-api:local .
+docker build -f services/auth-api/Dockerfile     -t composmart/auth-api:local .
+
+# Importer les images dans le cluster (sinon k3d ne les voit pas)
+k3d image import -c composmart \
+  composmart/web:local composmart/map-api:local composmart/games-api:local \
+  composmart/courses-api:local composmart/auth-api:local
+```
+
+## 3. Créer le namespace + les ConfigMaps de schémas et seeds
+
+```bash
+kubectl create namespace composmart
+
+kubectl create configmap map-schema   --from-file=schema.sql=db/map.sql   -n composmart
+kubectl create configmap games-schema --from-file=schema.sql=db/games.sql -n composmart
+kubectl create configmap core-schema  --from-file=schema.sql=db/core.sql  -n composmart
+kubectl create configmap seeds        --from-file=db/seeds/                -n composmart
+```
+
+## 4. Déployer
+
+```bash
+kubectl apply -f k8s/composmart.yaml
 kubectl get pods -n composmart -w
 ```
 
-## Repartir d'une base vide (wipe assumé)
+Ordre d'arrivée attendu : redis + les 3 bases (Healthy ~30 s), puis les Jobs seed
+(`seed-map` importe ~5800 composts, `seed-core` les cours), puis les 5 services.
 
-Les `volumeClaimTemplates` des StatefulSets **conservent** les données entre
-redéploiements. Pour repartir réellement de zéro (wipe assumé), supprimer les PVC :
+## 5. Créer l'admin
+
+Une fois `seed-core` terminé (`kubectl get jobs -n composmart` → seed-core Complete),
+aller sur http://localhost:8080 → page launchpad → créer l'admin (il aura les 8 cours / 410 XP).
+
+> ⚠️ Créer l'admin AVANT la fin de seed-core donnerait un admin à 0 XP (cf. bug timing).
+
+## Vérifications
 
 ```bash
-kubectl delete statefulset db-map db-games db-core -n composmart
-kubectl delete pvc -l 'app in (db-map,db-games,db-core)' -n composmart
-# puis ré-appliquer db-per-service.yaml : les seeds repeuplent au 1er démarrage
+kubectl get pods -n composmart           # tous Running / Ready
+kubectl get hpa  -n composmart           # autoscalers (nécessite metrics-server, inclus dans k3d)
+curl -s localhost:8080/api/carte/health.php   # {"status":"ok"}
+curl -s localhost:8080/api/carte/sites.php -d 'france=1' | head -c 120
 ```
 
-## Prérequis HPA
+## Repartir de zéro
 
-Les HorizontalPodAutoscaler ont besoin du **metrics-server** (k3s : `kubectl apply -f`
-le manifest officiel ou activé par défaut selon la version). Sans lui, les HPA restent
-en `<unknown>/65%`.
+```bash
+kubectl delete -f k8s/composmart.yaml
+kubectl delete pvc --all -n composmart   # efface les données (wipe)
+# ou jeter tout le cluster :
+k3d cluster delete composmart
+```
 
-## Reste à faire avant application (cf. MIGRATION-K8S.md)
+## Notes
 
-- [ ] Étape 0 : refactor `_guard.php` → Redis (sessions + rate-limit)
-- [ ] Étape 1 : 5 Dockerfiles + images GHCR
-- [ ] Étape 2 : découper `db/schema.sql` en `map.sql`/`games.sql`/`core.sql`, retirer la FK `scores→users`, dénormaliser `scores.username`
-- [ ] Ajouter un `health.php` trivial à chaque API (utilisé par les readinessProbe)
-- [ ] Étape 3 : valider sur kind/k3d
-- [ ] Étape 4 : migration des données prod + bascule k3s
+- **content/** est embarqué dans l'image `courses-api` (COPY au build) ; pour changer
+  un cours, rebuild + réimport de l'image.
+- **HPA** : k3d inclut metrics-server. Sur un k3s nu, l'activer si absent.
+
+---
+
+# Déploiement sur un serveur Linux (k3s) — étape 4
+
+Procédure pour mettre Composmart en production sur un VPS Linux avec **k3s**
+(distribution k8s légère, idéale pour un seul serveur). Le code arrive sur le
+serveur par **git pull** (workflow habituel).
+
+> ⚠️ Dimensionnement : variante B = 3 instances MariaDB + 5 PHP + Redis + k3s.
+> Prévoir **au moins 2 Go de RAM** (4 Go confortable). À 1 Go, préférer la
+> variante A (1 MariaDB / 3 bases logiques) — voir `db-shared.yaml`.
+
+## 1. Installer k3s
+
+```bash
+# Sur le VPS, en root
+curl -sfL https://get.k3s.io | sh -
+
+# k3s installe kubectl et un kubeconfig dans /etc/rancher/k3s/k3s.yaml
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+kubectl get nodes        # le nœud doit être Ready
+```
+
+k3s embarque **Traefik** (Ingress) et un **metrics-server** (HPA) : rien à installer de plus.
+
+## 2. Récupérer le code
+
+```bash
+cd ~/composmart
+git pull        # récupère k8s/composmart.yaml, db/*.sql, services/*, etc.
+```
+
+## 3. Construire les images
+
+k3s utilise **containerd** (pas le démon Docker). Deux options :
+
+### Option A — via GHCR (recommandée, colle au CI existant)
+
+Le workflow GitHub Actions build et pousse les 5 images sur GHCR à chaque push.
+Adapter `k8s/composmart.yaml` pour pointer vers ces images :
+
+```
+image: ghcr.io/theelse2098/composmart/<service>:latest
+imagePullPolicy: Always
+```
+
+Si le dépôt GHCR est privé, créer un secret de pull et le référencer :
+
+```bash
+kubectl create secret docker-registry ghcr-creds \
+  --docker-server=ghcr.io \
+  --docker-username=theelse2098 \
+  --docker-password=<TOKEN_GITHUB> \
+  -n composmart
+# puis ajouter sous spec.template.spec des Deployments :  imagePullSecrets: [{ name: ghcr-creds }]
+```
+
+### Option B — build local sur le VPS (sans registry)
+
+Builder avec Docker puis importer dans containerd de k3s :
+
+```bash
+for s in web map-api games-api courses-api auth-api; do
+  docker build -f services/$s/Dockerfile -t composmart/$s:local .
+  docker save composmart/$s:local | sudo k3s ctr images import -
+done
+```
+(garder `image: composmart/<service>:local` + `imagePullPolicy: IfNotPresent` dans le manifest)
+
+## 4. Secrets de production
+
+**Ne pas** utiliser le Secret en clair du manifest. Le remplacer par de vraies valeurs :
+
+```bash
+kubectl create namespace composmart
+kubectl create secret generic composmart-secrets -n composmart \
+  --from-literal=DB_NAME=Composmart \
+  --from-literal=DB_USER=composmart \
+  --from-literal=DB_PASSWORD='<MOT_DE_PASSE_FORT>' \
+  --from-literal=DB_ROOT_PASSWORD='<ROOT_FORT>' \
+  --from-literal=AUDIT_SECRET='<SECRET_ALEATOIRE>'
+```
+…et retirer le bloc `kind: Secret` du début de `composmart.yaml` (ou le laisser : le
+`kubectl create secret` ci-dessus prime s'il est appliqué après — au plus simple,
+supprimer le bloc Secret du YAML en prod).
+
+## 5. ConfigMaps (schémas + seeds)
+
+```bash
+kubectl create configmap map-schema   --from-file=schema.sql=db/map.sql   -n composmart
+kubectl create configmap games-schema --from-file=schema.sql=db/games.sql -n composmart
+kubectl create configmap core-schema  --from-file=schema.sql=db/core.sql  -n composmart
+kubectl create configmap seeds        --from-file=db/seeds/                -n composmart
+```
+
+## 6. Déployer
+
+```bash
+kubectl apply -f k8s/composmart.yaml
+kubectl get pods -n composmart -w
+```
+
+## 7. Domaine + HTTPS
+
+Le manifest a un Ingress sans `host` (catch-all, pratique pour tester par IP).
+En production avec `composmart.fr` + TLS Let's Encrypt :
+
+```bash
+# Installer cert-manager
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+```
+
+Puis ajouter à l'Ingress (`k8s/composmart.yaml`) :
+
+```yaml
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts: [composmart.fr]
+      secretName: composmart-tls
+  rules:
+    - host: composmart.fr        # ← ajouter le host sur la règle existante
+      http: { ... }
+```
+
+…et créer un `ClusterIssuer` Let's Encrypt (voir doc cert-manager). Faire pointer
+le DNS de `composmart.fr` vers l'IP du VPS.
+
+## 8. Créer l'admin
+
+Une fois `seed-core` terminé (`kubectl get jobs -n composmart`), aller sur le site
+→ launchpad → créer l'admin (8 cours / 410 XP).
+
+## Mettre à jour en production
+
+Avec GHCR (option A) :
+
+```bash
+git pull                                    # si le manifest a changé
+kubectl apply -f k8s/composmart.yaml        # applique les changements de manifest
+kubectl rollout restart deployment -n composmart   # recharge les images :latest
+kubectl rollout status deployment/map-api -n composmart
+```
+
+## Rollback / arrêt
+
+```bash
+kubectl rollout undo deployment/<service> -n composmart   # revenir à la version précédente
+kubectl delete -f k8s/composmart.yaml                     # tout arrêter
+kubectl delete pvc --all -n composmart                    # ⚠️ efface les données
+```
+
+> Garder l'ancien `docker-compose.prod.yml` comme filet de secours tant que le k3s
+> n'est pas éprouvé : en cas de souci, on peut revenir au monolithe en quelques minutes.
