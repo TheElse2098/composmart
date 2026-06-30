@@ -22,25 +22,46 @@ $query = '[out:json][timeout:120];'
        . ');'
        . 'out body;';
 
-echo "Requête Overpass en cours (jusqu'à 2 min)...\n";
+// L'API Overpass publique est souvent surchargée (429/504/HTML). On essaie
+// plusieurs miroirs, avec retries et pauses, avant d'abandonner.
+$endpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+];
+$max_essais_par_endpoint = 2;
 
-$ch = curl_init('https://overpass-api.de/api/interpreter');
-curl_setopt_array($ch, [
-    CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => 'data=' . urlencode($query),
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT        => 180,
-    CURLOPT_USERAGENT      => 'CompoSmart/1.0',
-    CURLOPT_HTTPHEADER     => ['Accept: application/json', 'Content-Type: application/x-www-form-urlencoded'],
-]);
-$response = curl_exec($ch);
-$err      = curl_error($ch);
-curl_close($ch);
+$data = null;
+foreach ($endpoints as $url) {
+    for ($essai = 1; $essai <= $max_essais_par_endpoint; $essai++) {
+        echo "Requête Overpass ($url) essai $essai...\n";
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => 'data=' . urlencode($query),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 180,
+            CURLOPT_USERAGENT      => 'CompoSmart/1.0',
+            CURLOPT_HTTPHEADER     => ['Accept: application/json', 'Content-Type: application/x-www-form-urlencoded'],
+        ]);
+        $response = curl_exec($ch);
+        $http     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err      = curl_error($ch);
+        curl_close($ch);
 
-if (!$response) die("Erreur cURL : $err\n");
+        if ($response === false) { echo "  cURL: $err\n"; sleep(5); continue; }
+        if ($http !== 200)       { echo "  HTTP $http (API occupée)\n"; sleep(10); continue; }
 
-$data = json_decode($response, true);
-if (!isset($data['elements'])) die("Réponse Overpass invalide.\n");
+        $parsed = json_decode($response, true);
+        if (isset($parsed['elements'])) { $data = $parsed; break 2; }
+        echo "  Réponse non-JSON ou sans 'elements' (HTTP $http)\n";
+        sleep(5);
+    }
+}
+
+if ($data === null) {
+    die("Import OSM abandonné : tous les miroirs Overpass ont échoué. Réessaie plus tard.\n");
+}
 
 $stmt_check = mysqli_prepare($connexion,
     'SELECT id FROM composts WHERE
