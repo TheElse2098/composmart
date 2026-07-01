@@ -1,9 +1,13 @@
 /* ============================================================================
    desktop.css — élargit les pages sur grand écran (mobile-first préservé).
    Les pages étaient bridées à ~400-700px centrés → bandes vides sur PC.
-   Ce fichier ne s'active qu'au-dessus de 900px : le mobile reste inchangé.
    Chargé après le <style> inline de chaque page pour pouvoir l'écraser.
    ============================================================================ */
+
+/* Nav partagé injecté dans <div id="site-nav"> : display:contents efface le
+   conteneur de la mise en page, pour que le <nav> reste pleine largeur même
+   quand le body centre ses enfants (align-items:center). Toutes tailles d'écran. */
+#site-nav { display: contents; }
 
 @media (min-width: 900px) {
 
