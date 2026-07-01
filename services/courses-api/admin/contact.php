@@ -52,13 +52,31 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     exit;
 }
 
-// ── Liste + compteur non-lus ────────────────────────────────────────────────
+// ── Liste filtrée + paginée ─────────────────────────────────────────────────
 $nouveaux = (int)(mysqli_fetch_row(mysqli_query($c,
     "SELECT COUNT(*) FROM contact_messages WHERE statut = 'nouveau'"))[0] ?? 0);
 
+// Filtre : 'non_lus' (nouveau), 'non_clos' (nouveau + lu), 'tous'
+$filtre = $_GET['filtre'] ?? 'non_clos';
+switch ($filtre) {
+    case 'non_lus':  $where = "WHERE statut = 'nouveau'"; break;
+    case 'tous':     $where = '';                          break;
+    case 'non_clos':
+    default:         $filtre = 'non_clos';
+                     $where = "WHERE statut IN ('nouveau','lu')"; break;
+}
+
+// Pagination
+const PAR_PAGE = 20;
+$page  = max(1, (int)($_GET['page'] ?? 1));
+$total = (int)(mysqli_fetch_row(mysqli_query($c, "SELECT COUNT(*) FROM contact_messages $where"))[0] ?? 0);
+$pages = max(1, (int)ceil($total / PAR_PAGE));
+$page  = min($page, $pages);
+$offset = ($page - 1) * PAR_PAGE;
+
 $res = mysqli_query($c,
-    'SELECT id, username, categorie, sujet, message, statut, created_at
-     FROM contact_messages ORDER BY id DESC LIMIT 50');
+    "SELECT id, username, categorie, sujet, message, statut, created_at
+     FROM contact_messages $where ORDER BY id DESC LIMIT " . PAR_PAGE . " OFFSET $offset");
 $messages = [];
 while ($row = mysqli_fetch_assoc($res)) {
     $messages[] = [
@@ -73,4 +91,11 @@ while ($row = mysqli_fetch_assoc($res)) {
 }
 mysqli_close($c);
 
-echo json_encode(['nouveaux' => $nouveaux, 'messages' => $messages], JSON_UNESCAPED_UNICODE);
+echo json_encode([
+    'nouveaux' => $nouveaux,
+    'messages' => $messages,
+    'filtre'   => $filtre,
+    'page'     => $page,
+    'pages'    => $pages,
+    'total'    => $total,
+], JSON_UNESCAPED_UNICODE);

@@ -11,10 +11,11 @@ RUN docker-php-ext-install mysqli \
     && a2enmod rewrite \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
-COPY shared/_guard.php          /var/www/html/api/_guard.php
-COPY services/courses-api/cours/ /var/www/html/api/cours/
-COPY services/courses-api/admin/ /var/www/html/api/admin/
-COPY content/                   /var/www/html/content/
-COPY shared/seeds/              /docker-seeds/
+COPY shared/_guard.php            /var/www/html/api/_guard.php
+COPY services/courses-api/cours/   /var/www/html/api/cours/
+COPY services/courses-api/admin/   /var/www/html/api/admin/
+COPY services/courses-api/contact/ /var/www/html/api/contact/
+COPY content/                     /var/www/html/content/
+COPY shared/seeds/                /docker-seeds/
 
 RUN chown -R www-data:www-data /var/www/html

@@ -61,6 +61,20 @@
     .sig-ok { background: #1e6e3e; color: #fff; }
     .sig-rej { background: #fdecea; color: #c0392b; }
     .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 18px; background: #fff; border-radius: 12px; }
+    /* Filtres + pagination des messages de contact */
+    .contact-filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .contact-filter { background: #fff; border: 1.5px solid #d4e6d8; color: #4a7a5a; border-radius: 20px; padding: 6px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .contact-filter:hover { border-color: #1e6e3e; color: #1e6e3e; }
+    .contact-filter.active { background: #1e6e3e; border-color: #1e6e3e; color: #fff; }
+    .contact-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 6px; }
+    .contact-pagination button { background: #fff; border: 1.5px solid #d4e6d8; color: #1e6e3e; border-radius: 8px; padding: 7px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+    .contact-pagination button:disabled { opacity: 0.4; cursor: default; }
+    .contact-pagination button:not(:disabled):hover { background: #eef4ec; }
+    .contact-page-info { font-size: 0.8rem; color: #4a7a5a; font-weight: 700; }
+    html.dark .contact-filter { background: #16211a; border-color: #2d4030; color: #7ab88e; }
+    html.dark .contact-filter.active { background: #1e6e3e; color: #fff; }
+    html.dark .contact-pagination button { background: #16211a; border-color: #2d4030; color: #7ab88e; }
+    html.dark .contact-page-info { color: #7ab88e; }
 
     /* Table utilisateurs */
     .user-table-wrap { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 10px rgba(30,110,62,0.08); overflow-x: auto; }
@@ -557,21 +571,51 @@
       .catch(() => {});
     }
 
-    // ── Messages de contact ──
+    // ── Messages de contact (filtre + pagination) ──
     const CONTACT_CAT = { bug: '🐛 Bug', suggestion: '💡 Suggestion', question: '❓ Question', autre: '✉️ Autre' };
+    const CONTACT_FILTRES = [
+      { key: 'non_clos', label: 'À traiter' },
+      { key: 'non_lus',  label: 'Non lus' },
+      { key: 'tous',     label: 'Tous' },
+    ];
+    let contactFiltre = 'non_clos';
+    let contactPage = 1;
 
     function chargerMessages() {
-      fetch('/api/admin/contact.php')
+      fetch('/api/admin/contact.php?filtre=' + contactFiltre + '&page=' + contactPage)
         .then(r => r.json())
-        .then(d => renderMessages(d && d.messages ? d.messages : [], d ? d.nouveaux : 0))
-        .catch(() => renderMessages([], 0));
+        .then(d => renderMessages(d || {}))
+        .catch(() => renderMessages({ messages: [], nouveaux: 0, page: 1, pages: 1, total: 0 }));
     }
 
-    function renderMessages(liste, nouveaux) {
-      document.getElementById('contactCount').textContent = nouveaux > 0 ? '(' + nouveaux + ' nouveau' + (nouveaux > 1 ? 'x' : '') + ')' : '';
+    function renderMessages(d) {
+      const liste = d.messages || [];
+      document.getElementById('contactCount').textContent =
+        d.nouveaux > 0 ? '(' + d.nouveaux + ' nouveau' + (d.nouveaux > 1 ? 'x' : '') + ')' : '';
       const box = document.getElementById('contactList');
-      if (!liste.length) { box.innerHTML = '<div class="empty-msg">Aucun message 📭</div>'; return; }
       box.innerHTML = '';
+
+      // Barre de filtres
+      const filterBar = document.createElement('div');
+      filterBar.className = 'contact-filters';
+      CONTACT_FILTRES.forEach(f => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'contact-filter' + (contactFiltre === f.key ? ' active' : '');
+        b.textContent = f.label;
+        b.addEventListener('click', () => { contactFiltre = f.key; contactPage = 1; chargerMessages(); });
+        filterBar.appendChild(b);
+      });
+      box.appendChild(filterBar);
+
+      if (!liste.length) {
+        const e = document.createElement('div');
+        e.className = 'empty-msg';
+        e.textContent = 'Aucun message dans ce filtre 📭';
+        box.appendChild(e);
+        return;
+      }
+
       liste.forEach(m => {
         const item = document.createElement('div');
         item.className = 'signal-item';
@@ -590,6 +634,23 @@
         });
         box.appendChild(item);
       });
+
+      // Pagination
+      if (d.pages > 1) {
+        const nav = document.createElement('div');
+        nav.className = 'contact-pagination';
+        const prev = document.createElement('button');
+        prev.type = 'button'; prev.textContent = '← Précédent'; prev.disabled = d.page <= 1;
+        prev.addEventListener('click', () => { contactPage = d.page - 1; chargerMessages(); });
+        const info = document.createElement('span');
+        info.className = 'contact-page-info';
+        info.textContent = 'Page ' + d.page + ' / ' + d.pages + ' · ' + d.total + ' message' + (d.total > 1 ? 's' : '');
+        const next = document.createElement('button');
+        next.type = 'button'; next.textContent = 'Suivant →'; next.disabled = d.page >= d.pages;
+        next.addEventListener('click', () => { contactPage = d.page + 1; chargerMessages(); });
+        nav.append(prev, info, next);
+        box.appendChild(nav);
+      }
     }
 
     function statutMessage(id, statut) {
