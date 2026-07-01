@@ -4,10 +4,13 @@
    Chargé après le <style> inline de chaque page pour pouvoir l'écraser.
    ============================================================================ */
 
-/* Nav partagé injecté dans <div id="site-nav"> : display:contents efface le
-   conteneur de la mise en page, pour que le <nav> reste pleine largeur même
-   quand le body centre ses enfants (align-items:center). Toutes tailles d'écran. */
-#site-nav { display: contents; }
+/* ── Nav partagé (injecté dans <div id="site-nav">) ──
+   Règles garantissant l'affichage correct du bandeau sur TOUTES les pages, même
+   celles dont le <style> inline ne contenait pas tout le CSS nav (ex. cours-detail).
+   Le conteneur prend toute la largeur ; le nav et sa zone droite restent en flex. */
+#site-nav { width: 100%; display: block; }
+#site-nav nav { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+#site-nav .nav-right { display: flex; align-items: center; gap: 12px; }
 
 @media (min-width: 900px) {
 

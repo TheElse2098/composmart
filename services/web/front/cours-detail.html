@@ -310,7 +310,9 @@
 
       userLoggedIn = me.logged_in || false;
       userXpBase = userLoggedIn ? (me.xp || 0) : 0;
-      document.getElementById('navXp').textContent = userLoggedIn ? ('⭐ ' + userXpBase + ' XP') : '⭐ –';
+      // #navXp n'existe que si la page affiche un compteur d'XP (nav partagé : absent).
+      var navXpEl = document.getElementById('navXp');
+      if (navXpEl) navXpEl.textContent = userLoggedIn ? ('⭐ ' + userXpBase + ' XP') : '⭐ –';
 
       if (!userLoggedIn && (data.meta.ordre || 0) !== 1) {
         showLockedModal();
@@ -489,7 +491,7 @@
         if (d.xp_earned > 0) {
           var newTotal = d.xp_total || (userXpBase + d.xp_earned);
           appendInlineXpBar(lastSlide, d.xp_earned, userXpBase, newTotal, d.niveau);
-          document.getElementById('navXp').textContent = '⭐ ' + newTotal + ' XP';
+          var _nx1 = document.getElementById('navXp'); if (_nx1) _nx1.textContent = '⭐ ' + newTotal + ' XP';
         } else {
           appendInlineXpBar(lastSlide, 0, userXpBase, userXpBase, Math.floor(userXpBase/100)+1);
         }
@@ -725,7 +727,7 @@
           var newTotal = d.xp_total || (userXpBase + d.xp_earned);
           document.getElementById('xpGained').textContent = '+' + d.xp_earned + ' XP gagnés !';
           document.getElementById('xpGained').style.display = 'inline-block';
-          document.getElementById('navXp').textContent = '⭐ ' + newTotal + ' XP';
+          var _nx2 = document.getElementById('navXp'); if (_nx2) _nx2.textContent = '⭐ ' + newTotal + ' XP';
           animateXpBar(userXpBase, newTotal, d.niveau);
         } else if (d.success === false && pct >= 50) {
           document.getElementById('xpGained').textContent = 'Cours déjà complété.';
