@@ -121,4 +121,5 @@ Pour ajouter un cours : créer un dossier dans `content/cours/` et rebuild l'ima
 - [x] découpage en microservices (map / web / games / cours / auth) + Redis
 - [x] séparation des bases de données (db-map / db-games / db-core)
 - [x] manifests Kubernetes (k3s) — cf. `k8s/`
-- [ ] valider le déploiement Kubernetes sur un cluster (k3d local ou serveur)
+- [x] valider le déploiement Kubernetes sur un cluster (validé en k3d local le 01/07/2026)
+- [ ] déployer sur le serveur de production (k3s) — en attente d'un serveur avec ≥ 2 Go RAM

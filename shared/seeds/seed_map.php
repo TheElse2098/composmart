@@ -5,16 +5,20 @@
  * Le schéma est créé par db/map.sql (initdb), pas ici.
  */
 
+// PHP 8.3 : mysqli lève des exceptions par défaut → un mysqli_connect qui échoue
+// fatale malgré le @. On désactive pour laisser la boucle de retry gérer l'attente.
+mysqli_report(MYSQLI_REPORT_OFF);
+
 $host = getenv('DB_HOST') ?: 'db-map';
 $user = getenv('DB_USER') ?: 'composmart';
 $pass = getenv('DB_PASSWORD') ?: '';
 $name = getenv('DB_NAME') ?: 'Composmart';
 
 $c = null;
-for ($i = 0; $i < 15; $i++) {
+for ($i = 0; $i < 30; $i++) {
     $c = @mysqli_connect($host, $user, $pass, $name);
     if ($c) break;
-    echo "seed_map: en attente de db-map... ($i/15)\n";
+    echo "seed_map: en attente de db-map... ($i/30)\n";
     sleep(2);
 }
 if (!$c) die("seed_map: impossible de se connecter à db-map.\n");

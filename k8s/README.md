@@ -7,81 +7,142 @@ même moteur que le VPS) avant tout déploiement réel.
 > Les anciens fichiers éclatés (`web.yaml`, `map-api.yaml`, `db-per-service.yaml`, …)
 > sont conservés comme référence historique mais **`composmart.yaml` fait foi**.
 
-## Prérequis (machine locale)
+# ============================================================================
+# LANCER LE PROJET EN LOCAL (k3d) — procédure complète et testée
+# ============================================================================
+# Toutes les commandes se lancent depuis la RACINE du repo (dossier composmart/).
+# Testé sous Windows (PowerShell) + Docker Desktop, le 01/07/2026.
 
-- Docker Desktop
-- `k3d`  : https://k3d.io  (`choco install k3d` sous Windows)
-- `kubectl` : `choco install kubernetes-cli`
+## Prérequis
 
-## 1. Créer le cluster local
+- **Docker Desktop** installé ET démarré (icône baleine "running").
+- **k3d**     : `choco install k3d -y`            (PowerShell admin)
+- **kubectl** : `choco install kubernetes-cli -y`
+
+Vérifier : `docker version`, `k3d version`, `kubectl version --client`.
+
+## Étape 1 — Créer le cluster
 
 ```bash
-# Cluster k3d avec le port 80 mappé vers l'Ingress Traefik (loadbalancer)
 k3d cluster create composmart -p "8080:80@loadbalancer"
-kubectl config use-context k3d-composmart
 ```
 
-Le site sera accessible sur **http://localhost:8080**.
+Le port 8080 de la machine est mappé vers l'Ingress → le site sera sur **http://localhost:8080**.
 
-## 2. Builder les 5 images et les importer dans k3d
+> ⚠️ **PIÈGE Windows fréquent** : k3d écrit un kubeconfig pointant sur
+> `host.docker.internal`, souvent INJOIGNABLE depuis Windows (kubectl timeout
+> "connection refused" / "context deadline exceeded"). Si `kubectl get nodes`
+> échoue, repointer sur 127.0.0.1 avec le port réel du cluster :
+> ```bash
+> # trouver le port : docker ps → ligne k3d-composmart-serverlb, colonne ...->6443/tcp
+> kubectl config set-cluster k3d-composmart --server=https://127.0.0.1:<PORT>
+> ```
+> Vérifier ensuite : `kubectl get nodes` doit afficher le nœud `Ready`.
+
+## Étape 2 — Builder les 5 images
 
 ```bash
-# Depuis la racine du repo (où sont les Dockerfiles services/*)
 docker build -f services/web/Dockerfile         -t composmart/web:local .
-docker build -f services/map-api/Dockerfile      -t composmart/map-api:local .
-docker build -f services/games-api/Dockerfile    -t composmart/games-api:local .
-docker build -f services/courses-api/Dockerfile  -t composmart/courses-api:local .
-docker build -f services/auth-api/Dockerfile     -t composmart/auth-api:local .
+docker build -f services/map-api/Dockerfile     -t composmart/map-api:local .
+docker build -f services/games-api/Dockerfile   -t composmart/games-api:local .
+docker build -f services/courses-api/Dockerfile -t composmart/courses-api:local .
+docker build -f services/auth-api/Dockerfile    -t composmart/auth-api:local .
+```
 
-# Importer les images dans le cluster (sinon k3d ne les voit pas)
+## Étape 3 — Importer les images dans k3d
+
+**Indispensable** : sans ça, les pods restent en `ErrImageNeverPull` (k3d ne voit
+pas les images du démon Docker local).
+
+```bash
 k3d image import -c composmart \
   composmart/web:local composmart/map-api:local composmart/games-api:local \
   composmart/courses-api:local composmart/auth-api:local
 ```
 
-## 3. Créer le namespace + les ConfigMaps de schémas et seeds
+## Étape 4 — Namespace + ConfigMaps (schémas SQL + seeds)
 
 ```bash
 kubectl create namespace composmart
-
 kubectl create configmap map-schema   --from-file=schema.sql=db/map.sql   -n composmart
 kubectl create configmap games-schema --from-file=schema.sql=db/games.sql -n composmart
 kubectl create configmap core-schema  --from-file=schema.sql=db/core.sql  -n composmart
 kubectl create configmap seeds        --from-file=shared/seeds/            -n composmart
 ```
 
-## 4. Déployer
+> ⚠️ La ConfigMap `seeds` se met à jour par **delete + create**, jamais par
+> `kubectl apply` (l'annotation générée dépasse la limite de 262 144 octets) :
+> ```bash
+> kubectl delete configmap seeds -n composmart
+> kubectl create configmap seeds --from-file=shared/seeds/ -n composmart
+> ```
+
+## Étape 5 — Déployer
 
 ```bash
 kubectl apply -f k8s/composmart.yaml
-kubectl get pods -n composmart -w
+kubectl get pods -n composmart -w      # Ctrl-C pour arrêter le suivi
 ```
 
-Ordre d'arrivée attendu : redis + les 3 bases (Healthy ~30 s), puis les Jobs seed
-(`seed-map` importe ~5800 composts, `seed-core` les cours), puis les 5 services.
+Ordre d'arrivée : redis + services (Running vite), puis les 3 bases deviennent
+Ready (~40 s), puis les Jobs seed s'exécutent :
+- `seed-core` → **Completed** (8 cours importés)
+- `seed-map`  → **Completed** (villes + import OSM ≈ 5860 composts ; jusqu'à 2 min)
 
-## 5. Créer l'admin
+> ℹ️ Les seeds affichent `Error`/`CrashLoopBackOff` les premières secondes : ils
+> démarrent avant que les bases soient prêtes et réessaient (`OnFailure`,
+> `backoffLimit: 4`). C'est normal — ils passent `Completed` dès les bases Ready.
+> S'ils restent en échec APRÈS que les bases sont Ready, voir les logs :
+> `kubectl logs -n composmart -l job-name=seed-map`.
 
-Une fois `seed-core` terminé (`kubectl get jobs -n composmart` → seed-core Complete),
-aller sur http://localhost:8080 → page launchpad → créer l'admin (il aura les 8 cours / 410 XP).
+## Étape 6 — Créer l'admin
 
-> ⚠️ Créer l'admin AVANT la fin de seed-core donnerait un admin à 0 XP (cf. bug timing).
+Une fois `seed-core` en **Completed** (`kubectl get jobs -n composmart`), aller sur
+**http://localhost:8080** → page launchpad → créer l'admin.
+Il reçoit alors les 8 cours validés + 410 XP (niveau 5).
 
-## Vérifications
+> ⚠️ Créer l'admin AVANT la fin de seed-core → admin à 0 XP / 0 cours (bug timing).
+
+## Étape 7 — Vérifier que tout marche
 
 ```bash
-kubectl get pods -n composmart           # tous Running / Ready
-kubectl get hpa  -n composmart           # autoscalers (nécessite metrics-server, inclus dans k3d)
-curl -s localhost:8080/api/carte/health.php   # {"status":"ok"}
-curl -s localhost:8080/api/carte/sites.php -d 'france=1' | head -c 120
+kubectl get pods -n composmart          # tous Running (services) / Completed (seeds)
+kubectl get hpa  -n composmart          # autoscalers actifs (metrics-server inclus dans k3d)
+
+curl -s localhost:8080/                        # page d'accueil (HTML)
+curl -s localhost:8080/api/carte/health.php    # {"status":"ok"}
+curl -s localhost:8080/api/auth/me.php         # {"logged_in":false}
+curl -s localhost:8080/api/carte/sites.php -d 'france=1' | head -c 80   # JSON composts
 ```
 
-## Repartir de zéro
+Sous PowerShell, remplacer `curl -s ... -d '...'` par :
+```powershell
+Invoke-WebRequest -Uri "http://localhost:8080/api/carte/sites.php" -Method POST -Body "france=france" -UseBasicParsing
+```
+
+## Mettre à jour après une modif de code
+
+```bash
+# 1. rebuild + réimport de l'image concernée (ex. map-api)
+docker build -f services/map-api/Dockerfile -t composmart/map-api:local .
+k3d image import -c composmart composmart/map-api:local
+# 2. redémarrer le déploiement pour recharger l'image
+kubectl rollout restart deployment/map-api -n composmart
+```
+
+Pour un changement de **seed** (dans `shared/seeds/`) : pas de rebuild, recréer la
+ConfigMap (delete+create, cf. étape 4) puis relancer le Job :
+```bash
+kubectl delete job seed-map -n composmart
+kubectl apply -f k8s/composmart.yaml
+```
+
+## Repartir de zéro / arrêter
 
 ```bash
 kubectl delete -f k8s/composmart.yaml
-kubectl delete pvc --all -n composmart   # efface les données (wipe)
-# ou jeter tout le cluster :
+kubectl delete pvc --all -n composmart   # ⚠️ efface les données (wipe)
+# ou tout jeter :
 k3d cluster delete composmart
 ```
 
