@@ -33,11 +33,17 @@
     }
   }
 
-  // Pas de cache — appel direct à chaque page pour toujours avoir l'état réel
+  var isAdminCached = false;
+
+  // Pas de cache serveur — appel direct pour toujours avoir l'état réel
   fetch('/api/auth/me.php')
     .then(function (r) { return r.json(); })
     .then(function (d) {
-      if (d && d.logged_in && d.isAdmin) injectBadge();
+      if (d && d.logged_in && d.isAdmin) { isAdminCached = true; injectBadge(); }
     })
     .catch(function () {});
+
+  // Le nav peut être injecté après ce fetch (nav partagé) : site-nav.js rappelle
+  // cette fonction une fois le bandeau en place, pour (ré)insérer le badge si admin.
+  window.refreshAdminBadge = function () { if (isAdminCached) injectBadge(); };
 })();

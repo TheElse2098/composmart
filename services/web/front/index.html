@@ -113,11 +113,26 @@
 
     /* Dark mode */
     html.dark body { background: #0f1811; color: #e8f5ee; }
+    html.dark body { background: #0f1811; color: #e8f5ee; }
+    /* Hero : dégradé assombri + courbe qui rejoint le fond sombre */
+    html.dark .hero { background: linear-gradient(160deg, #0d2f18 0%, #12401f 55%, #1a5c33 100%); }
+    html.dark .hero::after { background: #0f1811; }
+    html.dark .hero-badge { background: rgba(255,255,255,0.10); color: #cdeed9; }
+    html.dark .hero-sub { color: rgba(255,255,255,0.82); }
+    /* Titres et textes */
     html.dark .section-title, html.dark .feature-body h3, html.dark .why-item h4 { color: #e8f5ee; }
-    html.dark .stat, html.dark .feature, html.dark .why { background: #16211a; }
-    html.dark .feature { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    html.dark .section-tag { color: #52b788; }
     html.dark .stat-label, html.dark .feature-body p, html.dark .why-item p, html.dark .section-lead { color: #7ab88e; }
-    html.dark .btn-primary { background: #a8e6bf; color: #123d20; }
+    /* Cartes / panneaux */
+    html.dark .stat, html.dark .feature { background: #16211a; box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+    html.dark .stat-num { color: #52b788; }
+    html.dark .feature:hover { border-color: #2d4030; }
+    html.dark .why { background: #131d16; }
+    /* Boutons */
+    html.dark .btn-primary { background: #a8e6bf; color: #0d2f18; }
+    /* CTA final + footer restent verts foncés (déjà sombres, on ajuste un peu) */
+    html.dark .cta-final { background: linear-gradient(160deg, #12401f, #1a5c33); }
+    html.dark footer { background: #0a2413; }
   </style>
   <link rel="stylesheet" href="/assets/css/desktop.css">
 </head>
