@@ -2,117 +2,111 @@
 
 Site web de sensibilisation écologique au compostage : carte interactive des composteurs, système de cours avec quiz, jeux et dark mode.
 
+Architecture **microservices** : les fonctionnalités sont découpées en services indépendants (carte, jeux, cours, auth) pour que la charge de l'un n'impacte pas les autres.
+
 ## Stack
 
 - **Frontend** : HTML / CSS / JavaScript + Leaflet.js
-- **Backend** : PHP 8.3 (Apache)
-- **Base de données** : MariaDB 11
-- **CI/CD** : GitHub Actions → GHCR
+- **Backend** : PHP 8.3 (Apache), découpé en 5 services
+- **Bases de données** : MariaDB 11 (3 bases séparées : map / games / core)
+- **Sessions & cache** : Redis (sessions partagées, rate-limiting, cache carte)
+- **Orchestration** : Docker Compose (dev/prod actuel) → Kubernetes / k3s (cible, cf. `k8s/`)
+- **CI/CD** : GitHub Actions → GHCR (5 images)
 
-## Lancer en développement
+## Architecture
+
+| Service | Rôle | Base |
+|---|---|---|
+| **web** | Sert le front statique + reverse-proxy `/api/*` vers les services | — |
+| **map-api** | `api/carte/*` — CRUD composteurs, signalements (le plus lourd) | db-map |
+| **games-api** | `api/jeux/*` — scores des mini-jeux | db-games |
+| **courses-api** | `api/cours/*` + `api/admin/*` — cours, quiz, back-office | db-core |
+| **auth-api** | `api/auth/*` — login, profil, classement, launchpad | db-core |
+| **redis** | Sessions PHP partagées, rate-limiting, cache de la carte | — |
+
+Routage par préfixe de chemin (`/api/carte` → map-api, etc.), identique en Docker Compose (proxy Apache) et en Kubernetes (Ingress Traefik). Les URLs front ne changent pas.
+
+## Lancer en développement / production
 
 ```bash
-cp .env.example .env
+cp .env.example .env   # renseigner les mots de passe (DB, AUDIT_SECRET)
 docker compose up --build
 ```
 
 - Site : http://localhost
-- Au premier démarrage, la DB est peuplée automatiquement (~45s) : villes open data (Montpellier, Rennes, Marseille) + OSM France (~5 800 composteurs) + cours depuis `content/`
-- Les redémarrages suivants sont immédiats (données déjà en base)
+- Au premier démarrage, les bases sont peuplées automatiquement : composteurs (villes open data + OSM France) dans db-map, cours (`content/`) dans db-core.
+- L'import OSM est robuste (retries + miroirs Overpass) et rejoué chaque nuit à 3h15 (`osm-cron`).
+- Créer le compte admin via la page **launchpad** une fois le seed des cours terminé (il reçoit tous les cours validés + l'XP).
 
-## Lancer en production
+### Mettre à jour
 
-```bash
-# Premier déploiement — copier docker-compose.prod.yml, Caddyfile, db/schema.sql et .env sur la machine cible
-cp .env.example .env && nano .env   # renseigner les vrais mots de passe
-docker compose -f docker-compose.prod.yml pull
-docker compose -f docker-compose.prod.yml up -d
-```
-
-### Mettre à jour en production
-
-Après un push sur `main` (GitHub Actions reconstruit l'image automatiquement) :
+Après un push sur `main`, GitHub Actions reconstruit les 5 images sur GHCR :
 
 ```bash
-docker compose -f docker-compose.prod.yml pull   # télécharge la nouvelle image
-docker compose -f docker-compose.prod.yml up -d  # recrée les conteneurs
+docker compose pull
+docker compose up -d
 ```
 
-> ⚠️ `docker pull` seul ne suffit pas : les conteneurs en cours continuent de tourner avec l'ancienne image jusqu'au `up -d`.
+## Déploiement Kubernetes (k3s)
+
+Voir **`k8s/README.md`** : manifests complets (`k8s/composmart.yaml`), procédure k3d local
+et k3s sur serveur Linux, HPA (autoscaling de map-api), CronJob OSM, HTTPS.
 
 ## Structure
 
 ```
 composmart/
-├── front/                  ← Frontend (HTML, CSS, JS, images)
-│   ├── *.html              ← Pages (URLs propres via .htaccess)
-│   ├── cours-detail.html   ← Page de lecture d'un cours (slug via .htaccess)
-│   ├── assets/
-│   │   ├── img/            ← Icônes et images
-│   │   ├── css/
-│   │   │   └── dark.css    ← Overrides dark mode (html.dark)
-│   │   ├── js/
-│   │   │   └── theme.js    ← Toggle dark/light + persistance localStorage
-│   │   └── libs/           ← Plugins Leaflet locaux
-│   ├── favicon.svg
-│   └── Dockerfile
+├── services/
+│   ├── web/         ← front statique (HTML/CSS/JS, Leaflet) + reverse-proxy Apache
+│   │   └── front/
+│   ├── map-api/carte/       ← sites.php (CRUD + cache Redis), signalement.php, count.php
+│   ├── games-api/jeux/      ← score.php
+│   ├── courses-api/
+│   │   ├── cours/           ← list.php, get.php, complete.php
+│   │   └── admin/           ← stats.php, users.php, evolution.php
+│   └── auth-api/auth/       ← login, register, me, profile, leaderboard, launchpad, audit
 │
-├── api/                    ← Backend PHP
-│   ├── carte/
-│   │   └── sites.php       ← API CRUD des composteurs
-│   ├── cours/
-│   │   ├── list.php        ← Retourne thèmes + cours (depuis DB)
-│   │   ├── get.php         ← Retourne contenu d'un cours (depuis content/)
-│   │   └── complete.php    ← Valide quiz, enregistre progression, crédite XP
-│   ├── jeux/
-│   │   └── score.php       ← Scores des mini-jeux (save, records, top 5)
-│   └── auth/               ← Authentification (login, signin, me, launchpad)
+├── shared/
+│   ├── _guard.php   ← garde partagé (sessions Redis, rate-limit, csrf, audit) — SOURCE UNIQUE
+│   └── seeds/       ← seed_map.php, seed_core.php, import_{osm,city,cours}.php, *.json
 │
 ├── db/
-│   ├── schema.sql          ← Schéma : themes, cours, composts, users, progression
-│   └── seeds/
-│       ├── seed.php        ← Script lancé au démarrage (import auto)
-│       ├── import_osm.php  ← Import OpenStreetMap (Overpass API)
-│       ├── import_city.php ← Import open data villes (formats hétérogènes)
-│       ├── import_cours.php← Scan content/cours/*/meta.json → DB (idempotent)
-│       ├── montpellier.json
-│       ├── rennes.json
-│       └── marseille.json
+│   ├── map.sql      ← composts, regles, elements, signalements (+ index lat/lng)
+│   ├── games.sql    ← scores (username dénormalisé)
+│   └── core.sql     ← users, cours, themes, user_progress, audit_log, logins
 │
-└── content/                ← Données éditoriales — bind-monté en dev
-    ├── themes/
-    │   ├── pratique.json   ← { nom, emoji, couleur, ordre }
-    │   └── science.json
-    └── cours/
-        └── <slug>/
-            ├── meta.json   ← titre, theme_slug, emoji, niveau, xp, ordre
-            ├── texte.md    ← Contenu Markdown (optionnel)
-            ├── video.json  ← { url, titre, auteur, duree, description } (optionnel)
-            ├── podcast.json← { url, titre, auteur, duree, description } (optionnel)
-            └── quiz.json   ← [{ question, options[], correct }] (optionnel)
+├── content/         ← données éditoriales (cours, thèmes) — embarqué dans courses-api
+│   ├── themes/
+│   └── cours/<slug>/  ← meta.json, texte.md, video.json, podcast.json, quiz.json
+│
+├── k8s/             ← manifests Kubernetes + guide de déploiement
+├── docker-compose.yml
+└── MIGRATION-K8S.md ← plan et historique de la migration monolithe → microservices
 ```
+
+> Le garde `_guard.php` et les seeds vivent dans `shared/` (source unique) et sont copiés
+> dans les images au build par chaque Dockerfile — pas de duplication dans le dépôt.
 
 ## Système de cours
 
-Les cours sont définis par des fichiers dans `content/cours/<slug>/`. Au démarrage, `import_cours.php` les importe en base. Les médias manquants (vidéo, podcast) affichent un bouton grisé.
+Les cours sont définis par des fichiers dans `content/cours/<slug>/`. Au démarrage, `import_cours.php` les importe dans db-core. Les médias manquants (vidéo, podcast) affichent un bouton grisé.
 
 - **URL** : `/cours` → liste, `/cours/<slug>` → détail
 - **Médias** : YouTube/Vimeo auto-détecté (iframe embed), fichier direct (`<video>`), podcast (`<audio>`)
 - **Quiz** : score minimum 50% pour valider et gagner l'XP
 
-Pour ajouter un cours, créer un dossier dans `content/cours/` et redémarrer — aucun rebuild nécessaire en dev (bind mount).
+Pour ajouter un cours : créer un dossier dans `content/cours/` et rebuild l'image courses-api.
 
 ## Sources de données
 
 | Source | Contenu | Mise à jour |
 |---|---|---|
-| OpenStreetMap (Overpass) | ~4 500 composteurs France | Automatique au 1er démarrage |
+| OpenStreetMap (Overpass) | ~4 500 composteurs France | Auto au 1er démarrage + refresh quotidien 3h15 |
 | Open data Montpellier | ~420 points d'apport | Automatique au 1er démarrage |
 | Open data Rennes Métropole | ~590 composteurs | Automatique au 1er démarrage |
 | Open data Marseille | ~320 composteurs | Automatique au 1er démarrage |
 | Ajouts manuels (carte) | Points ajoutés via l'interface | Persistés en base |
 | Fichiers `content/` | Cours, thèmes, quiz | Import au démarrage (idempotent) |
-
 
 ## TODO LIST
 
@@ -123,4 +117,8 @@ Pour ajouter un cours, créer un dossier dans `content/cours/` et redémarrer �
 - [x] crée une infra pour les jeux
 - [x] rajoute un ou plusieurs jeux simples : mot croisés sur le thème du compostage, ou autre facile et accessible (lettres à clicker pour faire un mot genre le nom des vers de compostage)
 - [x] rajoute le bloc jeu dans la page principale ainsi que le bloc compte
-- [x] fais la liste des potentiels problèmes de cybersécu et l'écrire dans README.md dans une nouvelle section 
+- [x] fais la liste des potentiels problèmes de cybersécu et l'écrire dans README.md dans une nouvelle section
+- [x] découpage en microservices (map / web / games / cours / auth) + Redis
+- [x] séparation des bases de données (db-map / db-games / db-core)
+- [x] manifests Kubernetes (k3s) — cf. `k8s/`
+- [ ] valider le déploiement Kubernetes sur un cluster (k3d local ou serveur)

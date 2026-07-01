@@ -1,7 +1,7 @@
 # Déploiement Kubernetes — Composmart
 
 Manifest unique : **`composmart.yaml`** (variante B, 3 bases séparées), aligné sur
-`docker-compose.split.yml`. Conçu pour tester en local sur **k3d** (k3s dans Docker,
+`docker-compose.yml`. Conçu pour tester en local sur **k3d** (k3s dans Docker,
 même moteur que le VPS) avant tout déploiement réel.
 
 > Les anciens fichiers éclatés (`web.yaml`, `map-api.yaml`, `db-per-service.yaml`, …)
@@ -250,5 +250,5 @@ kubectl delete -f k8s/composmart.yaml                     # tout arrêter
 kubectl delete pvc --all -n composmart                    # ⚠️ efface les données
 ```
 
-> Garder l'ancien `docker-compose.prod.yml` comme filet de secours tant que le k3s
-> n'est pas éprouvé : en cas de souci, on peut revenir au monolithe en quelques minutes.
+> Filet de secours : revenir à `docker-compose.yml` (l'archi microservices
+> qui tourne déjà), ou à un commit antérieur via git, si le k3s pose problème.

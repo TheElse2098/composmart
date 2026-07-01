@@ -1,3 +1,0 @@
-composmart.fr {
-	reverse_proxy web:80
-}

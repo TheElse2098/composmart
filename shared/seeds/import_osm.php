@@ -92,3 +92,15 @@ foreach ($data['elements'] as $el) {
 
 echo "Import OSM terminé : $inserted insérés, $skipped doublons ignorés.\n";
 mysqli_close($connexion);
+
+// Invalide le cache Redis de la carte si des points ont été ajoutés (l'import
+// écrit en DB sans passer par sites.php, il faut donc flusher explicitement).
+if ($inserted > 0 && getenv('REDIS_HOST') && extension_loaded('redis')) {
+    try {
+        $r = new Redis();
+        if (@$r->connect(getenv('REDIS_HOST'), (int)(getenv('REDIS_PORT') ?: 6379), 0.5)) {
+            $r->del('carte:france');
+            echo "Cache carte invalidé.\n";
+        }
+    } catch (\Throwable $e) { /* pas de Redis → le TTL rattrapera */ }
+}

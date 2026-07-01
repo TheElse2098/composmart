@@ -33,6 +33,30 @@ if (mysqli_connect_errno()) {
     exit();
 }
 
+// ── Cache Redis de la liste France (lecture la plus lourde, identique pour tous) ──
+const CACHE_FRANCE_KEY = 'carte:france';
+const CACHE_FRANCE_TTL = 3600; // filet de sécurité ; l'invalidation explicite prime
+
+function carte_redis() {
+    static $r = false;
+    if ($r !== false) return $r;            // déjà résolu (objet ou null)
+    $r = null;
+    if (getenv('REDIS_HOST') && extension_loaded('redis')) {
+        try {
+            $cx = new Redis();
+            if (@$cx->connect(getenv('REDIS_HOST'), (int)(getenv('REDIS_PORT') ?: 6379), 0.5)) {
+                $r = $cx;
+            }
+        } catch (\Throwable $e) { $r = null; }
+    }
+    return $r;
+}
+
+// Invalide le cache France après toute écriture sur composts/regles.
+function carte_cache_flush() {
+    if ($r = carte_redis()) { try { $r->del(CACHE_FRANCE_KEY); } catch (\Throwable $e) {} }
+}
+
 // ── IMPORT DEPUIS OSM ──────────────────────────────────────────────────────
 if (isset($_POST['osm'])) {
     if (!rate_limit('add_compost', 15, 3600)) {
@@ -116,14 +140,31 @@ elseif (isset($_POST['donnees_json'])) {
     }
 }
 
-// ── LISTE TOUS LES COMPOSTS ────────────────────────────────────────────────
+// ── LISTE TOUS LES COMPOSTS (cachée dans Redis) ────────────────────────────
 elseif (isset($_POST['france'])) {
+    $r = carte_redis();
+    // Service direct depuis le cache : on renvoie le JSON tel quel, sans re-sérialiser.
+    if ($r) {
+        try {
+            $cached = $r->get(CACHE_FRANCE_KEY);
+            if ($cached !== false && $cached !== null) {
+                mysqli_close($connexion);
+                echo $cached;
+                exit();
+            }
+        } catch (\Throwable $e) { /* cache indispo → on requête la DB */ }
+    }
+
     $result = mysqli_query($connexion, "SELECT id, longitude, latitude, type FROM composts");
     $liste  = [];
     while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
         $liste[] = ["id" => $row["id"], "lon" => $row["longitude"], "lat" => $row["latitude"], "type" => $row["type"]];
     }
-    $response = $liste;
+    $json = json_encode($liste, JSON_UNESCAPED_UNICODE);
+    if ($r) { try { $r->setex(CACHE_FRANCE_KEY, CACHE_FRANCE_TTL, $json); } catch (\Throwable $e) {} }
+    mysqli_close($connexion);
+    echo $json;
+    exit();
 }
 
 // ── DÉTAIL D'UN COMPOST (autorisé/interdit) ────────────────────────────────
@@ -272,5 +313,12 @@ if (isset($_POST['supprimer'])) {
 }
 
 mysqli_close($connexion);
+
+// Toute branche atteignant ce point, hormis la lecture de détail 'autorinter',
+// est une écriture (ajout/modif/suppression) → on invalide le cache France.
+if (!isset($_POST['autorinter'])) {
+    carte_cache_flush();
+}
+
 echo json_encode($response, JSON_UNESCAPED_UNICODE);
 ?>
