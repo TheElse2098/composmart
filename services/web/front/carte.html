@@ -514,7 +514,8 @@
                         let compost_id = compost.id;
                         let lon = compost.lon;
                         let lat = compost.lat;
-                        let type = compost.type;
+                        // Payload allégé : "t" = 'C'onteneur / 'X' autre (cf. sites.php).
+                        let type = compost.t === 'C' ? "Conteneur" : "Compost";
                         if (type === "Conteneur") {
                             var grayIcon = L.icon({ iconUrl: '/assets/img/marker-bleu.png', iconSize: [20, 38], iconAnchor: [10, 38], popupAnchor: [0, -38] });
                             marker = L.marker([lat, lon], {icon: grayIcon});
