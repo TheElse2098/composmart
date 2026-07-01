@@ -135,6 +135,7 @@
     html.dark .evo-btn.active, html.dark .evo-btn:hover { background: #2d9959; color: #fff; border-color: #2d9959; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/assets/css/desktop.css">
 </head>
 <body>
 
@@ -183,6 +184,9 @@
 
     <div class="section-title">🚩 Signalements ouverts</div>
     <div id="signalList"></div>
+
+    <div class="section-title">✉️ Messages de contact <span id="contactCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
+    <div id="contactList"></div>
 
     <div class="section-title">👥 Utilisateurs <span id="userCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
     <input id="userSearch" class="user-search" type="search" placeholder="🔍 Rechercher un utilisateur par pseudo…" autocomplete="off" />
@@ -249,6 +253,7 @@
         document.getElementById('loader').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         chargerSignalements();
+        chargerMessages();
         loadEvolution('30d');
       })
       .catch(() => {});
@@ -549,6 +554,51 @@
       })
       .then(r => r.json())
       .then(d => { if (d.ok) { chargerSignalements(); refreshSignalCount(); } })
+      .catch(() => {});
+    }
+
+    // ── Messages de contact ──
+    const CONTACT_CAT = { bug: '🐛 Bug', suggestion: '💡 Suggestion', question: '❓ Question', autre: '✉️ Autre' };
+
+    function chargerMessages() {
+      fetch('/api/admin/contact.php')
+        .then(r => r.json())
+        .then(d => renderMessages(d && d.messages ? d.messages : [], d ? d.nouveaux : 0))
+        .catch(() => renderMessages([], 0));
+    }
+
+    function renderMessages(liste, nouveaux) {
+      document.getElementById('contactCount').textContent = nouveaux > 0 ? '(' + nouveaux + ' nouveau' + (nouveaux > 1 ? 'x' : '') + ')' : '';
+      const box = document.getElementById('contactList');
+      if (!liste.length) { box.innerHTML = '<div class="empty-msg">Aucun message 📭</div>'; return; }
+      box.innerHTML = '';
+      liste.forEach(m => {
+        const item = document.createElement('div');
+        item.className = 'signal-item';
+        if (m.statut === 'nouveau') item.style.borderLeft = '4px solid #1e6e3e';
+        const tagStatut = m.statut === 'nouveau' ? '🟢 Nouveau' : (m.statut === 'lu' ? '👁️ Lu' : '✓ Traité');
+        item.innerHTML =
+          '<div class="signal-item-motif">' + (CONTACT_CAT[m.categorie] || echap(m.categorie)) + ' · ' + echap(m.sujet) + '</div>'
+          + '<div class="signal-item-meta">par ' + echap(m.username) + ' · ' + (m.date || '').slice(0, 16).replace('T', ' ') + ' · ' + tagStatut + '</div>'
+          + '<div class="signal-item-comment">« ' + echap(m.message) + ' »</div>'
+          + '<div class="signal-item-actions">'
+          + (m.statut !== 'lu' && m.statut !== 'traite' ? '<button type="button" class="sig-voir" data-a="lu">👁️ Marquer lu</button>' : '')
+          + (m.statut !== 'traite' ? '<button type="button" class="sig-ok" data-a="traite">✓ Traité</button>' : '')
+          + '</div>';
+        item.querySelectorAll('button[data-a]').forEach(b => {
+          b.addEventListener('click', () => statutMessage(m.id, b.dataset.a));
+        });
+        box.appendChild(item);
+      });
+    }
+
+    function statutMessage(id, statut) {
+      fetch('/api/admin/contact.php', {
+        method: 'POST',
+        body: new URLSearchParams({ id: id, statut: statut })
+      })
+      .then(r => r.json())
+      .then(d => { if (d.ok) chargerMessages(); })
       .catch(() => {});
     }
 

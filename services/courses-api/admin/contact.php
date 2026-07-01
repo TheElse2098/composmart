@@ -1,0 +1,76 @@
+<?php
+/**
+ * Admin — messages de contact.
+ *  GET               → liste des messages (récents d'abord) + compteur non-lus.
+ *  POST action=statut → change le statut d'un message (lu / traite).
+ */
+ob_start();
+error_reporting(0);
+ini_set('display_errors', 0);
+require_once __DIR__ . '/../_guard.php';
+secure_session_start();
+header('Content-Type: application/json; charset=utf-8');
+ob_clean();
+csrf_check();
+mysqli_report(MYSQLI_REPORT_OFF);
+
+$c = mysqli_connect(
+    getenv('DB_HOST') ?: 'db-core',
+    getenv('DB_USER') ?: 'composmart',
+    getenv('DB_PASSWORD') ?: '',
+    getenv('DB_NAME') ?: 'Composmart'
+);
+if (!$c) { http_response_code(500); echo json_encode(['error' => 'DB error']); exit; }
+
+// ── Garde admin (vérif en base = source de vérité) ─────────────────────────
+$me = (int)($_SESSION['user_id'] ?? 0);
+$is_admin = false;
+if ($me > 0) {
+    $stmt = mysqli_prepare($c, 'SELECT isAdmin FROM users WHERE id = ?');
+    $stmt->bind_param('i', $me);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $is_admin = $row && (int)$row['isAdmin'] === 1;
+}
+if (!$is_admin) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Accès réservé aux administrateurs.']);
+    exit;
+}
+
+// ── Changer le statut d'un message ─────────────────────────────────────────
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    $id     = (int)($_POST['id'] ?? 0);
+    $statut = $_POST['statut'] ?? '';
+    if (!$id || !in_array($statut, ['lu', 'traite'], true)) {
+        echo json_encode(['error' => 'Données invalides']); exit;
+    }
+    $stmt = mysqli_prepare($c, 'UPDATE contact_messages SET statut = ? WHERE id = ?');
+    $stmt->bind_param('si', $statut, $id);
+    $stmt->execute();
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ── Liste + compteur non-lus ────────────────────────────────────────────────
+$nouveaux = (int)(mysqli_fetch_row(mysqli_query($c,
+    "SELECT COUNT(*) FROM contact_messages WHERE statut = 'nouveau'"))[0] ?? 0);
+
+$res = mysqli_query($c,
+    'SELECT id, username, categorie, sujet, message, statut, created_at
+     FROM contact_messages ORDER BY id DESC LIMIT 50');
+$messages = [];
+while ($row = mysqli_fetch_assoc($res)) {
+    $messages[] = [
+        'id'        => (int)$row['id'],
+        'username'  => $row['username'] ?: 'Anonyme',
+        'categorie' => $row['categorie'],
+        'sujet'     => $row['sujet'],
+        'message'   => $row['message'],
+        'statut'    => $row['statut'],
+        'date'      => $row['created_at'],
+    ];
+}
+mysqli_close($c);
+
+echo json_encode(['nouveaux' => $nouveaux, 'messages' => $messages], JSON_UNESCAPED_UNICODE);

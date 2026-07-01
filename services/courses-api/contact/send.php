@@ -1,0 +1,64 @@
+<?php
+/**
+ * Envoi d'un message de contact. Réservé aux utilisateurs connectés.
+ * Enregistre dans contact_messages (db-core) → visible dans l'admin panel.
+ */
+ob_start();
+error_reporting(0);
+ini_set('display_errors', 0);
+require_once __DIR__ . '/../_guard.php';
+secure_session_start();
+header('Content-Type: application/json; charset=utf-8');
+ob_clean();
+csrf_check();
+mysqli_report(MYSQLI_REPORT_OFF);
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); echo json_encode(['error' => 'method']); exit; }
+
+// Réservé aux connectés
+if (empty($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Connecte-toi pour envoyer un message.']);
+    exit;
+}
+
+// Anti-spam : 5 messages max par heure et par IP
+if (!rate_limit('contact', 5, 3600)) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Trop de messages récents. Réessaie plus tard.']);
+    exit;
+}
+
+$CATS = ['bug', 'suggestion', 'question', 'autre'];
+$cat     = in_array($_POST['categorie'] ?? '', $CATS, true) ? $_POST['categorie'] : 'autre';
+$sujet   = trim($_POST['sujet'] ?? '');
+$message = trim($_POST['message'] ?? '');
+
+if (mb_strlen($sujet) < 3 || mb_strlen($sujet) > 150) {
+    echo json_encode(['error' => 'Le sujet doit faire entre 3 et 150 caractères.']); exit;
+}
+if (mb_strlen($message) < 10 || mb_strlen($message) > 3000) {
+    echo json_encode(['error' => 'Le message doit faire entre 10 et 3000 caractères.']); exit;
+}
+
+$c = mysqli_connect(
+    getenv('DB_HOST') ?: 'db-core',
+    getenv('DB_USER') ?: 'composmart',
+    getenv('DB_PASSWORD') ?: '',
+    getenv('DB_NAME') ?: 'Composmart'
+);
+if (!$c) { http_response_code(500); echo json_encode(['error' => 'DB error']); exit; }
+
+$uid   = (int)$_SESSION['user_id'];
+$uname = $_SESSION['username'] ?? '';
+
+$stmt = mysqli_prepare($c,
+    'INSERT INTO contact_messages (user_id, username, categorie, sujet, message) VALUES (?, ?, ?, ?, ?)');
+$stmt->bind_param('issss', $uid, $uname, $cat, $sujet, $message);
+if ($stmt->execute()) {
+    echo json_encode(['ok' => true]);
+} else {
+    http_response_code(500);
+    echo json_encode(['error' => "Erreur lors de l'envoi."]);
+}
+mysqli_close($c);

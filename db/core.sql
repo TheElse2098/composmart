@@ -85,3 +85,18 @@ CREATE TABLE `logins` (
   KEY `idx_date` (`logged_at`),
   CONSTRAINT `logins_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── MESSAGES DE CONTACT (formulaire "nous contacter", réservé aux connectés) ──
+CREATE TABLE `contact_messages` (
+  `id`         int          NOT NULL AUTO_INCREMENT,
+  `user_id`    int          DEFAULT NULL,
+  `username`   varchar(100) DEFAULT NULL,   -- dénormalisé (survit à la suppression du compte)
+  `categorie`  enum('bug','suggestion','question','autre') NOT NULL DEFAULT 'autre',
+  `sujet`      varchar(150) NOT NULL,
+  `message`    text         NOT NULL,
+  `statut`     enum('nouveau','lu','traite') NOT NULL DEFAULT 'nouveau',
+  `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `statut_date` (`statut`, `created_at`),
+  CONSTRAINT `contact_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
