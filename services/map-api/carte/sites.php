@@ -140,28 +140,48 @@ elseif (isset($_POST['donnees_json'])) {
     }
 }
 
-// ── LISTE TOUS LES COMPOSTS (cachée dans Redis) ────────────────────────────
+// ── LISTE DES COMPOSTS (France entière, ou filtrée par zone visible) ──────
+// Payload allégé, quel que soit le mode :
+// - nombres (pas de strings) : évite 2 octets de guillemets par valeur
+// - coordonnées arrondies à 5 décimales (~1 m de précision, largement suffisant pour situer
+//   un composteur) au lieu des 9-10 décimales stockées en base
+// - type réduit à 1 lettre ('C'onteneur / 'X' autre), décodé côté front (cf. TYPE_MAP JS)
 elseif (isset($_POST['france'])) {
-    $r = carte_redis();
-    // Service direct depuis le cache : on renvoie le JSON tel quel, sans re-sérialiser.
-    if ($r) {
-        try {
-            $cached = $r->get(CACHE_FRANCE_KEY);
-            if ($cached !== false && $cached !== null) {
-                mysqli_close($connexion);
-                echo $cached;
-                exit();
-            }
-        } catch (\Throwable $e) { /* cache indispo → on requête la DB */ }
+    // Bornes optionnelles de la zone visible (bounding-box). Absentes = France entière
+    // (comportement d'origine, mis en cache Redis). Présentes = requête filtrée, non
+    // cachée (une clé par zone exploserait le cache ; l'index lat/lng suffit en direct).
+    $hasBounds = isset($_POST['north'], $_POST['south'], $_POST['east'], $_POST['west']);
+
+    if (!$hasBounds) {
+        $r = carte_redis();
+        // Service direct depuis le cache : on renvoie le JSON tel quel, sans re-sérialiser.
+        if ($r) {
+            try {
+                $cached = $r->get(CACHE_FRANCE_KEY);
+                if ($cached !== false && $cached !== null) {
+                    mysqli_close($connexion);
+                    echo $cached;
+                    exit();
+                }
+            } catch (\Throwable $e) { /* cache indispo → on requête la DB */ }
+        }
     }
 
-    // Payload allégé pour la liste France (~5800 points, appelée à chaque chargement carte) :
-    // - nombres (pas de strings) : évite 2 octets de guillemets par valeur
-    // - coordonnées arrondies à 5 décimales (~1 m de précision, largement suffisant pour situer
-    //   un composteur) au lieu des 9-10 décimales stockées en base
-    // - type réduit à 1 lettre ('C'onteneur / 'X' autre), décodé côté front (cf. TYPE_MAP JS)
-    $result = mysqli_query($connexion, "SELECT id, longitude, latitude, type FROM composts");
-    $liste  = [];
+    if ($hasBounds) {
+        $north = (float)$_POST['north']; $south = (float)$_POST['south'];
+        $east  = (float)$_POST['east'];  $west  = (float)$_POST['west'];
+        $stmt = mysqli_prepare($connexion,
+            'SELECT id, longitude, latitude, type FROM composts
+             WHERE latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?
+             LIMIT 3000');
+        $stmt->bind_param('dddd', $south, $north, $west, $east);
+        $stmt->execute();
+        $result = $stmt->get_result();
+    } else {
+        $result = mysqli_query($connexion, "SELECT id, longitude, latitude, type FROM composts");
+    }
+
+    $liste = [];
     while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
         $liste[] = [
             "id"  => (int)$row["id"],
@@ -171,7 +191,9 @@ elseif (isset($_POST['france'])) {
         ];
     }
     $json = json_encode($liste, JSON_UNESCAPED_UNICODE);
-    if ($r) { try { $r->setex(CACHE_FRANCE_KEY, CACHE_FRANCE_TTL, $json); } catch (\Throwable $e) {} }
+    if (!$hasBounds && ($r = carte_redis())) {
+        try { $r->setex(CACHE_FRANCE_KEY, CACHE_FRANCE_TTL, $json); } catch (\Throwable $e) {}
+    }
     mysqli_close($connexion);
     echo $json;
     exit();

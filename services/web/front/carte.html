@@ -492,52 +492,73 @@
         let current_compost_id = null;
         let current_lat = null;
         let current_lon = null;
+        // Un seul marqueur par compost_id, quelle que soit la zone qui l'a chargé
+        // (dédoublonnage : une zone revisitée ne recrée pas ses marqueurs existants).
         const markerMap = new Map();
-        let composteursLayer = null;
-        let conteneursLayer = null;
+        let composteursLayer = L.markerClusterGroup({ maxClusterRadius: 50 });
+        let conteneursLayer  = L.markerClusterGroup({ maxClusterRadius: 50 });
+        composteursLayer.addTo(map);
+        conteneursLayer.addTo(map);
+        L.control.layers({}, { "Conteneur": conteneursLayer, "Composteurs": composteursLayer }, { collapsed: false }).addTo(map);
 
-        nb_compost.textContent = "Recherche des compost en France...";
-
-        fetch("/api/carte/sites.php", {
-            method: "POST",
-            body: new URLSearchParams({france: "france"})
-        })
-        .then((response) => response.text())
-        .then((data) => {
-            try {
-                let donnees = JSON.parse(data);
-                if (Array.isArray(donnees)) {
-                    let i = 0;
-                    composteursLayer = L.markerClusterGroup({ maxClusterRadius: 50 });
-                    conteneursLayer = L.markerClusterGroup({ maxClusterRadius: 50 });
+        // Charge les composts d'une zone (bounds Leaflet) et ajoute les nouveaux marqueurs.
+        // bounds === null → France entière (zoom initial large, servi depuis le cache Redis).
+        function chargerZone(bounds) {
+            const body = { france: "france" };
+            if (bounds) {
+                body.north = bounds.getNorth(); body.south = bounds.getSouth();
+                body.east  = bounds.getEast();  body.west  = bounds.getWest();
+            }
+            return fetch("/api/carte/sites.php", { method: "POST", body: new URLSearchParams(body) })
+                .then((response) => response.text())
+                .then((data) => {
+                    let donnees = JSON.parse(data);
+                    if (!Array.isArray(donnees)) return 0;
+                    let ajoutes = 0;
                     donnees.forEach((compost) => {
                         let compost_id = compost.id;
+                        if (markerMap.has(compost_id)) return; // déjà affiché (zone déjà visitée)
                         let lon = compost.lon;
                         let lat = compost.lat;
                         // Payload allégé : "t" = 'C'onteneur / 'X' autre (cf. sites.php).
                         let type = compost.t === 'C' ? "Conteneur" : "Compost";
+                        let marker;
                         if (type === "Conteneur") {
                             var grayIcon = L.icon({ iconUrl: '/assets/img/marker-bleu.png', iconSize: [20, 38], iconAnchor: [10, 38], popupAnchor: [0, -38] });
                             marker = L.marker([lat, lon], {icon: grayIcon});
-                            marker.options.id = i;
                             conteneursLayer.addLayer(marker);
                         } else {
                             var greenIcon = L.icon({ iconUrl: '/assets/img/icon_vert.png', iconSize: [25, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] });
                             marker = L.marker([lat, lon], {icon: greenIcon});
-                            marker.options.id = i;
                             composteursLayer.addLayer(marker);
                         }
+                        marker.options.id = compost_id;
                         markerMap.set(compost_id, marker);
-                        i += 1;
+                        ajoutes++;
                         L.DomEvent.on(marker, 'click', function () { info_compost(compost_id, lat, lon) });
                     });
-                    composteursLayer.addTo(map);
-                    conteneursLayer.addTo(map);
-                    var overlays = { "Conteneur": conteneursLayer, "Composteurs": composteursLayer };
-                    L.control.layers({}, overlays, {collapsed: false}).addTo(map);
-                    nb_compost.textContent = i + " bacs à biodéchets et composts trouvés en France";
-                }
-            } catch(e) { console.error("Erreur JSON:", e); }
+                    return ajoutes;
+                });
+        }
+
+        nb_compost.textContent = "Recherche des compost en France...";
+        chargerZone(null)
+            .then((n) => { nb_compost.textContent = markerMap.size + " bacs à biodéchets et composts trouvés en France"; })
+            .catch((e) => console.error("Erreur JSON:", e));
+
+        // Recharge la zone visible après chaque déplacement/zoom (bounding-box).
+        // Debounce 400ms : évite une rafale de requêtes pendant un zoom/pan continu.
+        // Ne recharge que si la vue est assez proche (zoom ≥ 10) : dézoomé sur la
+        // France entière, on a déjà tout via le chargement initial (cache Redis).
+        let zoneReloadTimer = null;
+        map.on('moveend', function () {
+            if (map.getZoom() < 10) return;
+            clearTimeout(zoneReloadTimer);
+            zoneReloadTimer = setTimeout(function () {
+                chargerZone(map.getBounds())
+                    .then((n) => { nb_compost.textContent = markerMap.size + " bacs à biodéchets et composts trouvés en France"; })
+                    .catch((e) => console.error("Erreur JSON:", e));
+            }, 400);
         });
 
         let modifierCompostHandler = null;
