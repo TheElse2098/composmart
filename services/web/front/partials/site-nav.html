@@ -1,12 +1,27 @@
 <!-- ============================================================================
      site-nav.html — bandeau (nav) + sidebar (drawer) + overlay, partagés.
      Injecté dans chaque page par /assets/js/site-nav.js (fetch au chargement).
-     Le burger du bandeau ouvre la sidebar ; l'overlay/la croix la ferment.
+
+     DEUX MODES (bascule CSS selon la largeur, cf. desktop.css / dark.css) :
+     - MOBILE (< 900px) : logo + burger → ouvre la sidebar (drawer).
+     - DESKTOP (≥ 900px) : liens de navigation affichés en ligne dans le bandeau,
+       le burger est masqué. La sidebar reste dispo mais inutile.
+
      Le lien actif est marqué automatiquement par le JS selon l'URL courante.
      Modifier le menu ICI le répercute sur toutes les pages.
      ============================================================================ -->
 <nav>
   <a href="/" class="nav-logo">Compos<span>mart</span></a>
+
+  <!-- Liens horizontaux : visibles sur desktop, masqués sur mobile -->
+  <ul class="nav-links">
+    <li><a href="/carte.html" data-match="/carte,/carte.html">Carte</a></li>
+    <li><a href="/cours.html" data-match="/cours,/cours.html,/cours-detail.html">Cours</a></li>
+    <li><a href="/jeux" data-match="/jeux,/jeux.html">Jeux</a></li>
+    <li><a href="/materiel.html" data-match="/materiel,/materiel.html">Matériel</a></li>
+    <li><a href="/classement" data-match="/classement,/classement.html">Classement</a></li>
+  </ul>
+
   <div class="nav-right">
     <a href="/compte" class="nav-profil" aria-label="Mon compte">&#128100;</a>
     <button id="themeToggle" aria-label="Thème">🌙</button>

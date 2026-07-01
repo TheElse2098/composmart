@@ -20,7 +20,7 @@
       mount.innerHTML = html;
       wire();
     })
-    .catch(function (e) { console.error('[site-nav] injection échouée :', e); });
+    .catch(function () { /* échec silencieux : la page reste utilisable sans nav injectée */ });
 
   function wire() {
     var burger  = document.getElementById('burgerBtn');
@@ -42,9 +42,10 @@
     // Échap ferme le menu
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
 
-    // Marque le lien actif d'après l'URL courante (data-match = liste de chemins)
+    // Marque le lien actif d'après l'URL courante (data-match = liste de chemins).
+    // Cible à la fois la barre desktop (.nav-links) et la sidebar mobile (.drawer-menu).
     var path = window.location.pathname.replace(/\/+$/, '') || '/';
-    document.querySelectorAll('.drawer-menu a[data-match]').forEach(function (a) {
+    document.querySelectorAll('#site-nav a[data-match]').forEach(function (a) {
       var matches = a.getAttribute('data-match').split(',');
       for (var i = 0; i < matches.length; i++) {
         var m = matches[i].trim().replace(/\/+$/, '') || '/';
