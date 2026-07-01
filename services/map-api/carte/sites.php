@@ -155,10 +155,20 @@ elseif (isset($_POST['france'])) {
         } catch (\Throwable $e) { /* cache indispo → on requête la DB */ }
     }
 
+    // Payload allégé pour la liste France (~5800 points, appelée à chaque chargement carte) :
+    // - nombres (pas de strings) : évite 2 octets de guillemets par valeur
+    // - coordonnées arrondies à 5 décimales (~1 m de précision, largement suffisant pour situer
+    //   un composteur) au lieu des 9-10 décimales stockées en base
+    // - type réduit à 1 lettre ('C'onteneur / 'X' autre), décodé côté front (cf. TYPE_MAP JS)
     $result = mysqli_query($connexion, "SELECT id, longitude, latitude, type FROM composts");
     $liste  = [];
     while ($row = $result->fetch_array(MYSQLI_ASSOC)) {
-        $liste[] = ["id" => $row["id"], "lon" => $row["longitude"], "lat" => $row["latitude"], "type" => $row["type"]];
+        $liste[] = [
+            "id"  => (int)$row["id"],
+            "lon" => round((float)$row["longitude"], 5),
+            "lat" => round((float)$row["latitude"], 5),
+            "t"   => $row["type"] === 'Conteneur' ? 'C' : 'X',
+        ];
     }
     $json = json_encode($liste, JSON_UNESCAPED_UNICODE);
     if ($r) { try { $r->setex(CACHE_FRANCE_KEY, CACHE_FRANCE_TTL, $json); } catch (\Throwable $e) {} }
