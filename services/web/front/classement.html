@@ -83,41 +83,8 @@
 </head>
 <body>
 
-  <nav>
-    <a href="index.html" class="nav-logo">Compos<span>mart</span></a>
-    <div class="nav-right">
-      <a href="compte" class="nav-profil">&#128100;</a>
-      <button id="themeToggle" aria-label="Thème">🌙</button>
-      <button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
-    </div>
-  </nav>
-  <div class="overlay" id="overlay"></div>
-  <div class="drawer" id="drawer">
-    <div class="drawer-header">
-      <div class="drawer-logo">Compos<span>mart</span></div>
-      <button class="drawer-close" id="closeBtn">&#x2715;</button>
-    </div>
-    <ul class="drawer-menu">
-      <li><a href="index.html"><span class="menu-icon">🏠</span> Accueil</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="compte"><span class="menu-icon">👤</span> Mon compte</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="classement" class="active"><span class="menu-icon">🏆</span> Classement</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="carte.html"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="cours.html"><span class="menu-icon">📚</span> Les cours</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="jeux"><span class="menu-icon">🎮</span> Jeux</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="materiel.html"><span class="menu-icon">🧰</span> Le matériel</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="contact.html"><span class="menu-icon">✉️</span> Nous contacter</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="achat.html"><span class="menu-icon">🛒</span> Achat</a></li>
-      <div class="drawer-divider"></div>
-    </ul>
-  </div>
+    <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
+  <div id="site-nav"></div>
 
   <div class="hero">
     <h1>🏆 Classement</h1>
@@ -129,16 +96,6 @@
   </div>
 
   <script>
-    const burger = document.getElementById('burgerBtn');
-    const drawer = document.getElementById('drawer');
-    const overlay = document.getElementById('overlay');
-    const closeBtn = document.getElementById('closeBtn');
-    function openMenu() { drawer.classList.add('open'); overlay.classList.add('open'); burger.classList.add('open'); document.body.style.overflow = 'hidden'; }
-    function closeMenu() { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); document.body.style.overflow = ''; }
-    burger.addEventListener('click', openMenu);
-    closeBtn.addEventListener('click', closeMenu);
-    overlay.addEventListener('click', closeMenu);
-
     function esc(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
 
     function ordinal(n) { return n === 1 ? '1er' : n + 'e'; }

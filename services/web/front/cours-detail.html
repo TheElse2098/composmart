@@ -200,39 +200,8 @@
 </head>
 <body>
 
-  <nav>
-    <a href="/cours" class="nav-back">← Retour</a>
-    <a href="/" class="nav-logo">Compos<span>mart</span></a>
-    <div style="display:flex;align-items:center;gap:10px">
-      <div class="nav-xp" id="navXp">⭐ …</div>
-      <a href="/compte" class="nav-profil">&#128100;</a>
-      <button id="themeToggle" aria-label="Thème">🌙</button>
-      <button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
-    </div>
-  </nav>
-
-  <div class="overlay" id="overlay"></div>
-  <div class="drawer" id="drawer">
-    <div class="drawer-header">
-      <div class="drawer-logo">Compos<span>mart</span></div>
-      <button class="drawer-close" id="closeBtn">&#x2715;</button>
-    </div>
-    <ul class="drawer-menu">
-      <li><a href="/"><span class="menu-icon">🏠</span> Accueil</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="/compte"><span class="menu-icon">👤</span> Mon compte</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="/carte"><span class="menu-icon">🗺️</span> Carte interactive</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="/cours" class="active"><span class="menu-icon">📚</span> Les cours</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="/jeux"><span class="menu-icon">🎮</span> Jeux</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="/materiel"><span class="menu-icon">🧰</span> Le matériel</a></li>
-      <div class="drawer-divider"></div>
-      <li><a href="/achat"><span class="menu-icon">🛒</span> Achat</a></li>
-    </ul>
-  </div>
+    <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
+  <div id="site-nav"></div>
 
   <div class="course-header" id="courseHeader" style="display:none">
     <div class="course-hero">
@@ -819,15 +788,6 @@
     }
 
     /* ── Drawer ── */
-    var burger = document.getElementById('burgerBtn');
-    var drawer = document.getElementById('drawer');
-    var overlay = document.getElementById('overlay');
-    var closeBtn = document.getElementById('closeBtn');
-    function openMenu() { drawer.classList.add('open'); overlay.classList.add('open'); burger.classList.add('open'); document.body.style.overflow='hidden'; }
-    function closeMenu() { drawer.classList.remove('open'); overlay.classList.remove('open'); burger.classList.remove('open'); document.body.style.overflow=''; }
-    burger.addEventListener('click', openMenu);
-    closeBtn.addEventListener('click', closeMenu);
-    overlay.addEventListener('click', closeMenu);
   </script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/admin-badge.js?v=2"></script>
