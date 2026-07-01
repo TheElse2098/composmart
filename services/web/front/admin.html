@@ -71,6 +71,9 @@
     .contact-pagination button:disabled { opacity: 0.4; cursor: default; }
     .contact-pagination button:not(:disabled):hover { background: #eef4ec; }
     .contact-page-info { font-size: 0.8rem; color: #4a7a5a; font-weight: 700; }
+    .sig-del { background: #fdecea; color: #c0392b; border: 1.5px solid #f5c6c0; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+    .sig-del:hover { background: #f8d7d2; }
+    html.dark .sig-del { background: #3d1a1a; border-color: #5a2020; color: #ef9a9a; }
     html.dark .contact-filter { background: #16211a; border-color: #2d4030; color: #7ab88e; }
     html.dark .contact-filter.active { background: #1e6e3e; color: #fff; }
     html.dark .contact-pagination button { background: #16211a; border-color: #2d4030; color: #7ab88e; }
@@ -628,10 +631,13 @@
           + '<div class="signal-item-actions">'
           + (m.statut !== 'lu' && m.statut !== 'traite' ? '<button type="button" class="sig-voir" data-a="lu">👁️ Marquer lu</button>' : '')
           + (m.statut !== 'traite' ? '<button type="button" class="sig-ok" data-a="traite">✓ Traité</button>' : '')
+          + (m.statut === 'traite' ? '<button type="button" class="sig-del" data-del="1">🗑️ Supprimer</button>' : '')
           + '</div>';
         item.querySelectorAll('button[data-a]').forEach(b => {
           b.addEventListener('click', () => statutMessage(m.id, b.dataset.a));
         });
+        const delBtn = item.querySelector('button[data-del]');
+        if (delBtn) delBtn.addEventListener('click', () => supprimerMessage(m.id));
         box.appendChild(item);
       });
 
@@ -660,6 +666,17 @@
       })
       .then(r => r.json())
       .then(d => { if (d.ok) chargerMessages(); })
+      .catch(() => {});
+    }
+
+    function supprimerMessage(id) {
+      if (!confirm('Supprimer définitivement ce message ? Cette action est irréversible.')) return;
+      fetch('/api/admin/contact.php', {
+        method: 'POST',
+        body: new URLSearchParams({ id: id, action: 'supprimer' })
+      })
+      .then(r => r.json())
+      .then(d => { if (d.ok) chargerMessages(); else alert(d.error || 'Suppression impossible.'); })
       .catch(() => {});
     }
 

@@ -38,11 +38,28 @@ if (!$is_admin) {
     exit;
 }
 
-// ── Changer le statut d'un message ─────────────────────────────────────────
+// ── Actions POST : changer le statut ou supprimer ──────────────────────────
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $id     = (int)($_POST['id'] ?? 0);
+    $action = $_POST['action'] ?? 'statut';
+    if (!$id) { echo json_encode(['error' => 'Données invalides']); exit; }
+
+    // Suppression : réservée aux messages déjà traités (garde-fou anti-erreur).
+    if ($action === 'supprimer') {
+        $stmt = mysqli_prepare($c, "DELETE FROM contact_messages WHERE id = ? AND statut = 'traite'");
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        if (mysqli_stmt_affected_rows($stmt) > 0) {
+            echo json_encode(['ok' => true]);
+        } else {
+            echo json_encode(['error' => 'Seuls les messages traités peuvent être supprimés.']);
+        }
+        exit;
+    }
+
+    // Changement de statut (lu / traité)
     $statut = $_POST['statut'] ?? '';
-    if (!$id || !in_array($statut, ['lu', 'traite'], true)) {
+    if (!in_array($statut, ['lu', 'traite'], true)) {
         echo json_encode(['error' => 'Données invalides']); exit;
     }
     $stmt = mysqli_prepare($c, 'UPDATE contact_messages SET statut = ? WHERE id = ?');
