@@ -1,23 +1,31 @@
-/* Toggle thème clair/sombre. Utilise la délégation d'événement pour fonctionner
-   même quand le bouton #themeToggle est injecté après le chargement (nav partagé). */
+/* Toggle thème clair/sombre. Robuste au nav injecté après le chargement :
+   - délégation d'événement au niveau document (le bouton peut apparaître à tout moment)
+   - + attache directe quand initThemeToggle() est appelé après injection (ceinture/bretelles) */
 (function () {
     function sync() {
         var btn = document.getElementById('themeToggle');
         if (btn) btn.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙';
     }
 
-    // Délégation : on écoute au niveau du document, donc le bouton peut apparaître à tout moment.
-    document.addEventListener('click', function (e) {
-        var t = e.target;
-        if (t && (t.id === 'themeToggle' || (t.closest && t.closest('#themeToggle')))) {
-            var dark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', dark ? 'dark' : 'light');
-            sync();
-        }
-    });
+    function toggle() {
+        var dark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', dark ? 'dark' : 'light');
+        sync();
+    }
 
-    // Met à jour l'icône dès que possible, et après injection du nav.
-    document.addEventListener('DOMContentLoaded', sync);
-    window.initThemeToggle = sync;   // appelé par site-nav.js après injection
-    sync();
+    // Attache directe sur le bouton, une seule fois (dataset garde-fou anti-doublon).
+    // Appelée maintenant ET par site-nav.js après injection du nav → couvre les deux cas
+    // (bouton déjà en dur, ou bouton injecté plus tard).
+    function bind() {
+        var btn = document.getElementById('themeToggle');
+        if (btn && !btn.dataset.themeBound) {
+            btn.dataset.themeBound = '1';
+            btn.addEventListener('click', function (e) { e.preventDefault(); toggle(); });
+        }
+        sync();
+    }
+
+    document.addEventListener('DOMContentLoaded', bind);
+    window.initThemeToggle = bind;   // appelé par site-nav.js après injection
+    bind();
 })();

@@ -35,15 +35,20 @@
 
   var isAdminCached = false;
 
+  // Tente d'injecter le badge si (a) l'utilisateur est admin ET (b) le nav est présent.
+  // Insensible à l'ordre : appelé au retour du fetch ET après l'injection du nav.
+  function tryInject() {
+    if (isAdminCached && document.querySelector('.nav-right')) injectBadge();
+  }
+
   // Pas de cache serveur — appel direct pour toujours avoir l'état réel
   fetch('/api/auth/me.php')
     .then(function (r) { return r.json(); })
     .then(function (d) {
-      if (d && d.logged_in && d.isAdmin) { isAdminCached = true; injectBadge(); }
+      if (d && d.logged_in && d.isAdmin) { isAdminCached = true; tryInject(); }
     })
     .catch(function () {});
 
-  // Le nav peut être injecté après ce fetch (nav partagé) : site-nav.js rappelle
-  // cette fonction une fois le bandeau en place, pour (ré)insérer le badge si admin.
-  window.refreshAdminBadge = function () { if (isAdminCached) injectBadge(); };
+  // Rappelé par site-nav.js une fois le bandeau injecté.
+  window.refreshAdminBadge = tryInject;
 })();
