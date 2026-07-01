@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -6,25 +6,25 @@
   <link rel="stylesheet" href="/assets/css/dark.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <title>CompoSmart</title>
+  <title>CompoSmart — Composter n'a jamais été aussi simple</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    html { scroll-behavior: smooth; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; color: #1a3a25; overflow-x: hidden; }
 
-    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; position: relative; z-index: 100; }
+    /* ── NAV ── */
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; position: sticky; top: 0; z-index: 100; }
     .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
     .nav-logo span { color: #a8e6bf; }
     .nav-right { display: flex; align-items: center; gap: 12px; }
     .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; transition: color 0.15s; }
     .nav-profil:hover { color: #fff; }
-
     .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
     .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
     .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
     .burger.open span:nth-child(2) { opacity: 0; }
     .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
-
     .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
     .drawer.open { right: 0; }
     .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
@@ -36,40 +36,88 @@
     .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
     .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
     .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
-    .drawer-footer { padding: 16px 24px; border-top: 1px solid #e5ede8; }
-    .drawer-footer a { display: flex; align-items: center; gap: 14px; font-size: 0.95rem; font-weight: 700; color: #1e6e3e; text-decoration: none; }
-
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .overlay.open { opacity: 1; pointer-events: all; }
 
-    .hero { text-align: center; padding: 36px 20px 28px; }
-    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.85rem; font-weight: 800; padding: 6px 16px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
-    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.7rem, 6vw, 2.8rem); font-weight: 900; color: #1a3a25; line-height: 1.15; }
-    h1 span { color: #1e6e3e; }
-    .hero-sub { font-size: 1rem; color: #4a7a5a; margin-top: 8px; font-weight: 600; }
+    /* ── HERO ── */
+    .hero { position: relative; text-align: center; padding: 72px 20px 88px; background: linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2d9959 100%); color: #fff; overflow: hidden; }
+    .hero::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 60px; background: #eef4ec; clip-path: ellipse(75% 100% at 50% 100%); }
+    .hero-inner { position: relative; z-index: 2; max-width: 780px; margin: 0 auto; }
+    .hero-badge { display: inline-block; background: rgba(255,255,255,0.15); color: #d8f5e2; font-size: 0.82rem; font-weight: 800; padding: 6px 16px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 18px; backdrop-filter: blur(4px); }
+    .hero h1 { font-family: 'Baloo 2', cursive; font-size: clamp(2rem, 6vw, 3.4rem); font-weight: 900; line-height: 1.12; }
+    .hero h1 .accent { color: #a8e6bf; }
+    .hero-sub { font-size: clamp(1rem, 2.5vw, 1.2rem); color: rgba(255,255,255,0.9); margin: 16px auto 0; max-width: 560px; font-weight: 600; line-height: 1.5; }
+    .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 50px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1rem; text-decoration: none; cursor: pointer; border: none; transition: transform 0.15s, box-shadow 0.15s; }
+    .btn-primary { background: #fff; color: #1e6e3e; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.25); }
+    .btn-ghost { background: rgba(255,255,255,0.14); color: #fff; border: 1.5px solid rgba(255,255,255,0.45); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.24); transform: translateY(-3px); }
 
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding: 8px 20px 50px; width: 100%; max-width: 700px; }
+    /* ── SECTIONS ── */
+    .section { max-width: 1120px; margin: 0 auto; padding: 56px 20px; }
+    .section-tag { text-align: center; color: #1e6e3e; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+    .section-title { text-align: center; font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 900; color: #1a3a25; margin-bottom: 8px; }
+    .section-lead { text-align: center; color: #4a7a5a; font-weight: 600; max-width: 620px; margin: 0 auto 36px; line-height: 1.55; }
 
-    .card { border-radius: 24px; padding: 22px 14px 26px; display: flex; flex-direction: column; align-items: center; cursor: pointer; text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease; position: relative; overflow: hidden; }
-    .card::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.2s; background: rgba(255,255,255,0.12); }
-    .card:hover::before { opacity: 1; }
-    .card:hover { transform: translateY(-5px) scale(1.02); }
-    .card:active { transform: scale(0.97); }
+    /* Chiffres clés */
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 900px; margin: -56px auto 0; padding: 0 20px; position: relative; z-index: 5; }
+    .stat { background: #fff; border-radius: 20px; padding: 22px 16px; text-align: center; box-shadow: 0 6px 22px rgba(30,110,62,0.12); }
+    .stat-num { font-family: 'Baloo 2', cursive; font-size: clamp(1.7rem, 5vw, 2.6rem); font-weight: 900; color: #1e6e3e; line-height: 1; }
+    .stat-label { font-size: 0.82rem; color: #4a7a5a; font-weight: 700; margin-top: 6px; }
 
-    .card-1 { background: linear-gradient(145deg, #1e6e3e, #2d9959); box-shadow: 0 6px 20px rgba(30,110,62,0.35); }
-    .card-2 { background: linear-gradient(145deg, #2d6a4f, #52b788); box-shadow: 0 6px 20px rgba(45,106,79,0.35); }
-    .card-3 { background: linear-gradient(145deg, #386641, #6a994e); box-shadow: 0 6px 20px rgba(56,102,65,0.35); }
-    .card-4 { background: linear-gradient(145deg, #588157, #a7c957); box-shadow: 0 6px 20px rgba(88,129,87,0.35); }
-    .card-5 { background: linear-gradient(145deg, #5a3d8a, #8e6cc9); box-shadow: 0 6px 20px rgba(90,61,138,0.35); }
-    .card-6 { background: linear-gradient(145deg, #b87900, #e0a800); box-shadow: 0 6px 20px rgba(184,121,0,0.35); }
+    /* Fonctionnalités */
+    .features { display: grid; grid-template-columns: 1fr; gap: 18px; }
+    .feature { background: #fff; border-radius: 22px; padding: 26px 24px; display: flex; gap: 18px; align-items: flex-start; box-shadow: 0 4px 16px rgba(30,110,62,0.08); text-decoration: none; color: inherit; transition: transform 0.18s, box-shadow 0.18s; border: 1.5px solid transparent; }
+    .feature:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(30,110,62,0.16); border-color: #cfe6d6; }
+    .feature-emoji { font-size: 2.6rem; line-height: 1; flex-shrink: 0; }
+    .feature-body h3 { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #1a3a25; margin-bottom: 5px; }
+    .feature-body p { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; line-height: 1.5; }
+    .feature-arrow { margin-left: auto; align-self: center; color: #1e6e3e; font-size: 1.3rem; font-weight: 900; opacity: 0; transform: translateX(-6px); transition: all 0.18s; }
+    .feature:hover .feature-arrow { opacity: 1; transform: translateX(0); }
 
-    .card-emoji { font-size: clamp(54px, 12vw, 80px); line-height: 1; margin-bottom: 14px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); }
-    .card-title { font-family: 'Baloo 2', cursive; font-size: clamp(0.95rem, 2.5vw, 1.15rem); font-weight: 900; color: #fff; text-align: center; line-height: 1.25; }
-    .card-sub { font-size: 0.75rem; color: rgba(255,255,255,0.75); margin-top: 5px; text-align: center; font-weight: 600; }
+    /* Pourquoi composter */
+    .why { background: #fff; }
+    .why-grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1000px; margin: 0 auto; }
+    .why-item { text-align: center; padding: 8px; }
+    .why-emoji { font-size: 2.4rem; }
+    .why-item h4 { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #1a3a25; margin: 8px 0 4px; }
+    .why-item p { font-size: 0.86rem; color: #4a7a5a; font-weight: 600; line-height: 1.5; }
 
-    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+    /* CTA final */
+    .cta-final { text-align: center; background: linear-gradient(160deg, #1e6e3e, #2d9959); color: #fff; border-radius: 28px; max-width: 1000px; margin: 0 auto 56px; padding: 48px 24px; }
+    .cta-final h2 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 900; }
+    .cta-final p { color: rgba(255,255,255,0.9); font-weight: 600; margin: 12px auto 26px; max-width: 500px; line-height: 1.5; }
 
-    @media (min-width: 640px) { .grid { gap: 22px; padding: 10px 40px 60px; } .card { padding: 28px 20px 32px; } }
+    /* Footer */
+    footer { background: #123d20; color: rgba(255,255,255,0.8); padding: 40px 20px 60px; }
+    .footer-inner { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 24px; }
+    .footer-logo { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #fff; font-style: italic; letter-spacing: 1px; }
+    .footer-logo span { color: #a8e6bf; }
+    .footer-col h5 { color: #fff; font-size: 0.95rem; font-weight: 800; margin-bottom: 10px; }
+    .footer-col a { display: block; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.9rem; padding: 4px 0; }
+    .footer-col a:hover { color: #a8e6bf; }
+    .footer-bottom { text-align: center; color: rgba(255,255,255,0.5); font-size: 0.82rem; margin-top: 28px; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); z-index: 90; }
+
+    /* ── DESKTOP ── */
+    @media (min-width: 640px) {
+      .stats { grid-template-columns: repeat(4, 1fr); }
+      .why-grid { grid-template-columns: repeat(3, 1fr); }
+      .footer-inner { grid-template-columns: 2fr 1fr 1fr 1fr; }
+    }
+    @media (min-width: 900px) {
+      .features { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Dark mode */
+    html.dark body { background: #0f1811; color: #e8f5ee; }
+    html.dark .section-title, html.dark .feature-body h3, html.dark .why-item h4 { color: #e8f5ee; }
+    html.dark .stat, html.dark .feature, html.dark .why { background: #16211a; }
+    html.dark .feature { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    html.dark .stat-label, html.dark .feature-body p, html.dark .why-item p, html.dark .section-lead { color: #7ab88e; }
+    html.dark .btn-primary { background: #a8e6bf; color: #123d20; }
   </style>
   <link rel="stylesheet" href="/assets/css/desktop.css">
 </head>
@@ -81,13 +129,11 @@
   </nav>
 
   <div class="overlay" id="overlay"></div>
-
   <div class="drawer" id="drawer">
     <div class="drawer-header">
       <div class="drawer-logo">Compos<span>mart</span></div>
       <button class="drawer-close" id="closeBtn">&#x2715;</button>
     </div>
-        
     <ul class="drawer-menu">
       <li><a href="index.html" class="active"><span class="menu-icon">🏠</span> Accueil</a></li>
       <div class="drawer-divider"></div>
@@ -110,44 +156,107 @@
     </ul>
   </div>
 
-  <div class="hero">
-    <div class="hero-badge">🌱 Bienvenue !</div>
-    <h1>Où veux-tu<br><span>aller aujourd'hui ?</span></h1>
-    <p class="hero-sub">Choisis ton aventure compost 🌍</p>
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">🌱 Sensibilisation au compostage</div>
+      <h1>Composter n'a jamais<br>été aussi <span class="accent">simple</span></h1>
+      <p class="hero-sub">Trouve un composteur près de chez toi, apprends les bons gestes et transforme tes déchets en ressource. Le tout en t'amusant !</p>
+      <div class="hero-cta">
+        <a href="carte.html" class="btn btn-primary">🗺️ Explorer la carte</a>
+        <a href="#features" class="btn btn-ghost">Découvrir ↓</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- CHIFFRES -->
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="statComposts">5 800+</div><div class="stat-label">Composteurs recensés</div></div>
+    <div class="stat"><div class="stat-num">8</div><div class="stat-label">Cours interactifs</div></div>
+    <div class="stat"><div class="stat-num">2</div><div class="stat-label">Mini-jeux</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Gratuit &amp; open data</div></div>
   </div>
 
-  <div class="grid">
-    <a href="classement" class="card card-1">
-      <div class="card-emoji">🏆</div>
-      <div class="card-title">Classement</div>
-      <div class="card-sub">Qui est le meilleur ?</div>
-    </a>
-    <a href="cours.html" class="card card-2">
-      <div class="card-emoji">📚</div>
-      <div class="card-title">Les cours</div>
-      <div class="card-sub">Apprends & découvre</div>
-    </a>
-    <a href="carte.html" class="card card-3">
-      <div class="card-emoji">🗺️</div>
-      <div class="card-title">Carte interactive</div>
-      <div class="card-sub">Trouve près de toi</div>
-    </a>
-    <a href="materiel.html" class="card card-4">
-      <div class="card-emoji">🧰</div>
-      <div class="card-title">Le matériel</div>
-      <div class="card-sub">Tout ce qu'il faut</div>
-    </a>
-    <a href="jeux" class="card card-5">
-      <div class="card-emoji">🎮</div>
-      <div class="card-title">Jeux</div>
-      <div class="card-sub">Joue & bats des records</div>
-    </a>
-    <a href="compte" class="card card-6">
-      <div class="card-emoji">👤</div>
-      <div class="card-title">Mon compte</div>
-      <div class="card-sub" id="compteSub">Connexion & progression</div>
-    </a>
-  </div>
+  <!-- FONCTIONNALITÉS -->
+  <section class="section" id="features">
+    <div class="section-tag">Tout au même endroit</div>
+    <h2 class="section-title">Que veux-tu faire ?</h2>
+    <p class="section-lead">Composmart réunit tout ce qu'il te faut pour te lancer et progresser dans le compostage.</p>
+    <div class="features">
+      <a href="carte.html" class="feature">
+        <div class="feature-emoji">🗺️</div>
+        <div class="feature-body"><h3>Carte interactive</h3><p>Localise les composteurs et points d'apport partout en France. Ajoute les tiens et signale une erreur.</p></div>
+        <div class="feature-arrow">→</div>
+      </a>
+      <a href="cours.html" class="feature">
+        <div class="feature-emoji">📚</div>
+        <div class="feature-body"><h3>Cours &amp; quiz</h3><p>Apprends les bases du compostage à ton rythme, valide des quiz et gagne de l'XP.</p></div>
+        <div class="feature-arrow">→</div>
+      </a>
+      <a href="jeux" class="feature">
+        <div class="feature-emoji">🎮</div>
+        <div class="feature-body"><h3>Mini-jeux</h3><p>Teste tes connaissances en t'amusant et grimpe dans le classement de la communauté.</p></div>
+        <div class="feature-arrow">→</div>
+      </a>
+      <a href="materiel.html" class="feature">
+        <div class="feature-emoji">🧰</div>
+        <div class="feature-body"><h3>Le matériel</h3><p>Bac, lombricomposteur, point d'apport : découvre l'équipement adapté à ta situation.</p></div>
+        <div class="feature-arrow">→</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- POURQUOI COMPOSTER -->
+  <section class="why">
+    <div class="section">
+      <div class="section-tag">L'impact</div>
+      <h2 class="section-title">Pourquoi composter ?</h2>
+      <p class="section-lead">Un tiers de nos poubelles est compostable. Le composter, c'est agir concrètement.</p>
+      <div class="why-grid">
+        <div class="why-item"><div class="why-emoji">♻️</div><h4>Moins de déchets</h4><p>Réduis d'un tiers le volume de ta poubelle et allège la collecte des ordures.</p></div>
+        <div class="why-item"><div class="why-emoji">🌍</div><h4>Moins de CO₂</h4><p>Évite l'incinération de déchets humides et les émissions de méthane en décharge.</p></div>
+        <div class="why-item"><div class="why-emoji">🌻</div><h4>Un sol vivant</h4><p>Obtiens un compost riche et gratuit pour nourrir tes plantes et ton jardin.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="section">
+    <div class="cta-final">
+      <h2>Prêt à te lancer ?</h2>
+      <p>Crée ton compte gratuit, suis ta progression et rejoins une communauté qui composte malin.</p>
+      <a href="signin" class="btn btn-primary" id="ctaBtn">🌱 Créer mon compte</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-col">
+        <div class="footer-logo">Compos<span>mart</span></div>
+        <p style="margin-top:10px;font-size:0.88rem;line-height:1.5;">Sensibilisation écologique au compostage : carte, cours, jeux et communauté.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Explorer</h5>
+        <a href="carte.html">Carte</a>
+        <a href="cours.html">Cours</a>
+        <a href="jeux">Jeux</a>
+        <a href="materiel.html">Matériel</a>
+      </div>
+      <div class="footer-col">
+        <h5>Communauté</h5>
+        <a href="classement">Classement</a>
+        <a href="compte">Mon compte</a>
+        <a href="contact.html">Nous contacter</a>
+      </div>
+      <div class="footer-col">
+        <h5>Données</h5>
+        <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a>
+        <a href="achat.html">Matériel &amp; achat</a>
+      </div>
+    </div>
+    <div class="footer-bottom">🌍 Composmart — Données ouvertes · Fait avec 💚 pour la planète</div>
+  </footer>
 
   <div class="bottom-leaf"></div>
 
@@ -162,12 +271,18 @@
     closeBtn.addEventListener('click', closeMenu);
     overlay.addEventListener('click', closeMenu);
 
-    // Carte "Mon compte" : affiche le pseudo et le niveau si connecté
-    fetch('/api/auth/me.php')
-      .then(r => r.json())
+    // Chiffre "composteurs" en temps réel (endpoint léger déjà existant)
+    fetch('/api/carte/count.php').then(r => r.json())
+      .then(d => { if (d && typeof d.composts === 'number') document.getElementById('statComposts').textContent = d.composts.toLocaleString('fr-FR') + '+'; })
+      .catch(() => {});
+
+    // Si déjà connecté, le CTA final invite à continuer plutôt qu'à s'inscrire
+    fetch('/api/auth/me.php').then(r => r.json())
       .then(d => {
         if (d && d.logged_in) {
-          document.getElementById('compteSub').textContent = d.username + ' · Niveau ' + d.niveau;
+          const b = document.getElementById('ctaBtn');
+          b.textContent = '📚 Continuer mes cours';
+          b.setAttribute('href', 'cours.html');
         }
       })
       .catch(() => {});
