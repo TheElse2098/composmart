@@ -1,5 +1,8 @@
 RewriteEngine On
 
+# Page d'erreur 404 personnalisée (au lieu de l'erreur Apache brute).
+ErrorDocument 404 /404.html
+
 # /index et /index.html → redirect vers /
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index(\.html)?(\s|\ ) [NC]
 RewriteRule ^ / [R=301,L]
@@ -13,7 +16,9 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^cours/([^./]+)$ cours-detail.html [L]
 
-# /carte → sert carte.html en interne
+# /carte → sert carte.html en interne (seulement si le .html existe,
+# sinon on laisse Apache renvoyer un 404 → ErrorDocument /404.html)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}/$1.html -f
 RewriteRule ^([^.]+)$ $1.html [L]

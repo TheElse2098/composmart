@@ -9,15 +9,18 @@
    ============================================================================ */
 (function () {
   var mount = document.getElementById('site-nav');
-  if (!mount) return;
+  if (!mount) { console.warn('[site-nav] pas de <div id="site-nav"> sur cette page'); return; }
 
   fetch('/partials/site-nav.html')
-    .then(function (r) { return r.text(); })
+    .then(function (r) {
+      if (!r.ok) throw new Error('partial HTTP ' + r.status);
+      return r.text();
+    })
     .then(function (html) {
       mount.innerHTML = html;
       wire();
     })
-    .catch(function () { /* en cas d'échec, la page reste utilisable sans nav injectée */ });
+    .catch(function (e) { console.error('[site-nav] injection échouée :', e); });
 
   function wire() {
     var burger  = document.getElementById('burgerBtn');

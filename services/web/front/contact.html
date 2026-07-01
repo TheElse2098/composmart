@@ -162,6 +162,7 @@
     fetch('/api/auth/me.php').then(r => r.json()).catch(() => ({}))
       .then(me => { (me && me.logged_in) ? renderForm() : renderGuard(); });
   </script>
+  <script src="/assets/js/site-nav.js"></script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/admin-badge.js?v=2"></script>
 </body>
