@@ -11,7 +11,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; color: #1a3a25; overflow-x: hidden; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; color: #1a3a25; overflow-x: hidden; display: flex; flex-direction: column; }
 
     /* ── NAV ── */
     nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; position: sticky; top: 0; z-index: 100; }
@@ -40,7 +40,13 @@
     .overlay.open { opacity: 1; pointer-events: all; }
 
     /* ── HERO ── */
-    .hero { position: relative; text-align: center; padding: 72px 20px 88px; background: linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2d9959 100%); color: #fff; overflow: hidden; }
+    .hero {
+      position: relative; text-align: center; padding: 72px 20px 88px; color: #fff; overflow: hidden;
+      background-color: #1e6e3e;
+      background-image: url('/assets/img/motif-branchage-light.svg'), linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2d9959 100%);
+      background-repeat: repeat, no-repeat;
+      background-size: 220px 220px, cover;
+    }
     .hero::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 60px; background: #eef4ec; clip-path: ellipse(75% 100% at 50% 100%); }
     .hero-inner { position: relative; z-index: 2; max-width: 780px; margin: 0 auto; }
     .hero-badge { display: inline-block; background: rgba(255,255,255,0.15); color: #d8f5e2; font-size: 0.82rem; font-weight: 800; padding: 6px 16px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 18px; backdrop-filter: blur(4px); }
@@ -114,8 +120,13 @@
     /* Dark mode */
     html.dark body { background: #0f1811; color: #e8f5ee; }
     html.dark body { background: #0f1811; color: #e8f5ee; }
-    /* Hero : dégradé assombri + courbe qui rejoint le fond sombre */
-    html.dark .hero { background: linear-gradient(160deg, #0d2f18 0%, #12401f 55%, #1a5c33 100%); }
+    /* Hero : dégradé assombri + courbe qui rejoint le fond sombre + motif teinté vert clair */
+    html.dark .hero {
+      background-color: #0d2f18;
+      background-image: url('/assets/img/motif-branchage-dark.svg'), linear-gradient(160deg, #0d2f18 0%, #12401f 55%, #1a5c33 100%);
+      background-repeat: repeat, no-repeat;
+      background-size: 220px 220px, cover;
+    }
     html.dark .hero::after { background: #0f1811; }
     html.dark .hero-badge { background: rgba(255,255,255,0.10); color: #cdeed9; }
     html.dark .hero-sub { color: rgba(255,255,255,0.82); }
@@ -215,33 +226,8 @@
   </section>
 
   <!-- FOOTER -->
-  <footer>
-    <div class="footer-inner">
-      <div class="footer-col">
-        <div class="footer-logo">Compos<span>mart</span></div>
-        <p style="margin-top:10px;font-size:0.88rem;line-height:1.5;">Sensibilisation écologique au compostage : carte, cours, jeux et communauté.</p>
-      </div>
-      <div class="footer-col">
-        <h5>Explorer</h5>
-        <a href="carte.html">Carte</a>
-        <a href="cours.html">Cours</a>
-        <a href="jeux">Jeux</a>
-        <a href="materiel.html">Matériel</a>
-      </div>
-      <div class="footer-col">
-        <h5>Communauté</h5>
-        <a href="classement">Classement</a>
-        <a href="compte">Mon compte</a>
-        <a href="contact.html">Nous contacter</a>
-      </div>
-      <div class="footer-col">
-        <h5>Données</h5>
-        <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a>
-        <a href="achat.html">Matériel &amp; achat</a>
-      </div>
-    </div>
-    <div class="footer-bottom">🌍 Composmart — Données ouvertes · Fait avec 💚 pour la planète</div>
-  </footer>
+  <!-- Footer partagé (injecté par site-footer.js) -->
+  <div id="site-footer"></div>
 
   <div class="bottom-leaf"></div>
 
@@ -262,6 +248,7 @@
       })
       .catch(() => {});
   </script>
+  <script src="/assets/js/site-footer.js"></script>
   <script src="/assets/js/site-nav.js"></script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/admin-badge.js?v=2"></script>

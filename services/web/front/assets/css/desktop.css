@@ -57,3 +57,25 @@
 @media (min-width: 1400px) {
   .page-content { max-width: 1240px !important; }
 }
+
+/* ── Footer partagé (injecté dans <div id="site-footer">) ──
+   Garanti sur toutes les pages, même celles dont le <style> inline ne
+   contenait pas le CSS footer (repris de l'accueil, cf. partials/site-footer.html).
+   margin-top: auto + body en flex-column (déjà en place sur les pages migrées)
+   = le footer est repoussé en bas de la fenêtre sur les pages courtes, au lieu
+   de laisser un vide sous lui. Sans effet si le contenu dépasse déjà 100vh. */
+#site-footer { width: 100%; margin-top: auto; }
+#site-footer footer { background: #123d20; color: rgba(255,255,255,0.8); padding: 40px 20px 60px; width: 100%; box-sizing: border-box; }
+#site-footer .footer-inner { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 24px; }
+#site-footer .footer-logo { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #fff; font-style: italic; letter-spacing: 1px; }
+#site-footer .footer-logo span { color: #a8e6bf; }
+#site-footer .footer-col h5 { color: #fff; font-size: 0.95rem; font-weight: 800; margin-bottom: 10px; }
+#site-footer .footer-col a { display: block; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.9rem; padding: 4px 0; }
+#site-footer .footer-col a:hover { color: #a8e6bf; }
+#site-footer .footer-bottom { text-align: center; color: rgba(255,255,255,0.5); font-size: 0.82rem; margin-top: 28px; }
+
+html.dark #site-footer footer { background: #0a2413; }
+
+@media (min-width: 900px) {
+  #site-footer .footer-inner { grid-template-columns: 2fr 1fr 1fr 1fr; }
+}

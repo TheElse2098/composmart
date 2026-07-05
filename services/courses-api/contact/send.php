@@ -56,6 +56,17 @@ $stmt = mysqli_prepare($c,
     'INSERT INTO contact_messages (user_id, username, categorie, sujet, message) VALUES (?, ?, ?, ?, ?)');
 $stmt->bind_param('issss', $uid, $uname, $cat, $sujet, $message);
 if ($stmt->execute()) {
+    // Notification mail (best-effort : ne bloque jamais l'enregistrement du message).
+    $CAT_LABELS = ['bug' => 'Bug', 'suggestion' => 'Suggestion', 'question' => 'Question', 'autre' => 'Autre'];
+    $mailSujet = '[' . ($CAT_LABELS[$cat] ?? $cat) . '] ' . $sujet;
+    $mailCorps = "Nouveau message de contact sur Composmart\n\n"
+               . "Catégorie : " . ($CAT_LABELS[$cat] ?? $cat) . "\n"
+               . "Sujet : $sujet\n"
+               . "De : $uname (id=$uid)\n"
+               . "Date : " . date('Y-m-d H:i:s') . "\n\n"
+               . "Message :\n$message\n";
+    send_mail('contact@composmart.fr', $mailSujet, $mailCorps);
+
     echo json_encode(['ok' => true]);
 } else {
     http_response_code(500);

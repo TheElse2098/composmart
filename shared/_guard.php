@@ -55,6 +55,41 @@ function audit_log($conn, $action, $details = '', $extra = []) {
 }
 
 /**
+ * Envoie un email. Échec toujours silencieux (ne doit jamais casser l'action
+ * utilisateur qui déclenche l'envoi — cf. audit_log()).
+ *
+ * Transport :
+ * - Si SMTP_HOST est défini (variables d'env SMTP_HOST/PORT/USER/PASSWORD),
+ *   envoie via ce relais SMTP (authentifié, TLS) — à configurer quand un
+ *   fournisseur (Brevo, Mailgun, etc.) est choisi. NON IMPLÉMENTÉ pour l'instant :
+ *   la fonction retourne false sans rien envoyer tant que ce n'est pas branché,
+ *   pour ne pas donner une fausse impression de succès.
+ * - Sinon, tente mail() (nécessite un MTA local configuré dans le conteneur,
+ *   absent par défaut) — best-effort, peut échouer silencieusement.
+ *
+ * @return bool true si l'envoi a été tenté avec succès (pas de garantie de livraison)
+ */
+function send_mail($to, $subject, $body, $replyTo = null) {
+    $from = getenv('MAIL_FROM') ?: 'no-reply@composmart.fr';
+
+    if (getenv('SMTP_HOST')) {
+        // TODO : brancher un client SMTP (ex. PHPMailer) une fois un fournisseur
+        // choisi. Volontairement non implémenté : mieux vaut échouer visiblement
+        // en dev que de prétendre envoyer un mail qui ne part jamais.
+        return false;
+    }
+
+    $headers = "From: Composmart <$from>\r\nContent-Type: text/plain; charset=UTF-8";
+    if ($replyTo) { $headers .= "\r\nReply-To: " . $replyTo; }
+
+    try {
+        return @mail($to, $subject, $body, $headers);
+    } catch (\Throwable $e) {
+        return false;
+    }
+}
+
+/**
  * Renvoie un message d'erreur si le mot de passe est trop faible, '' sinon.
  * Règle : 8 caractères min, au moins une lettre et un chiffre.
  */

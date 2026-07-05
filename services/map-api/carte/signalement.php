@@ -67,6 +67,25 @@ if ($action === 'creer') {
     if (!isset($_SESSION['signalements_envoyes'])) $_SESSION['signalements_envoyes'] = [];
     $_SESSION['signalements_envoyes'][] = $compost_id;
 
+    // Notification mail (best-effort : ne bloque jamais la création du signalement).
+    $MOTIF_LABELS = [
+        'position'   => 'Mauvaise position',
+        'type_acces' => 'Mauvais type ou accès',
+        'regles'     => 'Règles incorrectes',
+        'inexistant' => "N'existe plus",
+        'autre'      => 'Autre',
+    ];
+    $posRow = mysqli_query($conn, "SELECT latitude, longitude FROM composts WHERE id=$compost_id")->fetch_assoc();
+    $sujet = 'Signalement : ' . ($MOTIF_LABELS[$motif] ?? $motif) . ' — composteur #' . $compost_id;
+    $corps = "Nouveau signalement sur Composmart\n\n"
+           . "Composteur : #$compost_id\n"
+           . ($posRow ? "Position : {$posRow['latitude']}, {$posRow['longitude']}\n" : '')
+           . "Motif : " . ($MOTIF_LABELS[$motif] ?? $motif) . "\n"
+           . "Commentaire : " . ($commentaire !== '' ? $commentaire : '(aucun)') . "\n"
+           . "Signalé par : " . ($reporter ?: 'Anonyme (non connecté)') . "\n"
+           . "Date : " . date('Y-m-d H:i:s') . "\n";
+    send_mail('contact@composmart.fr', $sujet, $corps);
+
     echo json_encode(['ok' => true]);
     exit;
 }
