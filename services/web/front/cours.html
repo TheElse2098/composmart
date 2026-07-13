@@ -69,6 +69,13 @@
     .cours-card .c-locked { position: absolute; top: 8px; right: 8px; font-size: 0.8rem; }
     .c-done { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.9); color: #1e6e3e; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.5px; }
 
+    /* Cadenas recouvrant toute la tuile pour un cours inaccessible */
+    .cours-card-locked .c-emoji, .cours-card-locked .c-title, .cours-card-locked .c-level { filter: blur(1.5px); opacity: 0.55; }
+    .c-locked-overlay {
+      position: absolute; inset: 0; border-radius: 18px; display: flex; align-items: center; justify-content: center;
+      background: rgba(20, 30, 24, 0.45); font-size: 1.8rem; backdrop-filter: blur(1px);
+    }
+
     /* Stats connecté */
     .stats-box { background: #fff; border-radius: 18px; padding: 16px 18px; display: flex; gap: 0; margin-bottom: 10px; box-shadow: 0 2px 12px rgba(30,110,62,0.1); }
     .stats-cell { flex: 1; text-align: center; }
@@ -173,7 +180,7 @@
 
   <div class="bottom-leaf"></div>
 
-  <!-- Auth modal -->
+  <!-- Auth modal (non connecté) -->
   <div class="auth-backdrop" id="authModal" onclick="if(event.target===this)closeAuthModal()">
     <div class="auth-box">
       <div class="auth-box-icon">🔒</div>
@@ -182,6 +189,17 @@
       <a href="/signin" class="auth-btn-primary">Créer un compte gratuitement</a>
       <a href="/login" class="auth-btn-secondary">Se connecter</a>
       <button class="auth-btn-later" onclick="closeAuthModal()">Plus tard</button>
+    </div>
+  </div>
+
+  <!-- Locked modal (connecté, catégorie pas encore débloquée) -->
+  <div class="auth-backdrop" id="lockedModal" onclick="if(event.target===this)closeLockedModal()">
+    <div class="auth-box">
+      <div class="auth-box-icon">🔒</div>
+      <div class="auth-box-title">Cours verrouillé</div>
+      <div class="auth-box-sub" id="lockedModalText">Termine le premier cours de cette catégorie pour débloquer la suite !</div>
+      <a href="/cours" class="auth-btn-primary" id="lockedModalLink">Voir le premier cours</a>
+      <button class="auth-btn-later" onclick="closeLockedModal()">Plus tard</button>
     </div>
   </div>
 
@@ -199,6 +217,15 @@
     function showAuthModal() { document.getElementById('authModal').classList.add('show'); document.body.style.overflow = 'hidden'; }
     function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); document.body.style.overflow = ''; }
 
+    function showLockedModal(catName, catFirstSlug) {
+      document.getElementById('lockedModalText').textContent =
+        'Termine le premier cours de "' + catName + '" pour débloquer la suite de cette catégorie !';
+      document.getElementById('lockedModalLink').setAttribute('href', '/cours/' + catFirstSlug);
+      document.getElementById('lockedModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLockedModal() { document.getElementById('lockedModal').classList.remove('show'); document.body.style.overflow = ''; }
+
     function renderPage(data) {
       var themes = data.themes || data; // compat si ancien format
       var user = data.user || null;
@@ -215,13 +242,27 @@
       } else {
         container.innerHTML = themes.map(function(theme, ti) {
           var palette = PALETTES[ti % PALETTES.length];
+          // Accès à la catégorie : son 1er cours doit être terminé pour débloquer les suivants.
+          var catUnlocked = theme.cours.length > 0 && theme.cours[0].completed;
           var cards = theme.cours.map(function(c, ci) {
             var grad = c.couleur || palette[ci % palette.length];
             var niveau = NIVEAUX[c.niveau] || c.niveau;
             var qs = c.nb_questions > 0 ? ' · ' + c.nb_questions + ' q.' : '';
             var doneBadge = c.completed ? '<div class="c-done">✓ fait</div>' : '';
-            return '<a href="/cours/' + c.slug + '" class="cours-card" data-slug="' + c.slug + '" style="background:' + grad + ';box-shadow:0 4px 14px rgba(0,0,0,0.2)">'
+            // Verrouillage :
+            //  - non connecté : tout sauf le tout premier cours du site
+            //  - connecté     : tout cours qui n'est pas le 1er de sa catégorie ET dont
+            //                   le 1er cours de la catégorie n'est pas encore terminé
+            var isFirstOfCat = ci === 0;
+            var locked = isLoggedIn
+              ? (!isFirstOfCat && !catUnlocked)
+              : (c.slug !== firstSlug);
+            var lockIcon = locked ? '<div class="c-locked-overlay">🔒</div>' : '';
+            var lockedClass = locked ? ' cours-card-locked' : '';
+            var catFirstSlug = theme.cours[0] ? theme.cours[0].slug : '';
+            return '<a href="/cours/' + c.slug + '" class="cours-card' + lockedClass + '" data-slug="' + c.slug + '" data-locked="' + (locked ? '1' : '0') + '" data-cat-first-slug="' + catFirstSlug + '" data-cat-name="' + theme.nom.replace(/"/g, '&quot;') + '" style="background:' + grad + ';box-shadow:0 4px 14px rgba(0,0,0,0.2)">'
               + doneBadge
+              + lockIcon
               + '<div class="c-emoji">' + (c.emoji || '📖') + '</div>'
               + '<div class="c-title">' + c.titre + '</div>'
               + '<div class="c-level">' + niveau + qs + '</div>'
@@ -290,12 +331,14 @@
       });
 
     document.getElementById('cours-container').addEventListener('click', function(e) {
-      if (isLoggedIn) return;
       var card = e.target.closest('.cours-card');
-      if (!card) return;
-      if (card.dataset.slug === firstSlug) return;
+      if (!card || card.dataset.locked !== '1') return;
       e.preventDefault();
-      showAuthModal();
+      if (isLoggedIn) {
+        showLockedModal(card.dataset.catName, card.dataset.catFirstSlug);
+      } else {
+        showAuthModal();
+      }
     });
   </script>
   <script src="/assets/js/site-footer.js"></script>
