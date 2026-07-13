@@ -204,12 +204,33 @@
   </div>
 
   <script>
-    var PALETTES = [
-      ['linear-gradient(135deg,#1e6e3e,#2d9959)','linear-gradient(135deg,#2d6a4f,#40916c)','linear-gradient(135deg,#386641,#6a994e)','linear-gradient(135deg,#588157,#a7c957)'],
-      ['linear-gradient(135deg,#1565c0,#1e88e5)','linear-gradient(135deg,#0277bd,#29b6f6)','linear-gradient(135deg,#4a148c,#7b1fa2)','linear-gradient(135deg,#283593,#3f51b5)','linear-gradient(135deg,#004d40,#00897b)'],
-      ['linear-gradient(135deg,#b71c1c,#e53935)','linear-gradient(135deg,#e65100,#fb8c00)','linear-gradient(135deg,#37474f,#607d8b)','linear-gradient(135deg,#4a148c,#9c27b0)']
-    ];
     var NIVEAUX = { debutant: 'Débutant', intermediaire: 'Intermédiaire', expert: 'Expert' };
+
+    // Couleur des tuiles de cours : dérivée du dégradé du thème (theme.couleur),
+    // assombrie progressivement selon la position du cours dans sa catégorie
+    // (1er cours = couleur d'origine, suivants = de plus en plus sombres).
+    var FALLBACK_GRADIENT = 'linear-gradient(135deg,#1e6e3e,#2d9959)';
+
+    function darkenHex(hex, factor) {
+      // factor 1 = couleur d'origine, < 1 = assombrit (0.7 = -30%, etc.)
+      var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+      if (!m) return hex;
+      var channels = [m[1], m[2], m[3]].map(function (h) {
+        var v = Math.round(parseInt(h, 16) * factor);
+        return Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0');
+      });
+      return '#' + channels.join('');
+    }
+
+    function courseGradient(themeCouleur, ci) {
+      var grad = themeCouleur || FALLBACK_GRADIENT;
+      var m = /linear-gradient\(([^,]+),\s*(#[0-9a-f]{6}),\s*(#[0-9a-f]{6})\)/i.exec(grad);
+      if (!m) return grad;
+      var angle = m[1], c1 = m[2], c2 = m[3];
+      // -32% par cran de profondeur ; ci=0 → 1.0 (couleur d'origine), contraste marqué
+      var factor = Math.pow(0.68, ci);
+      return 'linear-gradient(' + angle + ',' + darkenHex(c1, factor) + ',' + darkenHex(c2, factor) + ')';
+    }
 
     var isLoggedIn = false;
     var firstSlug = null;
@@ -241,11 +262,10 @@
         container.innerHTML = '<div style="text-align:center;padding:40px;color:#7ab88e;">Aucun cours disponible.</div>';
       } else {
         container.innerHTML = themes.map(function(theme, ti) {
-          var palette = PALETTES[ti % PALETTES.length];
           // Accès à la catégorie : son 1er cours doit être terminé pour débloquer les suivants.
           var catUnlocked = theme.cours.length > 0 && theme.cours[0].completed;
           var cards = theme.cours.map(function(c, ci) {
-            var grad = c.couleur || palette[ci % palette.length];
+            var grad = courseGradient(theme.couleur, ci);
             var niveau = NIVEAUX[c.niveau] || c.niveau;
             var qs = c.nb_questions > 0 ? ' · ' + c.nb_questions + ' q.' : '';
             var doneBadge = c.completed ? '<div class="c-done">✓ fait</div>' : '';
