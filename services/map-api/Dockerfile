@@ -15,8 +15,13 @@ RUN apt-get update \
     && docker-php-ext-install mysqli curl \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && a2enmod rewrite \
+    && a2enmod rewrite deflate \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
+
+# La conf deflate par défaut ne compresse pas le JSON : la liste France (~290 Ko)
+# passe à ~60 Ko une fois gzippée.
+RUN echo 'AddOutputFilterByType DEFLATE application/json' > /etc/apache2/conf-available/json-deflate.conf \
+    && a2enconf json-deflate
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

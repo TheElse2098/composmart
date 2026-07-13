@@ -495,8 +495,13 @@
         // Un seul marqueur par compost_id, quelle que soit la zone qui l'a chargé
         // (dédoublonnage : une zone revisitée ne recrée pas ses marqueurs existants).
         const markerMap = new Map();
-        let composteursLayer = L.markerClusterGroup({ maxClusterRadius: 50 });
-        let conteneursLayer  = L.markerClusterGroup({ maxClusterRadius: 50 });
+        // chunkedLoading : étale l'ajout des marqueurs sur plusieurs frames,
+        // la page reste fluide pendant le chargement des ~6000 points.
+        let composteursLayer = L.markerClusterGroup({ maxClusterRadius: 50, chunkedLoading: true });
+        let conteneursLayer  = L.markerClusterGroup({ maxClusterRadius: 50, chunkedLoading: true });
+        // Icônes partagées par tous les marqueurs (2 objets au lieu de 6000).
+        const iconConteneur = L.icon({ iconUrl: '/assets/img/marker-bleu.png', iconSize: [20, 38], iconAnchor: [10, 38], popupAnchor: [0, -38] });
+        const iconCompost   = L.icon({ iconUrl: '/assets/img/icon_vert.png',  iconSize: [25, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] });
         composteursLayer.addTo(map);
         conteneursLayer.addTo(map);
         L.control.layers({}, { "Conteneur": conteneursLayer, "Composteurs": composteursLayer }, { collapsed: false }).addTo(map);
@@ -514,30 +519,31 @@
                 .then((data) => {
                     let donnees = JSON.parse(data);
                     if (!Array.isArray(donnees)) return 0;
-                    let ajoutes = 0;
+                    // Ajout en masse : addLayers() (pluriel) ne recalcule le clustering
+                    // qu'une seule fois, contre un recalcul par marqueur avec addLayer().
+                    const nouveauxConteneurs = [];
+                    const nouveauxComposts = [];
                     donnees.forEach((compost) => {
                         let compost_id = compost.id;
                         if (markerMap.has(compost_id)) return; // déjà affiché (zone déjà visitée)
                         let lon = compost.lon;
                         let lat = compost.lat;
                         // Payload allégé : "t" = 'C'onteneur / 'X' autre (cf. sites.php).
-                        let type = compost.t === 'C' ? "Conteneur" : "Compost";
                         let marker;
-                        if (type === "Conteneur") {
-                            var grayIcon = L.icon({ iconUrl: '/assets/img/marker-bleu.png', iconSize: [20, 38], iconAnchor: [10, 38], popupAnchor: [0, -38] });
-                            marker = L.marker([lat, lon], {icon: grayIcon});
-                            conteneursLayer.addLayer(marker);
+                        if (compost.t === 'C') {
+                            marker = L.marker([lat, lon], { icon: iconConteneur });
+                            nouveauxConteneurs.push(marker);
                         } else {
-                            var greenIcon = L.icon({ iconUrl: '/assets/img/icon_vert.png', iconSize: [25, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] });
-                            marker = L.marker([lat, lon], {icon: greenIcon});
-                            composteursLayer.addLayer(marker);
+                            marker = L.marker([lat, lon], { icon: iconCompost });
+                            nouveauxComposts.push(marker);
                         }
                         marker.options.id = compost_id;
                         markerMap.set(compost_id, marker);
-                        ajoutes++;
                         L.DomEvent.on(marker, 'click', function () { info_compost(compost_id, lat, lon) });
                     });
-                    return ajoutes;
+                    if (nouveauxConteneurs.length) conteneursLayer.addLayers(nouveauxConteneurs);
+                    if (nouveauxComposts.length)   composteursLayer.addLayers(nouveauxComposts);
+                    return nouveauxConteneurs.length + nouveauxComposts.length;
                 });
         }
 
