@@ -35,6 +35,13 @@ services:
       # map-api n'a pas la table audit_log : il l'écrit via auth-api.
       AUDIT_REMOTE_URL: http://auth-api/api/auth/audit.php
       AUDIT_SECRET: ${AUDIT_SECRET}
+      # SMTP (notification mail des signalements) — vide = envoi désactivé.
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
     depends_on:
       db-map: { condition: service_healthy }
       redis: { condition: service_started }
@@ -67,6 +74,13 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      # SMTP (notification mail du formulaire contact) — vide = envoi désactivé.
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
     depends_on:
       db-core: { condition: service_healthy }
       redis: { condition: service_started }

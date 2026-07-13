@@ -58,7 +58,7 @@ $stmt->bind_param('issss', $uid, $uname, $cat, $sujet, $message);
 if ($stmt->execute()) {
     // Notification mail (best-effort : ne bloque jamais l'enregistrement du message).
     $CAT_LABELS = ['bug' => 'Bug', 'suggestion' => 'Suggestion', 'question' => 'Question', 'autre' => 'Autre'];
-    $mailSujet = '[' . ($CAT_LABELS[$cat] ?? $cat) . '] ' . $sujet;
+    $mailSujet = '[SUPPORT] [' . ($CAT_LABELS[$cat] ?? $cat) . '] ' . $sujet;
     $mailCorps = "Nouveau message de contact sur Composmart\n\n"
                . "Catégorie : " . ($CAT_LABELS[$cat] ?? $cat) . "\n"
                . "Sujet : $sujet\n"

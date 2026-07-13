@@ -55,35 +55,50 @@ function audit_log($conn, $action, $details = '', $extra = []) {
 }
 
 /**
- * Envoie un email. Échec toujours silencieux (ne doit jamais casser l'action
- * utilisateur qui déclenche l'envoi — cf. audit_log()).
+ * Envoie un email via SMTP authentifié (PHPMailer). Échec toujours silencieux
+ * (ne doit jamais casser l'action utilisateur qui déclenche l'envoi — cf. audit_log()).
  *
- * Transport :
- * - Si SMTP_HOST est défini (variables d'env SMTP_HOST/PORT/USER/PASSWORD),
- *   envoie via ce relais SMTP (authentifié, TLS) — à configurer quand un
- *   fournisseur (Brevo, Mailgun, etc.) est choisi. NON IMPLÉMENTÉ pour l'instant :
- *   la fonction retourne false sans rien envoyer tant que ce n'est pas branché,
- *   pour ne pas donner une fausse impression de succès.
- * - Sinon, tente mail() (nécessite un MTA local configuré dans le conteneur,
- *   absent par défaut) — best-effort, peut échouer silencieusement.
+ * Configuration par variables d'environnement (ex. OVH : ssl0.ovh.net) :
+ *   SMTP_HOST     — ex. ssl0.ovh.net
+ *   SMTP_PORT     — 465 (SMTP_SECURE=ssl) ou 587 (SMTP_SECURE=tls)
+ *   SMTP_USER     — adresse d'envoi (ex. contact@composmart.fr)
+ *   SMTP_PASSWORD — mot de passe du compte mail
+ *   SMTP_SECURE   — 'ssl' ou 'tls' (défaut 'tls')
+ *   MAIL_FROM     — adresse affichée en expéditeur (défaut = SMTP_USER)
  *
- * @return bool true si l'envoi a été tenté avec succès (pas de garantie de livraison)
+ * Si SMTP_HOST n'est pas défini, n'envoie rien (retourne false) : évite de
+ * donner une fausse impression de succès tant que le SMTP n'est pas configuré.
+ *
+ * @return bool true si l'envoi a réussi
  */
 function send_mail($to, $subject, $body, $replyTo = null) {
-    $from = getenv('MAIL_FROM') ?: 'no-reply@composmart.fr';
+    $host = getenv('SMTP_HOST');
+    if (!$host) return false;
 
-    if (getenv('SMTP_HOST')) {
-        // TODO : brancher un client SMTP (ex. PHPMailer) une fois un fournisseur
-        // choisi. Volontairement non implémenté : mieux vaut échouer visiblement
-        // en dev que de prétendre envoyer un mail qui ne part jamais.
-        return false;
-    }
+    require_once __DIR__ . '/vendor/autoload.php';
 
-    $headers = "From: Composmart <$from>\r\nContent-Type: text/plain; charset=UTF-8";
-    if ($replyTo) { $headers .= "\r\nReply-To: " . $replyTo; }
+    $from = getenv('MAIL_FROM') ?: getenv('SMTP_USER');
 
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
     try {
-        return @mail($to, $subject, $body, $headers);
+        $mail->isSMTP();
+        $mail->Host       = $host;
+        $mail->Port       = (int)(getenv('SMTP_PORT') ?: 587);
+        $mail->SMTPAuth   = true;
+        $mail->Username   = getenv('SMTP_USER');
+        $mail->Password   = getenv('SMTP_PASSWORD');
+        $mail->SMTPSecure = getenv('SMTP_SECURE') ?: \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->CharSet    = 'UTF-8';
+
+        $mail->setFrom($from, 'Composmart');
+        $mail->addAddress($to);
+        if ($replyTo) { $mail->addReplyTo($replyTo); }
+
+        $mail->isHTML(false);
+        $mail->Subject = $subject;
+        $mail->Body    = $body;
+
+        return $mail->send();
     } catch (\Throwable $e) {
         return false;
     }

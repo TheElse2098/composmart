@@ -76,7 +76,7 @@ if ($action === 'creer') {
         'autre'      => 'Autre',
     ];
     $posRow = mysqli_query($conn, "SELECT latitude, longitude FROM composts WHERE id=$compost_id")->fetch_assoc();
-    $sujet = 'Signalement : ' . ($MOTIF_LABELS[$motif] ?? $motif) . ' — composteur #' . $compost_id;
+    $sujet = '[SUPPORT] Signalement : ' . ($MOTIF_LABELS[$motif] ?? $motif) . ' — composteur #' . $compost_id;
     $corps = "Nouveau signalement sur Composmart\n\n"
            . "Composteur : #$compost_id\n"
            . ($posRow ? "Position : {$posRow['latitude']}, {$posRow['longitude']}\n" : '')
