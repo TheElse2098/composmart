@@ -54,14 +54,21 @@
     .hero h1 .accent { color: #a8e6bf; }
     .hero-sub { font-size: clamp(1rem, 2.5vw, 1.2rem); color: rgba(255,255,255,0.9); margin: 16px auto 0; max-width: 560px; font-weight: 600; line-height: 1.5; }
     .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
-    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 50px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1rem; text-decoration: none; cursor: pointer; border: none; transition: transform 0.15s, box-shadow 0.15s; }
-    .btn-primary { background: #fff; color: #1e6e3e; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
+    .btn, .btn:link, .btn:visited { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 50px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1rem; text-decoration: none; cursor: pointer; border: none; transition: transform 0.4s cubic-bezier(.25,.8,.25,1), box-shadow 0.4s ease, background 0.4s ease; }
+    .btn-primary, .btn-primary:visited { background: #fff; color: #1e6e3e; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
     .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.25); }
-    .btn-ghost { background: rgba(255,255,255,0.14); color: #fff; border: 1.5px solid rgba(255,255,255,0.45); }
+    .btn-ghost, .btn-ghost:visited { background: rgba(255,255,255,0.14); color: #fff; border: 1.5px solid rgba(255,255,255,0.45); }
     .btn-ghost:hover { background: rgba(255,255,255,0.24); transform: translateY(-3px); }
+    /* Flèche du bouton "Découvrir" : ondulation douce et continue, invite au scroll sans à-coup */
+    .btn-ghost .arrow { display: inline-block; animation: float-down 2.2s ease-in-out infinite; }
+    @keyframes float-down {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(5px); }
+    }
 
     /* ── SECTIONS ── */
-    .section { max-width: 1120px; margin: 0 auto; padding: 56px 20px; }
+    /* scroll-margin-top : atterrissage sous la nav sticky, pas de coupe brusque en haut */
+    .section { max-width: 1120px; margin: 0 auto; padding: 56px 20px; scroll-margin-top: 90px; }
     .section-tag { text-align: center; color: #1e6e3e; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
     .section-title { text-align: center; font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 900; color: #1a3a25; margin-bottom: 8px; }
     .section-lead { text-align: center; color: #4a7a5a; font-weight: 600; max-width: 620px; margin: 0 auto 36px; line-height: 1.55; }
@@ -160,7 +167,7 @@
       <p class="hero-sub">Trouve un composteur près de chez toi, apprends les bons gestes et transforme tes déchets en ressource. Le tout en t'amusant !</p>
       <div class="hero-cta">
         <a href="carte.html" class="btn btn-primary">🗺️ Explorer la carte</a>
-        <a href="#features" class="btn btn-ghost">Découvrir ↓</a>
+        <a href="#features" class="btn btn-ghost">Découvrir <span class="arrow">↓</span></a>
       </div>
     </div>
   </header>
@@ -232,6 +239,33 @@
   <div class="bottom-leaf"></div>
 
   <script>
+    // Scroll animé "maison" pour les ancres internes : indépendant de scroll-behavior
+    // CSS (que certains OS/navigateurs désactivent via prefers-reduced-motion), donc
+    // le glissement est toujours visible et sa durée/allure contrôlées précisément.
+    function smoothScrollTo(targetY, duration) {
+      const startY = window.scrollY;
+      const diff = targetY - startY;
+      const startTime = performance.now();
+      function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        window.scrollTo(0, startY + diff * easeInOutCubic(progress));
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (!target) return;
+        e.preventDefault();
+        const navOffset = 90; // hauteur approx. de la nav sticky
+        const targetY = target.getBoundingClientRect().top + window.scrollY - navOffset;
+        smoothScrollTo(targetY, 900);
+      });
+    });
+
     // Chiffre "composteurs" en temps réel (endpoint léger déjà existant)
     fetch('/api/carte/count.php').then(r => r.json())
       .then(d => { if (d && typeof d.composts === 'number') document.getElementById('statComposts').textContent = d.composts.toLocaleString('fr-FR') + '+'; })
