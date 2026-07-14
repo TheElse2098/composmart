@@ -19,5 +19,5 @@ build/
 # Artefact Docker (point de montage créé automatiquement)
 front/api/
 
-
-k8s/composmart.yaml
+# manifest de prod genere par sed sur le VPS (contient la config reelle du cluster)
+k8s/composmart.prod.yaml
