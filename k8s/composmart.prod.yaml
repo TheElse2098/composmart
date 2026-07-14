@@ -1,0 +1,533 @@
+# ============================================================================
+# Composmart — manifest k8s complet (variante B : 3 bases séparées).
+# Conçu pour un cluster k3d/k3s local. Aligné sur docker-compose.yml.
+#
+# Images attendues (à builder puis importer dans k3d, cf. k8s/README.md) :
+#   composmart/web composmart/map-api composmart/games-api
+#   composmart/courses-api composmart/auth-api   (tag :local)
+#
+# Les schémas SQL (db/*.sql) sont injectés via ConfigMaps générées au déploiement :
+#   kubectl create configmap map-schema   --from-file=schema.sql=db/map.sql   -n composmart
+#   kubectl create configmap games-schema --from-file=schema.sql=db/games.sql -n composmart
+#   kubectl create configmap core-schema  --from-file=schema.sql=db/core.sql  -n composmart
+#   kubectl create configmap seeds        --from-file=shared/seeds/            -n composmart
+# (content/ est embarqué dans l'image courses-api via COPY, pas de ConfigMap.)
+# ============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: composmart
+---
+# ── Secrets (dev local : valeurs en clair, à remplacer par un vrai Secret en prod) ──
+apiVersion: v1
+kind: Secret
+metadata:
+  name: composmart-secrets
+  namespace: composmart
+type: Opaque
+stringData:
+  DB_NAME: Composmart
+  DB_USER: composmart
+  DB_PASSWORD: changeme
+  DB_ROOT_PASSWORD: changeme_root
+  AUDIT_SECRET: changeme_audit_secret
+---
+# ════════════════════════ REDIS ════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: redis, namespace: composmart }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: redis } }
+  template:
+    metadata: { labels: { app: redis } }
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+          ports: [{ containerPort: 6379 }]
+          resources:
+            requests: { cpu: "25m", memory: "32Mi" }
+            limits:   { cpu: "200m", memory: "160Mi" }
+          readinessProbe:
+            exec: { command: ["redis-cli", "ping"] }
+            initialDelaySeconds: 2
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata: { name: redis, namespace: composmart }
+spec:
+  selector: { app: redis }
+  ports: [{ port: 6379, targetPort: 6379 }]
+---
+# ════════════════════════ BASES (variante B : 3 StatefulSets) ════════════════════════
+# Bloc commun : MARIADB_* depuis le secret, schéma initial monté en lecture seule.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: db-map, namespace: composmart }
+spec:
+  serviceName: db-map
+  replicas: 1
+  selector: { matchLabels: { app: db-map } }
+  template:
+    metadata: { labels: { app: db-map } }
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:11
+          env:
+            - { name: MARIADB_ROOT_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_ROOT_PASSWORD } } }
+            - { name: MARIADB_DATABASE,      valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: MARIADB_USER,          valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: MARIADB_PASSWORD,      valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+          ports: [{ containerPort: 3306 }]
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/mysql }
+            - { name: init, mountPath: /docker-entrypoint-initdb.d }
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits:   { cpu: "1000m", memory: "1Gi" }
+          readinessProbe:
+            exec: { command: ["healthcheck.sh", "--connect", "--innodb_initialized"] }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: init
+          configMap: { name: map-schema }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec: { accessModes: ["ReadWriteOnce"], resources: { requests: { storage: 5Gi } } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: db-map, namespace: composmart }
+spec:
+  selector: { app: db-map }
+  ports: [{ port: 3306, targetPort: 3306 }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: db-games, namespace: composmart }
+spec:
+  serviceName: db-games
+  replicas: 1
+  selector: { matchLabels: { app: db-games } }
+  template:
+    metadata: { labels: { app: db-games } }
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:11
+          env:
+            - { name: MARIADB_ROOT_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_ROOT_PASSWORD } } }
+            - { name: MARIADB_DATABASE,      valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: MARIADB_USER,          valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: MARIADB_PASSWORD,      valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+          ports: [{ containerPort: 3306 }]
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/mysql }
+            - { name: init, mountPath: /docker-entrypoint-initdb.d }
+          resources:
+            requests: { cpu: "50m", memory: "192Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
+          readinessProbe:
+            exec: { command: ["healthcheck.sh", "--connect", "--innodb_initialized"] }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: init
+          configMap: { name: games-schema }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec: { accessModes: ["ReadWriteOnce"], resources: { requests: { storage: 2Gi } } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: db-games, namespace: composmart }
+spec:
+  selector: { app: db-games }
+  ports: [{ port: 3306, targetPort: 3306 }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: db-core, namespace: composmart }
+spec:
+  serviceName: db-core
+  replicas: 1
+  selector: { matchLabels: { app: db-core } }
+  template:
+    metadata: { labels: { app: db-core } }
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:11
+          env:
+            - { name: MARIADB_ROOT_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_ROOT_PASSWORD } } }
+            - { name: MARIADB_DATABASE,      valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: MARIADB_USER,          valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: MARIADB_PASSWORD,      valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+          ports: [{ containerPort: 3306 }]
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/mysql }
+            - { name: init, mountPath: /docker-entrypoint-initdb.d }
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits:   { cpu: "1000m", memory: "1Gi" }
+          readinessProbe:
+            exec: { command: ["healthcheck.sh", "--connect", "--innodb_initialized"] }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: init
+          configMap: { name: core-schema }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec: { accessModes: ["ReadWriteOnce"], resources: { requests: { storage: 3Gi } } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: db-core, namespace: composmart }
+spec:
+  selector: { app: db-core }
+  ports: [{ port: 3306, targetPort: 3306 }]
+---
+# ════════════════════════ SEEDS (Jobs one-shot) ════════════════════════
+apiVersion: batch/v1
+kind: Job
+metadata: { name: seed-map, namespace: composmart }
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      restartPolicy: OnFailure
+      imagePullSecrets: [{ name: ghcr-creds }]
+      containers:
+        - name: seed-map
+          image: ghcr.io/theelse2098/composmart/map-api:latest
+          imagePullPolicy: Always
+          command: ["php", "/docker-seeds/seed_map.php"]
+          env:
+            - { name: DB_HOST, value: db-map }
+            - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+          volumeMounts:
+            - { name: seeds, mountPath: /docker-seeds }
+      volumes:
+        - name: seeds
+          configMap: { name: seeds }
+---
+apiVersion: batch/v1
+kind: Job
+metadata: { name: seed-core, namespace: composmart }
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      restartPolicy: OnFailure
+      imagePullSecrets: [{ name: ghcr-creds }]
+      containers:
+        - name: seed-core
+          image: ghcr.io/theelse2098/composmart/courses-api:latest
+          imagePullPolicy: Always
+          command: ["php", "/docker-seeds/seed_core.php"]
+          env:
+            - { name: DB_HOST, value: db-core }
+            - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+          volumeMounts:
+            - { name: seeds,   mountPath: /docker-seeds }
+            # content/ est déjà embarqué dans l'image courses-api ; pas de montage requis.
+      volumes:
+        - name: seeds
+          configMap: { name: seeds }
+---
+# ── Rafraîchissement OSM quotidien (3h15) ──────────────────────
+# Retente l'import OSM tous les jours : rattrape un échec précédent ET met à jour
+# les données (les composteurs OSM évoluent). import_osm déduplique + abandonne
+# proprement si Overpass est down. concurrencyPolicy: Forbid → pas d'empilement.
+apiVersion: batch/v1
+kind: CronJob
+metadata: { name: osm-refresh, namespace: composmart }
+spec:
+  schedule: "15 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          imagePullSecrets: [{ name: ghcr-creds }]
+          containers:
+            - name: osm-refresh
+              image: ghcr.io/theelse2098/composmart/map-api:latest
+              imagePullPolicy: Always
+              command: ["php", "/docker-seeds/import_osm.php"]
+              env:
+                - { name: DB_HOST, value: db-map }
+                - { name: REDIS_HOST, value: redis }
+                - { name: REDIS_PORT, value: "6379" }
+                - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+                - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+                - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+---
+# ════════════════════════ SERVICES API ════════════════════════
+# map-api
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: map-api, namespace: composmart }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: map-api } }
+  template:
+    metadata: { labels: { app: map-api } }
+    spec:
+      imagePullSecrets: [{ name: ghcr-creds }]
+      containers:
+        - name: map-api
+          image: ghcr.io/theelse2098/composmart/map-api:latest
+          imagePullPolicy: Always
+          ports: [{ containerPort: 80 }]
+          env:
+            - { name: DB_HOST, value: db-map }
+            - { name: REDIS_HOST, value: redis }
+            - { name: REDIS_PORT, value: "6379" }
+            - { name: AUDIT_REMOTE_URL, value: "http://auth-api/api/auth/audit.php" }
+            - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+            - { name: AUDIT_SECRET, valueFrom: { secretKeyRef: { name: composmart-secrets, key: AUDIT_SECRET } } }
+          resources:
+            requests: { cpu: "100m", memory: "128Mi" }
+            limits:   { cpu: "1000m", memory: "512Mi" }
+          readinessProbe:
+            httpGet: { path: /api/carte/health.php, port: 80 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata: { name: map-api, namespace: composmart }
+spec:
+  selector: { app: map-api }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: map-api, namespace: composmart }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: map-api }
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 65 } }
+---
+# games-api
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: games-api, namespace: composmart }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: games-api } }
+  template:
+    metadata: { labels: { app: games-api } }
+    spec:
+      imagePullSecrets: [{ name: ghcr-creds }]
+      containers:
+        - name: games-api
+          image: ghcr.io/theelse2098/composmart/games-api:latest
+          imagePullPolicy: Always
+          ports: [{ containerPort: 80 }]
+          env:
+            - { name: DB_HOST, value: db-games }
+            - { name: REDIS_HOST, value: redis }
+            - { name: REDIS_PORT, value: "6379" }
+            - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits:   { cpu: "500m", memory: "256Mi" }
+          readinessProbe:
+            httpGet: { path: /api/jeux/health.php, port: 80 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata: { name: games-api, namespace: composmart }
+spec:
+  selector: { app: games-api }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: games-api, namespace: composmart }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: games-api }
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
+---
+# courses-api
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: courses-api, namespace: composmart }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: courses-api } }
+  template:
+    metadata: { labels: { app: courses-api } }
+    spec:
+      imagePullSecrets: [{ name: ghcr-creds }]
+      containers:
+        - name: courses-api
+          image: ghcr.io/theelse2098/composmart/courses-api:latest
+          imagePullPolicy: Always
+          ports: [{ containerPort: 80 }]
+          env:
+            - { name: DB_HOST, value: db-core }
+            - { name: REDIS_HOST, value: redis }
+            - { name: REDIS_PORT, value: "6379" }
+            - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+          resources:
+            requests: { cpu: "50m", memory: "128Mi" }
+            limits:   { cpu: "500m", memory: "384Mi" }
+          readinessProbe:
+            httpGet: { path: /api/cours/health.php, port: 80 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata: { name: courses-api, namespace: composmart }
+spec:
+  selector: { app: courses-api }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: courses-api, namespace: composmart }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: courses-api }
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
+---
+# auth-api
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: auth-api, namespace: composmart }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: auth-api } }
+  template:
+    metadata: { labels: { app: auth-api } }
+    spec:
+      imagePullSecrets: [{ name: ghcr-creds }]
+      containers:
+        - name: auth-api
+          image: ghcr.io/theelse2098/composmart/auth-api:latest
+          imagePullPolicy: Always
+          ports: [{ containerPort: 80 }]
+          env:
+            - { name: DB_HOST, value: db-core }
+            - { name: REDIS_HOST, value: redis }
+            - { name: REDIS_PORT, value: "6379" }
+            - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+            - { name: AUDIT_SECRET, valueFrom: { secretKeyRef: { name: composmart-secrets, key: AUDIT_SECRET } } }
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits:   { cpu: "500m", memory: "256Mi" }
+          readinessProbe:
+            httpGet: { path: /api/auth/health.php, port: 80 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata: { name: auth-api, namespace: composmart }
+spec:
+  selector: { app: auth-api }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: auth-api, namespace: composmart }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: auth-api }
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
+---
+# ════════════════════════ WEB (front + reverse-proxy) ════════════════════════
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: web, namespace: composmart }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: web } }
+  template:
+    metadata: { labels: { app: web } }
+    spec:
+      imagePullSecrets: [{ name: ghcr-creds }]
+      containers:
+        - name: web
+          image: ghcr.io/theelse2098/composmart/web:latest
+          imagePullPolicy: Always
+          ports: [{ containerPort: 80 }]
+          resources:
+            requests: { cpu: "10m", memory: "32Mi" }
+            limits:   { cpu: "300m", memory: "160Mi" }
+          readinessProbe:
+            httpGet: { path: /healthz, port: 80 }
+            initialDelaySeconds: 3
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata: { name: web, namespace: composmart }
+spec:
+  selector: { app: web }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+# ════════════════════════ INGRESS (Traefik) ════════════════════════
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: composmart
+  namespace: composmart
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts: [composmart.fr]
+      secretName: composmart-tls
+  rules:
+    - host: composmart.fr
+      http:
+        paths:
+          - { path: /api/carte, pathType: Prefix, backend: { service: { name: map-api,     port: { number: 80 } } } }
+          - { path: /api/jeux,  pathType: Prefix, backend: { service: { name: games-api,   port: { number: 80 } } } }
+          - { path: /api/cours, pathType: Prefix, backend: { service: { name: courses-api, port: { number: 80 } } } }
+          - { path: /api/contact, pathType: Prefix, backend: { service: { name: courses-api, port: { number: 80 } } } }
+          - { path: /api/admin, pathType: Prefix, backend: { service: { name: courses-api, port: { number: 80 } } } }
+          - { path: /api/auth,  pathType: Prefix, backend: { service: { name: auth-api,    port: { number: 80 } } } }
+          - { path: /,          pathType: Prefix, backend: { service: { name: web,         port: { number: 80 } } } }

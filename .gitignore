@@ -18,3 +18,6 @@ build/
 
 # Artefact Docker (point de montage créé automatiquement)
 front/api/
+
+
+k8s/composmart.yaml
