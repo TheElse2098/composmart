@@ -1,0 +1,111 @@
+<?php
+/**
+ * Notifications groupées par mail : accumule des ids en base (table
+ * notif_state, db-map) et déclenche un mail récapitulatif quand le seuil
+ * est atteint (5 par défaut).
+ *
+ * Utilisé par sites.php (ajouts manuels de composteurs — les imports OSM
+ * du cron ne passent pas par là, donc exclus) et signalement.php.
+ */
+
+const NOTIF_SEUIL = 5;
+
+/**
+ * Ajoute $id au lot $cle. Renvoie le tableau des ids si le seuil est
+ * atteint (le lot est alors vidé), null sinon.
+ */
+function notif_batch_push($conn, $cle, $id) {
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS notif_state (
+        cle VARCHAR(32) NOT NULL PRIMARY KEY,
+        ids TEXT NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $k = mysqli_real_escape_string($conn, $cle);
+    mysqli_query($conn, "INSERT IGNORE INTO notif_state (cle, ids) VALUES ('$k', '[]')");
+
+    mysqli_query($conn, 'START TRANSACTION');
+    $res = mysqli_query($conn, "SELECT ids FROM notif_state WHERE cle='$k' FOR UPDATE");
+    $row = $res ? mysqli_fetch_assoc($res) : null;
+    $ids = $row ? (json_decode($row['ids'], true) ?: []) : [];
+    $ids[] = (int)$id;
+
+    if (count($ids) >= NOTIF_SEUIL) {
+        mysqli_query($conn, "UPDATE notif_state SET ids='[]' WHERE cle='$k'");
+        mysqli_query($conn, 'COMMIT');
+        return $ids;
+    }
+    $j = mysqli_real_escape_string($conn, json_encode($ids));
+    mysqli_query($conn, "UPDATE notif_state SET ids='$j' WHERE cle='$k'");
+    mysqli_query($conn, 'COMMIT');
+    return null;
+}
+
+/** Remet un lot en attente (fusionné avec l'existant) si l'envoi a échoué. */
+function notif_batch_restore($conn, $cle, $ids) {
+    $k = mysqli_real_escape_string($conn, $cle);
+    mysqli_query($conn, 'START TRANSACTION');
+    $res = mysqli_query($conn, "SELECT ids FROM notif_state WHERE cle='$k' FOR UPDATE");
+    $row = $res ? mysqli_fetch_assoc($res) : null;
+    $courant = $row ? (json_decode($row['ids'], true) ?: []) : [];
+    $j = mysqli_real_escape_string($conn, json_encode(array_values(array_unique(array_merge($ids, $courant)))));
+    mysqli_query($conn, "UPDATE notif_state SET ids='$j' WHERE cle='$k'");
+    mysqli_query($conn, 'COMMIT');
+}
+
+/** À appeler après chaque ajout manuel de composteur. Best-effort. */
+function notif_compost_ajoute($conn, $id) {
+    $lot = notif_batch_push($conn, 'composts', $id);
+    if (!$lot) return;
+
+    $in = implode(',', array_map('intval', $lot));
+    $res = mysqli_query($conn,
+        "SELECT id, latitude, longitude, type, publique, created_at
+         FROM composts WHERE id IN ($in) ORDER BY id");
+    $lignes = [];
+    while ($res && ($r = mysqli_fetch_assoc($res))) {
+        $lignes[] = '#' . $r['id']
+            . ' — ' . round((float)$r['latitude'], 5) . ', ' . round((float)$r['longitude'], 5)
+            . ' — ' . ($r['type'] ?: 'type non renseigné')
+            . ' (' . ($r['publique'] ?: 'accès non renseigné') . ')'
+            . ' — ' . $r['created_at'];
+    }
+    $n = count($lot);
+    $corps = "$n nouveaux composteurs ajoutés manuellement sur la carte Composmart :\n\n"
+           . implode("\n", $lignes)
+           . "\n\n(Les points supprimés depuis leur ajout n'apparaissent pas dans la liste.)\n";
+    if (!send_mail('contact@composmart.fr', "[SUPPORT] $n nouveaux composteurs sur la carte", $corps)) {
+        notif_batch_restore($conn, 'composts', $lot);
+    }
+}
+
+/** À appeler après chaque création de signalement. Best-effort. */
+function notif_signalement_cree($conn, $id) {
+    $lot = notif_batch_push($conn, 'signalements', $id);
+    if (!$lot) return;
+
+    $MOTIF_LABELS = [
+        'position'   => 'Mauvaise position',
+        'type_acces' => 'Mauvais type ou accès',
+        'regles'     => 'Règles incorrectes',
+        'inexistant' => "N'existe plus",
+        'autre'      => 'Autre',
+    ];
+    $in = implode(',', array_map('intval', $lot));
+    $res = mysqli_query($conn,
+        "SELECT id, compost_id, motif, commentaire, reporter_username, created_at
+         FROM signalements WHERE id IN ($in) ORDER BY id");
+    $lignes = [];
+    while ($res && ($r = mysqli_fetch_assoc($res))) {
+        $lignes[] = 'Composteur #' . $r['compost_id']
+            . ' — ' . ($MOTIF_LABELS[$r['motif']] ?? $r['motif'])
+            . ' — par ' . ($r['reporter_username'] ?: 'Anonyme')
+            . ' — ' . $r['created_at']
+            . ($r['commentaire'] !== '' && $r['commentaire'] !== null ? "\n    « " . $r['commentaire'] . ' »' : '');
+    }
+    $n = count($lot);
+    $corps = "$n nouveaux signalements sur la carte Composmart :\n\n"
+           . implode("\n", $lignes)
+           . "\n\nÀ traiter dans la page admin.\n";
+    if (!send_mail('contact@composmart.fr', "[SUPPORT] $n nouveaux signalements sur la carte", $corps)) {
+        notif_batch_restore($conn, 'signalements', $lot);
+    }
+}

@@ -3,6 +3,7 @@ ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once __DIR__ . '/../_guard.php';
+require_once __DIR__ . '/_notif.php';
 secure_session_start();
 header('Content-Type: application/json');
 ob_clean();
@@ -79,6 +80,7 @@ if (isset($_POST['osm'])) {
         $stmt = mysqli_prepare($connexion, "INSERT INTO composts (longitude, latitude, type, publique) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("ddss", $lon, $lat, $type, $pub);
         if ($stmt->execute()) {
+            notif_compost_ajoute($connexion, (int)$connexion->insert_id);
             echo json_encode("Insertion réussie.");
         } else {
             echo json_encode("Erreur d'insertion : " . $stmt->error);
@@ -122,6 +124,7 @@ elseif (isset($_POST['donnees_json'])) {
 
         $row = mysqli_query($connexion, "SELECT max(id) FROM composts")->fetch_array(MYSQLI_ASSOC);
         $id_actuel = (int)$row["max(id)"];
+        notif_compost_ajoute($connexion, $id_actuel);
         echo $id_actuel;
 
         $ins = mysqli_prepare($connexion, "INSERT INTO regles (id_compost,id_element,autorise) VALUES (?,(SELECT id FROM elements WHERE nom=?),?)");
@@ -309,6 +312,7 @@ if (isset($_POST['lat_click']) && isset($_POST['lon_click'])) {
         $new_id = (int)$connexion->insert_id;
         if (!isset($_SESSION['created_composts'])) $_SESSION['created_composts'] = [];
         $_SESSION['created_composts'][] = $new_id;
+        notif_compost_ajoute($connexion, $new_id);
         $response = $new_id;
     } else {
         $response = ["error" => $stmt->error];

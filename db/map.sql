@@ -49,6 +49,15 @@ CREATE TABLE `regles` (
   CONSTRAINT `regles_ibfk_2` FOREIGN KEY (`id_element`) REFERENCES `elements` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Etat des notifications mail groupees (lots d'ids en attente, cf. _notif.php).
+-- Creee aussi a la volee par _notif.php (CREATE TABLE IF NOT EXISTS) pour les
+-- bases existantes.
+CREATE TABLE IF NOT EXISTS `notif_state` (
+  `cle` varchar(32) NOT NULL,
+  `ids` text        NOT NULL,
+  PRIMARY KEY (`cle`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `signalements` (
   `id`          int      NOT NULL AUTO_INCREMENT,
   `compost_id`  int      NOT NULL,
