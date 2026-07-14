@@ -579,6 +579,17 @@
     }
 
     /* ── Quiz slides ── */
+    // Mélange Fisher-Yates : renvoie les indices [0..n-1] dans un ordre aléatoire.
+    function shuffledIndices(n) {
+      var idx = [];
+      for (var k = 0; k < n; k++) idx.push(k);
+      for (var j = n - 1; j > 0; j--) {
+        var r = Math.floor(Math.random() * (j + 1));
+        var tmp = idx[j]; idx[j] = idx[r]; idx[r] = tmp;
+      }
+      return idx;
+    }
+
     function buildQuizSlides() {
       var container = document.getElementById('quizSlides');
       container.innerHTML = '';
@@ -588,8 +599,10 @@
         var div = document.createElement('div');
         div.className = 'lesson-slide' + (i === 0 ? ' active' : '');
         div.id = 'qs-' + i;
-        var opts = q.options.map(function(o, oi) {
-          return '<button class="quiz-opt" id="qopt-' + i + '-' + oi + '" onclick="selectOpt(' + i + ',' + oi + ',' + q.correct + ',this)">' + esc(o) + '</button>';
+        // Ordre d'affichage aléatoire ; oi reste l'index d'origine (celui que
+        // selectOpt compare à q.correct et que le serveur revalide).
+        var opts = shuffledIndices(q.options.length).map(function(oi) {
+          return '<button class="quiz-opt" id="qopt-' + i + '-' + oi + '" onclick="selectOpt(' + i + ',' + oi + ',' + q.correct + ',this)">' + esc(q.options[oi]) + '</button>';
         }).join('');
         div.innerHTML =
           '<div class="quiz-card">' +
