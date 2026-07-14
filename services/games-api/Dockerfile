@@ -4,7 +4,12 @@
 #   docker build -f services/games-api/Dockerfile -t composmart/games-api .
 FROM php:8.3-apache
 
-RUN docker-php-ext-install mysqli \
+# curl : l'extension PHP sert à créditer l'XP des jeux via auth-api (xp.php).
+# libcurl4-openssl-dev est requise pour compiler l'extension.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && docker-php-ext-install mysqli curl \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && a2enmod rewrite \

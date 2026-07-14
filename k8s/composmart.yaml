@@ -344,6 +344,9 @@ spec:
             - { name: DB_HOST, value: db-games }
             - { name: REDIS_HOST, value: redis }
             - { name: REDIS_PORT, value: "6379" }
+            # Crédit d'XP des jeux vers db-core via l'endpoint interne d'auth-api.
+            - { name: XP_REMOTE_URL, value: "http://auth-api/api/auth/xp.php" }
+            - { name: AUDIT_SECRET, valueFrom: { secretKeyRef: { name: composmart-secrets, key: AUDIT_SECRET } } }
             - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
             - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
             - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }

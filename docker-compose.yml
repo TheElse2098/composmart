@@ -58,6 +58,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      # Crédit d'XP des jeux vers db-core, via l'endpoint interne d'auth-api
+      # (même secret que l'audit : domaine de confiance service→service).
+      XP_REMOTE_URL: http://auth-api/api/auth/xp.php
+      AUDIT_SECRET: ${AUDIT_SECRET}
     depends_on:
       db-games: { condition: service_healthy }
       redis: { condition: service_started }

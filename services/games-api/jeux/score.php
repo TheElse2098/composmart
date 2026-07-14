@@ -21,6 +21,37 @@ if (!$conn) { echo json_encode(['error' => 'Connexion DB échouée']); exit; }
 $JEUX_MAX = ['mot-mystere' => 80, 'compost-ou-pas' => 12, 'temps-decompo' => 30];
 $JEUX_VALIDES = array_keys($JEUX_MAX);
 
+// Réserve d'XP de chaque jeu. L'XP acquise = réserve × (record ÷ score max),
+// créditée par paliers : seule l'amélioration du record rapporte la différence
+// (80 % du max = 80 % de la réserve ; passer à 90 % ne rapporte que les 10 %
+// manquants). Bornée par la réserve : impossible de farmer à l'infini.
+$JEUX_XP = ['mot-mystere' => 50, 'compost-ou-pas' => 50, 'temps-decompo' => 50];
+
+// XP cumulée pour un record donné (arrondi au plus proche).
+function xp_pour_best($jeu_id, $best) {
+    global $JEUX_XP, $JEUX_MAX;
+    return (int)round($JEUX_XP[$jeu_id] * max(0, $best) / $JEUX_MAX[$jeu_id]);
+}
+
+// Crédite l'XP côté db-core via l'endpoint interne d'auth-api (même pattern
+// que l'audit : secret partagé, best-effort). Renvoie la réponse ou null.
+function crediter_xp($uid, $delta, $jeu_id) {
+    $url = getenv('XP_REMOTE_URL') ?: '';
+    if ($url === '' || $delta <= 0) return null;
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode(['uid' => $uid, 'delta' => $delta, 'source' => 'jeu:' . $jeu_id]),
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'X-Audit-Secret: ' . (getenv('AUDIT_SECRET') ?: '')],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 3,
+    ]);
+    $raw = curl_exec($ch);
+    curl_close($ch);
+    $rep = $raw !== false ? json_decode($raw, true) : null;
+    return (is_array($rep) && !empty($rep['ok'])) ? $rep : null;
+}
+
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // ── ENREGISTRER UN SCORE (connecté uniquement) ─────────────────────────────
@@ -35,16 +66,40 @@ if ($action === 'save') {
     $uid = (int)$_SESSION['user_id'];
     // username dénormalisé (users vit dans db-core, pas joignable depuis games-api)
     $uname = $_SESSION['username'] ?? '';
+
+    // Record AVANT ce score : sert de base au palier d'XP déjà acquis.
+    $stmt = mysqli_prepare($conn, 'SELECT MAX(score) AS best FROM scores WHERE user_id = ? AND jeu_id = ?');
+    $stmt->bind_param('is', $uid, $jeu_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $ancien_best = ($row && $row['best'] !== null) ? (int)$row['best'] : 0;
+
     $stmt = mysqli_prepare($conn, 'INSERT INTO scores (user_id, username, jeu_id, score) VALUES (?, ?, ?, ?)');
     $stmt->bind_param('issi', $uid, $uname, $jeu_id, $score);
     $stmt->execute();
 
-    $stmt = mysqli_prepare($conn, 'SELECT MAX(score) AS best FROM scores WHERE user_id = ? AND jeu_id = ?');
-    $stmt->bind_param('is', $uid, $jeu_id);
-    $stmt->execute();
-    $best = (int)($stmt->get_result()->fetch_assoc()['best'] ?? 0);
+    $best = max($ancien_best, $score);
 
-    echo json_encode(['ok' => true, 'best' => $best, 'record' => $best === $score]);
+    // XP : seule l'amélioration du record rapporte la différence de palier.
+    $xp_gagne = 0; $xp_total = null; $niveau = null;
+    $delta = xp_pour_best($jeu_id, $best) - xp_pour_best($jeu_id, $ancien_best);
+    if ($delta > 0) {
+        $rep = crediter_xp($uid, $delta, $jeu_id);
+        if ($rep) {
+            $xp_gagne = $delta;
+            $xp_total = (int)$rep['xp'];
+            $niveau   = (int)$rep['niveau'];
+        }
+    }
+
+    echo json_encode([
+        'ok'       => true,
+        'best'     => $best,
+        'record'   => $best === $score && $score > $ancien_best,
+        'xp_gagne' => $xp_gagne,
+        'xp_total' => $xp_total,
+        'niveau'   => $niveau,
+    ]);
     exit;
 }
 

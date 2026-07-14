@@ -73,6 +73,7 @@
     .end-score { font-family: 'Baloo 2', cursive; font-size: 2rem; font-weight: 900; color: #1e6e3e; }
     .end-msg { font-size: 0.9rem; color: #4a7a5a; font-weight: 700; margin: 6px 0 14px; }
     .end-record { display: inline-block; background: #fff9c4; color: #b26a00; font-size: 0.78rem; font-weight: 800; padding: 5px 14px; border-radius: 14px; margin-bottom: 12px; }
+    .end-xp { display: inline-block; background: #e8f5e9; color: #1e6e3e; font-size: 0.78rem; font-weight: 800; padding: 5px 14px; border-radius: 14px; margin-bottom: 12px; margin-left: 6px; }
     .leaderboard { text-align: left; margin: 14px auto 0; max-width: 300px; }
     .lb-title { font-family: 'Baloo 2', cursive; font-size: 0.9rem; font-weight: 900; color: #1a3a25; margin-bottom: 8px; text-align: center; }
     .lb-row { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; color: #1a3a25; padding: 5px 10px; border-radius: 8px; }
@@ -102,6 +103,7 @@
     html.dark .lb-row:nth-child(even) { background: #1e2d22; }
     html.dark .lb-title { color: #e8f5ee; }
     html.dark .end-record { background: #2e2410; color: #e8b931; }
+    html.dark .end-xp { background: #16291c; color: #7fc99a; }
     html.dark h1 { color: #e8f5ee; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
@@ -141,6 +143,7 @@
         <div class="end-score" id="endScore"></div>
         <div class="end-msg" id="endMsg"></div>
         <div class="end-record" id="endRecord" style="display:none">🎉 Nouveau record perso !</div>
+        <div class="end-xp" id="endXp" style="display:none"></div>
         <div class="leaderboard" id="leaderboard" style="display:none">
           <div class="lb-title">🏅 Top 5</div>
           <div id="lbRows"></div>
@@ -331,6 +334,11 @@
         } else if (d.ok && d.record && score > 0) {
           document.getElementById('endRecord').style.display = 'inline-block';
         }
+        if (d.ok && d.xp_gagne > 0) {
+          var endXp = document.getElementById('endXp');
+          endXp.textContent = '⚡ +' + d.xp_gagne + ' XP';
+          endXp.style.display = 'inline-block';
+        }
         return fetch('/api/jeux/score.php?action=infos&jeu_id=' + JEU_ID);
       })
       .then(r => r.json())
@@ -356,6 +364,7 @@
 
     document.getElementById('btnRejouer').addEventListener('click', () => {
       document.getElementById('endRecord').style.display = 'none';
+      document.getElementById('endXp').style.display = 'none';
       document.getElementById('leaderboard').style.display = 'none';
       document.getElementById('saveInfo').style.display = 'none';
       demarrer();
