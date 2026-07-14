@@ -3,11 +3,21 @@ RewriteEngine On
 # Page d'erreur 404 personnalisée (au lieu de l'erreur Apache brute).
 ErrorDocument 404 /404.html
 
+# Derrière le proxy TLS (Traefik/k3s), Apache ne voit que du HTTP : les
+# redirections doivent reprendre le schéma d'origine du client
+# (X-Forwarded-Proto), sinon Location: http://... → mixed content en HTTPS.
+
 # /index et /index.html → redirect vers /
+RewriteCond %{HTTP:X-Forwarded-Proto} =https
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index(\.html)?(\s|\ ) [NC]
+RewriteRule ^ https://%{HTTP_HOST}/ [R=301,L]
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index(\.html)?(\s|\ ) [NC]
 RewriteRule ^ / [R=301,L]
 
 # /carte.html → redirect vers /carte (propre dans l'URL bar)
+RewriteCond %{HTTP:X-Forwarded-Proto} =https
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /(.+)\.html\ HTTP/
+RewriteRule ^ https://%{HTTP_HOST}/%1 [R=301,L]
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /(.+)\.html\ HTTP/
 RewriteRule ^ /%1 [R=301,L]
 

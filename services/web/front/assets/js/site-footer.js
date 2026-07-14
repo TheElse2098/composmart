@@ -11,7 +11,9 @@
   var mount = document.getElementById('site-footer');
   if (!mount) return;
 
-  fetch('/partials/site-footer.html')
+  // Sans .html : la 301 du .htaccess (strip d'extension) génère un Location en
+  // http:// derrière le proxy TLS → mixed content bloqué en HTTPS.
+  fetch('/partials/site-footer')
     .then(function (r) {
       if (!r.ok) throw new Error('partial HTTP ' + r.status);
       return r.text();

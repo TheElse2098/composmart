@@ -11,7 +11,9 @@
   var mount = document.getElementById('site-nav');
   if (!mount) { console.warn('[site-nav] pas de <div id="site-nav"> sur cette page'); return; }
 
-  fetch('/partials/site-nav.html')
+  // Sans .html : la 301 du .htaccess (strip d'extension) génère un Location en
+  // http:// derrière le proxy TLS → mixed content bloqué en HTTPS.
+  fetch('/partials/site-nav')
     .then(function (r) {
       if (!r.ok) throw new Error('partial HTTP ' + r.status);
       return r.text();
