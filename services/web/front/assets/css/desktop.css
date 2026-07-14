@@ -8,7 +8,9 @@
    Règles garantissant l'affichage correct du bandeau sur TOUTES les pages, même
    celles dont le <style> inline ne contenait pas tout le CSS nav (ex. cours-detail).
    Le conteneur prend toute la largeur ; le nav et sa zone droite restent en flex. */
-#site-nav { width: 100%; display: block; }
+/* sticky sur le CONTENEUR : le sticky posé sur le <nav> intérieur par les pages
+   ne colle jamais (le parent #site-nav fait exactement sa hauteur). */
+#site-nav { width: 100%; display: block; position: sticky; top: 0; z-index: 100; }
 #site-nav nav { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 #site-nav .nav-right { display: flex; align-items: center; gap: 12px; }
 
