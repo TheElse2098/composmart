@@ -18,7 +18,7 @@ if (!$conn) { echo json_encode(['error' => 'Connexion DB échouée']); exit; }
 
 // Registre des jeux : slug => score maximum atteignable.
 // Ajouter une entrée ici quand on crée un nouveau jeu.
-$JEUX_MAX = ['mot-mystere' => 80, 'compost-ou-pas' => 12];
+$JEUX_MAX = ['mot-mystere' => 80, 'compost-ou-pas' => 12, 'temps-decompo' => 30];
 $JEUX_VALIDES = array_keys($JEUX_MAX);
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
@@ -108,8 +108,9 @@ if ($action === 'bests') {
 // Renvoie aussi la méta (nom/emoji/max) pour que le front affiche sans dépendre d'auth.
 if ($action === 'profile') {
     $meta = [
-        'mot-mystere'    => ['nom' => 'Mot mystère',      'emoji' => '🔤', 'max' => 80],
-        'compost-ou-pas' => ['nom' => 'Compost ou pas ?', 'emoji' => '♻️', 'max' => 12],
+        'mot-mystere'    => ['nom' => 'Mot mystère',       'emoji' => '🔤', 'max' => 80],
+        'compost-ou-pas' => ['nom' => 'Compost ou pas ?',  'emoji' => '♻️', 'max' => 12],
+        'temps-decompo'  => ['nom' => 'Combien de temps ?', 'emoji' => '⏳', 'max' => 30],
     ];
     $joues = [];
     $parties_total = 0;
