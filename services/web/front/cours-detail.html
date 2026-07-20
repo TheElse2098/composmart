@@ -82,7 +82,7 @@
     @keyframes fadeSlide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
     /* ── LESSON CARD ── */
-    .lesson-card { background: #fff; border-radius: 22px; padding: 22px 18px 18px; margin-top: 14px; box-shadow: 0 4px 18px rgba(30,110,62,0.09); }
+    .lesson-card { background: #fff; border-radius: 22px; padding: 22px 18px 32px; margin-top: 14px; box-shadow: 0 4px 18px rgba(30,110,62,0.09); }
     .lesson-emoji { font-size: 2.6rem; text-align: center; margin-bottom: 8px; display: block; }
     .lesson-title { font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 900; color: #1a3a25; margin-bottom: 12px; text-align: center; line-height: 1.25; }
     .lesson-body { font-size: 0.92rem; color: #2d5a3d; line-height: 1.65; font-weight: 600; }
@@ -137,7 +137,7 @@
     .xp-gained { display: inline-block; background: linear-gradient(135deg, #f9a825, #ff8f00); color: #fff; font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 900; padding: 8px 20px; border-radius: 20px; margin-bottom: 18px; }
 
     /* ── BUTTONS ── */
-    .btn-next { width: 100%; background: linear-gradient(135deg, #1e6e3e, #2d9959); color: #fff; border: none; border-radius: 16px; padding: 15px; font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; cursor: pointer; margin-top: 16px; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 4px 12px rgba(30,110,62,0.32); }
+    .btn-next { width: 100%; background: linear-gradient(135deg, #1e6e3e, #2d9959); color: #fff; border: none; border-radius: 16px; padding: 15px; font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; cursor: pointer; margin-top: -14px; position: relative; z-index: 1; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 4px 12px rgba(30,110,62,0.32); }
     .btn-next:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(30,110,62,0.4); }
     .btn-next:active { transform: scale(0.97); }
     .btn-next:disabled { background: #bdbdbd; box-shadow: none; cursor: not-allowed; transform: none; }

@@ -27,6 +27,11 @@ if (file_exists("$base/video.json")) {
 // podcast
 if (file_exists("$base/podcast.json")) {
     $data['podcast'] = json_decode(file_get_contents("$base/podcast.json"), true);
+    // Raccourci : "fichier" (nom du fichier audio dans le dossier du cours) plutôt
+    // qu'une "url" complète à retaper — évite de casser le lien si le slug change.
+    if (empty($data['podcast']['url']) && !empty($data['podcast']['fichier'])) {
+        $data['podcast']['url'] = "/content/cours/$slug/" . rawurlencode($data['podcast']['fichier']);
+    }
 } else {
     // Pas de podcast.json : on cherche un fichier audio/vidéo déposé tel quel
     // dans le dossier du cours (mp3/mp4/m4a/wav/ogg) et on le sert directement,
