@@ -2,41 +2,61 @@
 
 ## Qu'est-ce qu'un biodéchet ?
 
-Un biodéchet est un déchet d'origine biologique, capable de se décomposer naturellement. On distingue :
+Les biodéchets sont :  
 
-- **Les déchets alimentaires** : épluchures, restes de repas, marc de café, coquilles d'œufs
-- **Les déchets verts** : tontes de gazon, feuilles mortes, tailles de haies
-- **Les papiers non recyclables souillés** : essuie-tout, serviettes en papier
+- Définis par l’article L541-1-1 du *Code de l’Environnement*
+- Sans danger et biodégradable 
+- Issus de restes alimentaires ou de jardins et de parcs 
+- Produits par des particuliers, des entreprises, des collectivités
+
+> **Exemples** : les épluchures, vos coquilles d’oeuf, votre viande, votre tonte (de cheveux ou d’herbe)
 
 > ⚠️ À ne pas confondre avec les **déchets organiques** au sens large, qui incluent aussi le papier, le bois ou le textile.
 
+### Sources
+
+-  [Ministère de la Transition écologique](https://www.ecologie.gouv.fr/biodechets)
+
 ## Ce que deviennent nos déchets aujourd'hui
 
-En France, chaque habitant produit en moyenne **83 kg de biodéchets par an**, soit environ 30 % du contenu d'une poubelle grise. Pourtant la plupart finit à l'incinérateur ou en décharge.
+De nos jours: 
 
-| Mode de traitement | Part des déchets |
-|---|---|
-| Incinération | ~40 % |
-| Mise en décharge | ~25 % |
-| Recyclage matière | ~25 % |
-| Compostage / méthanisation | ~10 % |
+- **90,7% des décherts verts** sont bien triés grâce à des bennes déchets verts ou des collectes séparées de biodéchets
+- mais **3,7% des déchets alimentaires** sont bien triés.
 
-**Le problème :**
-- Brûlé, un biodéchet dégage du CO₂ sans valorisation optimale
-- En décharge, il produit du **méthane** — un gaz à effet de serre 25 fois plus puissant que le CO₂ — lors de sa décomposition anaérobie
+$\rightarrow$ Nos biodéchets alimentaires finissent dans la poubelle ménagère où ils représentent 32% du poids, en moyenne.
+
+Ils sont ensuite incinérés ou enfouis.
+
+### Sources
+
+- [Enquête  Modecom 2024, Ademe](https://librairie.ademe.fr/economie-circulaire-et-dechets/8784-modecom-2024-campagne-nationale-de-caracterisation-des-dechets-menagers-et-assimiles.html)
 
 ## Pourquoi trier ?
 
-1. **Réduire les émissions de gaz à effet de serre** : éviter la décomposition en décharge
-2. **Produire un amendement naturel** : le compost enrichit les sols, réduisant les besoins en engrais chimiques
-3. **Économiser de l'argent public** : le tri à la source réduit le coût de traitement des ordures ménagères (environ 100 €/tonne en moins)
-4. **Respecter la loi** : depuis janvier 2024, le tri des biodéchets est obligatoire pour tous en France
+### Parce que c’est BON pour l’ENVIRONNEMENT !
 
-## La loi AGEC et le tri obligatoire
+1 tonne de biodéchets incinérée correspond à 1 tonne de $CO^2$ émise (soit 1% des émissions des français).
 
-La loi **Anti-Gaspillage pour une Économie Circulaire (AGEC)** de 2020 a rendu le tri à la source des biodéchets obligatoire par étapes :
+Il s’agit donc d’un **accélérateur au réchauffement climatique**.
 
-- **2016** : obligatoire pour les gros producteurs (restaurants > 5 t/an, supermarchés, cantines)
-- **2024** : étendu à **tous les ménages** — les communes doivent proposer une solution
+Mais c’est aussi une source de :
+- pollution de *l’air*
+- pollution de *l’eau* 
+- pollution des *sols*
 
-Votre commune doit donc vous proposer un composteur, un point d'apport volontaire ou une collecte séparée. Si ce n'est pas encore le cas, renseignez-vous auprès de votre mairie !
+### Sources
+
+- [Ministère de la Transition écologique](https://mission-transition-ecologique.beta.gouv.fr/projets-entreprise/gestion-biodechets)
+
+## Comment trier ses déchets grâce à Composmart ?
+
+Composmart est conçu en trois parties : 
+
+- Les cours : Ils vous permettent d’acquérir toutes les connaissances autour des biodéchets ! Ils sont sous formats textuel et audio, et certains sont même appuyés par des vidéos.
+
+- Les jeux : Ils vous permettent de tester les connaissances que vous avez déjà acquises ! Vous pouvez grâce à eux vous entraîner, ou acquérir des connaissances pratiques.
+
+- La carte : Elle vous permet de passer à l’action directement ! Vous retrouverez les lieux de dépôts accessibles autour de vous et leurs règles associées ! Si vous connaissez un lieu qui n’est pas enregistré, ajoutez-le !
+
+

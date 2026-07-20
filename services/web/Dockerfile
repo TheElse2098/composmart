@@ -13,6 +13,11 @@ RUN a2enmod rewrite proxy proxy_http \
 # Front statique uniquement (pas d'API embarquée : elle vit dans les services dédiés).
 COPY services/web/front/ /var/www/html/
 
+# content/ (médias de cours : podcasts/vidéos déposés à côté du texte.md) servi
+# tel quel en statique, pour que /content/cours/<slug>/<fichier> soit joignable
+# (get.php, côté courses-api, construit cette URL — cf. content/README le cas échéant).
+COPY content/ /var/www/html/content/
+
 # Reverse-proxy /api/<domaine> → service correspondant.
 COPY services/web/api-proxy.conf /etc/apache2/conf-enabled/api-proxy.conf
 

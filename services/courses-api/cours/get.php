@@ -27,6 +27,19 @@ if (file_exists("$base/video.json")) {
 // podcast
 if (file_exists("$base/podcast.json")) {
     $data['podcast'] = json_decode(file_get_contents("$base/podcast.json"), true);
+} else {
+    // Pas de podcast.json : on cherche un fichier audio/vidéo déposé tel quel
+    // dans le dossier du cours (mp3/mp4/m4a/wav/ogg) et on le sert directement,
+    // sans métadonnées (titre/auteur/description).
+    $EXT_MEDIA = ['mp3', 'mp4', 'm4a', 'wav', 'ogg'];
+    $fichier = null;
+    foreach (glob("$base/*") as $f) {
+        $ext = strtolower(pathinfo($f, PATHINFO_EXTENSION));
+        if (in_array($ext, $EXT_MEDIA, true)) { $fichier = basename($f); break; }
+    }
+    if ($fichier) {
+        $data['podcast'] = ['url' => "/content/cours/$slug/" . rawurlencode($fichier)];
+    }
 }
 
 // quiz

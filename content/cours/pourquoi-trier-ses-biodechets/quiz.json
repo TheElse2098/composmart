@@ -1,27 +1,27 @@
 [
   {
-    "question": "Quelle proportion environ des poubelles grises françaises est composée de biodéchets ?",
-    "options": ["Environ 10 %", "Environ 30 %", "Environ 50 %", "Environ 70 %"],
-    "correct": 1
+    "question": "Quelle proportion des biodéchets alimentaires est bien triée ?",
+    "options": ["Plus de 90% ", "Entre 50 et 80%", "Entre 10 et 40%", "Moins de 5%"],
+    "correct": 3
+  },
+    {
+    "question": "Quelle proportion des biodéchets verts est bien triée ?",
+    "options": ["Plus de 90% ", "Entre 50 et 80%", "Entre 10 et 40%", "Moins de 5%"],
+    "correct": 0
   },
   {
     "question": "Qu'est-ce qu'un biodéchet ?",
     "options": [
-      "Tout déchet qui peut être brûlé",
+      "Tout déchet pouvant être incinéré",
       "Un déchet d'origine biologique capable de se décomposer naturellement",
       "Un déchet provenant uniquement des industries alimentaires",
-      "Un déchet recyclable comme le papier ou le verre"
+      "Un déchet vert issu de l'agriculture ou des jardins"
     ],
     "correct": 1
   },
   {
-    "question": "Quel gaz à effet de serre dangereux est produit par les biodéchets qui se décomposent en décharge ?",
-    "options": ["CO₂ uniquement", "Méthane (CH₄)", "Dioxyde de soufre (SO₂)", "Ozone (O₃)"],
-    "correct": 1
-  },
-  {
-    "question": "Depuis quelle date le tri des biodéchets est-il obligatoire pour tous les ménages français ?",
-    "options": ["1er janvier 2020", "1er janvier 2022", "1er janvier 2024", "1er janvier 2026"],
+    "question": "L'incinération de la tonne de biodéchet représente quelle proposrtion des émissions des français ?",
+    "options": ["0.1%", "0.4%", "1%", "3%"],
     "correct": 2
   }
 ]
