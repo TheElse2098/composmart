@@ -38,7 +38,7 @@ if (file_exists("$base/podcast.json")) {
         if (in_array($ext, $EXT_MEDIA, true)) { $fichier = basename($f); break; }
     }
     if ($fichier) {
-        $data['podcast'] = ['url' => "/content/cours/$slug/" . rawurlencode($fichier)];
+        $data['podcast'] = ['url' => "/content/cours/$slug/" . rawurlencode($fichier), 'auteur' => 'Composmart'];
     }
 }
 
