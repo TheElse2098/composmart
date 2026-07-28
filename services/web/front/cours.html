@@ -139,6 +139,20 @@
     .ch-btn { background: #fff; color: #f9a825; font-weight: 900; font-size: 0.8rem; padding: 8px 14px; border-radius: 12px; white-space: nowrap; font-family: 'Baloo 2', cursive; cursor: pointer; border: none; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+
+    /* ─────────── DESKTOP : grille au lieu du scroll horizontal ───────────
+       En mobile, .cards-scroll défile car les catégories dépassent la largeur
+       (voulu). En desktop, .page-content est déjà élargi (desktop.css,
+       max-width: 1100px) mais des tuiles à 150px fixes en flex laissent un
+       thème à 1-2 cours perdu dans le vide. La grille étire les tuiles pour
+       occuper la largeur réelle, quel que soit le nombre de cours du thème. */
+    @media (min-width: 900px) {
+      .cards-scroll {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        overflow-x: visible; padding: 8px 4px 12px;
+      }
+      .cours-card { width: auto; max-width: 260px; }
+    }
   </style>
   <link rel="stylesheet" href="/assets/css/desktop.css">
 </head>
