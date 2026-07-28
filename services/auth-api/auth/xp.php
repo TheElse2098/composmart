@@ -23,9 +23,13 @@ if ($expected === '' || !hash_equals($expected, $got)) {
     http_response_code(403); echo json_encode(['error' => 'forbidden']); exit;
 }
 
-$body  = json_decode(file_get_contents('php://input'), true);
-$uid   = (int)($body['uid'] ?? 0);
-$delta = (int)($body['delta'] ?? 0);
+$body   = json_decode(file_get_contents('php://input'), true);
+$uid    = (int)($body['uid'] ?? 0);
+$delta  = (int)($body['delta'] ?? 0);
+// source envoyée par games-api : 'jeu:<jeu_id>' (cf. score.php crediter_xp) — on
+// n'en garde que le nom du jeu pour le label du journal.
+$source = trim((string)($body['source'] ?? ''));
+$label  = strpos($source, 'jeu:') === 0 ? substr($source, 4) : null;
 if ($uid <= 0 || $delta <= 0 || $delta > 1000) {
     http_response_code(400); echo json_encode(['error' => 'bad_request']); exit;
 }
@@ -42,6 +46,10 @@ mysqli_query($c, "UPDATE users SET xp = xp + $delta WHERE id = $uid");
 if (mysqli_affected_rows($c) <= 0) {
     http_response_code(404); echo json_encode(['error' => 'user_not_found']); exit;
 }
+
+$stmt = mysqli_prepare($c, "INSERT INTO xp_log (user_id, delta, source, label) VALUES (?, ?, 'jeu', ?)");
+$stmt->bind_param('iis', $uid, $delta, $label);
+$stmt->execute();
 $row = mysqli_fetch_assoc(mysqli_query($c, "SELECT xp FROM users WHERE id = $uid"));
 $new_xp     = (int)$row['xp'];
 $new_niveau = floor($new_xp / 100) + 1;

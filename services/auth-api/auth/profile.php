@@ -29,16 +29,32 @@ if (!$u) { echo json_encode(['logged_in' => false]); exit; }
 // ── Cours terminés ─────────────────────────────────────────────────────────
 $completed = [];
 $res = mysqli_query($c,
-    "SELECT c.slug, c.titre, c.emoji
+    "SELECT c.slug, c.titre, c.emoji, up.completed_at
      FROM user_progress up JOIN cours c ON c.slug = up.cours_id
      WHERE up.user_id = $uid
      ORDER BY up.completed_at DESC");
 if ($res) {
     while ($row = mysqli_fetch_assoc($res)) {
-        $completed[] = ['slug' => $row['slug'], 'titre' => $row['titre'], 'emoji' => $row['emoji'] ?: '📘'];
+        $completed[] = ['slug' => $row['slug'], 'titre' => $row['titre'], 'emoji' => $row['emoji'] ?: '📘', 'completed_at' => $row['completed_at']];
     }
 }
 $total_cours = (int) (mysqli_fetch_row(mysqli_query($c, 'SELECT COUNT(*) FROM cours'))[0] ?? 0);
+
+// ── Historique XP (cours + jeux, pour l'histogramme sur la page profil) ─────
+// Ordre chronologique ASC : le front construit le cumul directement dans cet ordre.
+$xp_history = [];
+$stmt = mysqli_prepare($c, 'SELECT delta, source, label, created_at FROM xp_log WHERE user_id = ? ORDER BY created_at ASC LIMIT 200');
+$stmt->bind_param('i', $uid);
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    $xp_history[] = [
+        'delta'      => (int)$row['delta'],
+        'source'     => $row['source'],
+        'label'      => $row['label'],
+        'created_at' => $row['created_at'],
+    ];
+}
 
 // Les records/parties de jeux vivent dans db-games (games-api) : le front les
 // récupère via /api/jeux/score.php?action=profile et complète l'affichage +
@@ -70,4 +86,5 @@ echo json_encode([
     'rank'        => $rank,
     'cours'       => ['done' => $nb_done, 'total' => $total_cours, 'liste' => $completed],
     'badges'      => $badges,
+    'xp_history'  => $xp_history,
 ], JSON_UNESCAPED_UNICODE);

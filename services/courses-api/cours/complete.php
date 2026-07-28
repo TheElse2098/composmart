@@ -26,7 +26,7 @@ $c = mysqli_connect(
 if (!$c) { http_response_code(500); echo json_encode(['error' => 'DB error']); exit; }
 
 $s   = mysqli_real_escape_string($c, $slug);
-$res = mysqli_query($c, "SELECT xp_reward, nb_questions FROM cours WHERE slug='$s'");
+$res = mysqli_query($c, "SELECT titre, xp_reward, nb_questions FROM cours WHERE slug='$s'");
 $cours = mysqli_fetch_assoc($res);
 if (!$cours) { http_response_code(404); echo json_encode(['error' => 'cours introuvable']); exit; }
 
@@ -64,6 +64,11 @@ if ($user_id > 0) {
     mysqli_query($c, "INSERT IGNORE INTO user_progress (user_id, cours_id) VALUES ($user_id, '$s')");
     if (mysqli_affected_rows($c) > 0) {
         mysqli_query($c, "UPDATE users SET xp = xp + $xp_reward WHERE id = $user_id");
+
+        $stmt = mysqli_prepare($c, "INSERT INTO xp_log (user_id, delta, source, label) VALUES (?, ?, 'cours', ?)");
+        $titre = $cours['titre'] ?? $slug;
+        $stmt->bind_param('iis', $user_id, $xp_reward, $titre);
+        $stmt->execute();
 
         // Recalculer et mettre à jour le niveau (100 XP par niveau)
         $row = mysqli_fetch_assoc(mysqli_query($c, "SELECT xp FROM users WHERE id = $user_id"));

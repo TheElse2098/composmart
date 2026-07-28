@@ -61,6 +61,23 @@ CREATE TABLE `user_progress` (
   CONSTRAINT `progress_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ── JOURNAL D'XP (historique daté des gains, cours + jeux) ───────────────────
+-- Alimentée par complete.php (cours) et xp.php (jeux, via games-api → appel
+-- interne). Sert l'histogramme d'XP dans le temps sur la page profil.
+-- Ne remplace pas users.xp (source de vérité du total courant) : c'est un
+-- journal write-only, jamais relu pour recalculer le total.
+CREATE TABLE `xp_log` (
+  `id`         int          NOT NULL AUTO_INCREMENT,
+  `user_id`    int          NOT NULL,
+  `delta`      int          NOT NULL,
+  `source`     enum('cours','jeu') NOT NULL,
+  `label`      varchar(120) DEFAULT NULL,  -- titre du cours / nom du jeu, pour affichage
+  `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_date` (`user_id`, `created_at`),
+  CONSTRAINT `xp_log_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ── JOURNAL D'AUDIT (actions admin, écrit aussi par map-api via auth-api) ────
 CREATE TABLE `audit_log` (
   `id`          int          NOT NULL AUTO_INCREMENT,

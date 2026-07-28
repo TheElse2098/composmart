@@ -88,6 +88,22 @@
     .course-chip { display: inline-flex; align-items: center; gap: 6px; background: #e8f5e9; color: #1b5e20; border-radius: 20px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; margin: 0 6px 8px 0; }
     .course-empty { font-size: 0.82rem; color: #7aaa8a; font-style: italic; }
 
+    /* Historique des cours (timeline datée) */
+    .history-list { display: flex; flex-direction: column; gap: 2px; }
+    .history-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid #eef4ec; text-decoration: none; }
+    .history-row:last-child { border-bottom: none; }
+    .history-emoji { font-size: 1.15rem; flex-shrink: 0; }
+    .history-title { flex: 1; min-width: 0; font-size: 0.82rem; font-weight: 700; color: #1a3a25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-date { font-size: 0.7rem; color: #7aaa8a; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+
+    /* Histogramme XP (barres, une seule série) */
+    .xp-chart { display: flex; align-items: flex-end; gap: 3px; height: 90px; padding: 0 2px; }
+    .xp-chart-bar-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+    .xp-chart-bar { width: 100%; max-width: 24px; background: #2a9450; border-radius: 4px 4px 0 0; min-height: 3px; transition: opacity 0.15s; cursor: default; }
+    .xp-chart-bar:hover { opacity: 0.75; }
+    .xp-chart-label { font-size: 0.6rem; color: #7aaa8a; font-weight: 600; margin-top: 5px; white-space: nowrap; }
+    .xp-chart-empty { font-size: 0.82rem; color: #7aaa8a; font-style: italic; }
+
     /* ── Non connecté ── */
     .guest-title { font-size: 1.2rem; font-weight: 800; color: #1a3a25; margin-bottom: 8px; text-align: center; }
     .guest-sub { font-size: 0.9rem; color: #7aaa8a; text-align: center; margin-bottom: 32px; line-height: 1.5; }
@@ -121,6 +137,10 @@
     html.dark .game-row-name { color: #c8e6d4; }
     html.dark .game-row-best { color: #52b788; }
     html.dark .course-chip { background: #16291c; color: #7fc99a; }
+    html.dark .history-row { border-bottom-color: #243328; }
+    html.dark .history-title { color: #c8e6d4; }
+    html.dark .history-date, html.dark .xp-chart-label, html.dark .xp-chart-empty { color: #4a7a5a; }
+    html.dark .xp-chart-bar { background: #52b788; }
 
     /* Puce rang */
     .rank-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff9c4; color: #b26a00; border-radius: 20px; padding: 7px 16px; font-size: 0.82rem; font-weight: 800; text-decoration: none; margin-bottom: 24px; transition: background 0.15s; }
@@ -211,6 +231,46 @@
 
     function ordinal(n) { return n === 1 ? '1er' : n + 'e'; }
 
+    // completed_at/created_at viennent en 'YYYY-MM-DD HH:MM:SS' (datetime MySQL, sans
+    // fuseau) : on force le 'T' pour un parsing fiable cross-navigateur.
+    function parseSqlDate(s) { return new Date(String(s).replace(' ', 'T')); }
+    function formatDate(s) {
+      return parseSqlDate(s).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    }
+
+    // Agrège xp_history (liste d'événements datés, ASC) par jour civil, puis rend
+    // un histogramme en barres CSS. Une seule série → pas de légende (cf. skill dataviz).
+    function buildXpChartHtml(history) {
+      if (!history.length) {
+        return `<div class="sec-head">📈 XP dans le temps</div><div class="xp-chart-empty">Pas encore assez de données pour un graphique.</div>`;
+      }
+      const byDay = new Map();
+      history.forEach(function(ev) {
+        const day = String(ev.created_at).slice(0, 10); // 'YYYY-MM-DD'
+        byDay.set(day, (byDay.get(day) || 0) + ev.delta);
+      });
+      // Ordre chronologique garanti par le tri Map-insertion (history est déjà ASC).
+      const days = Array.from(byDay.keys());
+      // Trop de jours pour la largeur dispo (carte mobile) : on garde les 20 plus récents.
+      const shown = days.slice(-20);
+      const maxDelta = Math.max.apply(null, shown.map(function(d) { return byDay.get(d); }));
+
+      const bars = shown.map(function(d) {
+        const delta = byDay.get(d);
+        const pct = Math.max(4, Math.round(delta / maxDelta * 100)); // min visible même pour un petit gain
+        const dateObj = parseSqlDate(d + ' 00:00:00');
+        const label = dateObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' });
+        return `
+          <div class="xp-chart-bar-wrap">
+            <div class="xp-chart-bar" style="height:${pct}%" title="${label} — +${delta} XP"></div>
+          </div>`;
+      }).join('');
+
+      return `
+        <div class="sec-head">📈 XP dans le temps <span class="sec-count">${shown.length} derniers jours actifs</span></div>
+        <div class="xp-chart">${bars}</div>`;
+    }
+
     function renderProfile(u) {
       const initial = u.username.charAt(0).toUpperCase();
       document.getElementById('heroAvatar').textContent = initial;
@@ -267,8 +327,23 @@
           ? `<div>${u.cours.liste.map(c => `<a href="/cours/${esc(c.slug)}" class="course-chip">${c.emoji} ${esc(c.titre)}</a>`).join('')}</div>`
           : `<div class="course-empty">Aucun cours terminé pour l'instant. <a href="/cours">Commence ici !</a></div>`}`;
 
+      // Historique des cours (mêmes données que coursHtml, vue chronologique datée)
+      const historyHtml = `
+        <div class="sec-head">🕓 Historique des cours</div>
+        ${u.cours.liste.length
+          ? `<div class="history-list">${u.cours.liste.map(c => `
+              <a href="/cours/${esc(c.slug)}" class="history-row">
+                <span class="history-emoji">${c.emoji}</span>
+                <span class="history-title">${esc(c.titre)}</span>
+                <span class="history-date">${formatDate(c.completed_at)}</span>
+              </a>`).join('')}</div>`
+          : `<div class="course-empty">Rien pour l'instant.</div>`}`;
+
+      // Histogramme XP : agrégation par jour (delta cumulé du jour, cours + jeux confondus)
+      const xpChartHtml = buildXpChartHtml(u.xp_history || []);
+
       document.getElementById('cardContent').innerHTML =
-        statsHtml + badgesHtml + recordsHtml + coursHtml +
+        statsHtml + badgesHtml + recordsHtml + xpChartHtml + coursHtml + historyHtml +
         `<button class="btn-logout" id="btnLogout" style="margin-top:28px">Se déconnecter</button>`;
 
       document.getElementById('btnLogout').addEventListener('click', () => {
