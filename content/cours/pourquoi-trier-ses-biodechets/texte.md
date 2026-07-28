@@ -36,7 +36,7 @@ Ils sont ensuite incinérés ou enfouis.
 
 ### Parce que c’est BON pour l’ENVIRONNEMENT !
 
-1 tonne de biodéchets incinérée correspond à 1 tonne de $CO^2$ émise (soit 1% des émissions des français).
+1 tonne de biodéchets incinérée correspond à 1 tonne de $CO_2$ émise (soit 1% des émissions des français).
 
 Il s’agit donc d’un **accélérateur au réchauffement climatique**.
 
