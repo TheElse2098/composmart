@@ -140,17 +140,15 @@
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
 
-    /* ─────────── DESKTOP : plus de scroll, tuiles côte à côte ───────────
-       En mobile, .cards-scroll défile car les catégories dépassent la largeur
-       (voulu). En desktop, .page-content est déjà élargi (desktop.css,
-       max-width: 1100px) : on retire juste la contrainte de scroll pour que
-       les tuiles (taille inchangée, 150px) se posent l'une à côté de l'autre
-       et wrap sur plusieurs lignes si la catégorie en a beaucoup — sans les
-       étirer en pleine largeur. */
+    /* ─────────── DESKTOP : tuiles côte à côte, largeur remplie ───────────
+       En mobile, .cards-scroll défile (voulu). En desktop, .page-content est
+       déjà élargi (desktop.css, max-width: 1100px) : les tuiles grandissent
+       (flex-grow) pour occuper toute la largeur, mais restent flex (pas grid)
+       pour rester collées les unes aux autres via le gap existant, au lieu
+       d'être chacune centrée dans sa propre colonne avec du vide autour. */
     @media (min-width: 900px) {
-      .cards-scroll {
-        flex-wrap: wrap; overflow-x: visible; scroll-snap-type: none;
-      }
+      .cards-scroll { flex-wrap: wrap; overflow-x: visible; scroll-snap-type: none; }
+      .cours-card { flex: 1 1 170px; width: auto; max-width: 240px; }
     }
   </style>
   <link rel="stylesheet" href="/assets/css/desktop.css">
