@@ -95,12 +95,14 @@
     .history-title { flex: 1; min-width: 0; font-size: 0.82rem; font-weight: 700; color: #1a3a25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .history-date { font-size: 0.7rem; color: #7aaa8a; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 
-    /* Courbe XP f(n), n en jours (une seule série → pas de légende) */
-    .xp-curve { width: 100%; height: 90px; display: block; overflow: visible; }
+    /* Courbe de progression XP (une seule série → pas de légende) */
+    .xp-curve { width: 100%; height: 100px; display: block; overflow: visible; }
     .xp-curve-grid { stroke: #e3efe5; stroke-width: 1; }
     .xp-curve-area { fill: #2a9450; fill-opacity: 0.1; stroke: none; }
     .xp-curve-line { fill: none; stroke: #2a9450; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
     .xp-curve-end { fill: #2a9450; stroke: #fff; stroke-width: 2; }
+    .xp-curve-tick { font-size: 8px; fill: #7aaa8a; font-weight: 600; }
+    .xp-curve-end-label { font-size: 9px; font-weight: 800; fill: #1a3a25; }
     .xp-curve-axis { display: flex; justify-content: space-between; font-size: 0.65rem; color: #7aaa8a; font-weight: 600; margin-top: 4px; }
     .xp-chart-empty { font-size: 0.82rem; color: #7aaa8a; font-style: italic; }
 
@@ -143,6 +145,8 @@
     html.dark .xp-curve-area { fill: #52b788; }
     html.dark .xp-curve-line { stroke: #52b788; }
     html.dark .xp-curve-end { fill: #52b788; stroke: #1a2b1e; }
+    html.dark .xp-curve-tick { fill: #4a7a5a; }
+    html.dark .xp-curve-end-label { fill: #c8e6d4; }
 
     /* Puce rang */
     .rank-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff9c4; color: #b26a00; border-radius: 20px; padding: 7px 16px; font-size: 0.82rem; font-weight: 800; text-decoration: none; margin-bottom: 24px; transition: background 0.15s; }
@@ -241,12 +245,12 @@
     }
 
     // Agrège xp_history (liste d'événements datés, ASC) par jour civil pour obtenir
-    // f(n) = XP cumulée au jour n (n = jours écoulés depuis le premier gain), puis
-    // rend une courbe SVG (ligne + aire légère). Série unique → pas de légende,
-    // marqueur uniquement sur le point courant (cf. skill dataviz, marks-and-anatomy).
+    // l'XP cumulée jour par jour depuis le premier gain, puis rend une courbe SVG
+    // (ligne + aire légère). Série unique → pas de légende, dates réelles en axe X
+    // (cf. skill dataviz, marks-and-anatomy).
     function buildXpChartHtml(history) {
       if (!history.length) {
-        return `<div class="sec-head">📈 XP dans le temps</div><div class="xp-chart-empty">Pas encore assez de données pour un graphique.</div>`;
+        return `<div class="sec-head">📈 Progression de l'XP</div><div class="xp-chart-empty">Pas encore assez de données pour un graphique.</div>`;
       }
       const byDay = new Map();
       history.forEach(function(ev) {
@@ -255,8 +259,8 @@
       });
       const days = Array.from(byDay.keys()); // ASC (insertion suit history, déjà trié)
 
-      // f(n) : cumul jour par jour depuis le tout premier événement, en comblant les
-      // jours sans gain (sinon la courbe "saute" les jours creux au lieu de rester plate).
+      // Cumul jour par jour depuis le tout premier événement, en comblant les jours
+      // sans gain (sinon la courbe "saute" les jours creux au lieu de rester plate).
       const start = parseSqlDate(days[0] + ' 00:00:00');
       const end   = parseSqlDate(days[days.length - 1] + ' 00:00:00');
       const totalDays = Math.round((end - start) / 86400000);
@@ -271,7 +275,9 @@
         points.push({ n: n, xp: cumul, dateObj: d });
       }
 
-      const W = 300, H = 90, PAD_L = 4, PAD_R = 4, PAD_T = 8, PAD_B = 4;
+      // PAD_L élargi : place pour le tick "0". PAD_T élargi : place pour le label
+      // de valeur au-dessus du point final (toujours au sommet, cumul croissant).
+      const W = 300, H = 100, PAD_L = 28, PAD_R = 8, PAD_T = 18, PAD_B = 4;
       const maxXp = points[points.length - 1].xp || 1;
       const x = function(n) { return PAD_L + (n / Math.max(1, totalDays)) * (W - PAD_L - PAD_R); };
       const y = function(xp) { return PAD_T + (1 - xp / maxXp) * (H - PAD_T - PAD_B); };
@@ -280,23 +286,35 @@
       const areaPath = linePath + ` L${x(points[points.length - 1].n).toFixed(1)},${H - PAD_B} L${x(0).toFixed(1)},${H - PAD_B} Z`;
 
       const last = points[points.length - 1];
+      const fmtDate = function(d) { return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }); };
       const dotsHtml = points.map(function(p) {
-        const label = p.dateObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
         // Cercle transparent plus grand que le point visible : cible de survol confortable.
         return `<circle cx="${x(p.n).toFixed(1)}" cy="${y(p.xp).toFixed(1)}" r="7" fill="transparent">`
-          + `<title>Jour ${p.n} (${label}) — ${p.xp} XP</title></circle>`;
+          + `<title>${fmtDate(p.dateObj)} — ${p.xp} XP</title></circle>`;
       }).join('');
 
+      // Échelle Y : seul "0" en bas (le haut affiche déjà le max via le label du
+      // point final ci-dessous — le cumul étant croissant, ce point EST le max,
+      // donc un 2e tick en haut ferait doublon).
+      const yAxisHtml = `<text class="xp-curve-tick" x="${PAD_L - 6}" y="${H - PAD_B}" text-anchor="end" dominant-baseline="middle">0</text>`;
+
+      // Label direct sur le point final (recommandé pour une ligne : valeur à l'extrémité).
+      const endLabelX = x(last.n) - 4;
+      const endLabelHtml = `<text class="xp-curve-end-label" x="${endLabelX.toFixed(1)}" y="${(y(last.xp) - 8).toFixed(1)}" text-anchor="end">${last.xp} XP</text>`;
+
       return `
-        <div class="sec-head">📈 XP dans le temps <span class="sec-count">f(n), n en jours</span></div>
-        <svg class="xp-curve" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Courbe d'XP cumulée sur ${totalDays} jours, de 0 à ${maxXp} XP">
+        <div class="sec-head">📈 Progression de l'XP</div>
+        <svg class="xp-curve" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Courbe d'XP cumulée du ${fmtDate(points[0].dateObj)} au ${fmtDate(last.dateObj)}, de 0 à ${maxXp} XP">
           <line class="xp-curve-grid" x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" />
+          <line class="xp-curve-grid" x1="${PAD_L}" y1="${PAD_T}" x2="${W - PAD_R}" y2="${PAD_T}" />
+          ${yAxisHtml}
           <path class="xp-curve-area" d="${areaPath}" />
           <path class="xp-curve-line" d="${linePath}" />
           ${dotsHtml}
           <circle class="xp-curve-end" cx="${x(last.n).toFixed(1)}" cy="${y(last.xp).toFixed(1)}" r="4" />
+          ${endLabelHtml}
         </svg>
-        <div class="xp-curve-axis"><span>Jour 0</span><span>Jour ${totalDays}</span></div>`;
+        <div class="xp-curve-axis"><span>${fmtDate(points[0].dateObj)}</span><span>${fmtDate(last.dateObj)}</span></div>`;
     }
 
     function renderProfile(u) {
