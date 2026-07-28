@@ -7,6 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked-katex-extension@5.1.10/lib/index.umd.js"></script>
   <title>CompoSmart – Cours</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap');
@@ -289,6 +292,9 @@
   </div>
 
   <script>
+    // Notation math dans les cours : $inline$ et $$bloc$$ (cf. texte.md des cours).
+    marked.use(markedKatex({ throwOnError: false }));
+
     var slug = location.pathname.replace(/^\/cours\//, '').replace(/\/$/, '');
     if (!slug) { document.body.innerHTML = '<p style="padding:40px;color:#c0392b">Cours introuvable.</p>'; }
 
