@@ -231,7 +231,7 @@
         </div>
         <div class="xp-bar-wrap"><div class="xp-bar" style="width:${pct}%"></div></div>
         <div class="xp-label">${xpInLevel} / ${xpToNext} XP pour le niveau ${u.niveau + 1}</div>
-        <a href="/classement" class="rank-chip">🏆 ${ordinal(u.rank)} au classement général</a>`;
+        ${u.isAdmin ? '' : `<a href="/classement" class="rank-chip">🏆 ${ordinal(u.rank)} au classement général</a>`}`;
 
       // Badges
       const badgesHtml = `

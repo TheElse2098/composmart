@@ -57,7 +57,7 @@ $badges = [
     ['emoji' => '🔥', 'label' => 'Niveau 10',        'desc' => 'Atteindre le niveau 10',    'unlocked' => $niveau >= 10],
 ];
 
-$rank_row = mysqli_fetch_row(mysqli_query($c, 'SELECT COUNT(*) FROM users WHERE xp > ' . (int)$u['xp']));
+$rank_row = mysqli_fetch_row(mysqli_query($c, 'SELECT COUNT(*) FROM users WHERE isAdmin = 0 AND xp > ' . (int)$u['xp']));
 $rank = (int)($rank_row[0] ?? 0) + 1;
 
 echo json_encode([
