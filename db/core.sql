@@ -20,12 +20,13 @@ CREATE TABLE `users` (
 
 -- ── COURS ──────────────────────────────────────────────────────────────────
 CREATE TABLE `themes` (
-  `id`      int          NOT NULL AUTO_INCREMENT,
-  `slug`    varchar(80)  NOT NULL,
-  `nom`     varchar(120) NOT NULL,
-  `emoji`   varchar(10)  DEFAULT NULL,
-  `couleur` varchar(80)  DEFAULT NULL,
-  `ordre`   int          NOT NULL DEFAULT 0,
+  `id`          int          NOT NULL AUTO_INCREMENT,
+  `slug`        varchar(80)  NOT NULL,
+  `nom`         varchar(120) NOT NULL,
+  `emoji`       varchar(10)  DEFAULT NULL,
+  `couleur`     varchar(80)  DEFAULT NULL,
+  `description` varchar(200) DEFAULT NULL,
+  `ordre`       int          NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `slug` (`slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

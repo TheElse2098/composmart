@@ -23,7 +23,7 @@ html.dark .drawer-divider { background: #2a3d2e; }
 
 /* ── Titres & textes communs ── */
 html.dark h1, html.dark h2, html.dark h3 { color: #c8e6d4; }
-html.dark .hero-sub, html.dark .step-sub, html.dark .progress-text { color: #7ab88e; }
+html.dark .hero-sub, html.dark .step-sub, html.dark .progress-text, html.dark .cat-desc { color: #7ab88e; }
 html.dark .cat-title, html.dark .sec-title, html.dark .section-title { color: #c8e6d4; }
 
 /* ── Badges/pills ── */

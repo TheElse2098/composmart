@@ -49,10 +49,11 @@
     .page-content { width: 100%; max-width: 600px; padding: 0 16px; }
 
     .cat-section { margin-bottom: 28px; }
-    .cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding: 0 4px; }
+    .cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; padding: 0 4px; }
     .cat-icon { font-size: 1.6rem; }
     .cat-title { font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 900; color: #1a3a25; }
     .cat-badge { margin-left: auto; background: #c8e6c9; color: #1a3a25; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; }
+    .cat-desc { font-size: 0.8rem; color: #4a7a5a; font-weight: 600; padding: 0 4px; margin-bottom: 10px; line-height: 1.4; }
 
     /* Horizontal scroll cards */
     .cards-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 8px 4px 12px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
@@ -303,12 +304,14 @@
           var progressBadge = user && doneCount > 0
             ? '<div class="cat-badge" style="background:#a8e6bf;color:#1a3a25">' + doneCount + '/' + theme.cours.length + ' fini' + (doneCount > 1 ? 's' : '') + '</div>'
             : '<div class="cat-badge">' + theme.cours.length + ' cours</div>';
+          var descHtml = theme.description ? '<div class="cat-desc">' + theme.description + '</div>' : '';
           return '<div class="cat-section">'
             + '<div class="cat-header">'
             + '<div class="cat-icon">' + (theme.emoji || '📂') + '</div>'
             + '<div class="cat-title">' + theme.nom + '</div>'
             + progressBadge
             + '</div>'
+            + descHtml
             + '<div class="cards-scroll">' + cards + '</div>'
             + '</div>';
         }).join('');

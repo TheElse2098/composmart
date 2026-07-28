@@ -2,5 +2,6 @@
   "nom": "Science",
   "emoji": "🔬",
   "couleur": "linear-gradient(135deg,#1565c0,#1e88e5)",
+  "description": "Ce qui se passe vraiment dans le tas : micro-organismes, vers de terre, réactions chimiques.",
   "ordre": 2
 }

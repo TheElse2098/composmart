@@ -68,20 +68,23 @@ foreach ($dirs as $meta_file) {
             $theme_nom    = $theme_slug;
             $theme_emoji  = '📂';
             $theme_couleur = 'linear-gradient(135deg,#1e6e3e,#2d9959)';
+            $theme_description = null;
             $theme_ordre  = 0;
             if (file_exists($theme_meta_file)) {
                 $tm = json_decode(file_get_contents($theme_meta_file), true);
                 $theme_nom    = $tm['nom']    ?? $theme_slug;
                 $theme_emoji  = $tm['emoji']  ?? '📂';
                 $theme_couleur = $tm['couleur'] ?? $theme_couleur;
+                $theme_description = $tm['description'] ?? null;
                 $theme_ordre  = intval($tm['ordre'] ?? 0);
             }
             $tn = mysqli_real_escape_string($c, $theme_nom);
             $te = mysqli_real_escape_string($c, $theme_emoji);
             $tc = mysqli_real_escape_string($c, $theme_couleur);
-            mysqli_query($c, "INSERT INTO themes (slug,nom,emoji,couleur,ordre)
-                              VALUES ('$ts','$tn','$te','$tc',$theme_ordre)
-                              ON DUPLICATE KEY UPDATE nom='$tn',emoji='$te',couleur='$tc',ordre=$theme_ordre");
+            $td = $theme_description !== null ? "'" . mysqli_real_escape_string($c, $theme_description) . "'" : 'NULL';
+            mysqli_query($c, "INSERT INTO themes (slug,nom,emoji,couleur,description,ordre)
+                              VALUES ('$ts','$tn','$te','$tc',$td,$theme_ordre)
+                              ON DUPLICATE KEY UPDATE nom='$tn',emoji='$te',couleur='$tc',description=$td,ordre=$theme_ordre");
             $res2 = mysqli_query($c, "SELECT id FROM themes WHERE slug='$ts'");
             $themes_cache[$theme_slug] = mysqli_fetch_assoc($res2)['id'];
         }
