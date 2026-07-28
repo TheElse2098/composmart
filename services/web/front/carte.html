@@ -464,10 +464,23 @@
         // ── BURGER ──
         // ── MAP ──
         var map = L.map('map').setView([46.785016, 7.670405], 6);
+        // Fond clair (OSM standard) / sombre (CARTO Dark Matter) selon le thème du site,
+        // basculé en direct sur l'event 'themechange' émis par theme.js (pas de reload).
         var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         });
-        osmLayer.addTo(map);
+        var darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        });
+        (document.documentElement.classList.contains('dark') ? darkLayer : osmLayer).addTo(map);
+        document.addEventListener('themechange', function (e) {
+            var next = e.detail.dark ? darkLayer : osmLayer;
+            var prev = e.detail.dark ? osmLayer : darkLayer;
+            if (map.hasLayer(prev)) map.removeLayer(prev);
+            if (!map.hasLayer(next)) next.addTo(map);
+        });
 
         var fsControl = L.control.fullscreen();
         map.addControl(fsControl);

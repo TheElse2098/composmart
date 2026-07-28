@@ -11,6 +11,9 @@
         var dark = document.documentElement.classList.toggle('dark');
         localStorage.setItem('theme', dark ? 'dark' : 'light');
         sync();
+        // Permet aux pages avec du contenu dépendant du thème en JS (ex: carte.html
+        // et son fond de tuiles) de réagir sans recharger la page.
+        document.dispatchEvent(new CustomEvent('themechange', { detail: { dark: dark } }));
     }
 
     // Attache directe sur le bouton, une seule fois (dataset garde-fou anti-doublon).
