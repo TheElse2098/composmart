@@ -85,7 +85,6 @@
     .game-row-best.none { color: #bbb; font-size: 0.78rem; font-weight: 700; }
 
     /* Cours terminés */
-    .course-chip { display: inline-flex; align-items: center; gap: 6px; background: #e8f5e9; color: #1b5e20; border-radius: 20px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; margin: 0 6px 8px 0; }
     .course-empty { font-size: 0.82rem; color: #7aaa8a; font-style: italic; }
 
     /* Historique des cours (timeline datée) */
@@ -96,12 +95,13 @@
     .history-title { flex: 1; min-width: 0; font-size: 0.82rem; font-weight: 700; color: #1a3a25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .history-date { font-size: 0.7rem; color: #7aaa8a; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
 
-    /* Histogramme XP (barres, une seule série) */
-    .xp-chart { display: flex; align-items: flex-end; gap: 3px; height: 90px; padding: 0 2px; }
-    .xp-chart-bar-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
-    .xp-chart-bar { width: 100%; max-width: 24px; background: #2a9450; border-radius: 4px 4px 0 0; min-height: 3px; transition: opacity 0.15s; cursor: default; }
-    .xp-chart-bar:hover { opacity: 0.75; }
-    .xp-chart-label { font-size: 0.6rem; color: #7aaa8a; font-weight: 600; margin-top: 5px; white-space: nowrap; }
+    /* Courbe XP f(n), n en jours (une seule série → pas de légende) */
+    .xp-curve { width: 100%; height: 90px; display: block; overflow: visible; }
+    .xp-curve-grid { stroke: #e3efe5; stroke-width: 1; }
+    .xp-curve-area { fill: #2a9450; fill-opacity: 0.1; stroke: none; }
+    .xp-curve-line { fill: none; stroke: #2a9450; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+    .xp-curve-end { fill: #2a9450; stroke: #fff; stroke-width: 2; }
+    .xp-curve-axis { display: flex; justify-content: space-between; font-size: 0.65rem; color: #7aaa8a; font-weight: 600; margin-top: 4px; }
     .xp-chart-empty { font-size: 0.82rem; color: #7aaa8a; font-style: italic; }
 
     /* ── Non connecté ── */
@@ -136,11 +136,13 @@
     html.dark .game-row:hover { background: #1e2d22; }
     html.dark .game-row-name { color: #c8e6d4; }
     html.dark .game-row-best { color: #52b788; }
-    html.dark .course-chip { background: #16291c; color: #7fc99a; }
     html.dark .history-row { border-bottom-color: #243328; }
     html.dark .history-title { color: #c8e6d4; }
-    html.dark .history-date, html.dark .xp-chart-label, html.dark .xp-chart-empty { color: #4a7a5a; }
-    html.dark .xp-chart-bar { background: #52b788; }
+    html.dark .history-date, html.dark .xp-chart-empty, html.dark .xp-curve-axis { color: #4a7a5a; }
+    html.dark .xp-curve-grid { stroke: #243328; }
+    html.dark .xp-curve-area { fill: #52b788; }
+    html.dark .xp-curve-line { stroke: #52b788; }
+    html.dark .xp-curve-end { fill: #52b788; stroke: #1a2b1e; }
 
     /* Puce rang */
     .rank-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff9c4; color: #b26a00; border-radius: 20px; padding: 7px 16px; font-size: 0.82rem; font-weight: 800; text-decoration: none; margin-bottom: 24px; transition: background 0.15s; }
@@ -238,8 +240,10 @@
       return parseSqlDate(s).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     }
 
-    // Agrège xp_history (liste d'événements datés, ASC) par jour civil, puis rend
-    // un histogramme en barres CSS. Une seule série → pas de légende (cf. skill dataviz).
+    // Agrège xp_history (liste d'événements datés, ASC) par jour civil pour obtenir
+    // f(n) = XP cumulée au jour n (n = jours écoulés depuis le premier gain), puis
+    // rend une courbe SVG (ligne + aire légère). Série unique → pas de légende,
+    // marqueur uniquement sur le point courant (cf. skill dataviz, marks-and-anatomy).
     function buildXpChartHtml(history) {
       if (!history.length) {
         return `<div class="sec-head">📈 XP dans le temps</div><div class="xp-chart-empty">Pas encore assez de données pour un graphique.</div>`;
@@ -249,26 +253,50 @@
         const day = String(ev.created_at).slice(0, 10); // 'YYYY-MM-DD'
         byDay.set(day, (byDay.get(day) || 0) + ev.delta);
       });
-      // Ordre chronologique garanti par le tri Map-insertion (history est déjà ASC).
-      const days = Array.from(byDay.keys());
-      // Trop de jours pour la largeur dispo (carte mobile) : on garde les 20 plus récents.
-      const shown = days.slice(-20);
-      const maxDelta = Math.max.apply(null, shown.map(function(d) { return byDay.get(d); }));
+      const days = Array.from(byDay.keys()); // ASC (insertion suit history, déjà trié)
 
-      const bars = shown.map(function(d) {
-        const delta = byDay.get(d);
-        const pct = Math.max(4, Math.round(delta / maxDelta * 100)); // min visible même pour un petit gain
-        const dateObj = parseSqlDate(d + ' 00:00:00');
-        const label = dateObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'numeric' });
-        return `
-          <div class="xp-chart-bar-wrap">
-            <div class="xp-chart-bar" style="height:${pct}%" title="${label} — +${delta} XP"></div>
-          </div>`;
+      // f(n) : cumul jour par jour depuis le tout premier événement, en comblant les
+      // jours sans gain (sinon la courbe "saute" les jours creux au lieu de rester plate).
+      const start = parseSqlDate(days[0] + ' 00:00:00');
+      const end   = parseSqlDate(days[days.length - 1] + ' 00:00:00');
+      const totalDays = Math.round((end - start) / 86400000);
+      let cumul = 0;
+      const points = []; // { n, xp, dateObj }
+      for (let n = 0; n <= totalDays; n++) {
+        const d = new Date(start.getTime() + n * 86400000);
+        // Clé locale (pas toISOString(), qui convertit en UTC et peut décaler le
+        // jour) — doit matcher le format 'YYYY-MM-DD' des clés de byDay.
+        const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        cumul += byDay.get(key) || 0;
+        points.push({ n: n, xp: cumul, dateObj: d });
+      }
+
+      const W = 300, H = 90, PAD_L = 4, PAD_R = 4, PAD_T = 8, PAD_B = 4;
+      const maxXp = points[points.length - 1].xp || 1;
+      const x = function(n) { return PAD_L + (n / Math.max(1, totalDays)) * (W - PAD_L - PAD_R); };
+      const y = function(xp) { return PAD_T + (1 - xp / maxXp) * (H - PAD_T - PAD_B); };
+
+      const linePath = points.map(function(p, i) { return (i === 0 ? 'M' : 'L') + x(p.n).toFixed(1) + ',' + y(p.xp).toFixed(1); }).join(' ');
+      const areaPath = linePath + ` L${x(points[points.length - 1].n).toFixed(1)},${H - PAD_B} L${x(0).toFixed(1)},${H - PAD_B} Z`;
+
+      const last = points[points.length - 1];
+      const dotsHtml = points.map(function(p) {
+        const label = p.dateObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+        // Cercle transparent plus grand que le point visible : cible de survol confortable.
+        return `<circle cx="${x(p.n).toFixed(1)}" cy="${y(p.xp).toFixed(1)}" r="7" fill="transparent">`
+          + `<title>Jour ${p.n} (${label}) — ${p.xp} XP</title></circle>`;
       }).join('');
 
       return `
-        <div class="sec-head">📈 XP dans le temps <span class="sec-count">${shown.length} derniers jours actifs</span></div>
-        <div class="xp-chart">${bars}</div>`;
+        <div class="sec-head">📈 XP dans le temps <span class="sec-count">f(n), n en jours</span></div>
+        <svg class="xp-curve" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Courbe d'XP cumulée sur ${totalDays} jours, de 0 à ${maxXp} XP">
+          <line class="xp-curve-grid" x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" />
+          <path class="xp-curve-area" d="${areaPath}" />
+          <path class="xp-curve-line" d="${linePath}" />
+          ${dotsHtml}
+          <circle class="xp-curve-end" cx="${x(last.n).toFixed(1)}" cy="${y(last.xp).toFixed(1)}" r="4" />
+        </svg>
+        <div class="xp-curve-axis"><span>Jour 0</span><span>Jour ${totalDays}</span></div>`;
     }
 
     function renderProfile(u) {
@@ -320,16 +348,9 @@
               : `<div class="game-row-best none">Jouer →</div>`}
           </a>`).join('')}`;
 
-      // Cours terminés
-      const coursHtml = `
-        <div class="sec-head">📚 Cours terminés <span class="sec-count">${u.cours.done} / ${u.cours.total}</span></div>
-        ${u.cours.liste.length
-          ? `<div>${u.cours.liste.map(c => `<a href="/cours/${esc(c.slug)}" class="course-chip">${c.emoji} ${esc(c.titre)}</a>`).join('')}</div>`
-          : `<div class="course-empty">Aucun cours terminé pour l'instant. <a href="/cours">Commence ici !</a></div>`}`;
-
-      // Historique des cours (mêmes données que coursHtml, vue chronologique datée)
+      // Historique des cours (chronologique, daté)
       const historyHtml = `
-        <div class="sec-head">🕓 Historique des cours</div>
+        <div class="sec-head">📚 Cours terminés <span class="sec-count">${u.cours.done} / ${u.cours.total}</span></div>
         ${u.cours.liste.length
           ? `<div class="history-list">${u.cours.liste.map(c => `
               <a href="/cours/${esc(c.slug)}" class="history-row">
@@ -337,13 +358,13 @@
                 <span class="history-title">${esc(c.titre)}</span>
                 <span class="history-date">${formatDate(c.completed_at)}</span>
               </a>`).join('')}</div>`
-          : `<div class="course-empty">Rien pour l'instant.</div>`}`;
+          : `<div class="course-empty">Aucun cours terminé pour l'instant. <a href="/cours">Commence ici !</a></div>`}`;
 
       // Histogramme XP : agrégation par jour (delta cumulé du jour, cours + jeux confondus)
       const xpChartHtml = buildXpChartHtml(u.xp_history || []);
 
       document.getElementById('cardContent').innerHTML =
-        statsHtml + badgesHtml + recordsHtml + xpChartHtml + coursHtml + historyHtml +
+        statsHtml + badgesHtml + recordsHtml + xpChartHtml + historyHtml +
         `<button class="btn-logout" id="btnLogout" style="margin-top:28px">Se déconnecter</button>`;
 
       document.getElementById('btnLogout').addEventListener('click', () => {
