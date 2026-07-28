@@ -64,8 +64,9 @@ if ($action === 'save') {
         exit;
     }
     $uid = (int)$_SESSION['user_id'];
-    // username dénormalisé (users vit dans db-core, pas joignable depuis games-api)
-    $uname = $_SESSION['username'] ?? '';
+    // username/is_admin dénormalisés (users vit dans db-core, pas joignable depuis games-api)
+    $uname    = $_SESSION['username'] ?? '';
+    $is_admin = is_admin_session() ? 1 : 0;
 
     // Record AVANT ce score : sert de base au palier d'XP déjà acquis.
     $stmt = mysqli_prepare($conn, 'SELECT MAX(score) AS best FROM scores WHERE user_id = ? AND jeu_id = ?');
@@ -74,8 +75,8 @@ if ($action === 'save') {
     $row = $stmt->get_result()->fetch_assoc();
     $ancien_best = ($row && $row['best'] !== null) ? (int)$row['best'] : 0;
 
-    $stmt = mysqli_prepare($conn, 'INSERT INTO scores (user_id, username, jeu_id, score) VALUES (?, ?, ?, ?)');
-    $stmt->bind_param('issi', $uid, $uname, $jeu_id, $score);
+    $stmt = mysqli_prepare($conn, 'INSERT INTO scores (user_id, username, is_admin, jeu_id, score) VALUES (?, ?, ?, ?, ?)');
+    $stmt->bind_param('isisi', $uid, $uname, $is_admin, $jeu_id, $score);
     $stmt->execute();
 
     $best = max($ancien_best, $score);
@@ -119,11 +120,13 @@ if ($action === 'infos') {
     }
 
     // username dénormalisé : plus de JOIN users (table dans db-core).
+    // is_admin exclu du top public (HAVING : un seul score marqué admin suffit à exclure le joueur).
     $stmt = mysqli_prepare($conn,
         'SELECT s.username, MAX(s.score) AS best
          FROM scores s
          WHERE s.jeu_id = ?
          GROUP BY s.user_id, s.username
+         HAVING MAX(s.is_admin) = 0
          ORDER BY best DESC, MIN(s.played_at) ASC
          LIMIT 5');
     $stmt->bind_param('s', $jeu_id);

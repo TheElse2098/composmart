@@ -8,6 +8,7 @@ CREATE TABLE `scores` (
   `id`        int          NOT NULL AUTO_INCREMENT,
   `user_id`   int          NOT NULL,
   `username`  varchar(100) NOT NULL DEFAULT '',  -- dénormalisé depuis db-core
+  `is_admin`  tinyint(1)   NOT NULL DEFAULT 0,   -- dénormalisé depuis db-core, exclu des tops publics
   `jeu_id`    varchar(100) NOT NULL,
   `score`     int          NOT NULL,
   `played_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,

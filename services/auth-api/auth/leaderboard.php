@@ -15,8 +15,8 @@ $c = mysqli_connect(
 );
 if (!$c) { echo json_encode(['error' => 'db']); exit; }
 
-// Top 10 par XP
-$res = mysqli_query($c, 'SELECT id, username, xp, niveau FROM users ORDER BY xp DESC, created_at ASC LIMIT 10');
+// Top 10 par XP (comptes admin exclus : pas des joueurs, faussent le classement)
+$res = mysqli_query($c, 'SELECT id, username, xp, niveau FROM users WHERE isAdmin = 0 ORDER BY xp DESC, created_at ASC LIMIT 10');
 $top = [];
 while ($row = mysqli_fetch_assoc($res)) {
     $top[] = ['id' => (int)$row['id'], 'username' => $row['username'], 'xp' => (int)$row['xp'], 'niveau' => (int)$row['niveau']];
@@ -31,7 +31,7 @@ if (!empty($_SESSION['user_id'])) {
     $stmt->execute();
     $u = $stmt->get_result()->fetch_assoc();
     if ($u) {
-        $rank_row = mysqli_fetch_row(mysqli_query($c, "SELECT COUNT(*) FROM users WHERE xp > " . (int)$u['xp']));
+        $rank_row = mysqli_fetch_row(mysqli_query($c, "SELECT COUNT(*) FROM users WHERE isAdmin = 0 AND xp > " . (int)$u['xp']));
         $rank = (int)($rank_row[0] ?? 0) + 1;
         $me = ['username' => $u['username'], 'xp' => (int)$u['xp'], 'niveau' => (int)$u['niveau'], 'rank' => $rank, 'id' => $uid];
     }
