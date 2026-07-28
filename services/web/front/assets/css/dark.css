@@ -95,6 +95,13 @@ html.dark .leaflet-popup-tip { background: #1e2d22 !important; color: #c8e6d4 !i
 /* Icône fullscreen : PNG noir opaque sans variante claire, on l'inverse en dark. */
 html.dark .fullscreen-icon { filter: invert(1) brightness(1.6); }
 
+/* Fond de carte en dark : on inverse les tuiles OSM (au lieu d'un tile layer alternatif
+   type CARTO Dark Matter) pour conserver le relief/les teintes du terrain, comme en
+   light mode — seul le calque des tuiles est filtré, pas les marqueurs/popups par-dessus. */
+html.dark .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+
 /* Échelle graphique (distances en bas à gauche) : par défaut fond blanc + texte noir,
    fixes quel que soit le thème du site → on les aligne sur les autres contrôles. */
 html.dark .leaflet-control-scale-line {
