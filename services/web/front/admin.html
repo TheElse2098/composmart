@@ -119,6 +119,9 @@
     .user-empty { text-align: center; color: #999; font-size: 0.82rem; padding: 16px; }
 
     /* Journal d'audit */
+    .audit-filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .audit-type-select, .audit-date-input { border: 1.5px solid #d4e6d8; border-radius: 10px; padding: 7px 12px; font-size: 0.8rem; font-family: inherit; background: #fff; color: #1a3a25; outline: none; cursor: pointer; }
+    .audit-type-select:focus, .audit-date-input:focus { border-color: #1e6e3e; }
     .audit-item { background: #fff; border-radius: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.04); margin-bottom: 7px; overflow: hidden; }
     .audit-head { display: flex; align-items: center; gap: 10px; padding: 9px 13px; font-size: 0.8rem; color: #1a3a25; cursor: pointer; transition: background 0.12s; }
     .audit-head:hover { background: #f3f8f3; }
@@ -160,6 +163,8 @@
     html.dark .act-delete { background: #3d1a1a; color: #ef9a9a; }
     html.dark .user-search { background: #16211a; border-color: #2b3c30; color: #e8f5ee; }
     html.dark .user-search:focus { border-color: #52b788; }
+    html.dark .audit-type-select, html.dark .audit-date-input { background: #16211a; border-color: #2b3c30; color: #e8f5ee; }
+    html.dark .audit-type-select:focus, html.dark .audit-date-input:focus { border-color: #52b788; }
     html.dark .tab { background: #16211a; color: #7ab88e; }
     html.dark .tab.active { background: #2d9959; color: #fff; border-color: #2d9959; }
     html.dark .tab:hover:not(.active) { border-color: #52b788; color: #52b788; }
@@ -244,7 +249,11 @@
 
       <!-- Journal d'audit -->
       <div class="tab-content" id="tab-audit">
-        <div class="section-title">📜 Journal d'activité</div>
+        <div class="section-title">📜 Journal d'activité <span id="auditCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
+        <div class="audit-filters">
+          <select id="auditTypeFilter" class="audit-type-select"><option value="tous">Toutes les actions</option></select>
+          <input id="auditDateFilter" class="audit-date-input" type="date" title="Depuis le" />
+        </div>
         <div id="auditList"></div>
       </div>
 
@@ -316,11 +325,11 @@
         if (!d || d.error) { showDenied(); return; }
         fillCrossBaseStats(d.stats).then(renderStats);
         loadUsers('');
-        renderAudit(d.audit || []);
         document.getElementById('loader').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         chargerSignalements();
         chargerMessages();
+        chargerAudit();
         loadEvolution('30d');
       })
       .catch(() => {});
@@ -492,12 +501,10 @@
       fetch('/api/admin/stats.php')
         .then(r => r.json())
         .then(d => {
-          if (d && d.stats) {
-            fillCrossBaseStats(d.stats).then(renderStats);
-            renderAudit(d.audit || []);
-          }
+          if (d && d.stats) fillCrossBaseStats(d.stats).then(renderStats);
         })
         .catch(() => {});
+      chargerAudit();
       loadUsers(document.getElementById('userSearch').value);
     }
 
@@ -506,6 +513,7 @@
       compost_cree:        { icon: '📍', txt: 'Composteur ajouté' },
       compost_modifie:     { icon: '✏️', txt: 'Composteur modifié' },
       compost_supprime:    { icon: '🗑️', txt: 'Composteur supprimé' },
+      signalement_cree:    { icon: '🚩', txt: 'Signalement créé' },
       signalement_resolu:  { icon: '✓', txt: 'Signalement résolu' },
       signalement_rejete:  { icon: '✗', txt: 'Signalement rejeté' },
       user_promu:          { icon: '⬆️', txt: 'Utilisateur promu admin' },
@@ -561,10 +569,48 @@
       return rows;
     }
 
-    function renderAudit(liste) {
+    // ── Journal d'audit (filtre par type d'action + pagination) ──
+    let auditType = 'tous';
+    let auditDepuis = '';
+    let auditPage = 1;
+    let auditTypesConnus = false;
+
+    function chargerAudit() {
+      const params = new URLSearchParams({ type: auditType, page: auditPage });
+      if (auditDepuis) params.set('depuis', auditDepuis);
+      fetch('/api/admin/audit.php?' + params.toString())
+        .then(r => r.json())
+        .then(d => renderAudit(d || {}))
+        .catch(() => renderAudit({ entries: [], types: [], page: 1, pages: 1, total: 0 }));
+    }
+
+    document.getElementById('auditTypeFilter').addEventListener('change', e => {
+      auditType = e.target.value; auditPage = 1; chargerAudit();
+    });
+    document.getElementById('auditDateFilter').addEventListener('change', e => {
+      auditDepuis = e.target.value; auditPage = 1; chargerAudit();
+    });
+
+    function renderAudit(d) {
+      // Peuple le sélecteur de types une seule fois (les types n'apparaissent
+      // ni ne disparaissent en cours de session), avec les libellés connus.
+      if (!auditTypesConnus && d.types && d.types.length) {
+        auditTypesConnus = true;
+        const sel = document.getElementById('auditTypeFilter');
+        d.types.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = (AUDIT_LABELS[t] ? AUDIT_LABELS[t].icon + ' ' + AUDIT_LABELS[t].txt : t);
+          sel.appendChild(opt);
+        });
+      }
+
+      document.getElementById('auditCount').textContent = d.total ? '(' + d.total + ')' : '';
+
       const box = document.getElementById('auditList');
+      const liste = d.entries || [];
       if (!liste.length) {
-        box.innerHTML = '<div class="empty-msg">Aucune action enregistrée pour l\'instant.</div>';
+        box.innerHTML = '<div class="empty-msg">Aucune action enregistrée pour ce filtre.</div>';
         return;
       }
       box.innerHTML = '';
@@ -585,6 +631,23 @@
         item.querySelector('.audit-head').addEventListener('click', () => item.classList.toggle('open'));
         box.appendChild(item);
       });
+
+      // Pagination (même composant visuel que les messages de contact)
+      if (d.pages > 1) {
+        const nav = document.createElement('div');
+        nav.className = 'contact-pagination';
+        const prev = document.createElement('button');
+        prev.type = 'button'; prev.textContent = '← Précédent'; prev.disabled = d.page <= 1;
+        prev.addEventListener('click', () => { auditPage = d.page - 1; chargerAudit(); });
+        const info = document.createElement('span');
+        info.className = 'contact-page-info';
+        info.textContent = 'Page ' + d.page + ' / ' + d.pages + ' · ' + d.total + ' action' + (d.total > 1 ? 's' : '');
+        const next = document.createElement('button');
+        next.type = 'button'; next.textContent = 'Suivant →'; next.disabled = d.page >= d.pages;
+        next.addEventListener('click', () => { auditPage = d.page + 1; chargerAudit(); });
+        nav.append(prev, info, next);
+        box.appendChild(nav);
+      }
     }
 
     // ── Signalements (réutilise l'API existante) ──

@@ -68,9 +68,16 @@ if ($action === 'creer') {
     if (!isset($_SESSION['signalements_envoyes'])) $_SESSION['signalements_envoyes'] = [];
     $_SESSION['signalements_envoyes'][] = $compost_id;
 
+    $new_id = (int)mysqli_insert_id($conn);
+    audit_log($conn, 'signalement_cree', "id=$new_id", [
+        'target_type' => 'signalement',
+        'target_id'   => $new_id,
+        'snapshot'    => ['reporter' => $reporter ?: 'Anonyme', 'motif' => $motif, 'commentaire' => $commentaire, 'compost_id' => $compost_id],
+    ]);
+
     // Notification mail groupée tous les 5 signalements (best-effort :
     // ne bloque jamais la création du signalement).
-    notif_signalement_cree($conn, (int)mysqli_insert_id($conn));
+    notif_signalement_cree($conn, $new_id);
 
     echo json_encode(['ok' => true]);
     exit;

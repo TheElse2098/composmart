@@ -37,11 +37,6 @@ function count_of($c, $sql) {
     if (!$res) return 0;
     return (int) (mysqli_fetch_row($res)[0] ?? 0);
 }
-function table_exists($c, $name) {
-    $name = mysqli_real_escape_string($c, $name);
-    $res = mysqli_query($c, "SHOW TABLES LIKE '$name'");
-    return $res && mysqli_num_rows($res) > 0;
-}
 
 // composts/parties/signalements vivent dans db-map et db-games : le front admin
 // les complète via /api/carte/count.php et /api/jeux/count.php. On expose null ici.
@@ -69,27 +64,11 @@ while ($row = mysqli_fetch_assoc($res)) {
     ];
 }
 
-// Journal d'audit (30 dernières actions) — défensif si table absente
-$audit = [];
-if (table_exists($c, 'audit_log')) {
-    $res = mysqli_query($c, 'SELECT username, action, details, target_type, target_id, snapshot, created_at FROM audit_log ORDER BY id DESC LIMIT 30');
-    while ($row = mysqli_fetch_assoc($res)) {
-        $audit[] = [
-            'username'    => $row['username'] ?: 'inconnu',
-            'action'      => $row['action'],
-            'details'     => $row['details'],
-            'target_type' => $row['target_type'],
-            'target_id'   => $row['target_id'] !== null ? (int)$row['target_id'] : null,
-            'snapshot'    => $row['snapshot'] ? json_decode($row['snapshot'], true) : null,
-            'date'        => $row['created_at'],
-        ];
-    }
-}
+// Journal d'audit : servi séparément par admin/audit.php (filtre + pagination).
 
 mysqli_close($c);
 echo json_encode([
     'me'    => (int)$_SESSION['user_id'],
     'stats' => $stats,
     'users' => $users,
-    'audit' => $audit,
 ], JSON_UNESCAPED_UNICODE);
