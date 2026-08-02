@@ -65,7 +65,11 @@ if ($stmt->execute()) {
                . "De : $uname (id=$uid)\n"
                . "Date : " . date('Y-m-d H:i:s') . "\n\n"
                . "Message :\n$message\n";
-    send_mail('contact@composmart.fr', $mailSujet, $mailCorps);
+    $mail_ok = send_mail('contact@composmart.fr', $mailSujet, $mailCorps);
+    audit_log($c, 'mail_envoye', ($mail_ok ? 'Envoyé' : 'Échec') . ' — ' . $mailSujet, [
+        'target_type' => 'mail',
+        'snapshot'    => ['to' => 'contact@composmart.fr', 'sujet' => $mailSujet, 'ok' => $mail_ok],
+    ]);
 
     echo json_encode(['ok' => true]);
 } else {

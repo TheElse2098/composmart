@@ -69,10 +69,19 @@ function notif_compost_ajoute($conn, $id) {
             . ' — ' . $r['created_at'];
     }
     $n = count($lot);
+    $sujet = "[SUPPORT] $n nouveaux composteurs sur la carte";
     $corps = "$n nouveaux composteurs ajoutés manuellement sur la carte Composmart :\n\n"
            . implode("\n", $lignes)
            . "\n\n(Les points supprimés depuis leur ajout n'apparaissent pas dans la liste.)\n";
-    if (!send_mail('contact@composmart.fr', "[SUPPORT] $n nouveaux composteurs sur la carte", $corps)) {
+    $ok = send_mail('contact@composmart.fr', $sujet, $corps);
+    // Déclenché par un ajout de composteur, pas une action admin explicite :
+    // audit_log() attribue quand même à la session courante (l'auteur de
+    // l'ajout qui a fait franchir le seuil), c'est correct comme traçabilité.
+    audit_log($conn, 'mail_envoye', ($ok ? 'Envoyé' : 'Échec') . " — $sujet", [
+        'target_type' => 'mail',
+        'snapshot'    => ['to' => 'contact@composmart.fr', 'sujet' => $sujet, 'ok' => $ok, 'nb' => $n],
+    ]);
+    if (!$ok) {
         notif_batch_restore($conn, 'composts', $lot);
     }
 }
@@ -102,10 +111,16 @@ function notif_signalement_cree($conn, $id) {
             . ($r['commentaire'] !== '' && $r['commentaire'] !== null ? "\n    « " . $r['commentaire'] . ' »' : '');
     }
     $n = count($lot);
+    $sujet = "[SUPPORT] $n nouveaux signalements sur la carte";
     $corps = "$n nouveaux signalements sur la carte Composmart :\n\n"
            . implode("\n", $lignes)
            . "\n\nÀ traiter dans la page admin.\n";
-    if (!send_mail('contact@composmart.fr', "[SUPPORT] $n nouveaux signalements sur la carte", $corps)) {
+    $ok = send_mail('contact@composmart.fr', $sujet, $corps);
+    audit_log($conn, 'mail_envoye', ($ok ? 'Envoyé' : 'Échec') . " — $sujet", [
+        'target_type' => 'mail',
+        'snapshot'    => ['to' => 'contact@composmart.fr', 'sujet' => $sujet, 'ok' => $ok, 'nb' => $n],
+    ]);
+    if (!$ok) {
         notif_batch_restore($conn, 'signalements', $lot);
     }
 }

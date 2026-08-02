@@ -510,7 +510,8 @@
       signalement_rejete:  { icon: '✗', txt: 'Signalement rejeté' },
       user_promu:          { icon: '⬆️', txt: 'Utilisateur promu admin' },
       user_retrograde:     { icon: '⬇️', txt: 'Admin rétrogradé' },
-      user_supprime:       { icon: '🚫', txt: 'Utilisateur supprimé' }
+      user_supprime:       { icon: '🚫', txt: 'Utilisateur supprimé' },
+      mail_envoye:         { icon: '📧', txt: 'Email envoyé' }
     };
 
     function row(key, val, isEmpty) {
@@ -549,6 +550,11 @@
         rows += row('Utilisateur', echap(s.username || ('#' + a.target_id)));
         if (s.admin !== undefined) rows += row('Nouveau rôle', s.admin ? 'Administrateur' : 'Utilisateur');
         if (s.etait_admin !== undefined) rows += row('Était admin', s.etait_admin ? 'oui' : 'non');
+      } else if (a.target_type === 'mail') {
+        rows += row('Destinataire', echap(s.to || '—'));
+        rows += row('Sujet', echap(s.sujet || '—'));
+        rows += row('Statut', s.ok ? '✅ Envoyé' : '❌ Échec d\'envoi');
+        if (s.nb) rows += row('Éléments groupés', s.nb);
       } else if (a.details) {
         rows += row('Détails', echap(a.details));
       }
