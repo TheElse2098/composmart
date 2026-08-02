@@ -103,6 +103,10 @@
     .no-compost-tags { display: flex; flex-wrap: wrap; gap: 8px; }
     .no-compost-tag { background: #fff; border-radius: 10px; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; color: #c62828; }
 
+    /* Hors de .layout (plus de contrainte de .page-content) : on reprend les
+       mêmes paliers de largeur pour rester aligné avec le contenu au-dessus. */
+    .no-compost-fixed { width: 100%; max-width: 600px; margin: 0 auto 24px; padding: 0 16px; box-sizing: border-box; }
+
     /* ─────────── DESKTOP : layout "web classique" sidebar + contenu ─────────── */
     @media (min-width: 900px) {
       body { align-items: stretch; }
@@ -121,11 +125,15 @@
       .item-card:hover { transform: translateY(-4px); }
       .item-card { align-items: flex-start; }
       .sec-title { font-size: 1.2rem; }
+      /* Aligné avec le début de .page-content : largeur de la colonne .tabs
+         (240px) + le padding-left de .page-content lui-même (8px). */
+      .no-compost-fixed { max-width: none; padding: 0 48px 0 248px; }
     }
     @media (min-width: 1300px) {
       .tabs { width: 260px; padding-left: 64px; }
       .hero { padding-left: 64px; }
       .page-content { padding-right: 64px; }
+      .no-compost-fixed { padding: 0 64px 0 268px; }
     }
 
     html.dark .tab { background: #1e2d22; color: #5a8a6a; }
@@ -443,24 +451,24 @@
         </div>
       </div>
 
-      <!-- À ne PAS mettre -->
-      <div class="no-compost-box">
-        <div class="no-compost-title">🚫 À ne jamais composter</div>
-        <div class="no-compost-tags">
-          <span class="no-compost-tag">🥩 Viande &amp; poisson</span>
-          <span class="no-compost-tag">🧀 Produits laitiers</span>
-          <span class="no-compost-tag">🛢️ Huile de cuisson</span>
-          <span class="no-compost-tag">💊 Médicaments</span>
-          <span class="no-compost-tag">🐾 Excréments d'animaux</span>
-          <span class="no-compost-tag">🔋 Piles &amp; plastiques</span>
-        </div>
-      </div>
-
     </div>
 
   </div><!-- end page-content -->
 
   </div><!-- end layout -->
+
+  <!-- À ne PAS mettre : hors de .layout (sidebar + contenu), visible quel que soit l'onglet actif -->
+  <div class="no-compost-box no-compost-fixed">
+    <div class="no-compost-title">🚫 À ne jamais composter</div>
+    <div class="no-compost-tags">
+      <span class="no-compost-tag">🥩 Viande &amp; poisson</span>
+      <span class="no-compost-tag">🧀 Produits laitiers</span>
+      <span class="no-compost-tag">🛢️ Huile de cuisson</span>
+      <span class="no-compost-tag">💊 Médicaments</span>
+      <span class="no-compost-tag">🐾 Excréments d'animaux</span>
+      <span class="no-compost-tag">🔋 Piles &amp; plastiques</span>
+    </div>
+  </div>
 
     <!-- Footer partagé (injecté par site-footer.js) -->
   <div id="site-footer"></div>
