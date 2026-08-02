@@ -42,6 +42,25 @@
     .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
     h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; color: #1a3a25; }
 
+    /* Onglets */
+    .tabs { display: flex; gap: 8px; padding: 16px 16px 0; width: 100%; max-width: 760px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; box-sizing: border-box; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tabs > .tab:last-child { margin-right: 16px; }
+    .tab { flex-shrink: 0; white-space: nowrap; padding: 10px 16px; border-radius: 20px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.85rem; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; background: #fff; color: #4a7a5a; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 6px; }
+    .tab.active { background: #1e6e3e; color: #fff; border-color: #1e6e3e; }
+    .tab:hover:not(.active) { border-color: #1e6e3e; color: #1e6e3e; }
+    .tab-count { background: rgba(0,0,0,0.08); color: inherit; font-size: 0.72rem; font-weight: 800; padding: 1px 7px; border-radius: 8px; }
+    .tab.active .tab-count { background: rgba(255,255,255,0.25); }
+    .tab.alert:not(.active) { color: #c0392b; }
+    .tab.alert:not(.active) .tab-count { background: #fdecea; color: #c0392b; }
+    @media (min-width: 640px) {
+      .tabs { padding: 20px 24px 0; }
+      .tabs > .tab:last-child { margin-right: 0; }
+      .tab { flex: 1; justify-content: center; }
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
     .page-content { width: 100%; max-width: 760px; padding: 0 16px; }
     .section-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin: 24px 4px 12px; display: flex; align-items: center; gap: 8px; }
 
@@ -141,6 +160,11 @@
     html.dark .act-delete { background: #3d1a1a; color: #ef9a9a; }
     html.dark .user-search { background: #16211a; border-color: #2b3c30; color: #e8f5ee; }
     html.dark .user-search:focus { border-color: #52b788; }
+    html.dark .tab { background: #16211a; color: #7ab88e; }
+    html.dark .tab.active { background: #2d9959; color: #fff; border-color: #2d9959; }
+    html.dark .tab:hover:not(.active) { border-color: #52b788; color: #52b788; }
+    html.dark .tab.alert:not(.active) { color: #ef9a9a; }
+    html.dark .tab.alert:not(.active) .tab-count { background: #3d1a1a; color: #ef9a9a; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
 
@@ -166,38 +190,66 @@
     <h1>Tableau de bord</h1>
   </div>
 
-  <div class="page-content" id="dashboard" style="display:none">
-    <div class="section-title">📊 Vue d'ensemble</div>
-    <div class="stats-grid" id="statsGrid"></div>
+  <div id="dashboard" style="display:none">
 
-    <div class="section-title">📈 Évolution</div>
-    <div class="evo-bar">
-      <button class="evo-btn" data-p="7d">7 jours</button>
-      <button class="evo-btn active" data-p="30d">30 jours</button>
-      <button class="evo-btn" data-p="90d">3 mois</button>
-    </div>
-    <div class="evo-card">
-      <canvas id="evoChart"></canvas>
+    <div class="tabs" id="adminTabs">
+      <div class="tab active" data-tab="overview">📊 Vue d'ensemble</div>
+      <div class="tab" data-tab="signals">🚩 Signalements<span class="tab-count" id="tabCountSignals" style="display:none"></span></div>
+      <div class="tab" data-tab="contact">✉️ Messages<span class="tab-count" id="tabCountContact" style="display:none"></span></div>
+      <div class="tab" data-tab="users">👥 Utilisateurs</div>
+      <div class="tab" data-tab="audit">📜 Journal</div>
     </div>
 
-    <div class="section-title">🚩 Signalements ouverts</div>
-    <div id="signalList"></div>
+    <div class="page-content">
 
-    <div class="section-title">✉️ Messages de contact <span id="contactCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
-    <div id="contactList"></div>
+      <!-- Vue d'ensemble : stats + évolution -->
+      <div class="tab-content active" id="tab-overview">
+        <div class="section-title">📊 Vue d'ensemble</div>
+        <div class="stats-grid" id="statsGrid"></div>
 
-    <div class="section-title">👥 Utilisateurs <span id="userCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
-    <input id="userSearch" class="user-search" type="search" placeholder="🔍 Rechercher un utilisateur par pseudo…" autocomplete="off" />
-    <div class="user-table-wrap">
-      <table>
-        <thead><tr><th>Pseudo</th><th>Niveau</th><th>XP</th><th>Inscrit le</th><th>Rôle</th><th>Actions</th></tr></thead>
-        <tbody id="userRows"></tbody>
-      </table>
-    </div>
+        <div class="section-title">📈 Évolution</div>
+        <div class="evo-bar">
+          <button class="evo-btn" data-p="7d">7 jours</button>
+          <button class="evo-btn active" data-p="30d">30 jours</button>
+          <button class="evo-btn" data-p="90d">3 mois</button>
+        </div>
+        <div class="evo-card">
+          <canvas id="evoChart"></canvas>
+        </div>
+      </div>
 
-    <div class="section-title">📜 Journal d'activité</div>
-    <div id="auditList"></div>
-  </div>
+      <!-- Signalements -->
+      <div class="tab-content" id="tab-signals">
+        <div class="section-title">🚩 Signalements ouverts</div>
+        <div id="signalList"></div>
+      </div>
+
+      <!-- Messages de contact -->
+      <div class="tab-content" id="tab-contact">
+        <div class="section-title">✉️ Messages de contact <span id="contactCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
+        <div id="contactList"></div>
+      </div>
+
+      <!-- Utilisateurs -->
+      <div class="tab-content" id="tab-users">
+        <div class="section-title">👥 Utilisateurs <span id="userCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
+        <input id="userSearch" class="user-search" type="search" placeholder="🔍 Rechercher un utilisateur par pseudo…" autocomplete="off" />
+        <div class="user-table-wrap">
+          <table>
+            <thead><tr><th>Pseudo</th><th>Niveau</th><th>XP</th><th>Inscrit le</th><th>Rôle</th><th>Actions</th></tr></thead>
+            <tbody id="userRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Journal d'audit -->
+      <div class="tab-content" id="tab-audit">
+        <div class="section-title">📜 Journal d'activité</div>
+        <div id="auditList"></div>
+      </div>
+
+    </div><!-- end page-content -->
+  </div><!-- end dashboard -->
 
   <div class="loader" id="loader">Chargement…</div>
 
@@ -220,6 +272,28 @@
 
     function showDenied() {
       window.location.replace('/');
+    }
+
+    // ── Onglets ──
+    document.querySelectorAll('#adminTabs .tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('#adminTabs .tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    function setTabCount(id, n, alertTabSelector) {
+      const el = document.getElementById(id);
+      if (n > 0) {
+        el.textContent = n;
+        el.style.display = '';
+        if (alertTabSelector) document.querySelector(alertTabSelector).classList.add('alert');
+      } else {
+        el.style.display = 'none';
+        if (alertTabSelector) document.querySelector(alertTabSelector).classList.remove('alert');
+      }
     }
 
     // Complète les compteurs cross-base (composts/signalements → db-map, parties → db-games).
@@ -516,6 +590,7 @@
     }
 
     function renderSignalements(liste) {
+      setTabCount('tabCountSignals', liste.length, '#adminTabs .tab[data-tab="signals"]');
       const box = document.getElementById('signalList');
       if (!liste.length) {
         box.innerHTML = '<div class="empty-msg">Aucun signalement ouvert 🎉</div>';
@@ -568,6 +643,7 @@
     }
 
     function renderMessages(d) {
+      setTabCount('tabCountContact', d.nouveaux || 0, '#adminTabs .tab[data-tab="contact"]');
       const liste = d.messages || [];
       document.getElementById('contactCount').textContent =
         d.nouveaux > 0 ? '(' + d.nouveaux + ' nouveau' + (d.nouveaux > 1 ? 'x' : '') + ')' : '';
