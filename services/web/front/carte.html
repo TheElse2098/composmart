@@ -321,10 +321,21 @@
         }
 
         /* ── SIGNALEMENT (formulaire utilisateur) ── */
+        /* Action rare et secondaire : traitée en lien discret plutôt qu'en bouton
+           plein, pour ne pas concurrencer les itinéraires ni trôner seule au
+           milieu du panneau quand l'utilisateur n'est pas admin.
+           !important : .tabl-actions button:not(.btn-supprimer) impose le vert. */
         .btn-signaler {
-            background: #fff8e1 !important; color: #b26a00 !important;
-            border: 1.5px solid #e8b931 !important;
+            margin-left: auto;
+            background: none !important; border: none !important;
+            color: #a8823c !important;
+            font-size: 0.74rem !important; font-weight: 600 !important;
+            padding: 6px 2px !important;
+            text-decoration: underline; text-underline-offset: 3px;
+            text-decoration-color: rgba(168,130,60,0.4);
+            transition: color 0.15s;
         }
+        .btn-signaler:hover { color: #8a6a2c !important; text-decoration-color: currentColor; }
         .signal-zone { display: none; flex-direction: column; gap: 7px; padding: 10px 16px 0; }
         .signal-zone select, .signal-zone textarea {
             width: 100%; border: 1.5px solid #e0d4b0; border-radius: 8px;
@@ -374,7 +385,8 @@
 
         html.dark .edit-check { color: #e8f5ee !important; }
         html.dark .edit-select { background: #1e2d22 !important; color: #e8f5ee !important; border-color: #3a5c42 !important; }
-        html.dark .btn-signaler { background: #2e2410 !important; color: #e8b931 !important; border-color: #7a6320 !important; }
+        html.dark .btn-signaler { background: none !important; border: none !important; color: #c9a34e !important; }
+        html.dark .btn-signaler:hover { color: #e8b931 !important; }
         html.dark .signal-zone select, html.dark .signal-zone textarea { background: #1e2d22 !important; color: #e8f5ee !important; border-color: #3a5c42 !important; }
         html.dark #signalAdminPanel { background: #16211a; }
         html.dark .signal-item { border-color: #2b3c30; color: #e8f5ee; }
@@ -440,7 +452,7 @@
                 <div class="tabl-actions">
                     <div id="boutton"><button type="button" id="modifier_compost" class="btn-modifier">✏️ Modifier</button></div>
                     <button type="button" id="signaler_compost" class="btn-signaler">⚠️ Signaler</button>
-                    <button type="button" id="supprimer_compost" class="btn-supprimer" style="visibility:hidden">🗑 Supprimer</button>
+                    <button type="button" id="supprimer_compost" class="btn-supprimer" style="display:none">🗑 Supprimer</button>
                 </div>
                 <div id="signal_zone" class="signal-zone">
                     <select id="signal_motif">
@@ -577,7 +589,7 @@
             // Consultation d'un point existant : on sort du parcours d'ajout (sinon
             // le bouton resterait sur « Envoyer la demande » après une proposition).
             nouv = 0;
-            document.getElementById("supprimer_compost").style.visibility = isAdmin ? "visible" : "hidden";
+            document.getElementById("supprimer_compost").style.display = isAdmin ? "" : "none";
             document.getElementById("signaler_compost").style.display = "";
             document.getElementById("signal_zone").style.display = "none";
             document.getElementById("signal_msg").textContent = "";
@@ -717,7 +729,7 @@
         });
 
         function modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter) {
-            document.getElementById("supprimer_compost").style.visibility = isAdmin ? "visible" : "hidden";
+            document.getElementById("supprimer_compost").style.display = isAdmin ? "" : "none";
             let liste_type = ["Conteneur", "Compost bois", "Compost plastique"];
             let contenu_changer = '<select name="type" id="type_change" class="edit-select" form="formulaire_changer">';
             liste_type.forEach((t) => { contenu_changer += '<option value="' + t + '"' + (t === type ? ' selected' : '') + '>' + t + '</option>'; });
@@ -804,7 +816,7 @@
         var current_lat_click = null; var current_lon_click = null;
 
         function onMapClick(e) {
-            document.getElementById("supprimer_compost").style.visibility = "hidden";
+            document.getElementById("supprimer_compost").style.display = "none";
             var contenu_modi = document.getElementById("rajouter_compost");
             contenu_modi.innerHTML = '<button type="button" id="valid_rajout">📍 Cliquez ici pour rajouter le compost</button>';
             current_lat_click = e.latlng.lat; current_lon_click = e.latlng.lng;
@@ -941,7 +953,7 @@
         supp = document.getElementById("supprimer_compost");
         supp.addEventListener('click', function () {
             document.getElementById("tableau").style.display = "none";
-            document.getElementById("supprimer_compost").style.visibility = "hidden";
+            document.getElementById("supprimer_compost").style.display = "none";
             var supprimer = document.getElementById("rajouter_compost");
             supprimer.style.visibility = "visible";
             supprimer.innerHTML = "Êtes-vous sûr de vouloir supprimer ce compost ? <button id='oui'>Oui</button><button id='non'>Non</button>";
