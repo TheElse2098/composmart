@@ -25,6 +25,9 @@ function count_of($c, $sql) {
 }
 
 echo json_encode([
-    'composts'     => count_of($c, 'SELECT COUNT(*) FROM composts'),
+    // 'composts' = ceux réellement sur la carte ; les demandes en attente sont
+    // comptées à part (badge de l'onglet « Ajouts » de l'admin).
+    'composts'     => count_of($c, "SELECT COUNT(*) FROM composts WHERE statut = 'valide'"),
+    'en_attente'   => count_of($c, "SELECT COUNT(*) FROM composts WHERE statut = 'en_attente'"),
     'signalements' => count_of($c, "SELECT COUNT(*) FROM signalements WHERE statut = 'ouvert'"),
 ]);

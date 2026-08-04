@@ -80,7 +80,9 @@ if (isset($_POST['osm'])) {
         $stmt = mysqli_prepare($connexion, "INSERT INTO composts (longitude, latitude, type, publique) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("ddss", $lon, $lat, $type, $pub);
         if ($stmt->execute()) {
-            notif_compost_ajoute($connexion, (int)$connexion->insert_id);
+            // Import : le point est directement 'valide' (DEFAULT), pas de mail —
+            // la notification ne concerne que les demandes à valider.
+            carte_cache_flush();
             echo json_encode("Insertion réussie.");
         } else {
             echo json_encode("Erreur d'insertion : " . $stmt->error);
@@ -124,7 +126,8 @@ elseif (isset($_POST['donnees_json'])) {
 
         $row = mysqli_query($connexion, "SELECT max(id) FROM composts")->fetch_array(MYSQLI_ASSOC);
         $id_actuel = (int)$row["max(id)"];
-        notif_compost_ajoute($connexion, $id_actuel);
+        // Import direct : point déjà 'valide', pas de mail de validation à envoyer.
+        carte_cache_flush();
         echo $id_actuel;
 
         $ins = mysqli_prepare($connexion, "INSERT INTO regles (id_compost,id_element,autorise) VALUES (?,(SELECT id FROM elements WHERE nom=?),?)");
@@ -170,18 +173,21 @@ elseif (isset($_POST['france'])) {
         }
     }
 
+    // statut='valide' : les demandes en attente (et les refus) ne sont jamais
+    // servies à la carte publique, seulement à l'admin via pending.php.
     if ($hasBounds) {
         $north = (float)$_POST['north']; $south = (float)$_POST['south'];
         $east  = (float)$_POST['east'];  $west  = (float)$_POST['west'];
         $stmt = mysqli_prepare($connexion,
-            'SELECT id, longitude, latitude, type FROM composts
-             WHERE latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?
-             LIMIT 3000');
+            "SELECT id, longitude, latitude, type FROM composts
+             WHERE statut = 'valide'
+               AND latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?
+             LIMIT 3000");
         $stmt->bind_param('dddd', $south, $north, $west, $east);
         $stmt->execute();
         $result = $stmt->get_result();
     } else {
-        $result = mysqli_query($connexion, "SELECT id, longitude, latitude, type FROM composts");
+        $result = mysqli_query($connexion, "SELECT id, longitude, latitude, type FROM composts WHERE statut = 'valide'");
     }
 
     $liste = [];
@@ -274,17 +280,36 @@ elseif (isset($_POST['type'])) {
     if ($is_new) {
         $_SESSION['created_composts'] = array_values(array_filter($created_ids, fn($v) => $v !== $id));
     }
-    audit_log($connexion, $is_new ? 'compost_cree' : 'compost_modifie', "id=$id", [
-        'target_type' => 'compost',
-        'target_id'   => $id,
-        'snapshot'    => [
-            'type'    => $type,
-            'acces'   => $acces,
-            'mettre'      => array_values($mettre),
-            'pas_mettre'  => array_values($pas_mettre),
-        ],
-    ]);
-    $response = $is_new ? "Compost créé." : "Modification enregistrée.";
+
+    $snapshot = [
+        'type'       => $type,
+        'acces'      => $acces,
+        'mettre'     => array_values($mettre),
+        'pas_mettre' => array_values($pas_mettre),
+    ];
+
+    if ($is_new) {
+        // Fin du parcours d'ajout : la demande part en validation (le point reste
+        // 'en_attente', donc toujours absent de la carte publique). C'est ici — et
+        // pas à la création du brouillon — que l'audit et le mail se déclenchent.
+        audit_log($connexion, 'compost_demande', "id=$id", [
+            'target_type' => 'compost',
+            'target_id'   => $id,
+            'snapshot'    => $snapshot + ['propose_par' => $_SESSION['username'] ?? 'Anonyme'],
+        ]);
+        notif_compost_ajoute($connexion, $id);
+        $response = "Demande envoyée.";
+    } else {
+        audit_log($connexion, 'compost_modifie', "id=$id", [
+            'target_type' => 'compost',
+            'target_id'   => $id,
+            'snapshot'    => $snapshot,
+        ]);
+        // Le type est servi dans la liste France mise en cache : un changement
+        // doit l'invalider, sinon la carte garde l'ancienne icône jusqu'au TTL.
+        carte_cache_flush();
+        $response = "Modification enregistrée.";
+    }
 }
 
 // ── AJOUTER UN COMPOST VIA CLIC CARTE ─────────────────────────────────────
@@ -297,7 +322,9 @@ if (isset($_POST['lat_click']) && isset($_POST['lon_click'])) {
         exit();
     }
 
-    $sql_check = "SELECT id, (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))) AS distance FROM composts HAVING distance < 0.005 LIMIT 1";
+    // Doublon : on compare aux points validés ET aux demandes déjà en attente
+    // (un point refusé ne bloque pas une nouvelle proposition au même endroit).
+    $sql_check = "SELECT id, (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))) AS distance FROM composts WHERE statut <> 'refuse' HAVING distance < 0.005 LIMIT 1";
     $stmt = mysqli_prepare($connexion, $sql_check);
     $stmt->bind_param("ddd", $lat, $lon, $lat);
     $stmt->execute();
@@ -306,13 +333,16 @@ if (isset($_POST['lat_click']) && isset($_POST['lon_click'])) {
         exit();
     }
 
-    $stmt = mysqli_prepare($connexion, "INSERT INTO composts (longitude, latitude) VALUES (?, ?)");
-    $stmt->bind_param("dd", $lon, $lat);
+    // Brouillon de demande : 'en_attente' tant que le formulaire n'est pas envoyé,
+    // donc invisible sur la carte publique. La notification mail et l'audit ne
+    // partent qu'à l'envoi effectif de la demande (cf. bloc « modifier »).
+    $propose_par = $_SESSION['username'] ?? null;
+    $stmt = mysqli_prepare($connexion, "INSERT INTO composts (longitude, latitude, statut, propose_par) VALUES (?, ?, 'en_attente', ?)");
+    $stmt->bind_param("dds", $lon, $lat, $propose_par);
     if ($stmt->execute()) {
         $new_id = (int)$connexion->insert_id;
         if (!isset($_SESSION['created_composts'])) $_SESSION['created_composts'] = [];
         $_SESSION['created_composts'][] = $new_id;
-        notif_compost_ajoute($connexion, $new_id);
         $response = $new_id;
     } else {
         $response = ["error" => $stmt->error];

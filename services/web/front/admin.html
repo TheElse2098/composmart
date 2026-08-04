@@ -142,6 +142,66 @@
     .audit-chip { display: inline-block; background: #eef4ec; color: #2d6a4f; border-radius: 8px; padding: 1px 7px; font-size: 0.72rem; font-weight: 700; margin: 1px 2px 1px 0; }
     .audit-chip.nok { background: #fdecea; color: #c0392b; }
 
+    /* Demandes d'ajout de composteurs */
+    .bulk-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
+    .bulk-check { display: flex; align-items: center; gap: 7px; font-size: 0.82rem; font-weight: 700; color: #1a3a25; cursor: pointer; }
+    .bulk-count { font-size: 0.78rem; color: #4a7a5a; font-weight: 700; }
+    .bulk-actions { display: flex; gap: 6px; margin-left: auto; }
+    .bulk-btn { border: none; border-radius: 12px; padding: 7px 14px; font-size: 0.78rem; font-weight: 800; cursor: pointer; transition: opacity 0.12s; }
+    .bulk-btn:disabled { opacity: 0.4; cursor: default; }
+    .bulk-btn:not(:disabled):hover { opacity: 0.82; }
+    .bulk-ok { background: #1e6e3e; color: #fff; }
+    .bulk-no { background: #fdecea; color: #c0392b; }
+
+    .pending-item { background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); display: flex; gap: 12px; align-items: flex-start; }
+    .pending-item.sel { outline: 2px solid #1e6e3e; }
+    .pending-cb { margin-top: 3px; flex-shrink: 0; width: 17px; height: 17px; cursor: pointer; accent-color: #1e6e3e; }
+    .pending-main { flex: 1; min-width: 0; }
+    .pending-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.85rem; font-weight: 800; color: #1a3a25; }
+    .pending-id { color: #7aaa8a; font-weight: 700; }
+    .pending-badge { font-size: 0.68rem; font-weight: 800; padding: 2px 9px; border-radius: 10px; background: #eef4ec; color: #1e6e3e; }
+    .pending-badge.vide { background: #fff3e0; color: #b26a00; }
+    .pending-meta { font-size: 0.72rem; color: #888; margin-top: 3px; }
+    .pending-rules { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+    .pending-actions { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+    .pending-actions button, .pending-actions a { border: none; border-radius: 12px; padding: 5px 12px; font-size: 0.72rem; font-weight: 800; cursor: pointer; text-decoration: none; }
+
+    /* Modale de modification */
+    .modal-back { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 600; display: none; align-items: center; justify-content: center; padding: 18px; }
+    .modal-back.show { display: flex; }
+    .modal-box { background: #fff; border-radius: 20px; padding: 22px; max-width: 460px; width: 100%; max-height: 88vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+    .modal-title { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #1a3a25; margin-bottom: 14px; }
+    .modal-label { font-size: 0.75rem; font-weight: 800; color: #4a7a5a; text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 5px; }
+    .modal-field { width: 100%; border: 1.5px solid #d7e6da; border-radius: 10px; padding: 8px 11px; font-size: 0.85rem; font-family: inherit; background: #fff; color: #1a3a25; outline: none; }
+    .modal-field:focus { border-color: #1e6e3e; }
+    .modal-hint { font-size: 0.7rem; color: #888; margin-top: 4px; }
+    .elt-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+    /* Pastille tri-état : neutre → autorisé → interdit → neutre */
+    .elt-chip { border: 1.5px solid #d7e6da; background: #fff; color: #4a7a5a; border-radius: 12px; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .elt-chip[data-state="1"] { background: #e8f5e9; border-color: #43a047; color: #1b5e20; }
+    .elt-chip[data-state="2"] { background: #fdecea; border-color: #e53935; color: #b71c1c; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 18px; }
+    .modal-actions button { flex: 1; border: none; border-radius: 12px; padding: 11px; font-size: 0.85rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+    .modal-save { background: #1e6e3e; color: #fff; }
+    .modal-cancel { background: #eef4ec; color: #4a7a5a; }
+    .modal-err { color: #c0392b; font-size: 0.78rem; font-weight: 700; margin-top: 10px; }
+
+    html.dark .bulk-bar, html.dark .pending-item { background: #16211a; }
+    html.dark .bulk-check, html.dark .pending-head { color: #e8f5ee; }
+    html.dark .bulk-count { color: #7ab88e; }
+    html.dark .bulk-no { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .pending-badge { background: #1e2d22; color: #7fc99a; }
+    html.dark .pending-badge.vide { background: #2e2410; color: #e8b931; }
+    html.dark .modal-box { background: #1a2b1e; }
+    html.dark .modal-title { color: #c8e6d4; }
+    html.dark .modal-label { color: #7ab88e; }
+    html.dark .modal-field { background: #16211a; border-color: #2b3c30; color: #e8f5ee; }
+    html.dark .modal-field:focus { border-color: #52b788; }
+    html.dark .elt-chip { background: #16211a; border-color: #2b3c30; color: #7ab88e; }
+    html.dark .elt-chip[data-state="1"] { background: #16291c; border-color: #43a047; color: #7fc99a; }
+    html.dark .elt-chip[data-state="2"] { background: #3d1a1a; border-color: #e53935; color: #ef9a9a; }
+    html.dark .modal-cancel { background: #243328; color: #7ab88e; }
+
     .loader { text-align: center; padding: 40px; color: #4a7a5a; font-weight: 700; }
 
     html.dark .stat-card, html.dark .signal-item, html.dark .user-table-wrap, html.dark .empty-msg { background: #16211a; }
@@ -200,6 +260,7 @@
     <div class="tabs" id="adminTabs">
       <div class="tab active" data-tab="overview">📊 Vue d'ensemble</div>
       <div class="tab" data-tab="signals">🚩 Signalements<span class="tab-count" id="tabCountSignals" style="display:none"></span></div>
+      <div class="tab" data-tab="pending">🌱 Ajouts<span class="tab-count" id="tabCountPending" style="display:none"></span></div>
       <div class="tab" data-tab="contact">✉️ Messages<span class="tab-count" id="tabCountContact" style="display:none"></span></div>
       <div class="tab" data-tab="users">👥 Utilisateurs</div>
       <div class="tab" data-tab="audit">📜 Journal</div>
@@ -227,6 +288,12 @@
       <div class="tab-content" id="tab-signals">
         <div class="section-title">🚩 Signalements ouverts</div>
         <div id="signalList"></div>
+      </div>
+
+      <!-- Demandes d'ajout de composteurs -->
+      <div class="tab-content" id="tab-pending">
+        <div class="section-title">🌱 Demandes d'ajout <span id="pendingCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
+        <div id="pendingList"></div>
       </div>
 
       <!-- Messages de contact -->
@@ -266,6 +333,43 @@
   <div id="site-footer"></div>
 
   <div class="bottom-leaf"></div>
+
+  <!-- Modale : corriger une demande avant de la valider -->
+  <div class="modal-back" id="editModal">
+    <div class="modal-box">
+      <div class="modal-title" id="editModalTitle">Modifier la demande</div>
+
+      <div class="modal-label">Type</div>
+      <select class="modal-field" id="editType">
+        <option value="Conteneur">Conteneur</option>
+        <option value="Compost bois">Compost bois</option>
+        <option value="Compost plastique">Compost plastique</option>
+      </select>
+
+      <div class="modal-label">Accès</div>
+      <select class="modal-field" id="editAcces">
+        <option value="public">public</option>
+        <option value="privé">privé</option>
+        <option value="institution">institution</option>
+      </select>
+
+      <div class="modal-label">Gestion</div>
+      <input class="modal-field" id="editGestion" type="text" maxlength="300" placeholder="Mairie, association…" />
+
+      <div class="modal-label">Infos de contact</div>
+      <input class="modal-field" id="editInfoGestion" type="text" maxlength="300" placeholder="Téléphone, horaires…" />
+
+      <div class="modal-label">Déchets acceptés</div>
+      <div class="elt-grid" id="editElements"></div>
+      <div class="modal-hint">Clic : neutre → ✅ autorisé → ❌ interdit</div>
+
+      <div class="modal-err" id="editErr" style="display:none"></div>
+      <div class="modal-actions">
+        <button type="button" class="modal-cancel" id="editCancel">Annuler</button>
+        <button type="button" class="modal-save" id="editSave">Enregistrer</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     // ── BURGER ──
@@ -312,6 +416,7 @@
         fetch('/api/jeux/count.php').then(r => r.json()).catch(() => ({})),
       ]).then(([carte, jeux]) => {
         stats.composts     = carte.composts ?? stats.composts;
+        stats.en_attente   = carte.en_attente ?? 0;
         stats.signalements = carte.signalements ?? stats.signalements;
         stats.parties      = jeux.parties ?? stats.parties;
         return stats;
@@ -328,6 +433,7 @@
         document.getElementById('loader').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         chargerSignalements();
+        chargerPending();
         chargerMessages();
         chargerAudit();
         loadEvolution('30d');
@@ -405,6 +511,7 @@
         { n: s.completions, l: 'Cours validés' },
         { n: s.parties, l: 'Parties jouées' },
         { n: s.admins, l: 'Admins' },
+        { n: s.en_attente == null ? '—' : s.en_attente, l: 'Ajouts en attente', alert: s.en_attente > 0 },
         { n: s.signalements == null ? '—' : s.signalements, l: 'Signalements', alert: s.signalements > 0 }
       ];
       document.getElementById('statsGrid').innerHTML = cards.map(c =>
@@ -511,6 +618,9 @@
     // ── Journal d'audit ──
     const AUDIT_LABELS = {
       compost_cree:        { icon: '📍', txt: 'Composteur ajouté' },
+      compost_demande:     { icon: '🌱', txt: "Demande d'ajout" },
+      compost_valide:      { icon: '✅', txt: 'Demande validée' },
+      compost_refuse:      { icon: '⛔', txt: 'Demande refusée' },
       compost_modifie:     { icon: '✏️', txt: 'Composteur modifié' },
       compost_supprime:    { icon: '🗑️', txt: 'Composteur supprimé' },
       signalement_cree:    { icon: '🚩', txt: 'Signalement créé' },
@@ -546,8 +656,13 @@
           ? row('Commentaire', '« ' + echap(s.commentaire) + ' »')
           : row('Commentaire', 'aucun', true);
         rows += row('Composteur', s.compost_id != null ? '#' + s.compost_id : '—');
+      } else if (a.target_type === 'compost' && Array.isArray(s.ids) && s.ids.length > 1) {
+        // Traitement en masse : un seul log pour tout le lot (cf. pending.php).
+        rows += row('Composteurs', s.ids.map(i => '<span class="audit-chip">#' + i + '</span>').join(''));
+        rows += row('Traités', s.traites + ' / ' + s.ids.length);
       } else if (a.target_type === 'compost') {
         rows += row('Composteur', '#' + (a.target_id != null ? a.target_id : (s.id != null ? s.id : '—')));
+        if (s.propose_par) rows += row('Proposé par', echap(s.propose_par));
         if (s.type)  rows += row('Type', echap(s.type));
         if (s.acces) rows += row('Accès', echap(s.acces));
         if (s.lat != null && s.lon != null) rows += row('Position', s.lat.toFixed(5) + ', ' + s.lon.toFixed(5));
@@ -693,6 +808,246 @@
       .then(d => { if (d.ok) { chargerSignalements(); refreshSignalCount(); } })
       .catch(() => {});
     }
+
+    // ── Demandes d'ajout de composteurs ────────────────────────────────────
+    let pendingPage = 1;
+    let pendingSel = new Set();     // ids cochés (remis à zéro à chaque page)
+    let pendingElements = [];       // référentiel des déchets (pour la modale)
+    let pendingItems = {};          // id → demande, pour préremplir la modale
+
+    function chargerPending() {
+      fetch('/api/carte/pending.php?action=liste&page=' + pendingPage)
+        .then(r => r.json())
+        .then(d => renderPending(d || {}))
+        .catch(() => renderPending({ demandes: [], page: 1, pages: 1, total: 0 }));
+    }
+
+    function renderPending(d) {
+      const liste = d.demandes || [];
+      if (d.elements && d.elements.length) pendingElements = d.elements;
+      // Le serveur borne la page demandée (ex. dernier élément d'une page validé) :
+      // on se recale dessus, sinon le prochain chargement repart d'un numéro mort.
+      pendingPage = d.page || 1;
+      pendingItems = {};
+      liste.forEach(x => { pendingItems[x.id] = x; });
+      // La sélection ne survit pas au changement de page : les cases affichées
+      // sont les seules qui comptent, sinon on validerait des lignes invisibles.
+      pendingSel = new Set();
+
+      setTabCount('tabCountPending', d.total || 0, '#adminTabs .tab[data-tab="pending"]');
+      document.getElementById('pendingCount').textContent = d.total ? '(' + d.total + ')' : '';
+
+      const box = document.getElementById('pendingList');
+      box.innerHTML = '';
+
+      if (!liste.length) {
+        box.innerHTML = '<div class="empty-msg">Aucune demande en attente 🎉</div>';
+        return;
+      }
+
+      // Barre d'actions groupées
+      const bar = document.createElement('div');
+      bar.className = 'bulk-bar';
+      bar.innerHTML =
+        '<label class="bulk-check"><input type="checkbox" id="pendingAll" class="pending-cb" style="margin-top:0"> Tout sélectionner</label>'
+        + '<span class="bulk-count" id="pendingSelCount"></span>'
+        + '<div class="bulk-actions">'
+        + '<button type="button" class="bulk-btn bulk-ok" id="bulkValider" disabled>✓ Valider</button>'
+        + '<button type="button" class="bulk-btn bulk-no" id="bulkRefuser" disabled>✗ Refuser</button>'
+        + '</div>';
+      box.appendChild(bar);
+
+      liste.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'pending-item';
+        item.dataset.id = p.id;
+
+        const typeBadge = p.type
+          ? '<span class="pending-badge">' + echap(p.type) + '</span>'
+          : '<span class="pending-badge vide">type manquant</span>';
+        const accesBadge = p.acces
+          ? '<span class="pending-badge">' + echap(p.acces) + '</span>'
+          : '<span class="pending-badge vide">accès manquant</span>';
+
+        const chips = (arr, cls) => (arr || []).map(x =>
+          '<span class="audit-chip' + cls + '">' + echap(x) + '</span>').join('');
+        const regles = (p.mettre || []).length || (p.pas_mettre || []).length
+          ? '<div class="pending-rules">' + chips(p.mettre, '') + chips(p.pas_mettre, ' nok') + '</div>'
+          : '';
+
+        const gestion = p.gestion
+          ? ' · ' + echap(p.gestion)
+          : '';
+
+        item.innerHTML =
+          '<input type="checkbox" class="pending-cb" data-id="' + p.id + '">'
+          + '<div class="pending-main">'
+          + '<div class="pending-head"><span class="pending-id">#' + p.id + '</span>'
+          + typeBadge + accesBadge + '</div>'
+          + '<div class="pending-meta">📍 ' + p.lat.toFixed(5) + ', ' + p.lon.toFixed(5)
+          + ' · par ' + echap(p.propose_par)
+          + ' · ' + (p.date || '').slice(0, 16).replace('T', ' ') + gestion + '</div>'
+          + regles
+          + '<div class="pending-actions">'
+          + '<a class="sig-voir" href="https://www.openstreetmap.org/?mlat=' + p.lat + '&mlon=' + p.lon + '#map=19/' + p.lat + '/' + p.lon + '" target="_blank" rel="noopener">📍 Voir</a>'
+          + '<button type="button" class="act-btn act-demote" data-edit="' + p.id + '">✏️ Modifier</button>'
+          + '<button type="button" class="sig-ok" data-ok="' + p.id + '">✓ Valider</button>'
+          + '<button type="button" class="sig-rej" data-no="' + p.id + '">✗ Refuser</button>'
+          + '</div></div>';
+        box.appendChild(item);
+      });
+
+      // Pagination
+      if (d.pages > 1) {
+        const nav = document.createElement('div');
+        nav.className = 'contact-pagination';
+        const prev = document.createElement('button');
+        prev.type = 'button'; prev.textContent = '← Précédent'; prev.disabled = d.page <= 1;
+        prev.addEventListener('click', () => { pendingPage = d.page - 1; chargerPending(); });
+        const info = document.createElement('span');
+        info.className = 'contact-page-info';
+        info.textContent = 'Page ' + d.page + ' / ' + d.pages + ' · ' + d.total + ' demande' + (d.total > 1 ? 's' : '');
+        const next = document.createElement('button');
+        next.type = 'button'; next.textContent = 'Suivant →'; next.disabled = d.page >= d.pages;
+        next.addEventListener('click', () => { pendingPage = d.page + 1; chargerPending(); });
+        nav.append(prev, info, next);
+        box.appendChild(nav);
+      }
+
+      // ── Câblage : sélection ──
+      const majSelection = () => {
+        const n = pendingSel.size;
+        document.getElementById('pendingSelCount').textContent = n ? n + ' sélectionné' + (n > 1 ? 's' : '') : '';
+        document.getElementById('bulkValider').disabled = n === 0;
+        document.getElementById('bulkRefuser').disabled = n === 0;
+        const all = document.getElementById('pendingAll');
+        all.checked = n > 0 && n === liste.length;
+        all.indeterminate = n > 0 && n < liste.length;
+      };
+
+      box.querySelectorAll('.pending-cb[data-id]').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const id = parseInt(cb.dataset.id, 10);
+          if (cb.checked) pendingSel.add(id); else pendingSel.delete(id);
+          cb.closest('.pending-item').classList.toggle('sel', cb.checked);
+          majSelection();
+        });
+      });
+
+      document.getElementById('pendingAll').addEventListener('change', e => {
+        const on = e.target.checked;
+        box.querySelectorAll('.pending-cb[data-id]').forEach(cb => {
+          cb.checked = on;
+          const id = parseInt(cb.dataset.id, 10);
+          if (on) pendingSel.add(id); else pendingSel.delete(id);
+          cb.closest('.pending-item').classList.toggle('sel', on);
+        });
+        majSelection();
+      });
+
+      // ── Câblage : actions ──
+      document.getElementById('bulkValider').addEventListener('click', () => traiterPending('valider', [...pendingSel]));
+      document.getElementById('bulkRefuser').addEventListener('click', () => traiterPending('refuser', [...pendingSel]));
+      box.querySelectorAll('[data-ok]').forEach(b => b.addEventListener('click', () => traiterPending('valider', [parseInt(b.dataset.ok, 10)])));
+      box.querySelectorAll('[data-no]').forEach(b => b.addEventListener('click', () => traiterPending('refuser', [parseInt(b.dataset.no, 10)])));
+      box.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => ouvrirModale(parseInt(b.dataset.edit, 10))));
+
+      majSelection();
+    }
+
+    function traiterPending(action, ids) {
+      if (!ids.length) return;
+      if (action === 'refuser') {
+        const quoi = ids.length > 1 ? 'ces ' + ids.length + ' demandes' : 'cette demande';
+        if (!confirm('Refuser ' + quoi + ' ?')) return;
+      }
+      const body = new URLSearchParams();
+      body.set('action', action);
+      ids.forEach(id => body.append('ids[]', id));
+      fetch('/api/carte/pending.php', { method: 'POST', body: body })
+        .then(r => r.json())
+        .then(d => {
+          if (d.ok) { chargerPending(); refreshSignalCount(); }
+          else alert(d.error || 'Action impossible.');
+        })
+        .catch(() => alert('Erreur réseau.'));
+    }
+
+    // ── Modale de modification ──
+    let editId = null;
+    const editModal = document.getElementById('editModal');
+
+    function ouvrirModale(id) {
+      const p = pendingItems[id];
+      if (!p) return;
+      editId = id;
+      document.getElementById('editModalTitle').textContent = 'Modifier la demande #' + id;
+      document.getElementById('editType').value = p.type || 'Conteneur';
+      document.getElementById('editAcces').value = p.acces || 'public';
+      document.getElementById('editGestion').value = p.gestion || '';
+      document.getElementById('editInfoGestion').value = p.info_gestion || '';
+      document.getElementById('editErr').style.display = 'none';
+
+      const grid = document.getElementById('editElements');
+      grid.innerHTML = '';
+      pendingElements.forEach(nom => {
+        let state = 0;
+        if ((p.mettre || []).includes(nom)) state = 1;
+        else if ((p.pas_mettre || []).includes(nom)) state = 2;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'elt-chip';
+        b.dataset.state = state;
+        b.dataset.nom = nom;
+        b.textContent = nom;
+        b.addEventListener('click', () => {
+          b.dataset.state = (parseInt(b.dataset.state, 10) + 1) % 3;
+        });
+        grid.appendChild(b);
+      });
+      editModal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function fermerModale() {
+      editModal.classList.remove('show');
+      document.body.style.overflow = '';
+      editId = null;
+    }
+
+    document.getElementById('editCancel').addEventListener('click', fermerModale);
+    editModal.addEventListener('click', e => { if (e.target === editModal) fermerModale(); });
+
+    document.getElementById('editSave').addEventListener('click', () => {
+      if (!editId) return;
+      const body = new URLSearchParams();
+      body.set('action', 'modifier');
+      body.set('id', editId);
+      body.set('type', document.getElementById('editType').value);
+      body.set('acces', document.getElementById('editAcces').value);
+      body.set('gestion', document.getElementById('editGestion').value);
+      body.set('info_gestion', document.getElementById('editInfoGestion').value);
+      document.querySelectorAll('#editElements .elt-chip').forEach(b => {
+        const s = parseInt(b.dataset.state, 10);
+        if (s === 1) body.append('mettre[]', b.dataset.nom);
+        else if (s === 2) body.append('pas_mettre[]', b.dataset.nom);
+      });
+      fetch('/api/carte/pending.php', { method: 'POST', body: body })
+        .then(r => r.json())
+        .then(d => {
+          if (d.ok) { fermerModale(); chargerPending(); }
+          else {
+            const err = document.getElementById('editErr');
+            err.textContent = d.error || 'Enregistrement impossible.';
+            err.style.display = 'block';
+          }
+        })
+        .catch(() => {
+          const err = document.getElementById('editErr');
+          err.textContent = 'Erreur réseau.';
+          err.style.display = 'block';
+        });
+    });
 
     // ── Messages de contact (filtre + pagination) ──
     const CONTACT_CAT = { bug: '🐛 Bug', suggestion: '💡 Suggestion', question: '❓ Question', autre: '✉️ Autre' };

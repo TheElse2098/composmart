@@ -104,8 +104,10 @@
     .no-compost-tag { background: #fff; border-radius: 10px; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; color: #c62828; }
 
     /* Hors de .layout (plus de contrainte de .page-content) : on reprend les
-       mêmes paliers de largeur pour rester aligné avec le contenu au-dessus. */
-    .no-compost-fixed { width: 100%; max-width: 600px; margin: 0 auto 24px; padding: 0 16px; box-sizing: border-box; }
+       mêmes paliers de largeur pour rester aligné avec le contenu au-dessus.
+       En marge, pas en padding : .no-compost-box a déjà son padding interne
+       (16px) et les deux propriétés sur le même élément s'écraseraient. */
+    .no-compost-fixed { width: calc(100% - 32px); max-width: 600px; margin: 0 auto 24px; box-sizing: border-box; }
 
     /* ─────────── DESKTOP : layout "web classique" sidebar + contenu ─────────── */
     @media (min-width: 900px) {
@@ -126,14 +128,15 @@
       .item-card { align-items: flex-start; }
       .sec-title { font-size: 1.2rem; }
       /* Aligné avec le début de .page-content : largeur de la colonne .tabs
-         (240px) + le padding-left de .page-content lui-même (8px). */
-      .no-compost-fixed { max-width: none; padding: 0 48px 0 248px; }
+         (240px) + le padding-left de .page-content lui-même (8px). En marge,
+         pas en padding — même raison qu'en mobile (cf. règle de base). */
+      .no-compost-fixed { width: auto; max-width: none; margin: 0 48px 24px 248px; }
     }
     @media (min-width: 1300px) {
       .tabs { width: 260px; padding-left: 64px; }
       .hero { padding-left: 64px; }
       .page-content { padding-right: 64px; }
-      .no-compost-fixed { padding: 0 64px 0 268px; }
+      .no-compost-fixed { margin: 0 64px 24px 268px; }
     }
 
     html.dark .tab { background: #1e2d22; color: #5a8a6a; }

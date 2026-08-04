@@ -574,7 +574,11 @@
         const trajetHandlers = new Map();
 
         function info_compost(compost_id, lat, lon) {
+            // Consultation d'un point existant : on sort du parcours d'ajout (sinon
+            // le bouton resterait sur « Envoyer la demande » après une proposition).
+            nouv = 0;
             document.getElementById("supprimer_compost").style.visibility = isAdmin ? "visible" : "hidden";
+            document.getElementById("signaler_compost").style.display = "";
             document.getElementById("signal_zone").style.display = "none";
             document.getElementById("signal_msg").textContent = "";
             document.getElementById("rajouter_compost").style.visibility = "hidden";
@@ -687,7 +691,15 @@
                 if (data.includes("ne peut pas") || data.includes("Fatal error")) {
                     enregistrer.innerHTML = '<div style="color:red">' + data + '</div><input type="submit" value="Enregistrer">';
                 } else {
-                    if (nouv === 1) { alert("Compost créé !"); location.reload(); }
+                    if (nouv === 1) {
+                        // Demande envoyée : le point reste invisible sur la carte tant
+                        // qu'un admin ne l'a pas validé, donc rien à rafraîchir ici.
+                        nouv = 0;
+                        document.getElementById("tableau").style.display = "none";
+                        if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); currentMarker_click = null; }
+                        alert("Merci ! Ta demande a été envoyée.\nLe composteur apparaîtra sur la carte une fois validé par un administrateur.");
+                        return;
+                    }
                     if (newType && markerMap.has(compost_id) && composteursLayer && conteneursLayer) {
                         const marker = markerMap.get(compost_id);
                         if (conteneursLayer.hasLayer(marker)) conteneursLayer.removeLayer(marker);
@@ -724,7 +736,17 @@
                 Interdit_changer += '<label class="edit-check"><input type="checkbox" name="pas_mettre[]" value="' + elt + '"' + chk_i + '/> ' + elt + '</label>';
             });
             Inter.innerHTML = Interdit_changer; Autor.innerHTML = Autorise_changer;
-            document.getElementById("boutton").innerHTML = '<input type="submit" value="💾 Enregistrer">';
+            // Nouveau point : il part en validation admin au lieu d'être enregistré
+            // directement. On masque « Signaler » au passage — on ne signale pas un
+            // point qu'on vient soi-même de proposer.
+            const btnSignaler = document.getElementById("signaler_compost");
+            if (nouv === 1) {
+                if (btnSignaler) btnSignaler.style.display = "none";
+                document.getElementById("boutton").innerHTML = '<input type="submit" value="📤 Envoyer la demande">';
+            } else {
+                if (btnSignaler) btnSignaler.style.display = "";
+                document.getElementById("boutton").innerHTML = '<input type="submit" value="💾 Enregistrer">';
+            }
         }
 
         function calcul_trajet(id, lat, lon) {

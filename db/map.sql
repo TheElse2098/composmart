@@ -3,6 +3,9 @@
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
+-- statut : les ajouts faits depuis la carte partent en 'en_attente' et ne sont
+-- visibles publiquement qu'une fois validés dans l'admin. DEFAULT 'valide' pour
+-- que les imports OSM/JSON (qui ne renseignent pas la colonne) restent visibles.
 CREATE TABLE `composts` (
   `id`           int          NOT NULL AUTO_INCREMENT,
   `latitude`     double       NOT NULL,
@@ -11,10 +14,13 @@ CREATE TABLE `composts` (
   `publique`     text,
   `gestion`      text,
   `info_gestion` text,
+  `statut`       enum('en_attente','valide','refuse') NOT NULL DEFAULT 'valide',
+  `propose_par`  varchar(100) DEFAULT NULL,  -- pseudo du demandeur (users vit en db-core)
   `created_at`   datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   -- Index pour la détection de proximité (Haversine) et le filtrage par zone.
-  KEY `lat_lng` (`latitude`, `longitude`)
+  KEY `lat_lng` (`latitude`, `longitude`),
+  KEY `statut_date` (`statut`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `elements` (

@@ -58,7 +58,7 @@ function notif_compost_ajoute($conn, $id) {
 
     $in = implode(',', array_map('intval', $lot));
     $res = mysqli_query($conn,
-        "SELECT id, latitude, longitude, type, publique, created_at
+        "SELECT id, latitude, longitude, type, publique, propose_par, created_at
          FROM composts WHERE id IN ($in) ORDER BY id");
     $lignes = [];
     while ($res && ($r = mysqli_fetch_assoc($res))) {
@@ -66,13 +66,14 @@ function notif_compost_ajoute($conn, $id) {
             . ' — ' . round((float)$r['latitude'], 5) . ', ' . round((float)$r['longitude'], 5)
             . ' — ' . ($r['type'] ?: 'type non renseigné')
             . ' (' . ($r['publique'] ?: 'accès non renseigné') . ')'
+            . ' — par ' . ($r['propose_par'] ?: 'Anonyme')
             . ' — ' . $r['created_at'];
     }
     $n = count($lot);
-    $sujet = "[SUPPORT] $n nouveaux composteurs sur la carte";
-    $corps = "$n nouveaux composteurs ajoutés manuellement sur la carte Composmart :\n\n"
+    $sujet = "[SUPPORT] $n demandes d'ajout de composteurs";
+    $corps = "$n nouvelles demandes d'ajout de composteurs sur Composmart :\n\n"
            . implode("\n", $lignes)
-           . "\n\n(Les points supprimés depuis leur ajout n'apparaissent pas dans la liste.)\n";
+           . "\n\nÀ valider dans la page admin, onglet « Ajouts ».\n";
     $ok = send_mail('contact@composmart.fr', $sujet, $corps);
     // Déclenché par un ajout de composteur, pas une action admin explicite :
     // audit_log() attribue quand même à la session courante (l'auteur de
