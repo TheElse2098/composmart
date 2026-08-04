@@ -243,6 +243,9 @@ elseif (isset($_POST['type'])) {
     $acces      = $_POST['acces']     ?? '';
     $mettre     = $_POST['mettre']    ?? [];
     $pas_mettre = $_POST['pas_mettre'] ?? [];
+    // Champs libres : même assainissement que la branche d'import JSON.
+    $gestion    = mb_substr(strip_tags((string)($_POST['gestion'] ?? '')), 0, 300);
+    $info_gest  = mb_substr(strip_tags((string)($_POST['info_gestion'] ?? '')), 0, 300);
 
     if (!in_array($type, TYPES_VALIDES, true) || !in_array($acces, ACCES_VALIDES, true)) {
         echo json_encode(["error" => "Type ou accès invalide."]);
@@ -257,8 +260,8 @@ elseif (isset($_POST['type'])) {
         }
     }
 
-    $stmt = mysqli_prepare($connexion, "UPDATE composts SET type=?, publique=? WHERE id=$id");
-    $stmt->bind_param("ss", $type, $acces);
+    $stmt = mysqli_prepare($connexion, "UPDATE composts SET type=?, publique=?, gestion=?, info_gestion=? WHERE id=$id");
+    $stmt->bind_param("ssss", $type, $acces, $gestion, $info_gest);
     $stmt->execute();
 
     mysqli_query($connexion, "DELETE FROM regles WHERE id_compost=$id");
@@ -284,6 +287,7 @@ elseif (isset($_POST['type'])) {
     $snapshot = [
         'type'       => $type,
         'acces'      => $acces,
+        'gestion'    => $gestion,
         'mettre'     => array_values($mettre),
         'pas_mettre' => array_values($pas_mettre),
     ];

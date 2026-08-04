@@ -663,8 +663,9 @@
       } else if (a.target_type === 'compost') {
         rows += row('Composteur', '#' + (a.target_id != null ? a.target_id : (s.id != null ? s.id : '—')));
         if (s.propose_par) rows += row('Proposé par', echap(s.propose_par));
-        if (s.type)  rows += row('Type', echap(s.type));
-        if (s.acces) rows += row('Accès', echap(s.acces));
+        if (s.type)    rows += row('Type', echap(s.type));
+        if (s.acces)   rows += row('Accès', echap(s.acces));
+        if (s.gestion) rows += row('Gestion', echap(s.gestion));
         if (s.lat != null && s.lon != null) rows += row('Position', s.lat.toFixed(5) + ', ' + s.lon.toFixed(5));
         const ok = chips(s.mettre); const nok = chips(s.pas_mettre, 'nok');
         if (ok)  rows += row('Autorisé', ok);

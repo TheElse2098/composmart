@@ -208,6 +208,14 @@
             padding: 5px 8px; font-size: 0.82rem; font-weight: 600;
             cursor: pointer; outline: none;
         }
+        .edit-input {
+            display: block; width: 100%;
+            background: #eef4ec; color: #1a3a25;
+            border: 1.5px solid #c8dfc8; border-radius: 8px;
+            padding: 5px 8px; font-size: 0.82rem; font-weight: 600;
+            font-family: inherit; outline: none;
+        }
+        .edit-input:focus { border-color: #1e6e3e; }
         .edit-check {
             display: flex; align-items: center; gap: 7px;
             padding: 3px 0; font-size: 0.78rem; color: #1a3a25;
@@ -385,6 +393,8 @@
 
         html.dark .edit-check { color: #e8f5ee !important; }
         html.dark .edit-select { background: #1e2d22 !important; color: #e8f5ee !important; border-color: #3a5c42 !important; }
+        html.dark .edit-input { background: #1e2d22 !important; color: #e8f5ee !important; border-color: #3a5c42 !important; }
+        html.dark .edit-input:focus { border-color: #52b788 !important; }
         html.dark .btn-signaler { background: none !important; border: none !important; color: #c9a34e !important; }
         html.dark .btn-signaler:hover { color: #e8b931 !important; }
         html.dark .signal-zone select, html.dark .signal-zone textarea { background: #1e2d22 !important; color: #e8f5ee !important; border-color: #3a5c42 !important; }
@@ -667,7 +677,7 @@
                         let modif_compost = document.getElementById("modifier_compost");
                         if (modif_compost) {
                             if (modifierCompostHandler) { modif_compost.removeEventListener("click", modifierCompostHandler); }
-                            modifierCompostHandler = function () { modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter) };
+                            modifierCompostHandler = function () { modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter, gestion, info_gestion) };
                             modif_compost.addEventListener("click", modifierCompostHandler);
                         }
                     }
@@ -728,7 +738,7 @@
             }).catch(error => { if (error.message !== 'forbidden') console.error("Erreur:", error); });
         });
 
-        function modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter) {
+        function modifier_compost(compost_id, Autor, Inter, acces, Acces, type, Type, donnees_autor, donnees_inter, gestion, info_gestion) {
             document.getElementById("supprimer_compost").style.display = isAdmin ? "" : "none";
             let liste_type = ["Conteneur", "Compost bois", "Compost plastique"];
             let contenu_changer = '<select name="type" id="type_change" class="edit-select" form="formulaire_changer">';
@@ -748,6 +758,19 @@
                 Interdit_changer += '<label class="edit-check"><input type="checkbox" name="pas_mettre[]" value="' + elt + '"' + chk_i + '/> ' + elt + '</label>';
             });
             Inter.innerHTML = Interdit_changer; Autor.innerHTML = Autorise_changer;
+
+            // Gestionnaire et contact : simples divs d'affichage hors édition, on les
+            // remplace par des champs. La valeur est posée via .value (pas dans
+            // l'attribut) pour ne pas avoir à échapper les guillemets.
+            const champ = function (hote, nom, placeholder, valeur) {
+                if (!hote) return;
+                hote.innerHTML = '<input type="text" name="' + nom + '" class="edit-input" maxlength="300" placeholder="'
+                    + placeholder + '" form="formulaire_changer">';
+                hote.querySelector('input').value = (valeur && valeur !== 'Pas de données') ? valeur : '';
+            };
+            champ(document.getElementById("gestion"), 'gestion', 'Gestionnaire (mairie, association…)', gestion);
+            champ(document.getElementById("infos_gestion"), 'info_gestion', 'Téléphone ou lien', info_gestion);
+
             // Nouveau point : il part en validation admin au lieu d'être enregistré
             // directement. On masque « Signaler » au passage — on ne signale pas un
             // point qu'on vient soi-même de proposer.
@@ -840,9 +863,15 @@
                     }
                     document.getElementById("tableau").style.display = "block";
                     document.getElementById("rajouter_compost").style.visibility = "hidden";
-                    let Acces = document.getElementById("acces"); let Type = document.getElementById("type");
+                    // Autor/Inter doivent être les vrais conteneurs : passés en chaînes
+                    // vides, le .innerHTML des cases autorisé/interdit tombait dans le
+                    // vide et le formulaire de création n'affichait aucune règle.
+                    let Acces = document.getElementById("acces");
+                    let Type  = document.getElementById("type");
+                    let Autor = document.getElementById("Autor");
+                    let Inter = document.getElementById("Inter");
                     current_compost_id = number; nouv = 1;
-                    modifier_compost(number, "", "", "", Acces, "", Type, null, null);
+                    modifier_compost(number, Autor, Inter, "", Acces, "", Type, null, null, "", "");
                 });
             });
         }
