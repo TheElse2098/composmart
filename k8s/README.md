@@ -237,8 +237,21 @@ kubectl create secret generic composmart-secrets -n composmart \
   --from-literal=DB_USER=composmart \
   --from-literal=DB_PASSWORD='<MOT_DE_PASSE_FORT>' \
   --from-literal=DB_ROOT_PASSWORD='<ROOT_FORT>' \
-  --from-literal=AUDIT_SECRET='<SECRET_ALEATOIRE>'
+  --from-literal=AUDIT_SECRET='<SECRET_ALEATOIRE>' \
+  --from-literal=SMTP_HOST='ssl0.ovh.net' \
+  --from-literal=SMTP_PORT='465' \
+  --from-literal=SMTP_SECURE='ssl' \
+  --from-literal=SMTP_USER='contact@composmart.fr' \
+  --from-literal=SMTP_PASSWORD='<MDP_BOITE_MAIL>' \
+  --from-literal=MAIL_FROM='contact@composmart.fr'
 ```
+
+> ⚠️ **Sans les clés `SMTP_*`, aucun mail n'est envoyé** : `send_mail()`
+> (`shared/_guard.php`) sort immédiatement si `SMTP_HOST` est vide, sans tenter
+> de connexion ni lever d'erreur. C'est silencieux côté utilisateur — seul le
+> journal d'audit affiche « Échec » sur les entrées « Email envoyé ».
+> Les clés sont déclarées `optional: true` dans le manifest : les pods démarrent
+> sans elles, l'envoi est simplement désactivé.
 …et retirer le bloc `kind: Secret` du début de `composmart.yaml` (ou le laisser : le
 `kubectl create secret` ci-dessus prime s'il est appliqué après — au plus simple,
 supprimer le bloc Secret du YAML en prod).

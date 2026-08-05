@@ -289,6 +289,15 @@ spec:
             - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
             - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
             - { name: AUDIT_SECRET, valueFrom: { secretKeyRef: { name: composmart-secrets, key: AUDIT_SECRET } } }
+            # SMTP (notifications carte : demandes d'ajout, signalements).
+            # optional: true → le pod démarre même sans ces clés ; send_mail()
+            # renvoie alors false sans rien tenter (cf. shared/_guard.php).
+            - { name: SMTP_HOST,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_HOST,     optional: true } } }
+            - { name: SMTP_PORT,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_PORT,     optional: true } } }
+            - { name: SMTP_SECURE,   valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_SECURE,   optional: true } } }
+            - { name: SMTP_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_USER,     optional: true } } }
+            - { name: SMTP_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_PASSWORD, optional: true } } }
+            - { name: MAIL_FROM,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: MAIL_FROM,     optional: true } } }
           resources:
             requests: { cpu: "100m", memory: "128Mi" }
             limits:   { cpu: "1000m", memory: "512Mi" }
@@ -390,6 +399,14 @@ spec:
             - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
             - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
             - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+            # SMTP (mail du formulaire de contact). optional: true → le pod démarre
+            # même sans ces clés ; send_mail() renvoie alors false sans rien tenter.
+            - { name: SMTP_HOST,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_HOST,     optional: true } } }
+            - { name: SMTP_PORT,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_PORT,     optional: true } } }
+            - { name: SMTP_SECURE,   valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_SECURE,   optional: true } } }
+            - { name: SMTP_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_USER,     optional: true } } }
+            - { name: SMTP_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_PASSWORD, optional: true } } }
+            - { name: MAIL_FROM,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: MAIL_FROM,     optional: true } } }
           resources:
             requests: { cpu: "50m", memory: "128Mi" }
             limits:   { cpu: "500m", memory: "384Mi" }
