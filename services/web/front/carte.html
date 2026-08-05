@@ -332,6 +332,22 @@
            mode dans dark.css), on n'ajuste que la taille du glyphe. */
         .reset-vue { font-size: 17px; font-weight: 700; }
 
+        /* Icône plein écran : dessinée par un masque SVG teinté en currentColor,
+           donc toujours accordée à la couleur du bouton — plus de PNG noir/blanc
+           à échanger selon le thème (source des allers-retours icône invisible).
+           Le masque est porté par ::after et non par le <a> : masquer le lien
+           lui-même découperait aussi son fond, et la pastille disparaîtrait. */
+        @supports ((mask-image: none) or (-webkit-mask-image: none)) {
+            .fullscreen-icon { background-image: none !important; position: relative; }
+            .fullscreen-icon::after {
+                content: ''; position: absolute; inset: 0;
+                background-color: currentColor;
+                -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 10 4 4M4 4v5M4 4h5M14 10 20 4M20 4v5M20 4h-5M10 14 4 20M4 20v-5M4 20h5M14 14 20 20M20 20v-5M20 20h-5'/%3E%3C/svg%3E") no-repeat 50% 50%;
+                        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 10 4 4M4 4v5M4 4h5M14 10 20 4M20 4v5M20 4h-5M10 14 4 20M4 20v-5M4 20h5M14 14 20 20M20 20v-5M20 20h-5'/%3E%3C/svg%3E") no-repeat 50% 50%;
+                -webkit-mask-size: 17px 17px; mask-size: 17px 17px;
+            }
+        }
+
         /* ── SIGNALEMENT (formulaire utilisateur) ── */
         /* Action rare et secondaire : traitée en lien discret plutôt qu'en bouton
            plein, pour ne pas concurrencer les itinéraires ni trôner seule au

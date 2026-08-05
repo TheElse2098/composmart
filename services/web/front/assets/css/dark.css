@@ -92,13 +92,9 @@ html.dark .leaflet-control-layers-separator { border-color: #2a3d2e !important; 
 html.dark .leaflet-popup-content-wrapper,
 html.dark .leaflet-popup-tip { background: #1e2d22 !important; color: #c8e6d4 !important; }
 
-/* Icône fullscreen : PNG noir opaque, remplacé par une variante claire dédiée en dark.
-   (Pas de filter: invert() ici — combiné au background-color de .leaflet-bar a sur ce
-   même élément, un filter cassait la composition du navigateur et rendait tout le
-   bouton blanc plein, fond y compris. cf. investigation du 28/07 : confirmé en
-   désactivant filter dans les DevTools, le fond redevenait correct.) */
-html.dark .fullscreen-icon { background-image: url(/assets/libs/fullscreen/icon-fullscreen-dark.png) !important; }
-html.dark .leaflet-retina .fullscreen-icon { background-image: url(/assets/libs/fullscreen/icon-fullscreen-2x-dark.png) !important; }
+/* Icône fullscreen : plus de PNG à échanger selon le thème. Elle est dessinée
+   par un masque SVG teinté en currentColor (cf. carte.html), donc elle suit
+   automatiquement la couleur de texte fixée ci-dessus pour .leaflet-bar a. */
 
 /* Fond de carte en dark : on inverse les tuiles OSM (au lieu d'un tile layer alternatif
    type CARTO Dark Matter) pour conserver le relief/les teintes du terrain, comme en
