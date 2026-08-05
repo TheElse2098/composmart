@@ -58,10 +58,15 @@ $type = $_GET['type'] ?? 'tous';
 if ($type !== 'tous' && !in_array($type, $types, true)) { $type = 'tous'; }
 $where = $type === 'tous' ? '' : 'WHERE action = \'' . mysqli_real_escape_string($c, $type) . '\'';
 
-// Plage de dates optionnelle (YYYY-MM-DD).
+// Plage de dates optionnelle (YYYY-MM-DD), chaque borne indépendante et incluse.
 $depuis = $_GET['depuis'] ?? '';
+$jusqu  = $_GET['jusqu']  ?? '';
 if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $depuis)) {
     $where .= ($where ? ' AND ' : 'WHERE ') . "created_at >= '" . mysqli_real_escape_string($c, $depuis) . " 00:00:00'";
+}
+if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $jusqu)) {
+    // 23:59:59 : sans l'heure, la borne haute exclurait toute la journée choisie.
+    $where .= ($where ? ' AND ' : 'WHERE ') . "created_at <= '" . mysqli_real_escape_string($c, $jusqu) . " 23:59:59'";
 }
 
 const PAR_PAGE = 30;

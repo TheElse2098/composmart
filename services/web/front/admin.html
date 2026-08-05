@@ -122,6 +122,9 @@
     .audit-filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
     .audit-type-select, .audit-date-input { border: 1.5px solid #d4e6d8; border-radius: 10px; padding: 7px 12px; font-size: 0.8rem; font-family: inherit; background: #fff; color: #1a3a25; outline: none; cursor: pointer; }
     .audit-type-select:focus, .audit-date-input:focus { border-color: #1e6e3e; }
+    .audit-date-lbl { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: #4a7a5a; }
+    .audit-date-reset { background: none; border: none; color: #4a7a5a; font-size: 0.78rem; font-weight: 700; cursor: pointer; font-family: inherit; text-decoration: underline; padding: 7px 4px; }
+    .audit-date-reset:hover { color: #1e6e3e; }
     .audit-item { background: #fff; border-radius: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.04); margin-bottom: 7px; overflow: hidden; }
     .audit-head { display: flex; align-items: center; gap: 10px; padding: 9px 13px; font-size: 0.8rem; color: #1a3a25; cursor: pointer; transition: background 0.12s; }
     .audit-head:hover { background: #f3f8f3; }
@@ -225,6 +228,8 @@
     html.dark .user-search:focus { border-color: #52b788; }
     html.dark .audit-type-select, html.dark .audit-date-input { background: #16211a; border-color: #2b3c30; color: #e8f5ee; }
     html.dark .audit-type-select:focus, html.dark .audit-date-input:focus { border-color: #52b788; }
+    html.dark .audit-date-lbl, html.dark .audit-date-reset { color: #7ab88e; }
+    html.dark .audit-date-reset:hover { color: #52b788; }
     html.dark .tab { background: #16211a; color: #7ab88e; }
     html.dark .tab.active { background: #2d9959; color: #fff; border-color: #2d9959; }
     html.dark .tab:hover:not(.active) { border-color: #52b788; color: #52b788; }
@@ -319,7 +324,9 @@
         <div class="section-title">📜 Journal d'activité <span id="auditCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
         <div class="audit-filters">
           <select id="auditTypeFilter" class="audit-type-select"><option value="tous">Toutes les actions</option></select>
-          <input id="auditDateFilter" class="audit-date-input" type="date" title="Depuis le" />
+          <label class="audit-date-lbl">Du <input id="auditDateFrom" class="audit-date-input" type="date"></label>
+          <label class="audit-date-lbl">au <input id="auditDateTo" class="audit-date-input" type="date"></label>
+          <button type="button" class="audit-date-reset" id="auditDateReset" style="display:none">✕ Effacer les dates</button>
         </div>
         <div id="auditList"></div>
       </div>
@@ -692,12 +699,14 @@
     // ── Journal d'audit (filtre par type d'action + pagination) ──
     let auditType = 'tous';
     let auditDepuis = '';
+    let auditJusqu = '';
     let auditPage = 1;
     let auditTypesConnus = false;
 
     function chargerAudit() {
       const params = new URLSearchParams({ type: auditType, page: auditPage });
       if (auditDepuis) params.set('depuis', auditDepuis);
+      if (auditJusqu)  params.set('jusqu', auditJusqu);
       fetch('/api/admin/audit.php?' + params.toString())
         .then(r => r.json())
         .then(d => renderAudit(d || {}))
@@ -707,8 +716,28 @@
     document.getElementById('auditTypeFilter').addEventListener('change', e => {
       auditType = e.target.value; auditPage = 1; chargerAudit();
     });
-    document.getElementById('auditDateFilter').addEventListener('change', e => {
-      auditDepuis = e.target.value; auditPage = 1; chargerAudit();
+    const auditFrom  = document.getElementById('auditDateFrom');
+    const auditTo    = document.getElementById('auditDateTo');
+    const auditReset = document.getElementById('auditDateReset');
+
+    function majPlageAudit() {
+      auditDepuis = auditFrom.value;
+      auditJusqu  = auditTo.value;
+      // Bornes croisées : le navigateur empêche lui-même de choisir une date de
+      // fin antérieure au début (et inversement), plutôt que d'accepter puis
+      // renvoyer une liste vide sans explication.
+      auditTo.min   = auditDepuis || '';
+      auditFrom.max = auditJusqu  || '';
+      auditReset.style.display = (auditDepuis || auditJusqu) ? '' : 'none';
+      auditPage = 1;
+      chargerAudit();
+    }
+
+    auditFrom.addEventListener('change', majPlageAudit);
+    auditTo.addEventListener('change', majPlageAudit);
+    auditReset.addEventListener('click', () => {
+      auditFrom.value = ''; auditTo.value = '';
+      majPlageAudit();
     });
 
     function renderAudit(d) {
