@@ -328,6 +328,10 @@
             }
         }
 
+        /* Bouton « vue par défaut » : hérite du cadre .leaflet-bar (et de son dark
+           mode dans dark.css), on n'ajuste que la taille du glyphe. */
+        .reset-vue { font-size: 17px; font-weight: 700; }
+
         /* ── SIGNALEMENT (formulaire utilisateur) ── */
         /* Action rare et secondaire : traitée en lien discret plutôt qu'en bouton
            plein, pour ne pas concurrencer les itinéraires ni trôner seule au
@@ -485,7 +489,35 @@
     <script>
         // ── BURGER ──
         // ── MAP ──
-        var map = L.map('map').setView([46.785016, 7.670405], 6);
+        // Vue mémorisée d'une visite à l'autre : on restaure le dernier cadrage au
+        // lieu de repartir systématiquement sur la France entière. Le bouton ↺
+        // (sous les commandes de zoom) ramène à la vue par défaut.
+        var VUE_DEFAUT = { centre: [46.785016, 7.670405], zoom: 6 };
+        var CLE_VUE = 'carte:vue';
+
+        function lireVue() {
+            try {
+                var v = JSON.parse(localStorage.getItem(CLE_VUE) || 'null');
+                if (!v) return null;
+                var lat = Number(v.lat), lon = Number(v.lon), z = Number(v.z);
+                // Valeurs corrompues ou hors bornes : on repart sur la vue par défaut
+                // plutôt que de laisser Leaflet planter sur un centre invalide.
+                if (!isFinite(lat) || !isFinite(lon) || !isFinite(z)) return null;
+                if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+                if (z < 2 || z > 20) return null;
+                return { centre: [lat, lon], zoom: z };
+            } catch (e) { return null; }
+        }
+
+        function enregistrerVue() {
+            try {
+                var c = map.getCenter();
+                localStorage.setItem(CLE_VUE, JSON.stringify({ lat: c.lat, lon: c.lng, z: map.getZoom() }));
+            } catch (e) { /* quota plein / navigation privée : la carte marche sans mémorisation */ }
+        }
+
+        var vueInitiale = lireVue() || VUE_DEFAUT;
+        var map = L.map('map').setView(vueInitiale.centre, vueInitiale.zoom);
         // Un seul fond de tuiles (OSM standard) : le dark mode s'obtient par filtre CSS
         // (cf. dark.css .leaflet-tile-pane) plutôt qu'un tile layer alternatif, pour
         // garder le relief/les teintes du terrain visibles comme en light mode.
@@ -497,6 +529,34 @@
         var fsControl = L.control.fullscreen();
         map.addControl(fsControl);
         L.control.scale({metric: true, imperial: false}).addTo(map);
+
+        // Bouton « revenir à la vue par défaut ». Indispensable dès lors que la vue
+        // est mémorisée : sans lui, quelqu'un zoomé sur une rue n'aurait aucun moyen
+        // simple de retrouver la France entière, même en rechargeant.
+        var ResetVue = L.Control.extend({
+            options: { position: 'topleft' },
+            onAdd: function () {
+                var div = L.DomUtil.create('div', 'leaflet-bar');
+                var a = L.DomUtil.create('a', 'reset-vue', div);
+                a.href = '#';
+                a.title = 'Revenir à la vue par défaut (France entière)';
+                a.setAttribute('role', 'button');
+                a.setAttribute('aria-label', 'Revenir à la vue par défaut');
+                a.textContent = '↺';
+                L.DomEvent.on(a, 'click', function (e) {
+                    L.DomEvent.stop(e);
+                    // setView déclenche moveend, donc la vue par défaut est
+                    // réenregistrée : équivalent à oublier la position précédente.
+                    map.setView(VUE_DEFAUT.centre, VUE_DEFAUT.zoom);
+                });
+                return div;
+            }
+        });
+        map.addControl(new ResetVue());
+
+        // Handler dédié : celui du rechargement de zone (plus bas) sort avant
+        // pour les zooms < 10, on ne peut donc pas y greffer la mémorisation.
+        map.on('moveend', enregistrerVue);
         map.on('click', onMapClick);
         map.on('movestart', function() {
             var r = document.getElementById('rajouter_compost');
