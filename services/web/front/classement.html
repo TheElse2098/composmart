@@ -6,13 +6,17 @@
   <link rel="stylesheet" href="/assets/css/dark.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
   <title>CompoSmart – Classement</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background-color: #eef4ec; font-family: 'Segoe UI', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
 
+    /* ── NAV / DRAWER (markup injecté par site-nav.js) ── */
     nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; position: sticky; top: 0; z-index: 100; }
-    .nav-logo { font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
     .nav-logo span { color: #a8e6bf; }
     .nav-right { display: flex; align-items: center; gap: 12px; }
     .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; transition: color 0.15s; }
@@ -25,7 +29,7 @@
     .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
     .drawer.open { right: 0; }
     .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
-    .drawer-logo { font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
+    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
     .drawer-logo span { color: #a8e6bf; }
     .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
     .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
@@ -36,44 +40,97 @@
     .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .overlay.open { opacity: 1; pointer-events: all; }
 
-    /* Hero */
-    .hero { background: linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2a9450 100%); padding: 36px 24px 52px; text-align: center; }
-    .hero h1 { font-size: clamp(1.4rem, 4vw, 2rem); color: #fff; font-weight: 900; margin-bottom: 6px; }
-    .hero-sub { font-size: 0.9rem; color: #a8e6bf; }
+    /* ── HERO (même traitement que l'accueil) ── */
+    .hero {
+      position: relative; text-align: center; padding: 54px 20px 80px; color: #fff; overflow: hidden;
+      background-color: #1e6e3e;
+      background-image: url('/assets/img/motif-branchage-light.svg'), linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2d9959 100%);
+      background-repeat: repeat, no-repeat;
+      background-size: 220px 220px, cover;
+    }
+    .hero::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 60px; background: #eef4ec; clip-path: ellipse(75% 100% at 50% 100%); }
+    .hero-inner { position: relative; z-index: 2; max-width: 620px; margin: 0 auto; }
+    .hero h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 900; line-height: 1.15; }
+    .hero-sub { font-size: 1rem; color: rgba(255,255,255,0.9); font-weight: 600; margin-top: 8px; }
 
-    /* Card */
-    .card { background: #fff; border-radius: 24px; margin-top: -20px; padding: 32px 24px 40px; max-width: 520px; margin-left: auto; margin-right: auto; position: relative; }
+    /* ── SÉLECTEUR DE PÉRIODE (chevauche la courbe, comme les chiffres de l'accueil) ── */
+    .periode-wrap { position: relative; z-index: 5; margin-top: -26px; padding: 0 16px; display: flex; justify-content: center; }
+    .periode-switch { display: flex; gap: 4px; background: #fff; border-radius: 50px; padding: 6px; box-shadow: 0 6px 22px rgba(30,110,62,0.14); max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+    .periode-switch::-webkit-scrollbar { display: none; }
+    .per-btn { border: none; background: none; border-radius: 50px; padding: 10px 16px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.86rem; color: #4a7a5a; cursor: pointer; white-space: nowrap; transition: background 0.18s, color 0.18s; }
+    .per-btn.active { background: #1e6e3e; color: #fff; }
+    .per-btn:hover:not(.active) { background: #eef4ec; color: #1e6e3e; }
 
-    /* Tableau classement */
-    .lb-row { display: flex; align-items: center; gap: 12px; background: #f4f9f4; border-radius: 14px; padding: 13px 14px; margin-bottom: 9px; }
-    .lb-rank { font-size: 1.15rem; font-weight: 900; color: #bbb; width: 36px; text-align: center; flex-shrink: 0; }
-    .lb-rank.top1 { color: #f9a825; font-size: 1.4rem; }
-    .lb-rank.top2 { color: #9e9e9e; font-size: 1.3rem; }
-    .lb-rank.top3 { color: #a1673a; font-size: 1.25rem; }
-    .lb-name { flex: 1; font-size: 0.9rem; font-weight: 800; color: #1a3a25; }
-    .lb-xp { font-size: 0.88rem; font-weight: 900; color: #1e6e3e; white-space: nowrap; }
-    .lb-row.lb-me { background: #e8f5e9; border: 1.5px solid #a8e6bf; }
+    .board { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 20px 20px; }
+
+    /* ── PODIUM (top 3) ── */
+    .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: end; margin: 30px 0 22px; }
+    .pod { background: #fff; border-radius: 20px; padding: 16px 8px 14px; text-align: center; box-shadow: 0 4px 16px rgba(30,110,62,0.10); border: 2px solid transparent; min-width: 0; }
+    /* Le vainqueur domine par la hauteur, pas par la couleur seule */
+    .pod-1 { padding-top: 26px; padding-bottom: 20px; border-color: #f9c449; }
+    .pod-2 { border-color: #cfd4d8; }
+    .pod-3 { border-color: #d9a273; }
+    .pod-medal { font-size: 1.7rem; line-height: 1; }
+    .pod-ava { width: 48px; height: 48px; border-radius: 50%; margin: 8px auto 7px; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 1.2rem; color: #fff; background: linear-gradient(160deg, #1e6e3e, #2d9959); }
+    .pod-1 .pod-ava { width: 58px; height: 58px; font-size: 1.45rem; }
+    .pod-name { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.88rem; color: #1a3a25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pod-xp { font-size: 0.78rem; font-weight: 800; color: #1e6e3e; margin-top: 3px; }
+    .pod.is-me { box-shadow: 0 0 0 3px #a8e6bf, 0 4px 16px rgba(30,110,62,0.10); }
+
+    /* ── LISTE (rangs 4+) ── */
+    .lb-list { display: flex; flex-direction: column; gap: 8px; }
+    .lb-row { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 16px; padding: 13px 16px; box-shadow: 0 2px 10px rgba(30,110,62,0.07); transition: transform 0.15s; }
+    .lb-row:hover { transform: translateX(3px); }
+    .lb-rank { font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; color: #9db8a8; width: 34px; text-align: center; flex-shrink: 0; }
+    .lb-ava { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.9rem; color: #1e6e3e; background: #eef4ec; }
+    .lb-name { flex: 1; min-width: 0; font-size: 0.92rem; font-weight: 800; color: #1a3a25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-lvl { font-size: 0.7rem; font-weight: 700; color: #7aaa8a; }
+    .lb-xp { font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 900; color: #1e6e3e; white-space: nowrap; flex-shrink: 0; }
+    .lb-row.lb-me { background: #e8f5e9; box-shadow: 0 0 0 2px #a8e6bf; }
     .lb-row.lb-me .lb-name { color: #1e6e3e; }
-    .lb-me-sep { text-align: center; font-size: 0.72rem; color: #7aaa8a; font-weight: 700; padding: 6px 0 4px; letter-spacing: 2px; }
-    .lb-empty { text-align: center; font-size: 0.9rem; color: #7aaa8a; padding: 24px 0; }
+    .lb-me-tag { font-size: 0.68rem; font-weight: 800; color: #1e6e3e; background: #fff; border-radius: 20px; padding: 2px 8px; margin-left: 6px; }
+    .lb-sep { text-align: center; font-size: 0.9rem; color: #9db8a8; font-weight: 800; letter-spacing: 3px; padding: 4px 0; }
+    .lb-empty { text-align: center; font-size: 0.92rem; color: #7aaa8a; font-weight: 600; background: #fff; border-radius: 20px; padding: 32px 20px; box-shadow: 0 2px 10px rgba(30,110,62,0.07); }
 
-    .join-cta { background: #eef4ec; border-radius: 16px; padding: 18px 20px; margin-top: 20px; text-align: center; }
-    .join-cta p { font-size: 0.82rem; color: #4a7a5a; font-weight: 600; margin-bottom: 12px; }
-    .btn-primary { display: inline-block; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 11px 28px; font-size: 0.9rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: opacity 0.15s; }
-    .btn-primary:hover { opacity: 0.85; }
+    .join-cta { background: #fff; border-radius: 20px; padding: 24px 22px; margin-top: 18px; text-align: center; box-shadow: 0 4px 16px rgba(30,110,62,0.08); }
+    .join-cta p { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; margin-bottom: 14px; }
+    .btn-primary { display: inline-block; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 12px 30px; font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 800; text-decoration: none; cursor: pointer; box-shadow: 0 4px 14px rgba(30,110,62,0.28); transition: transform 0.18s, box-shadow 0.18s; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(30,110,62,0.34); }
 
-    /* dark */
-    html.dark body { background: #11190e; }
-    html.dark .card { background: #1a2b1e; }
-    html.dark .lb-row { background: #16241a; }
-    html.dark .lb-name { color: #c8e6d4; }
-    html.dark .lb-xp { color: #52b788; }
-    html.dark .lb-row.lb-me { background: #1a2f1e; border-color: #2d4030; }
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); z-index: 90; }
+
+    @media (min-width: 640px) {
+      .podium { gap: 16px; margin-top: 38px; }
+      .pod { padding: 20px 12px 18px; }
+      .pod-1 { padding-top: 32px; padding-bottom: 26px; }
+      .per-btn { padding: 10px 22px; font-size: 0.9rem; }
+    }
+
+    /* ── DARK MODE ── */
+    html.dark body { background: #0f1811; color: #e8f5ee; }
+    html.dark .hero {
+      background-color: #0d2f18;
+      background-image: url('/assets/img/motif-branchage-dark.svg'), linear-gradient(160deg, #0d2f18 0%, #12401f 55%, #1a5c33 100%);
+      background-repeat: repeat, no-repeat;
+      background-size: 220px 220px, cover;
+    }
+    html.dark .hero::after { background: #0f1811; }
+    html.dark .hero-sub { color: rgba(255,255,255,0.82); }
+    html.dark .periode-switch, html.dark .pod, html.dark .lb-row,
+    html.dark .lb-empty, html.dark .join-cta { background: #16211a; box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+    html.dark .per-btn { color: #7ab88e; }
+    html.dark .per-btn.active { background: #2d9959; color: #fff; }
+    html.dark .per-btn:hover:not(.active) { background: #1e2d22; color: #52b788; }
+    html.dark .pod-name, html.dark .lb-name { color: #e8f5ee; }
+    html.dark .pod-xp, html.dark .lb-xp { color: #52b788; }
+    html.dark .lb-ava { background: #1e2d22; color: #52b788; }
+    html.dark .lb-rank, html.dark .lb-lvl, html.dark .lb-sep,
+    html.dark .lb-empty, html.dark .join-cta p { color: #7ab88e; }
+    html.dark .lb-row.lb-me { background: #16291c; box-shadow: 0 0 0 2px #2d9959; }
     html.dark .lb-row.lb-me .lb-name { color: #52b788; }
-    html.dark .lb-me-sep { color: #4a7a5a; }
-    html.dark .lb-empty { color: #4a7a5a; }
-    html.dark .join-cta { background: #16241a; }
-    html.dark .join-cta p { color: #5a8a6a; }
+    html.dark .lb-me-tag { background: #0f1811; color: #52b788; }
+    html.dark .pod.is-me { box-shadow: 0 0 0 3px #2d9959, 0 4px 16px rgba(0,0,0,0.35); }
+    html.dark .btn-primary { background: #2d9959; }
     html.dark .drawer { background: #1a2b1e; }
     html.dark .drawer-menu li a { color: #b0d4be; }
     html.dark .drawer-menu li a:hover, html.dark .drawer-menu li a.active { background: #243328; color: #52b788; border-left-color: #52b788; }
@@ -83,73 +140,138 @@
 </head>
 <body>
 
-    <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
+  <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
   <div id="site-nav"></div>
 
-  <div class="hero">
-    <h1>🏆 Classement</h1>
-    <div class="hero-sub">Les meilleurs composteurs de la communauté</div>
+  <header class="hero">
+    <div class="hero-inner">
+      <h1>🏆 Classement</h1>
+      <p class="hero-sub" id="heroSub">Les meilleurs composteurs de la communauté</p>
+    </div>
+  </header>
+
+  <div class="periode-wrap">
+    <div class="periode-switch" id="periodeSwitch">
+      <button type="button" class="per-btn active" data-p="total">🏆 Général</button>
+      <button type="button" class="per-btn" data-p="semaine">📅 7 jours</button>
+      <button type="button" class="per-btn" data-p="jour">⚡ 24 h</button>
+    </div>
   </div>
 
-  <div class="card" id="cardContent">
+  <main class="board" id="board">
     <div class="lb-empty">Chargement…</div>
-  </div>
+  </main>
+
+  <!-- Footer partagé (injecté par site-footer.js) -->
+  <div id="site-footer"></div>
+
+  <div class="bottom-leaf"></div>
 
   <script>
     function esc(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+    function initiale(nom) { return (nom || '?').charAt(0).toUpperCase(); }
 
-    function ordinal(n) { return n === 1 ? '1er' : n + 'e'; }
+    // Libellés dépendants de la période : en « général » on montre un cumul,
+    // sur une fenêtre glissante on montre un gain — le dire évite de croire
+    // que l'XP totale d'un joueur a fondu en changeant d'onglet.
+    const PERIODES = {
+      total:   { sous: 'Les meilleurs composteurs de la communauté', suffixe: 'XP',        vide: 'Aucun joueur classé pour l\'instant.' },
+      semaine: { sous: 'XP gagnée au cours des 7 derniers jours',    suffixe: 'XP gagnés', vide: 'Personne n\'a gagné d\'XP cette semaine.' },
+      jour:    { sous: 'XP gagnée au cours des dernières 24 heures', suffixe: 'XP gagnés', vide: 'Personne n\'a gagné d\'XP aujourd\'hui.' },
+    };
 
-    fetch('/api/auth/leaderboard.php')
-      .then(r => r.json())
-      .catch(() => ({ top: [], me: null }))
-      .then(lb => render(lb));
+    let periode = 'total';
+
+    document.querySelectorAll('#periodeSwitch .per-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.p === periode) return;
+        periode = btn.dataset.p;
+        document.querySelectorAll('#periodeSwitch .per-btn').forEach(b => b.classList.toggle('active', b === btn));
+        charger();
+      });
+    });
+
+    function charger() {
+      document.getElementById('heroSub').textContent = PERIODES[periode].sous;
+      document.getElementById('board').innerHTML = '<div class="lb-empty">Chargement…</div>';
+      fetch('/api/auth/leaderboard.php?periode=' + periode)
+        .then(r => r.json())
+        .catch(() => ({ top: [], me: null }))
+        .then(render);
+    }
 
     function render(lb) {
       const top = lb.top || [];
       const me  = lb.me || null;
-      const medals = ['🥇', '🥈', '🥉'];
-      const rankClass = i => i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-      const rankLabel = i => medals[i] || ('#' + (i + 1));
-      const inTop = me && top.some(u => u.id === me.id);
+      const cfg = PERIODES[periode];
+      const board = document.getElementById('board');
 
-      if (top.length === 0) {
-        document.getElementById('cardContent').innerHTML = '<div class="lb-empty">Aucun utilisateur pour l\'instant.</div>';
+      if (lb.indisponible) {
+        board.innerHTML = '<div class="lb-empty">Le classement par période n\'est pas encore disponible.</div>';
+        return;
+      }
+      if (!top.length) {
+        let vide = '<div class="lb-empty">' + cfg.vide + '</div>';
+        if (!me) vide += ctaHtml();
+        board.innerHTML = vide;
         return;
       }
 
+      const medals = ['🥇', '🥈', '🥉'];
+      const estMoi = u => me && u.id === me.id;
       let html = '';
-      top.forEach((u, i) => {
-        const isMe = me && u.id === me.id;
-        html += `<div class="lb-row${isMe ? ' lb-me' : ''}">
-          <div class="lb-rank ${rankClass(i)}">${rankLabel(i)}</div>
-          <div class="lb-name">${esc(u.username)}${isMe ? ' <span style="font-size:0.72rem;font-weight:700;opacity:0.7">(moi)</span>' : ''}</div>
-          <div class="lb-xp">⭐ ${u.xp} XP</div>
-        </div>`;
-      });
 
-      if (me && !inTop) {
-        html += `<div class="lb-me-sep">· · ·</div>
-        <div class="lb-row lb-me">
-          <div class="lb-rank">#${me.rank}</div>
-          <div class="lb-name">${esc(me.username)} <span style="font-size:0.72rem;font-weight:700;opacity:0.7">(moi)</span></div>
-          <div class="lb-xp">⭐ ${me.xp} XP</div>
-        </div>`;
+      // ── Podium : les 3 premiers, le vainqueur au centre et surélevé ──
+      const trois = top.slice(0, 3);
+      if (trois.length === 3) {
+        const ordre = [1, 0, 2]; // 2e à gauche, 1er au centre, 3e à droite
+        html += '<div class="podium">' + ordre.map(i => {
+          const u = trois[i];
+          return `<div class="pod pod-${i + 1}${estMoi(u) ? ' is-me' : ''}">
+            <div class="pod-medal">${medals[i]}</div>
+            <div class="pod-ava">${esc(initiale(u.username))}</div>
+            <div class="pod-name">${esc(u.username)}</div>
+            <div class="pod-xp">${u.xp} ${cfg.suffixe}</div>
+          </div>`;
+        }).join('') + '</div>';
       }
 
-      if (!me) {
-        html += `<div class="join-cta">
-          <p>Inscris-toi pour apparaître dans le classement !</p>
-          <a href="/signin" class="btn-primary">Créer un compte</a>
-        </div>`;
+      // ── Reste du classement (ou tout, si moins de 3 joueurs) ──
+      const reste = trois.length === 3 ? top.slice(3) : top;
+      const depart = trois.length === 3 ? 4 : 1;
+      if (reste.length) {
+        html += '<div class="lb-list">' + reste.map((u, i) => ligne(u, depart + i, estMoi(u), cfg)).join('') + '</div>';
       }
 
-      document.getElementById('cardContent').innerHTML = html;
+      // ── Ma position si je suis hors du tableau affiché ──
+      if (me && !top.some(u => u.id === me.id)) {
+        html += '<div class="lb-sep">···</div><div class="lb-list">' + ligne(me, me.rank, true, cfg) + '</div>';
+      }
+      if (!me) html += ctaHtml();
+
+      board.innerHTML = html;
     }
-  </script>
 
-    <!-- Footer partagé (injecté par site-footer.js) -->
-  <div id="site-footer"></div>
+    function ligne(u, rang, isMe, cfg) {
+      return `<div class="lb-row${isMe ? ' lb-me' : ''}">
+        <div class="lb-rank">#${rang}</div>
+        <div class="lb-ava">${esc(initiale(u.username))}</div>
+        <div class="lb-name">${esc(u.username)}${isMe ? '<span class="lb-me-tag">moi</span>' : ''}
+          <div class="lb-lvl">Niveau ${u.niveau}</div>
+        </div>
+        <div class="lb-xp">${u.xp} ${cfg.suffixe}</div>
+      </div>`;
+    }
+
+    function ctaHtml() {
+      return `<div class="join-cta">
+        <p>Inscris-toi pour apparaître dans le classement et gagner de l'XP !</p>
+        <a href="/signin" class="btn-primary">Créer un compte</a>
+      </div>`;
+    }
+
+    charger();
+  </script>
 
   <script src="/assets/js/site-footer.js"></script>
   <script src="/assets/js/site-nav.js"></script>
