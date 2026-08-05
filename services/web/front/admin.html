@@ -678,6 +678,7 @@
         rows += row('Destinataire', echap(s.to || '—'));
         rows += row('Sujet', echap(s.sujet || '—'));
         rows += row('Statut', s.ok ? '✅ Envoyé' : '❌ Échec d\'envoi');
+        if (s.erreur) rows += row('Raison', echap(s.erreur));
         if (s.nb) rows += row('Éléments groupés', s.nb);
       } else if (a.details) {
         rows += row('Détails', echap(a.details));

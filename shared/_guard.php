@@ -71,11 +71,33 @@ function audit_log($conn, $action, $details = '', $extra = []) {
  *
  * @return bool true si l'envoi a réussi
  */
-function send_mail($to, $subject, $body, $replyTo = null) {
-    $host = getenv('SMTP_HOST');
-    if (!$host) return false;
+/**
+ * Raison du dernier échec d'envoi (diagnostic). L'appelant la joint à son
+ * audit_log : sans ça, l'exception PHPMailer est perdue et un « Échec » dans
+ * le journal n'indique pas si c'est l'auth, le port, le TLS ou le réseau.
+ * Appeler sans argument pour lire, avec une chaîne pour écrire.
+ */
+function send_mail_last_error($set = null) {
+    static $last = '';
+    if ($set !== null) $last = (string)$set;
+    return $last;
+}
 
-    require_once __DIR__ . '/vendor/autoload.php';
+function send_mail($to, $subject, $body, $replyTo = null) {
+    send_mail_last_error('');
+
+    $host = getenv('SMTP_HOST');
+    if (!$host) {
+        send_mail_last_error('SMTP_HOST non défini : envoi désactivé.');
+        return false;
+    }
+
+    $autoload = __DIR__ . '/vendor/autoload.php';
+    if (!is_file($autoload)) {
+        send_mail_last_error('PHPMailer absent de l\'image (vendor/autoload.php introuvable).');
+        return false;
+    }
+    require_once $autoload;
 
     $from = getenv('MAIL_FROM') ?: getenv('SMTP_USER');
 
@@ -89,6 +111,7 @@ function send_mail($to, $subject, $body, $replyTo = null) {
         $mail->Password   = getenv('SMTP_PASSWORD');
         $mail->SMTPSecure = getenv('SMTP_SECURE') ?: \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->CharSet    = 'UTF-8';
+        $mail->Timeout    = 10;   // défaut 300 s : bloquerait la requête utilisateur
 
         $mail->setFrom($from, 'Composmart');
         $mail->addAddress($to);
@@ -98,8 +121,12 @@ function send_mail($to, $subject, $body, $replyTo = null) {
         $mail->Subject = $subject;
         $mail->Body    = $body;
 
-        return $mail->send();
+        if ($mail->send()) return true;
+        // send() renvoie false sans lever : ErrorInfo porte alors le détail.
+        send_mail_last_error($mail->ErrorInfo ?: 'échec inconnu');
+        return false;
     } catch (\Throwable $e) {
+        send_mail_last_error($e->getMessage() ?: ($mail->ErrorInfo ?: 'exception sans message'));
         return false;
     }
 }

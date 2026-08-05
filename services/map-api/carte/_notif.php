@@ -80,7 +80,10 @@ function notif_compost_ajoute($conn, $id) {
     // l'ajout qui a fait franchir le seuil), c'est correct comme traçabilité.
     audit_log($conn, 'mail_envoye', ($ok ? 'Envoyé' : 'Échec') . " — $sujet", [
         'target_type' => 'mail',
-        'snapshot'    => ['to' => 'contact@composmart.fr', 'sujet' => $sujet, 'ok' => $ok, 'nb' => $n],
+        'snapshot'    => [
+            'to' => 'contact@composmart.fr', 'sujet' => $sujet, 'ok' => $ok, 'nb' => $n,
+            'erreur' => $ok ? null : mb_substr(send_mail_last_error(), 0, 300),
+        ],
     ]);
     if (!$ok) {
         notif_batch_restore($conn, 'composts', $lot);
@@ -119,7 +122,10 @@ function notif_signalement_cree($conn, $id) {
     $ok = send_mail('contact@composmart.fr', $sujet, $corps);
     audit_log($conn, 'mail_envoye', ($ok ? 'Envoyé' : 'Échec') . " — $sujet", [
         'target_type' => 'mail',
-        'snapshot'    => ['to' => 'contact@composmart.fr', 'sujet' => $sujet, 'ok' => $ok, 'nb' => $n],
+        'snapshot'    => [
+            'to' => 'contact@composmart.fr', 'sujet' => $sujet, 'ok' => $ok, 'nb' => $n,
+            'erreur' => $ok ? null : mb_substr(send_mail_last_error(), 0, 300),
+        ],
     ]);
     if (!$ok) {
         notif_batch_restore($conn, 'signalements', $lot);

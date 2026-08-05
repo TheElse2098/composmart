@@ -68,7 +68,12 @@ if ($stmt->execute()) {
     $mail_ok = send_mail('contact@composmart.fr', $mailSujet, $mailCorps);
     audit_log($c, 'mail_envoye', ($mail_ok ? 'Envoyé' : 'Échec') . ' — ' . $mailSujet, [
         'target_type' => 'mail',
-        'snapshot'    => ['to' => 'contact@composmart.fr', 'sujet' => $mailSujet, 'ok' => $mail_ok],
+        'snapshot'    => [
+            'to'     => 'contact@composmart.fr',
+            'sujet'  => $mailSujet,
+            'ok'     => $mail_ok,
+            'erreur' => $mail_ok ? null : mb_substr(send_mail_last_error(), 0, 300),
+        ],
     ]);
 
     echo json_encode(['ok' => true]);
