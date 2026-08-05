@@ -468,7 +468,10 @@
         { label: 'Connexions', data: d.connexions, backgroundColor: 'rgba(249,168,37,0.75)', borderColor: '#f9a825', borderWidth: 1, borderRadius: 4 }
       );
       if (d.composteurs) datasets.push(
-        { label: 'Composteurs ajoutés', data: d.composteurs, backgroundColor: 'rgba(106,153,78,0.75)', borderColor: '#6a994e', borderWidth: 1, borderRadius: 4 }
+        { label: 'Composteurs proposés', data: d.composteurs, backgroundColor: 'rgba(106,153,78,0.75)', borderColor: '#6a994e', borderWidth: 1, borderRadius: 4 }
+      );
+      if (d.valides) datasets.push(
+        { label: 'Composteurs validés', data: d.valides, backgroundColor: 'rgba(30,110,62,0.75)', borderColor: '#1e6e3e', borderWidth: 1, borderRadius: 4 }
       );
 
       const scaleOpts = {
