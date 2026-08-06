@@ -228,6 +228,10 @@
     html.dark .quiz-opt { background: #1e2d22; border-color: #2a4d35; color: #c8e6d4; }
     html.dark .quiz-opt:hover:not(:disabled) { background: #243328; border-color: #52b788; }
     html.dark .quiz-opt.choisi { background: #243328; border-color: #52b788; box-shadow: 0 0 0 3px rgba(82,183,136,0.22); }
+    /* Indispensables : html.dark .quiz-opt (0,2,1) l'emporte sur .quiz-opt.correct
+       (0,2,0), donc sans ces règles la correction ne se voit pas en dark mode. */
+    html.dark .quiz-opt.correct { background: #16291c; border-color: #43a047; color: #7fc99a; }
+    html.dark .quiz-opt.wrong   { background: #3d1a1a; border-color: #e53935; color: #ef9a9a; }
     html.dark .btn-prev { background: #1a2b1e; color: #52b788; border-color: #2d4030; }
     html.dark .btn-prev:hover { background: #243328; }
     html.dark .quiz-feedback.ok { background: #1a2f20; color: #52b788; }
