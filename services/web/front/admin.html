@@ -239,7 +239,7 @@
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
 
     /* Évolution */
-    .evo-bar { display: flex; gap: 6px; margin-bottom: 12px; }
+    .evo-bar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
     .evo-btn { border: 1.5px solid #c8e6c9; border-radius: 20px; padding: 6px 16px; font-size: 0.8rem; font-weight: 800; cursor: pointer; background: #fff; color: #1e6e3e; font-family: inherit; transition: background 0.15s, color 0.15s; }
     .evo-btn.active, .evo-btn:hover { background: #1e6e3e; color: #fff; border-color: #1e6e3e; }
     .evo-card { background: #fff; border-radius: 16px; padding: 20px 16px 14px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); }
@@ -279,13 +279,24 @@
         <div class="stats-grid" id="statsGrid"></div>
 
         <div class="section-title">📈 Évolution</div>
-        <div class="evo-bar">
+        <div class="evo-bar" id="evoBar">
           <button class="evo-btn" data-p="7d">7 jours</button>
           <button class="evo-btn active" data-p="30d">30 jours</button>
           <button class="evo-btn" data-p="90d">3 mois</button>
         </div>
         <div class="evo-card">
           <canvas id="evoChart"></canvas>
+        </div>
+
+        <div class="section-title">🌱 Composteurs sur la carte</div>
+        <div class="evo-bar" id="parcBar">
+          <button class="evo-btn parc-btn" data-p="7d">7 jours</button>
+          <button class="evo-btn parc-btn active" data-p="30d">30 jours</button>
+          <button class="evo-btn parc-btn" data-p="90d">3 mois</button>
+          <button class="evo-btn parc-btn" data-p="tout">Tout</button>
+        </div>
+        <div class="evo-card">
+          <canvas id="parcChart"></canvas>
         </div>
       </div>
 
@@ -444,18 +455,21 @@
         chargerMessages();
         chargerAudit();
         loadEvolution('30d');
+        loadParc('30d');
       })
       .catch(() => {});
 
     // ── Évolution ──────────────────────────────────────────────────────────────
     let evoChart = null;
 
-    document.querySelectorAll('.evo-btn').forEach(btn => {
+    // Sélecteurs scopés : les boutons du parc partagent la classe .evo-btn pour
+    // le style, un querySelectorAll global piloterait les deux graphes à la fois.
+    document.querySelectorAll('#evoBar .evo-btn').forEach(btn => {
       btn.addEventListener('click', () => loadEvolution(btn.dataset.p));
     });
 
     function loadEvolution(period) {
-      document.querySelectorAll('.evo-btn').forEach(b => b.classList.toggle('active', b.dataset.p === period));
+      document.querySelectorAll('#evoBar .evo-btn').forEach(b => b.classList.toggle('active', b.dataset.p === period));
       fetch('/api/admin/evolution.php?period=' + period)
         .then(r => r.json())
         .then(d => renderEvolution(d))
@@ -473,12 +487,6 @@
       ];
       if (d.connexions) datasets.push(
         { label: 'Connexions', data: d.connexions, backgroundColor: 'rgba(249,168,37,0.75)', borderColor: '#f9a825', borderWidth: 1, borderRadius: 4 }
-      );
-      if (d.composteurs) datasets.push(
-        { label: 'Composteurs proposés', data: d.composteurs, backgroundColor: 'rgba(106,153,78,0.75)', borderColor: '#6a994e', borderWidth: 1, borderRadius: 4 }
-      );
-      if (d.valides) datasets.push(
-        { label: 'Composteurs validés', data: d.valides, backgroundColor: 'rgba(30,110,62,0.75)', borderColor: '#1e6e3e', borderWidth: 1, borderRadius: 4 }
       );
 
       const scaleOpts = {
@@ -509,6 +517,65 @@
           scales: {
             x: { ...scaleOpts, ticks: { ...scaleOpts.ticks, maxTicksLimit: 15 } },
             y: { ...scaleOpts, beginAtZero: true, ticks: { ...scaleOpts.ticks, precision: 0 } }
+          }
+        }
+      });
+    }
+
+    // ── Parc de composteurs (db-map, cumul à chaque date) ──────────────────
+    let parcChart = null;
+
+    document.querySelectorAll('#parcBar .parc-btn').forEach(btn => {
+      btn.addEventListener('click', () => loadParc(btn.dataset.p));
+    });
+
+    function loadParc(period) {
+      document.querySelectorAll('#parcBar .parc-btn').forEach(b => b.classList.toggle('active', b.dataset.p === period));
+      fetch('/api/carte/evolution.php?periode=' + period)
+        .then(r => r.json())
+        .then(d => renderParc(d))
+        .catch(() => {});
+    }
+
+    function renderParc(d) {
+      const dark = document.documentElement.classList.contains('dark');
+      const grid = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+      const text = dark ? '#7aaa8a' : '#4a7a5a';
+      const font = { family: 'Nunito, Arial, sans-serif', size: 11, weight: '700' };
+
+      const dataset = {
+        label: 'Composteurs sur la carte',
+        data: d.totaux || [],
+        backgroundColor: 'rgba(45,153,89,0.75)',
+        borderColor: '#2d9959',
+        borderWidth: 1,
+        borderRadius: 4,
+      };
+      const scaleOpts = { ticks: { color: text, font, maxRotation: 45 }, grid: { color: grid } };
+
+      if (parcChart) {
+        parcChart.data.labels = d.labels;
+        parcChart.data.datasets = [dataset];
+        parcChart.options.scales.x.ticks.color = text;
+        parcChart.options.scales.y.ticks.color = text;
+        parcChart.options.scales.x.grid.color = grid;
+        parcChart.options.scales.y.grid.color = grid;
+        parcChart.options.plugins.legend.labels.color = text;
+        parcChart.update();
+        return;
+      }
+
+      parcChart = new Chart(document.getElementById('parcChart'), {
+        type: 'bar',
+        data: { labels: d.labels, datasets: [dataset] },
+        options: {
+          responsive: true,
+          plugins: { legend: { labels: { color: text, font, boxWidth: 12, padding: 16 } } },
+          scales: {
+            x: { ...scaleOpts, ticks: { ...scaleOpts.ticks, maxTicksLimit: 15 } },
+            // Cumul : l'axe démarre au socle et non à 0, sinon les variations
+            // récentes (quelques unités sur des milliers) seraient invisibles.
+            y: { ...scaleOpts, beginAtZero: false, ticks: { ...scaleOpts.ticks, precision: 0 } }
           }
         }
       });
