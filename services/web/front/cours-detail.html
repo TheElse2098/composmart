@@ -108,6 +108,37 @@
     .lesson-body blockquote { border-left: 4px solid #1e6e3e; background: #eef4ec; padding: 10px 13px; border-radius: 0 10px 10px 0; margin: 11px 0; color: #2d6a4f; font-style: italic; }
     .lesson-body code { background: #eef4ec; padding: 2px 5px; border-radius: 4px; font-size: 0.84em; }
 
+    /* Schéma « familles de solutions » — dessiné en HTML/CSS (pas une image) :
+       il reste lisible au zoom, s'adapte au mobile et suit le thème sombre.
+       Le markup vit dans content/cours/<slug>/texte.md, marked laisse passer
+       le HTML brut. */
+    .schema-solutions { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 4px 0 16px; }
+    .sch-branche { background: #f4f9f4; border-radius: 16px; padding: 16px 12px 14px; text-align: center; }
+    .sch-tete { display: inline-block; border-radius: 20px; padding: 7px 16px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.86rem; line-height: 1.2; }
+    .sch-prox .sch-tete { background: #22c55e; color: #08290f; }
+    .sch-coll .sch-tete { background: #bbf451; color: #22330a; }
+    /* Trait de rattachement tête → feuilles, pour lire l'arborescence */
+    .sch-feuilles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 2px solid #e3efe5; }
+    .sch-feuille { font-size: 0.78rem; font-weight: 800; line-height: 1.35; }
+    .sch-prox .sch-feuille { color: #16a34a; }
+    .sch-coll .sch-feuille { color: #7fb519; }
+    @media (min-width: 560px) {
+      .schema-solutions { grid-template-columns: 1fr 1fr; gap: 16px; }
+    }
+
+    /* Bloc « 2 options » — même principe : dessiné, pas une image.
+       Sélecteurs scopés sous .lesson-body : sans ça, .lesson-body p l'emporterait
+       sur .duo-texte (plus spécifique) et rajouterait sa marge de paragraphe. */
+    .lesson-body .duo-bloc { margin: 4px 0 16px; }
+    .lesson-body .duo-intro { text-align: center; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 1rem; color: #1a3a25; margin-bottom: 14px; }
+    .lesson-body .duo-options { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .lesson-body .duo-carte { background: #f4f9f4; border-radius: 16px; padding: 16px 14px; border-left: 4px solid #1e6e3e; }
+    .lesson-body .duo-titre { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.9rem; color: #1e6e3e; margin-bottom: 8px; line-height: 1.3; }
+    .lesson-body .duo-texte { font-size: 0.82rem; line-height: 1.5; color: #2d5a3d; font-weight: 600; margin: 0; }
+    @media (min-width: 560px) {
+      .lesson-body .duo-options { grid-template-columns: 1fr 1fr; gap: 14px; }
+    }
+
     /* ── MEDIA CARDS ── */
     .media-card { background: #fff; border-radius: 22px; padding: 22px 18px 18px; margin-top: 14px; box-shadow: 0 4px 18px rgba(30,110,62,0.09); }
     .media-title { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #1a3a25; }
@@ -171,6 +202,16 @@
     html.dark .lesson-body a:hover { color: #a8e6bf; }
     html.dark .lesson-body blockquote { background: #1e2d22; border-left-color: #52b788; color: #7ab88e; }
     html.dark .lesson-body code { background: #1e2d22; color: #a8e6bf; }
+    /* Schéma : les pastilles gardent leurs verts vifs (texte sombre dessus,
+       lisible sur les deux thèmes), on n'adapte que le fond et les feuilles. */
+    html.dark .sch-branche { background: #16241a; }
+    html.dark .sch-feuilles { border-top-color: #243a2c; }
+    html.dark .sch-prox .sch-feuille { color: #4ade80; }
+    html.dark .sch-coll .sch-feuille { color: #a3e635; }
+    html.dark .lesson-body .duo-intro { color: #c8e6d4; }
+    html.dark .lesson-body .duo-carte { background: #16241a; border-left-color: #52b788; }
+    html.dark .lesson-body .duo-titre { color: #a8e6bf; }
+    html.dark .lesson-body .duo-texte { color: #b0d4be; }
     html.dark .lesson-body th { background: #243328; }
     html.dark .lesson-body td { border-bottom-color: #2a3d2e; color: #b0d4be; }
     html.dark .quiz-opt { background: #1e2d22; border-color: #2a4d35; color: #c8e6d4; }

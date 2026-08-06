@@ -1,13 +1,43 @@
 [
   {
-    "question": "Quel ver est utilisé dans un lombricomposteur ?",
+    "question": "Depuis quelle date les collectivités ont-elles l'obligation de mettre à disposition une solution de tri des biodéchets ?",
     "options": [
-      "Lumbricus terrestris (ver de terre commun)",
-      "Eisenia fetida (ver rouge de fumier)",
-      "Tubifex tubifex (ver aquatique)",
-      "Nereis virens (ver marin)"
+      "Le 1er janvier 2020",
+      "Le 31 décembre 2023",
+      "Le 1er janvier 2025",
+      "Aucune date : il s'agit d'une simple recommandation"
     ],
     "correct": 1
+  },
+  {
+    "question": "Avant cette échéance, à qui s'appliquait l'article 541-21-1 du Code de l'environnement ?",
+    "options": [
+      "Aux entreprises produisant plus de 5 tonnes de biodéchets par an",
+      "Aux particuliers vivant en maison individuelle",
+      "Aux commerces alimentaires uniquement",
+      "À personne : l'article a été créé en 2023"
+    ],
+    "correct": 0
+  },
+  {
+    "question": "Quelles sont les deux grandes familles de solutions présentées dans ce cours ?",
+    "options": [
+      "Le compostage et la méthanisation",
+      "Le tri public et le tri privé",
+      "Le compostage individuel et le lombricompostage",
+      "La gestion de proximité et la collecte séparée"
+    ],
+    "correct": 3
+  },
+  {
+    "question": "Qui gère le plus souvent un composteur partagé installé par la collectivité ?",
+    "options": [
+      "Les services techniques de la mairie",
+      "Une entreprise privée mandatée",
+      "Une association d'habitants, en lien avec la collectivité",
+      "Personne : l'accès est libre et sans règles"
+    ],
+    "correct": 2
   },
   {
     "question": "Que signifie PAV ?",
@@ -20,23 +50,33 @@
     "correct": 1
   },
   {
-    "question": "Quelle solution est la plus adaptée à quelqu'un habitant en appartement sans balcon ?",
+    "question": "Pourquoi le point d'apport volontaire représente-t-il un coût pour la collectivité ?",
     "options": [
-      "Le compost en bac",
-      "Le lombricomposteur",
-      "Les points d'apports volontaires",
-      "Le lombricomposteur ou les PAV"
+      "Parce qu'il faut fournir un composteur à chaque foyer",
+      "Parce que la valorisation industrielle est payante",
+      "Parce qu'il faut former un référent par quartier",
+      "Parce qu'il faut organiser le ramassage des conteneurs"
     ],
     "correct": 3
   },
   {
-    "question": "Peut-on mettre de la viande dans un lombricomposteur ?",
+    "question": "Quel est l'intérêt principal de la collecte séparée à domicile ?",
     "options": [
-      "Oui, sans restriction",
-      "Oui, en petite quantité seulement",
-      "Non, cela perturbe l'équilibre et crée des nuisibles",
-      "Uniquement si elle est cuite"
+      "Elle fournit du compost directement utilisable pour ses plantes",
+      "Elle ne coûte rien à la collectivité",
+      "Les biodéchets sont collectés chez vous, sans avoir à se déplacer",
+      "Elle fonctionne sans poubelle dédiée"
     ],
     "correct": 2
+  },
+  {
+    "question": "Dans un bokashi, qu'est-ce qui décompose les biodéchets ?",
+    "options": [
+      "Des micro-organismes",
+      "Des lombrics",
+      "Des larves d'insectes",
+      "La seule montée en température"
+    ],
+    "correct": 0
   }
 ]
