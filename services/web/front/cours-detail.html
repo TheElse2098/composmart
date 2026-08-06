@@ -160,6 +160,9 @@
     .quiz-options { display: flex; flex-direction: column; gap: 9px; }
     .quiz-opt { border: 2.5px solid #c8e6c9; background: #fff; border-radius: 14px; padding: 12px 15px; text-align: left; font-family: 'Nunito', sans-serif; font-size: 0.88rem; font-weight: 700; color: #1a3a25; cursor: pointer; transition: all 0.18s; }
     .quiz-opt:hover:not(:disabled) { background: #eef4ec; border-color: #1e6e3e; }
+    /* Option choisie mais pas encore validée : mise en avant neutre, surtout
+       pas verte ni rouge — la couleur ne doit rien révéler avant correction. */
+    .quiz-opt.choisi { background: #eef4ec; border-color: #1e6e3e; box-shadow: 0 0 0 3px rgba(30,110,62,0.15); }
     .quiz-opt.correct { background: #e8f5e9; border-color: #43a047; color: #1b5e20; }
     .quiz-opt.wrong { background: #ffebee; border-color: #e53935; color: #b71c1c; }
     .quiz-feedback { margin-top: 12px; border-radius: 12px; padding: 11px 14px; font-weight: 700; font-size: 0.86rem; display: none; line-height: 1.4; }
@@ -224,6 +227,9 @@
     html.dark .lesson-body td { border-bottom-color: #2a3d2e; color: #b0d4be; }
     html.dark .quiz-opt { background: #1e2d22; border-color: #2a4d35; color: #c8e6d4; }
     html.dark .quiz-opt:hover:not(:disabled) { background: #243328; border-color: #52b788; }
+    html.dark .quiz-opt.choisi { background: #243328; border-color: #52b788; box-shadow: 0 0 0 3px rgba(82,183,136,0.22); }
+    html.dark .btn-prev { background: #1a2b1e; color: #52b788; border-color: #2d4030; }
+    html.dark .btn-prev:hover { background: #243328; }
     html.dark .quiz-feedback.ok { background: #1a2f20; color: #52b788; }
     html.dark .quiz-feedback.ko { background: #2d1a1a; color: #e57373; }
     html.dark .result-score { color: #52b788; }
@@ -353,7 +359,8 @@
     var quizSlides = [];
     var currentLesson = 0;
     var currentQuiz = 0;
-    var quizAnswers = {};
+    var quizAnswers = {};   // réponses validées (figées)
+    var quizChoix   = {};   // sélections en cours, avant validation
     var quizCorrect = 0;
     var quizTotal = 0;
     var hasQuiz = false;
@@ -671,10 +678,12 @@
         div.className = 'lesson-slide' + (i === 0 ? ' active' : '');
         div.id = 'qs-' + i;
         // Ordre d'affichage aléatoire ; oi reste l'index d'origine (celui que
-        // selectOpt compare à q.correct et que le serveur revalide).
+        // validerQuiz compare à q.correct et que le serveur revalide).
         var opts = shuffledIndices(q.options.length).map(function(oi) {
-          return '<button class="quiz-opt" id="qopt-' + i + '-' + oi + '" onclick="selectOpt(' + i + ',' + oi + ',' + q.correct + ',this)">' + esc(q.options[oi]) + '</button>';
+          return '<button class="quiz-opt" id="qopt-' + i + '-' + oi + '" onclick="choisirOpt(' + i + ',' + oi + ',this)">' + esc(q.options[oi]) + '</button>';
         }).join('');
+        // Deux temps : on choisit (réversible), puis on valide. « Continuer »
+        // ne remplace « Valider » qu'une fois la correction affichée.
         div.innerHTML =
           '<div class="quiz-card">' +
           '<div class="quiz-badge">🧠 Question ' + (i + 1) + ' / ' + quizTotal + '</div>' +
@@ -682,7 +691,8 @@
           '<div class="quiz-options" id="qopts-' + i + '">' + opts + '</div>' +
           '<div class="quiz-feedback" id="qfb-' + i + '"></div>' +
           '</div>' +
-          '<button class="btn-next" id="qbtn-' + i + '" onclick="goNextQuiz(' + i + ')" disabled>Continuer ➜</button>';
+          '<button class="btn-next" id="qval-' + i + '" onclick="validerQuiz(' + i + ',' + q.correct + ')" disabled>Valider ma réponse</button>' +
+          '<button class="btn-next" id="qbtn-' + i + '" onclick="goNextQuiz(' + i + ')" style="display:none">Continuer ➜</button>';
         container.appendChild(div);
       });
 
@@ -739,29 +749,48 @@
       document.getElementById('quizStep').textContent = '';
     }
 
-    function selectOpt(qi, oi, correct, btn) {
+    // Choix (réversible tant que non validé) : on met juste l'option en avant
+    // et on débloque le bouton de validation.
+    function choisirOpt(qi, oi, btn) {
+      quizChoix[qi] = oi;
+      document.querySelectorAll('#qopts-' + qi + ' .quiz-opt')
+        .forEach(function(b) { b.classList.remove('choisi'); });
+      btn.classList.add('choisi');
+      var val = document.getElementById('qval-' + qi);
+      if (val) val.disabled = false;
+    }
+
+    // Validation : c'est ici que la réponse est figée et corrigée.
+    function validerQuiz(qi, correct) {
+      var oi = quizChoix[qi];
+      if (oi === undefined) return;          // sécurité : bouton actif sans choix
+      if (quizAnswers[qi] !== undefined) return; // déjà validée : pas de double comptage
+
       var allOpts = document.querySelectorAll('#qopts-' + qi + ' .quiz-opt');
-      allOpts.forEach(function(b) { b.disabled = true; });
-      var fb = document.getElementById('qfb-' + qi);
-      var isCorrect = (oi === correct);
+      allOpts.forEach(function(b) { b.disabled = true; b.classList.remove('choisi'); });
+
+      var btn = document.getElementById('qopt-' + qi + '-' + oi);
+      var fb  = document.getElementById('qfb-' + qi);
       quizAnswers[qi] = oi;
-      if (isCorrect) {
-        btn.classList.add('correct');
+      if (oi === correct) {
+        if (btn) btn.classList.add('correct');
         quizCorrect++;
         fb.className = 'quiz-feedback show ok';
         fb.innerHTML = '✅ <strong>Bonne réponse !</strong>';
       } else {
-        btn.classList.add('wrong');
+        if (btn) btn.classList.add('wrong');
         var correctBtn = document.getElementById('qopt-' + qi + '-' + correct);
         if (correctBtn) correctBtn.classList.add('correct');
         fb.className = 'quiz-feedback show ko';
         fb.innerHTML = '❌ <strong>Pas tout à fait.</strong> La bonne réponse est surlignée en vert.';
       }
+
+      var val = document.getElementById('qval-' + qi);
+      if (val) val.style.display = 'none';
       var nextBtn = document.getElementById('qbtn-' + qi);
       if (nextBtn) {
-        nextBtn.disabled = false;
-        var isLast = (qi === quizTotal - 1);
-        if (isLast) {
+        nextBtn.style.display = '';
+        if (qi === quizTotal - 1) {
           nextBtn.textContent = 'Voir mes résultats 🎉';
           nextBtn.onclick = function() { showResult(); };
         }
@@ -829,7 +858,7 @@
 
     /* ── Restart quiz ── */
     function restartQuiz() {
-      quizAnswers = {}; quizCorrect = 0; currentQuiz = 0; resultShown = false;
+      quizAnswers = {}; quizChoix = {}; quizCorrect = 0; currentQuiz = 0; resultShown = false;
       buildQuizSlides();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
