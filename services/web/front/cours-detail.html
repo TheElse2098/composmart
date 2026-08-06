@@ -180,6 +180,14 @@
     .btn-next:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(30,110,62,0.4); }
     .btn-next:active { transform: scale(0.97); }
     .btn-next:disabled { background: #bdbdbd; box-shadow: none; cursor: not-allowed; transform: none; }
+    /* Barre de navigation des sections. Le décalage négatif qui faisait chevaucher
+       la carte portait sur .btn-next : il remonte ici, sinon les deux boutons
+       se désaligneraient verticalement. */
+    .lesson-nav { display: flex; gap: 10px; margin-top: -14px; position: relative; z-index: 1; }
+    .lesson-nav .btn-next { margin-top: 0; flex: 1; }
+    .btn-prev { flex: 0 0 auto; background: #fff; color: #1e6e3e; border: 2px solid #a8e6bf; border-radius: 16px; padding: 15px 16px; font-family: 'Baloo 2', cursive; font-size: 0.92rem; font-weight: 900; cursor: pointer; transition: background 0.15s ease, transform 0.15s ease; }
+    .btn-prev:hover { background: #eef4ec; transform: translateY(-2px); }
+    .btn-prev:active { transform: scale(0.97); }
     .btn-secondary { width: 100%; background: #fff; color: #1e6e3e; border: 2.5px solid #a8e6bf; border-radius: 16px; padding: 13px; font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 900; cursor: pointer; margin-top: 9px; transition: background 0.15s; }
     .btn-secondary:hover { background: #eef4ec; }
 
@@ -496,27 +504,35 @@
         var btnAction = isLast
           ? (hasQuiz ? 'switchTab(\'quiz\')' : 'completeNoQuiz()')
           : 'goNextLesson()';
+        // Pas de « Précédent » sur la première section : il n'aurait nulle part
+        // où aller et déséquilibrerait la barre pour rien.
+        var btnPrev = i > 0
+          ? '<button class="btn-prev" onclick="goPrevLesson()" aria-label="Section précédente">← Précédent</button>'
+          : '';
 
         div.innerHTML =
           '<div class="lesson-card">' +
           (s.title ? '<div class="lesson-title">' + esc(s.title) + '</div>' : '') +
           '<div class="lesson-body">' + marked.parse(s.content) + '</div>' +
           '</div>' +
-          '<button class="btn-next" onclick="' + btnAction + '">' + btnLabel + '</button>';
+          '<div class="lesson-nav">' + btnPrev +
+          '<button class="btn-next" onclick="' + btnAction + '">' + btnLabel + '</button>' +
+          '</div>';
         container.appendChild(div);
       });
       updateLessonProgress(0);
     }
 
-    function goNextLesson() {
-      var next = currentLesson + 1;
-      if (next < lessonSlides.length) {
-        document.getElementById('ls-' + currentLesson).classList.remove('active');
-        document.getElementById('ls-' + next).classList.add('active');
-        currentLesson = next;
-        updateLessonProgress(next);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+    function goNextLesson() { allerLecon(currentLesson + 1); }
+    function goPrevLesson() { allerLecon(currentLesson - 1); }
+
+    function allerLecon(cible) {
+      if (cible < 0 || cible >= lessonSlides.length) return;
+      document.getElementById('ls-' + currentLesson).classList.remove('active');
+      document.getElementById('ls-' + cible).classList.add('active');
+      currentLesson = cible;
+      updateLessonProgress(cible);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function updateLessonProgress(idx) {
