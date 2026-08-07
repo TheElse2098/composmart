@@ -24,6 +24,15 @@ $c = mysqli_connect(
 );
 if (!$c) { echo json_encode(['error' => 'db']); exit; }
 
+// Classement réservé aux membres. Le contrôle est ici et pas seulement côté
+// page : sans lui, les pseudos et l'XP resteraient lisibles en appelant
+// directement l'endpoint.
+if (empty($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Connexion requise.']);
+    exit;
+}
+
 function table_exists($c, $name) {
     $n = mysqli_real_escape_string($c, $name);
     $r = mysqli_query($c, "SHOW TABLES LIKE '$n'");

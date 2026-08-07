@@ -93,7 +93,11 @@
     .lb-empty { text-align: center; font-size: 0.92rem; color: #7aaa8a; font-weight: 600; background: #fff; border-radius: 20px; padding: 32px 20px; box-shadow: 0 2px 10px rgba(30,110,62,0.07); }
 
     .join-cta { background: #fff; border-radius: 20px; padding: 24px 22px; margin-top: 18px; text-align: center; box-shadow: 0 4px 16px rgba(30,110,62,0.08); }
-    .join-cta p { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; margin-bottom: 14px; }
+    .join-cta p { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; margin-bottom: 14px; max-width: 30rem; margin-left: auto; margin-right: auto; line-height: 1.55; }
+    .cta-cadenas { font-size: 2.4rem; line-height: 1; margin-bottom: 12px; }
+    .cta-inscription { margin-top: 14px; }
+    .cta-inscription a { font-size: 0.84rem; font-weight: 700; color: #4a7a5a; text-decoration: underline; text-underline-offset: 3px; }
+    .cta-inscription a:hover { color: #1e6e3e; }
     .btn-primary { display: inline-block; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 12px 30px; font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 800; text-decoration: none; cursor: pointer; box-shadow: 0 4px 14px rgba(30,110,62,0.28); transition: transform 0.18s, box-shadow 0.18s; }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(30,110,62,0.34); }
 
@@ -125,7 +129,9 @@
     html.dark .pod-xp, html.dark .lb-xp { color: #52b788; }
     html.dark .lb-ava { background: #1e2d22; color: #52b788; }
     html.dark .lb-rank, html.dark .lb-lvl, html.dark .lb-sep,
-    html.dark .lb-empty, html.dark .join-cta p { color: #7ab88e; }
+    html.dark .lb-empty, html.dark .join-cta p,
+    html.dark .cta-inscription a { color: #7ab88e; }
+    html.dark .cta-inscription a:hover { color: #52b788; }
     html.dark .lb-row.lb-me { background: #16291c; box-shadow: 0 0 0 2px #2d9959; }
     html.dark .lb-row.lb-me .lb-name { color: #52b788; }
     html.dark .lb-me-tag { background: #0f1811; color: #52b788; }
@@ -195,9 +201,23 @@
       document.getElementById('heroSub').textContent = PERIODES[periode].sous;
       document.getElementById('board').innerHTML = '<div class="lb-empty">Chargement…</div>';
       fetch('/api/auth/leaderboard.php?periode=' + periode)
-        .then(r => r.json())
+        .then(r => (r.status === 401 ? { nonConnecte: true } : r.json()))
         .catch(() => ({ top: [], me: null }))
         .then(render);
+    }
+
+    // Visiteur non connecté : le sélecteur de période n'a plus d'objet, on le
+    // masque et on remplace le tableau par une invitation à se connecter.
+    function ecranConnexion() {
+      document.getElementById('heroSub').textContent = 'Connecte-toi pour découvrir le classement de la communauté';
+      document.querySelector('.periode-wrap').style.display = 'none';
+      document.getElementById('board').innerHTML = `
+        <div class="join-cta">
+          <div class="cta-cadenas">🔒</div>
+          <p>Le classement est réservé aux membres. Connecte-toi pour voir les meilleurs composteurs — et y figurer à ton tour !</p>
+          <a href="/login" class="btn-primary">Se connecter</a>
+          <div class="cta-inscription"><a href="/signin">Pas encore de compte ? Créer un compte</a></div>
+        </div>`;
     }
 
     function render(lb) {
@@ -206,14 +226,13 @@
       const cfg = PERIODES[periode];
       const board = document.getElementById('board');
 
+      if (lb.nonConnecte) { ecranConnexion(); return; }
       if (lb.indisponible) {
         board.innerHTML = '<div class="lb-empty">Le classement par période n\'est pas encore disponible.</div>';
         return;
       }
       if (!top.length) {
-        let vide = '<div class="lb-empty">' + cfg.vide + '</div>';
-        if (!me) vide += ctaHtml();
-        board.innerHTML = vide;
+        board.innerHTML = '<div class="lb-empty">' + cfg.vide + '</div>';
         return;
       }
 
@@ -247,7 +266,6 @@
       if (me && !top.some(u => u.id === me.id)) {
         html += '<div class="lb-sep">···</div><div class="lb-list">' + ligne(me, me.rank, true, cfg) + '</div>';
       }
-      if (!me) html += ctaHtml();
 
       board.innerHTML = html;
     }
@@ -260,13 +278,6 @@
           <div class="lb-lvl">Niveau ${u.niveau}</div>
         </div>
         <div class="lb-xp">${u.xp} ${cfg.suffixe}</div>
-      </div>`;
-    }
-
-    function ctaHtml() {
-      return `<div class="join-cta">
-        <p>Inscris-toi pour apparaître dans le classement et gagner de l'XP !</p>
-        <a href="/signin" class="btn-primary">Créer un compte</a>
       </div>`;
     }
 
