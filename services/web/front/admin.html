@@ -406,14 +406,42 @@
     }
 
     // ── Onglets ──
+    // Chargement à l'ouverture (et à chaque retour) plutôt qu'une seule fois au
+    // chargement de la page : une action faite dans un onglet est ainsi toujours
+    // reflétée dans les autres — valider un ajout et aller voir le journal, par
+    // exemple. Ça allège aussi le démarrage : un seul onglet est chargé au départ.
+    const CHARGEURS = {
+      overview: function () { rafraichirStats(); loadEvolution(evoPeriode); loadParc(parcPeriode); },
+      signals:  function () { chargerSignalements(); },
+      pending:  function () { chargerPending(); },
+      contact:  function () { chargerMessages(); },
+      users:    function () { loadUsers(document.getElementById('userSearch').value); },
+      audit:    function () { chargerAudit(); },
+    };
+
+    function ouvrirOnglet(nom) {
+      document.querySelectorAll('#adminTabs .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === nom));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.getElementById('tab-' + nom).classList.add('active');
+      if (CHARGEURS[nom]) CHARGEURS[nom]();
+    }
+
     document.querySelectorAll('#adminTabs .tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('#adminTabs .tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-      });
+      tab.addEventListener('click', () => ouvrirOnglet(tab.dataset.tab));
     });
+
+    /** Onglet actuellement affiché (pour le recharger après une action). */
+    function ongletActif() {
+      var t = document.querySelector('#adminTabs .tab.active');
+      return t ? t.dataset.tab : 'overview';
+    }
+
+    /** À appeler après toute action modifiant des données. */
+    function rafraichirApresAction() {
+      rafraichirStats();                       // compteurs + badges d'onglets
+      var nom = ongletActif();
+      if (nom !== 'overview' && CHARGEURS[nom]) CHARGEURS[nom]();
+    }
 
     function setTabCount(id, n, alertTabSelector) {
       const el = document.getElementById(id);
@@ -446,21 +474,19 @@
       .then(r => { if (r.status === 403) { showDenied(); throw new Error('forbidden'); } return r.json(); })
       .then(d => {
         if (!d || d.error) { showDenied(); return; }
-        fillCrossBaseStats(d.stats).then(renderStats);
-        loadUsers('');
         document.getElementById('loader').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
-        chargerSignalements();
-        chargerPending();
-        chargerMessages();
-        chargerAudit();
-        loadEvolution('30d');
-        loadParc('30d');
+        // Seul l'onglet d'accueil est chargé ici ; les autres le seront à leur
+        // ouverture. rafraichirStats() renseigne au passage les badges des
+        // onglets non encore ouverts (signalements, demandes en attente).
+        ouvrirOnglet('overview');
       })
       .catch(() => {});
 
     // ── Évolution ──────────────────────────────────────────────────────────────
     let evoChart = null;
+    let evoPeriode  = '30d';
+    let parcPeriode = '30d';
 
     // Sélecteurs scopés : les boutons du parc partagent la classe .evo-btn pour
     // le style, un querySelectorAll global piloterait les deux graphes à la fois.
@@ -469,6 +495,7 @@
     });
 
     function loadEvolution(period) {
+      evoPeriode = period;   // mémorisé : revenir sur l'onglet ne remet pas 30 j
       document.querySelectorAll('#evoBar .evo-btn').forEach(b => b.classList.toggle('active', b.dataset.p === period));
       fetch('/api/admin/evolution.php?period=' + period)
         .then(r => r.json())
@@ -530,6 +557,7 @@
     });
 
     function loadParc(period) {
+      parcPeriode = period;
       document.querySelectorAll('#parcBar .parc-btn').forEach(b => b.classList.toggle('active', b.dataset.p === period));
       fetch('/api/carte/evolution.php?periode=' + period)
         .then(r => r.json())
@@ -680,17 +708,7 @@
       userSearchTimer = setTimeout(() => loadUsers(q), 250);
     });
 
-    function reloadDashboard() {
-      // Rafraîchit stats + audit, et ré-applique la recherche courante sur la table
-      fetch('/api/admin/stats.php')
-        .then(r => r.json())
-        .then(d => {
-          if (d && d.stats) fillCrossBaseStats(d.stats).then(renderStats);
-        })
-        .catch(() => {});
-      chargerAudit();
-      loadUsers(document.getElementById('userSearch').value);
-    }
+    function reloadDashboard() { rafraichirApresAction(); }
 
     // ── Journal d'audit ──
     const AUDIT_LABELS = {
@@ -906,7 +924,7 @@
         body: new URLSearchParams({ action: 'traiter', id: id, statut: statut })
       })
       .then(r => r.json())
-      .then(d => { if (d.ok) { chargerSignalements(); refreshSignalCount(); } })
+      .then(d => { if (d.ok) rafraichirApresAction(); })
       .catch(() => {});
     }
 
@@ -1068,7 +1086,7 @@
       fetch('/api/carte/pending.php', { method: 'POST', body: body })
         .then(r => r.json())
         .then(d => {
-          if (d.ok) { chargerPending(); refreshSignalCount(); }
+          if (d.ok) rafraichirApresAction();
           else alert(d.error || 'Action impossible.');
         })
         .catch(() => alert('Erreur réseau.'));
@@ -1257,10 +1275,22 @@
       .catch(() => {});
     }
 
-    function refreshSignalCount() {
-      fetch('/api/admin/stats.php')
+    /**
+     * Cartes de stats + badges des onglets. Les badges viennent des compteurs
+     * (count.php) et non des listes : ils restent donc justes même pour un onglet
+     * jamais ouvert, maintenant que le chargement est paresseux.
+     */
+    function rafraichirStats() {
+      return fetch('/api/admin/stats.php')
         .then(r => r.json())
-        .then(d => { if (d && d.stats) fillCrossBaseStats(d.stats).then(renderStats); })
+        .then(d => {
+          if (!d || !d.stats) return;
+          return fillCrossBaseStats(d.stats).then(function (s) {
+            renderStats(s);
+            setTabCount('tabCountSignals', s.signalements || 0, '#adminTabs .tab[data-tab="signals"]');
+            setTabCount('tabCountPending', s.en_attente   || 0, '#adminTabs .tab[data-tab="pending"]');
+          });
+        })
         .catch(() => {});
     }
   </script>
