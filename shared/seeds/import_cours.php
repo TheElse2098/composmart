@@ -110,5 +110,55 @@ foreach ($dirs as $meta_file) {
     echo "import_cours: [$cours_slug] OK (thème: $theme_slug)\n";
 }
 
+// ── Rattrapage des admins ───────────────────────────────────────────────────
+// launchpad.php valide tous les cours d'office à la création du compte admin,
+// mais une seule fois. Sans ce rattrapage, un cours ajouté ensuite reste
+// « non terminé » pour les admins existants : leur profil affiche 8/9 et le
+// badge « Expert compost » (terminer tous les cours) se reverrouille.
+function table_existe($c, $nom) {
+    $n = mysqli_real_escape_string($c, $nom);
+    $r = mysqli_query($c, "SHOW TABLES LIKE '$n'");
+    return $r && mysqli_num_rows($r) > 0;
+}
+$a_xp_log = table_existe($c, 'xp_log');
+
+$res_admins = mysqli_query($c, 'SELECT id FROM users WHERE isAdmin = 1');
+while ($res_admins && ($admin = mysqli_fetch_assoc($res_admins))) {
+    $uid = (int)$admin['id'];
+
+    // Cours pas encore validés pour cet admin
+    $res_manq = mysqli_query($c,
+        "SELECT c.slug, c.titre, c.xp_reward
+         FROM cours c
+         LEFT JOIN user_progress up ON up.cours_id = c.slug AND up.user_id = $uid
+         WHERE up.id IS NULL");
+
+    $valeurs = [];
+    $xp_gain = 0;
+    $journal = [];
+    while ($res_manq && ($r = mysqli_fetch_assoc($res_manq))) {
+        $slug      = mysqli_real_escape_string($c, $r['slug']);
+        $titre     = mysqli_real_escape_string($c, $r['titre']);
+        $xp        = (int)$r['xp_reward'];
+        $valeurs[] = "($uid, '$slug')";
+        $journal[] = "($uid, $xp, 'cours', '$titre')";
+        $xp_gain  += $xp;
+    }
+    if (!$valeurs) continue;
+
+    mysqli_query($c, 'INSERT IGNORE INTO user_progress (user_id, cours_id) VALUES ' . implode(',', $valeurs));
+    // XP ajoutée et non écrasée : préserve celle gagnée par ailleurs (jeux).
+    mysqli_query($c, "UPDATE users SET xp = xp + $xp_gain WHERE id = $uid");
+    // Niveau recalculé sur la même règle que complete.php et xp.php (100 XP/niveau).
+    mysqli_query($c, "UPDATE users SET niveau = FLOOR(xp / 100) + 1 WHERE id = $uid");
+    // Journal d'XP : sans ces lignes, la courbe de progression du profil
+    // n'expliquerait pas le saut du total.
+    if ($a_xp_log) {
+        mysqli_query($c, 'INSERT INTO xp_log (user_id, delta, source, label) VALUES ' . implode(',', $journal));
+    }
+
+    echo "import_cours: " . count($valeurs) . " cours validés d'office pour l'admin #$uid (+$xp_gain XP)\n";
+}
+
 mysqli_close($c);
 echo "import_cours: terminé.\n";
