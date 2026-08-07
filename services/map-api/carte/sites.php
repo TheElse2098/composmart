@@ -178,11 +178,16 @@ elseif (isset($_POST['france'])) {
     if ($hasBounds) {
         $north = (float)$_POST['north']; $south = (float)$_POST['south'];
         $east  = (float)$_POST['east'];  $west  = (float)$_POST['west'];
+        // 20 000 : ce plafond était à 3 000, hérité de l'époque où la base ne
+        // couvrait que la France. Dézoomé sur le monde, la boîte englobe tout et
+        // le plafond se voyait — la carte n'affichait que 3 000 points sur 11 000.
+        // Le clustering (chunkedLoading) encaisse cet ordre de grandeur ; c'est
+        // le garde-fou qui empêche une réponse démesurée, pas une pagination.
         $stmt = mysqli_prepare($connexion,
             "SELECT id, longitude, latitude, type FROM composts
              WHERE statut = 'valide'
                AND latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?
-             LIMIT 3000");
+             LIMIT 20000");
         $stmt->bind_param('dddd', $south, $north, $west, $east);
         $stmt->execute();
         $result = $stmt->get_result();
