@@ -192,7 +192,9 @@
     .btn-next { width: 100%; background: linear-gradient(135deg, #1e6e3e, #2d9959); color: #fff; border: none; border-radius: 16px; padding: 15px; font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; cursor: pointer; margin-top: -14px; position: relative; z-index: 1; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 4px 12px rgba(30,110,62,0.32); }
     .btn-next:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(30,110,62,0.4); }
     .btn-next:active { transform: scale(0.97); }
-    .btn-next:disabled { background: #bdbdbd; box-shadow: none; cursor: not-allowed; transform: none; }
+    /* Désactivé : gris-vert de la palette plutôt qu'un gris neutre, et texte
+       assombri — le blanc sur gris clair passait mal, y compris en thème clair. */
+    .btn-next:disabled { background: #dbe7dd; color: #8aa694; box-shadow: none; cursor: not-allowed; transform: none; }
     /* Barre de navigation des sections. Le décalage négatif qui faisait chevaucher
        la carte portait sur .btn-next : il remonte ici, sinon les deux boutons
        se désaligneraient verticalement. */
@@ -243,6 +245,8 @@
     html.dark .quiz-opt.choisi { background: #243328; border-color: #52b788; box-shadow: 0 0 0 3px rgba(82,183,136,0.22); }
     /* Indispensables : html.dark .quiz-opt (0,2,1) l'emporte sur .quiz-opt.correct
        (0,2,0), donc sans ces règles la correction ne se voit pas en dark mode. */
+    /* (0,3,1) : indispensable pour passer devant .btn-next:disabled (0,2,0). */
+    html.dark .btn-next:disabled { background: #22301f; color: #5a7a63; }
     html.dark .quiz-opt.correct { background: #16291c; border-color: #43a047; color: #7fc99a; }
     html.dark .quiz-opt.wrong   { background: #3d1a1a; border-color: #e53935; color: #ef9a9a; }
     html.dark .btn-prev { background: #1a2b1e; color: #52b788; border-color: #2d4030; }
