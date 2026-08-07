@@ -14,13 +14,14 @@ if (mysqli_connect_errno()) {
     die("Connexion DB impossible : " . mysqli_connect_error() . "\n");
 }
 
-$query = '[out:json][timeout:120];'
-       . 'area["name"="France"]["admin_level"="2"]->.fr;'
-       . '('
-       . '  node["amenity"="recycling"]["recycling:food_waste"="yes"](area.fr);'
-       . '  node["amenity"="recycling"]["recycling_type"="container"]["recycling:food_waste"="yes"](area.fr);'
-       . ');'
-       . 'out body;';
+// Monde entier : plus de filtre par zone. La seconde clause de l'ancienne requête
+// (recycling_type=container) était de toute façon un sous-ensemble de la première,
+// l'union ne ramenait rien de plus.
+// « out skel » plutôt que « out body » : on n'exploite que lat/lon, inutile de
+// rapatrier les tags de chaque nœud sur une requête mondiale.
+$query = '[out:json][timeout:600];'
+       . 'node["amenity"="recycling"]["recycling:food_waste"="yes"];'
+       . 'out skel qt;';
 
 // L'API Overpass publique est souvent surchargée (429/504/HTML). On essaie
 // plusieurs miroirs, avec retries et pauses, avant d'abandonner.
@@ -40,7 +41,7 @@ foreach ($endpoints as $url) {
             CURLOPT_POST           => true,
             CURLOPT_POSTFIELDS     => 'data=' . urlencode($query),
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 180,
+            CURLOPT_TIMEOUT        => 900,
             CURLOPT_USERAGENT      => 'CompoSmart/1.0',
             CURLOPT_HTTPHEADER     => ['Accept: application/json', 'Content-Type: application/x-www-form-urlencoded'],
         ]);
@@ -68,10 +69,17 @@ if ($data === null) {
 // au-dessus de 1. ACOS renvoie alors NULL, « NULL < 0.02 » n'est jamais vrai,
 // le doublon n'est pas détecté et le point est réinséré à CHAQUE passage du cron.
 // Même garde que dans carte/sites.php, où elle était déjà présente.
+// Pré-filtre par boîte englobante AVANT le calcul de distance : l'expression
+// Haversine n'est pas indexable, donc seule elle imposait un balayage complet de
+// la table pour CHAQUE point importé. Le BETWEEN sur (latitude, longitude) passe
+// par l'index lat_lng et ne laisse qu'une poignée de candidats à mesurer.
 $stmt_check = mysqli_prepare($connexion,
-    'SELECT id FROM composts WHERE
-     (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?))
-     + sin(radians(?)) * sin(radians(latitude))))) < 0.02 LIMIT 1');
+    'SELECT id FROM composts
+     WHERE latitude  BETWEEN ? AND ?
+       AND longitude BETWEEN ? AND ?
+       AND (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?))
+       + sin(radians(?)) * sin(radians(latitude))))) < 0.02
+     LIMIT 1');
 
 $stmt_ins = mysqli_prepare($connexion,
     'INSERT INTO composts (longitude, latitude, type, publique) VALUES (?, ?, ?, ?)');
@@ -85,7 +93,15 @@ foreach ($data['elements'] as $el) {
     $type = 'Conteneur';
     $pub  = 'public';
 
-    $stmt_check->bind_param('ddd', $lat, $lon, $lat);
+    // 20 m convertis en degrés. Un degré de longitude rétrécit avec la latitude :
+    // le plancher sur le cosinus évite une boîte infinie au voisinage des pôles,
+    // maintenant que l'import n'est plus limité à la France.
+    $d_lat = 0.02 / 111.32;
+    $d_lon = $d_lat / max(0.01, cos(deg2rad($lat)));
+    $lat_min = $lat - $d_lat; $lat_max = $lat + $d_lat;
+    $lon_min = $lon - $d_lon; $lon_max = $lon + $d_lon;
+
+    $stmt_check->bind_param('ddddddd', $lat_min, $lat_max, $lon_min, $lon_max, $lat, $lon, $lat);
     $stmt_check->execute();
     $stmt_check->store_result();
     if ($stmt_check->num_rows > 0) { $skipped++; $stmt_check->free_result(); continue; }
@@ -95,7 +111,7 @@ foreach ($data['elements'] as $el) {
     if ($stmt_ins->execute()) $inserted++;
 }
 
-echo "Import OSM terminé : $inserted insérés, $skipped doublons ignorés.\n";
+echo "Import OSM terminé : $inserted insérés, $skipped doublons ignorés (" . count($data['elements']) . " points reçus d'OSM).\n";
 mysqli_close($connexion);
 
 // Invalide le cache Redis de la carte si des points ont été ajoutés (l'import

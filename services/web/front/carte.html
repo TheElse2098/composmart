@@ -675,10 +675,25 @@
                 });
         }
 
-        nb_compost.textContent = "Recherche des compost en France...";
-        chargerZone(null)
-            .then((n) => { nb_compost.textContent = markerMap.size + " bacs à biodéchets et composts trouvés en France"; })
+        // Chargement initial limité à la zone visible : depuis que l'import OSM
+        // couvre le monde entier, un appel sans bornes ramènerait des dizaines de
+        // milliers de points et figerait le navigateur. Le reste se charge au fil
+        // des déplacements (cf. le moveend juste en dessous).
+        nb_compost.textContent = "Recherche des composteurs…";
+        chargerZone(map.getBounds())
             .catch((e) => console.error("Erreur JSON:", e));
+
+        // Le total affiché est le total en base, pas ce qui est chargé à l'écran :
+        // sinon le compteur changerait à chaque déplacement de carte.
+        fetch('/api/carte/count.php')
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (d && typeof d.composts === 'number') {
+                    nb_compost.textContent = d.composts.toLocaleString('fr-FR')
+                        + ' bacs à biodéchets et composteurs recensés';
+                }
+            })
+            .catch(function () { nb_compost.textContent = ''; });
 
         // Recharge la zone visible après chaque déplacement/zoom (bounding-box).
         // Debounce 400ms : évite une rafale de requêtes pendant un zoom/pan continu.

@@ -187,7 +187,11 @@ elseif (isset($_POST['france'])) {
         $stmt->execute();
         $result = $stmt->get_result();
     } else {
-        $result = mysqli_query($connexion, "SELECT id, longitude, latitude, type FROM composts WHERE statut = 'valide'");
+        // Garde-fou : la carte ne demande plus la liste sans bornes (elle charge
+        // par zone visible), mais l'endpoint reste appelable. Depuis que l'import
+        // couvre le monde, une réponse non bornée pèserait des dizaines de Mo —
+        // et serait mise en cache telle quelle dans Redis.
+        $result = mysqli_query($connexion, "SELECT id, longitude, latitude, type FROM composts WHERE statut = 'valide' LIMIT 20000");
     }
 
     $liste = [];
