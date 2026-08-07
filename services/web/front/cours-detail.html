@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked-katex-extension@5.1.10/lib/index.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
@@ -366,8 +366,30 @@
   </div>
 
   <script>
-    // Notation math dans les cours : $inline$ et $$bloc$$ (cf. texte.md des cours).
-    marked.use(markedKatex({ throwOnError: false }));
+    /**
+     * Rend les formules d'un fragment déjà inséré dans le DOM.
+     *
+     * On passe par auto-render de KaTeX plutôt que par une extension de marked :
+     * marked est chargé sans version épinglée, et une extension figée finit par
+     * ne plus s'accrocher à son API interne — elle s'enregistre alors sans
+     * erreur mais ne convertit plus rien, ce qui laissait « $O_2$ » en clair.
+     * Ici le traitement se fait sur le HTML produit, donc indépendamment de marked.
+     *
+     * Les délimiteurs sont explicites : auto-render ne reconnaît PAS « $…$ » par
+     * défaut (pour éviter de confondre avec des montants en dollars).
+     */
+    function rendreMath(el) {
+      if (!el || typeof renderMathInElement !== 'function') return;
+      renderMathInElement(el, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$',  right: '$',  display: false },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '\\(', right: '\\)', display: false },
+        ],
+        throwOnError: false,
+      });
+    }
 
     var slug = location.pathname.replace(/^\/cours\//, '').replace(/\/$/, '');
     if (!slug) { document.body.innerHTML = '<p style="padding:40px;color:#c0392b">Cours introuvable.</p>'; }
@@ -544,6 +566,8 @@
           '</div>';
         container.appendChild(div);
       });
+      // Après insertion dans le DOM : auto-render travaille sur des noeuds réels.
+      rendreMath(container);
       updateLessonProgress(0);
     }
 
