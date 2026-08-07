@@ -1,15 +1,15 @@
 ## Mise à disposition de solutions de tri
 
-Le *Code de l’environnement* fixe dans l’article 541-21-1 que vos collectivités ont **l’obligation** de vous mettre à disposition une solution de tri :
+Le *Code de l’environnement* fixe dans l’article L541-21-1 que vos collectivités ont **l’obligation** de mettre à votre disposition une solution de tri :
 
-- depuis le *31 décembre 2023*, cet article s’applique aux collectivités, alors qu'avant il s'appliquait aux entreprises produisant plus de 5 tonnes de biodéchets par an
+- depuis le *31 décembre 2023*, cet article s’applique aux collectivités, alors qu’auparavant il ne visait que les entreprises produisant plus de 5 tonnes de biodéchets par an
 - elles doivent mettre en place une **valorisation sur place ou par collecte séparée**
-- l'**Etat** doit prendre les **mesures nécessaires** pour permettre de **développer** les débouchés de **valorisation organique**
+- l’**État** doit prendre les **mesures nécessaires** pour **développer** les débouchés de **valorisation organique**
 
 ### Sources
 
 - [Ministère de la Transition écologique : loi anti-gaspillage](https://www.ecologie.gouv.fr/loi-anti-gaspillage-economie-circulaire)
-- [Ministère de la Transition écologique : vous êtes une collectivité territoriale et rencontrez des difficultéspour déployer le tri à la source des biodéchets](https://www.ecologie.gouv.fr/biodechets#vous-etes-une-collectivite-territoriale-et-rencontrez-des-difficultes-pour-deployer-le-tri-a-la-source-des-biodechets-2)
+- [Ministère de la Transition écologique : vous êtes une collectivité territoriale et rencontrez des difficultés pour déployer le tri à la source des biodéchets](https://www.ecologie.gouv.fr/biodechets#vous-etes-une-collectivite-territoriale-et-rencontrez-des-difficultes-pour-deployer-le-tri-a-la-source-des-biodechets-2)
 
 ## Les solutions les plus communes
 
@@ -30,7 +30,7 @@ Le *Code de l’environnement* fixe dans l’article 541-21-1 que vos collectivi
   </div>
 </figure>
 
-Vous ne savez pas ce que propose votre collectivité ? Rendez-vous sur le site internet de celle-ci et cherchez les mots-clés : “compostage”, “biodéchets” ou “Maitre composteurs”
+Vous ne savez pas ce que propose votre collectivité ? Rendez-vous sur son site internet et cherchez les mots-clés : « compostage », « biodéchets » ou « maître composteur ».
 
 ## Le bac de compostage
 
@@ -52,20 +52,20 @@ Vous ne savez pas ce que propose votre collectivité ? Rendez-vous sur le site i
 
 Les points d’apport volontaire sont les gros conteneurs que l’on retrouve historiquement pour le verre ou le carton, aujourd’hui adaptés aux biodéchets.
 
-Il s’agit de la solution préférée par les collectivités en milieu urbain, comme elle permet à tous de pouvoir trier ses biodéchets tout en permettant plusieurs valorisations telles que le compostage industriel ou la méthanisation. 
+C’est la solution que privilégient les collectivités en milieu urbain : elle permet à tous de trier ses biodéchets, et autorise plusieurs valorisations comme le compostage industriel ou la méthanisation.
 
-Néanmoins elle entraine un certain coût pour la collectivité du fait du besoin de ramassage.
+Elle entraîne néanmoins un coût pour la collectivité, du fait du ramassage.
 
-La collecte à domicile est le choix de certaines collectivités dans des poubelles séparées, souvent en centre-ville. 
+Certaines collectivités font plutôt le choix de la collecte à domicile, dans des poubelles séparées, souvent en centre-ville.
 
-L’avantage est que vos biodéchets sont collectés directement chez vous comme la poubelle ménagère, pas besoin de se déplacer pour les trier. 
+L’avantage : vos biodéchets sont collectés directement chez vous, comme la poubelle ménagère. Pas besoin de se déplacer pour les trier.
 
 ## Autres solutions
 
-Il existe bien d’autres solutions, mais aujourd'hui restent à la marge en France : 
-- Lombricomposteurs : Ce sont uniquement des lombrics qui viennent décomposer vos biodéchets
-- Bokashi : Ce sont ici des microorganismes qui viennent décomposer vos biodéchets
-- Compost en tas : Cette technique suit le même principe que le compost en bac mais sans le bac. C’est moins esthétique mais plus économique
+Il existe bien d’autres solutions, mais elles restent aujourd’hui à la marge en France :
+- Lombricomposteur : ce sont uniquement des lombrics qui décomposent vos biodéchets
+- Bokashi : ce sont ici des micro-organismes qui décomposent vos biodéchets
+- Compost en tas : la même technique que le compost en bac, mais sans le bac. C’est moins esthétique, mais plus économique
 
 ## Tableau comparatif
 

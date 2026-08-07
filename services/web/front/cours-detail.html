@@ -106,6 +106,16 @@
     .lesson-body th { background: #1e6e3e; color: #fff; padding: 7px 10px; text-align: left; }
     .lesson-body td { border-bottom: 1px solid #e5ede8; padding: 7px 10px; }
     .lesson-body blockquote { border-left: 4px solid #1e6e3e; background: #eef4ec; padding: 10px 13px; border-radius: 0 10px 10px 0; margin: 11px 0; color: #2d6a4f; font-style: italic; }
+    /* Citation centrée : annule le filet et le fond du blockquote standard, qui
+       supposent un texte aligné à gauche. Spécificité (0,2,0) contre (0,1,1)
+       pour .lesson-body blockquote — la classe l'emporte. */
+    .lesson-body .citation {
+      border-left: none; background: none; border-radius: 0;
+      text-align: center; font-style: italic;
+      font-size: 0.9rem; line-height: 1.65; color: #2d6a4f;
+      max-width: 34rem; margin: 16px auto; padding: 4px 10px;
+    }
+    .lesson-body .citation-source { display: inline-block; margin-top: 8px; font-style: normal; font-size: 0.78rem; font-weight: 700; color: #7aaa8a; }
     .lesson-body code { background: #eef4ec; padding: 2px 5px; border-radius: 4px; font-size: 0.84em; }
 
     /* Schéma « familles de solutions » — dessiné en HTML/CSS (pas une image) :
@@ -212,6 +222,9 @@
     html.dark .lesson-body a:visited { color: #7ab88e; }
     html.dark .lesson-body a:hover { color: #a8e6bf; }
     html.dark .lesson-body blockquote { background: #1e2d22; border-left-color: #52b788; color: #7ab88e; }
+    /* html.dark .lesson-body blockquote (0,2,2) l'emporterait sur .lesson-body
+       .citation (0,2,0) : il faut donc rappeler ici l'absence de fond. */
+    html.dark .lesson-body .citation { background: none; color: #a8c9b5; }
     html.dark .lesson-body code { background: #1e2d22; color: #a8e6bf; }
     /* Schéma : les pastilles gardent leurs verts vifs (texte sombre dessus,
        lisible sur les deux thèmes), on n'adapte que le fond et les feuilles. */
