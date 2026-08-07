@@ -63,10 +63,15 @@ if ($data === null) {
     die("Import OSM abandonné : tous les miroirs Overpass ont échoué. Réessaie plus tard.\n");
 }
 
+// LEAST(1, ...) indispensable : pour un point stricement identique à un point
+// déjà en base, l'arrondi flottant peut porter l'argument d'ACOS très légèrement
+// au-dessus de 1. ACOS renvoie alors NULL, « NULL < 0.02 » n'est jamais vrai,
+// le doublon n'est pas détecté et le point est réinséré à CHAQUE passage du cron.
+// Même garde que dans carte/sites.php, où elle était déjà présente.
 $stmt_check = mysqli_prepare($connexion,
     'SELECT id FROM composts WHERE
-     (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?))
-     + sin(radians(?)) * sin(radians(latitude)))) < 0.02 LIMIT 1');
+     (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?))
+     + sin(radians(?)) * sin(radians(latitude))))) < 0.02 LIMIT 1');
 
 $stmt_ins = mysqli_prepare($connexion,
     'INSERT INTO composts (longitude, latitude, type, publique) VALUES (?, ?, ?, ?)');
