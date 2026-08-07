@@ -127,9 +127,9 @@
     .xp-curve-grid { stroke: #e3efe5; stroke-width: 1; }
     .xp-curve-area { fill: #2d9959; fill-opacity: 0.12; stroke: none; }
     .xp-curve-line { fill: none; stroke: #2d9959; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-    .xp-curve-end { fill: #2d9959; stroke: #fff; stroke-width: 2; }
-    .xp-curve-tick { font-size: 8px; fill: #7aaa8a; font-weight: 600; }
-    .xp-curve-end-label { font-size: 9px; font-weight: 800; fill: #1a3a25; }
+    /* Total en HTML, hors du SVG étiré : police du site, jamais déformée. */
+    .xp-curve-total { font-family: 'Baloo 2', cursive; font-size: 1.5rem; font-weight: 900; color: #1e6e3e; line-height: 1; margin-bottom: 12px; }
+    .xp-curve-total span { font-family: 'Nunito', sans-serif; font-size: 0.78rem; font-weight: 700; color: #7aaa8a; }
     .xp-curve-axis { display: flex; justify-content: space-between; font-size: 0.7rem; color: #7aaa8a; font-weight: 700; margin-top: 6px; }
     .xp-chart-empty { font-size: 0.85rem; color: #7aaa8a; font-weight: 600; }
 
@@ -193,9 +193,8 @@
     html.dark .xp-curve-grid { stroke: #243328; }
     html.dark .xp-curve-area { fill: #52b788; }
     html.dark .xp-curve-line { stroke: #52b788; }
-    html.dark .xp-curve-end { fill: #52b788; stroke: #16211a; }
-    html.dark .xp-curve-tick { fill: #7ab88e; }
-    html.dark .xp-curve-end-label { fill: #e8f5ee; }
+    html.dark .xp-curve-total { color: #52b788; }
+    html.dark .xp-curve-total span { color: #7ab88e; }
     html.dark .btn-primary { background: #2d9959; }
     html.dark .btn-secondary { background: #16211a; color: #52b788; border-color: #2d4030; }
     html.dark .btn-secondary:hover { background: #1e2d22; }
@@ -301,9 +300,9 @@
         points.push({ n: n, xp: cumul, dateObj: d });
       }
 
-      // PAD_L élargi : place pour le tick "0". PAD_T élargi : place pour le label
-      // de valeur au-dessus du point final (toujours au sommet, cumul croissant).
-      const W = 300, H = 100, PAD_L = 28, PAD_R = 8, PAD_T = 18, PAD_B = 4;
+      // Marges réduites : plus aucun texte n'est dessiné dans le SVG (cf. plus bas),
+      // il n'y a donc plus de gouttière à réserver pour les libellés.
+      const W = 300, H = 100, PAD_L = 4, PAD_R = 4, PAD_T = 8, PAD_B = 4;
       const maxXp = points[points.length - 1].xp || 1;
       const x = function(n) { return PAD_L + (n / Math.max(1, totalDays)) * (W - PAD_L - PAD_R); };
       const y = function(xp) { return PAD_T + (1 - xp / maxXp) * (H - PAD_T - PAD_B); };
@@ -319,25 +318,17 @@
           + `<title>${fmtDate(p.dateObj)} — ${p.xp} XP</title></circle>`;
       }).join('');
 
-      // Échelle Y : seul "0" en bas (le haut affiche déjà le max via le label du
-      // point final ci-dessous — le cumul étant croissant, ce point EST le max,
-      // donc un 2e tick en haut ferait doublon).
-      const yAxisHtml = `<text class="xp-curve-tick" x="${PAD_L - 6}" y="${H - PAD_B}" text-anchor="end" dominant-baseline="middle">0</text>`;
-
-      // Label direct sur le point final (recommandé pour une ligne : valeur à l'extrémité).
-      const endLabelX = x(last.n) - 4;
-      const endLabelHtml = `<text class="xp-curve-end-label" x="${endLabelX.toFixed(1)}" y="${(y(last.xp) - 8).toFixed(1)}" text-anchor="end">${last.xp} XP</text>`;
-
+      // Le SVG est étiré horizontalement (preserveAspectRatio="none" pour occuper
+      // toute la largeur) : tout texte ou cercle dessiné dedans serait déformé
+      // d'autant. Le total passe donc en HTML au-dessus du graphe, et le trait
+      // garde une épaisseur constante grâce à vector-effect.
       return `
+        <div class="xp-curve-total">${last.xp} XP <span>au total</span></div>
         <svg class="xp-curve" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Courbe d'XP cumulée du ${fmtDate(points[0].dateObj)} au ${fmtDate(last.dateObj)}, de 0 à ${maxXp} XP">
-          <line class="xp-curve-grid" x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" />
-          <line class="xp-curve-grid" x1="${PAD_L}" y1="${PAD_T}" x2="${W - PAD_R}" y2="${PAD_T}" />
-          ${yAxisHtml}
+          <line class="xp-curve-grid" vector-effect="non-scaling-stroke" x1="${PAD_L}" y1="${H - PAD_B}" x2="${W - PAD_R}" y2="${H - PAD_B}" />
           <path class="xp-curve-area" d="${areaPath}" />
-          <path class="xp-curve-line" d="${linePath}" />
+          <path class="xp-curve-line" vector-effect="non-scaling-stroke" d="${linePath}" />
           ${dotsHtml}
-          <circle class="xp-curve-end" cx="${x(last.n).toFixed(1)}" cy="${y(last.xp).toFixed(1)}" r="4" />
-          ${endLabelHtml}
         </svg>
         <div class="xp-curve-axis"><span>${fmtDate(points[0].dateObj)}</span><span>${fmtDate(last.dateObj)}</span></div>`;
     }
