@@ -1,0 +1,102 @@
+[
+  {
+    "question": "Quel article du Code de l'environnement définit les biodéchets ?",
+    "options": [
+      "L110-1",
+      "L541-1-1",
+      "L541-21-1",
+      "L214-17"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "Parmi ces déchets, lequel n'est PAS un biodéchet ?",
+    "options": [
+      "Des coquilles d'œuf",
+      "Une tonte de pelouse",
+      "Un carton d'emballage",
+      "Des restes de viande"
+    ],
+    "correct": 2
+  },
+  {
+    "question": "Qu'est-ce qui distingue la décomposition aérobie de l'anaérobie ?",
+    "options": [
+      "L'aérobie nécessite du dioxygène, l'anaérobie se fait sans",
+      "L'aérobie se fait sans dioxygène, l'anaérobie en nécessite",
+      "L'aérobie est réalisée par des animaux, l'anaérobie par des végétaux",
+      "L'aérobie ne produit aucun gaz"
+    ],
+    "correct": 0
+  },
+  {
+    "question": "Quel gaz la décomposition anaérobie produit-elle, contrairement à l'aérobie ?",
+    "options": [
+      "Du dioxygène",
+      "De l'ammoniac",
+      "Du méthane",
+      "Du dioxyde de carbone"
+    ],
+    "correct": 2
+  },
+  {
+    "question": "Quelles conditions favorisent la décomposition aérobie ?",
+    "options": [
+      "L'absence d'air et beaucoup d'eau",
+      "L'aération, 40 à 65 % d'eau et une température élevée",
+      "Le froid et la sécheresse",
+      "Une forte acidité"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "Combien de paires de pattes possède un insecte ?",
+    "options": [
+      "2 paires",
+      "3 paires",
+      "4 paires",
+      "Cela varie selon les espèces"
+    ],
+    "correct": 1
+  },
+  {
+    "question": "À quel groupe les insectes appartiennent-ils ?",
+    "options": [
+      "Aux mollusques",
+      "Aux vertébrés",
+      "Aux annélides",
+      "Aux arthropodes"
+    ],
+    "correct": 3
+  },
+  {
+    "question": "Pourquoi les champignons ne sont-ils pas des végétaux ?",
+    "options": [
+      "Parce qu'ils ne réalisent pas la photosynthèse",
+      "Parce qu'ils vivent uniquement dans le sol",
+      "Parce qu'ils sont microscopiques",
+      "Parce qu'ils se déplacent"
+    ],
+    "correct": 0
+  },
+  {
+    "question": "Comment appelle-t-on les champignons qui dégradent la matière organique morte ?",
+    "options": [
+      "Des parasites",
+      "Des symbiotiques",
+      "Des saprophytes",
+      "Des autotrophes"
+    ],
+    "correct": 2
+  },
+  {
+    "question": "Parmi ces éléments, lequel entre dans la définition officielle des déchets verts ?",
+    "options": [
+      "Les épluchures de légumes",
+      "Les tailles de haies",
+      "Les restes de repas",
+      "Le marc de café"
+    ],
+    "correct": 1
+  }
+]
