@@ -22,6 +22,7 @@
     .field label { display: block; font-size: 0.78rem; font-weight: 700; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .field input { display: block; width: 100%; padding: 11px 14px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.95rem; color: #1a3a25; background: #f7fbf8; outline: none; transition: border-color 0.15s; }
     .field input:focus { border-color: #1e6e3e; background: #fff; }
+    .field-aide { font-size: 0.72rem; color: #7aaa8a; font-weight: 600; margin-top: 5px; line-height: 1.4; }
 
     .pass-wrap { position: relative; }
     .pass-wrap input { padding-right: 44px; }
@@ -39,6 +40,7 @@
     html.dark body { background: #121c14; }
     html.dark .auth-card { background: #1a2b1e; box-shadow: 0 4px 32px rgba(0,0,0,0.4); }
     html.dark .field label { color: #7ab88e; }
+    html.dark .field-aide { color: #5a8a6a; }
     html.dark .field input { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
     html.dark .field input:focus { border-color: #52b788; background: #243328; }
     html.dark .auth-footer { color: #4a7a5a; }
@@ -61,6 +63,11 @@
         <div class="field">
           <label for="username">Nom d'utilisateur</label>
           <input type="text" id="username" name="username" placeholder="ex : composteur42" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="email">Adresse email</label>
+          <input type="email" id="email" name="email" placeholder="ex : nom@exemple.fr" autocomplete="email" required />
+          <div class="field-aide">Un lien de confirmation y sera envoyé : il débloque l'accès aux cours.</div>
         </div>
         <div class="field">
           <label for="password">Mot de passe</label>
@@ -96,6 +103,7 @@
     document.getElementById('signupForm').addEventListener('submit', function (e) {
       e.preventDefault();
       const username  = document.getElementById('username').value.trim();
+      const email     = document.getElementById('email').value.trim();
       const password  = document.getElementById('password').value;
       const password2 = document.getElementById('password2').value;
       const errorMsg  = document.getElementById('errorMsg');
@@ -112,12 +120,14 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Création…';
 
-      const body = new URLSearchParams({ username, password });
+      const body = new URLSearchParams({ username, email, password });
       fetch('/api/auth/register.php', { method: 'POST', body })
         .then(r => r.json())
         .then(data => {
           if (data.ok) {
-            window.location.href = '/compte';
+            // Vers l'écran d'attente de confirmation plutôt que le profil :
+            // le compte existe mais ne donne pas encore accès aux cours.
+            window.location.href = '/verifier';
           } else {
             errorMsg.textContent = data.error || 'Erreur inconnue.';
             errorMsg.style.display = 'block';

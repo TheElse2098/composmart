@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <title>CompoSmart – Mot de passe oublié</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+
+    .auth-card { background: #fff; border-radius: 24px; box-shadow: 0 4px 32px rgba(30,110,62,0.12); width: 100%; max-width: 420px; overflow: hidden; }
+    .auth-header { background: linear-gradient(160deg, #145228 0%, #1e6e3e 60%, #2a9450 100%); padding: 28px 24px 24px; text-align: center; }
+    .auth-logo { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; display: block; margin-bottom: 16px; }
+    .auth-logo span { color: #a8e6bf; }
+    .auth-title { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; }
+    .auth-body { padding: 28px 24px 32px; }
+    .intro { font-size: 0.88rem; color: #4a7a5a; font-weight: 600; line-height: 1.55; margin-bottom: 20px; }
+
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 700; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .field input { display: block; width: 100%; padding: 11px 14px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.95rem; color: #1a3a25; background: #f7fbf8; outline: none; transition: border-color 0.15s; font-family: inherit; }
+    .field input:focus { border-color: #1e6e3e; background: #fff; }
+
+    .btn-submit { display: block; width: 100%; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 13px; font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 800; cursor: pointer; transition: opacity 0.15s; margin-top: 8px; }
+    .btn-submit:hover { opacity: 0.85; }
+    .btn-submit:disabled { opacity: 0.5; cursor: default; }
+    .avis { border-radius: 10px; padding: 12px 14px; font-size: 0.86rem; font-weight: 600; line-height: 1.5; margin-bottom: 16px; display: none; }
+    .avis.ok { background: #e8f5e9; color: #1b5e20; }
+    .avis.ko { background: #fdecea; color: #c0392b; }
+    .auth-footer { text-align: center; margin-top: 20px; font-size: 0.88rem; color: #7aaa8a; }
+    .auth-footer a { color: #1e6e3e; font-weight: 700; text-decoration: none; }
+    .auth-footer a:hover { text-decoration: underline; }
+
+    html.dark body { background: #121c14; }
+    html.dark .auth-card { background: #1a2b1e; box-shadow: 0 4px 32px rgba(0,0,0,0.4); }
+    html.dark .intro, html.dark .auth-footer { color: #7ab88e; }
+    html.dark .field label { color: #7ab88e; }
+    html.dark .field input { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .field input:focus { border-color: #52b788; background: #243328; }
+    html.dark .auth-footer a { color: #52b788; }
+    html.dark .avis.ok { background: #16291c; color: #7fc99a; }
+    html.dark .avis.ko { background: #3d1a1a; color: #ef9a9a; }
+  </style>
+  <link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+
+  <div class="auth-card">
+    <div class="auth-header">
+      <a href="/" class="auth-logo">Compos<span>mart</span></a>
+      <div class="auth-title">Mot de passe oublié</div>
+    </div>
+    <div class="auth-body">
+      <div class="avis" id="avis"></div>
+      <p class="intro">Indique ton nom d'utilisateur ou ton adresse email : nous t'enverrons un lien pour choisir un nouveau mot de passe.</p>
+
+      <form id="formOubli">
+        <div class="field">
+          <label for="identifiant">Nom d'utilisateur ou email</label>
+          <input type="text" id="identifiant" name="identifiant" placeholder="composteur42 ou nom@exemple.fr" autocomplete="username" required />
+        </div>
+        <button type="submit" class="btn-submit" id="submitBtn">Envoyer le lien</button>
+      </form>
+
+      <div class="auth-footer"><a href="/login">Retour à la connexion</a></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('formOubli').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var identifiant = document.getElementById('identifiant').value.trim();
+      var btn  = document.getElementById('submitBtn');
+      var avis = document.getElementById('avis');
+
+      avis.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Envoi…';
+
+      fetch('/api/auth/forgot.php', {
+        method: 'POST',
+        body: new URLSearchParams({ identifiant: identifiant })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          // La réponse est volontairement identique que le compte existe ou non :
+          // l'API ne doit pas permettre de deviner quels comptes sont inscrits.
+          avis.textContent = d.message || 'Si un compte correspond, un email vient d\'être envoyé.';
+          avis.className = 'avis ok';
+          avis.style.display = 'block';
+          document.getElementById('formOubli').style.display = 'none';
+        })
+        .catch(function () {
+          avis.textContent = 'Erreur réseau. Réessaie dans un instant.';
+          avis.className = 'avis ko';
+          avis.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Envoyer le lien';
+        });
+    });
+  </script>
+
+  <script src="/assets/js/theme.js"></script>
+</body>
+</html>

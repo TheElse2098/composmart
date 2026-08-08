@@ -20,7 +20,7 @@ $conn = mysqli_connect(
 );
 if (!$conn) { echo json_encode(['logged_in' => false]); exit; }
 
-$stmt = mysqli_prepare($conn, 'SELECT id, username, xp, niveau, isAdmin FROM users WHERE id = ?');
+$stmt = mysqli_prepare($conn, 'SELECT id, username, email, xp, niveau, isAdmin, email_verifie FROM users WHERE id = ?');
 $stmt->bind_param('i', $_SESSION['user_id']);
 $stmt->execute();
 $row = $stmt->get_result()->fetch_assoc();
@@ -28,10 +28,13 @@ $row = $stmt->get_result()->fetch_assoc();
 if (!$row) { session_destroy(); echo json_encode(['logged_in' => false]); exit; }
 
 echo json_encode([
-    'logged_in' => true,
-    'id'        => (int)$row['id'],
-    'username'  => $row['username'],
-    'xp'        => (int)$row['xp'],
-    'niveau'    => (int)$row['niveau'],
-    'isAdmin'   => (bool)$row['isAdmin'],
+    'logged_in'     => true,
+    'id'            => (int)$row['id'],
+    'username'      => $row['username'],
+    'email'         => $row['email'],
+    'xp'            => (int)$row['xp'],
+    'niveau'        => (int)$row['niveau'],
+    'isAdmin'       => (bool)$row['isAdmin'],
+    // Pilote le bandeau de rappel et l'accès aux cours (cf. cours/get.php).
+    'email_verifie' => (bool)$row['email_verifie'],
 ]);

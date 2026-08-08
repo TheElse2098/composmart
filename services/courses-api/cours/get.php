@@ -1,5 +1,33 @@
 <?php
+require_once __DIR__ . '/../_guard.php';
+secure_session_start();
 header('Content-Type: application/json; charset=utf-8');
+
+// Contenu réservé aux comptes dont l'adresse email est confirmée. Le contrôle est
+// ici et pas seulement dans la page : sinon le texte des cours resterait
+// récupérable en appelant l'API directement.
+// Un visiteur non connecté garde le régime existant (le 1er cours reste ouvert,
+// arbitré côté page) : c'est bien le compte NON VÉRIFIÉ qui est visé.
+if (!empty($_SESSION['user_id'])) {
+    $cv = mysqli_connect(
+        getenv('DB_HOST') ?: 'db-core',
+        getenv('DB_USER') ?: 'composmart',
+        getenv('DB_PASSWORD') ?: '',
+        getenv('DB_NAME') ?: 'Composmart'
+    );
+    if ($cv) {
+        $stmt = mysqli_prepare($cv, 'SELECT email_verifie FROM users WHERE id = ?');
+        $stmt->bind_param('i', $_SESSION['user_id']);
+        $stmt->execute();
+        $u = $stmt->get_result()->fetch_assoc();
+        mysqli_close($cv);
+        if ($u && (int)$u['email_verifie'] !== 1) {
+            http_response_code(403);
+            echo json_encode(['error' => 'email_non_verifie']);
+            exit;
+        }
+    }
+}
 
 $slug = preg_replace('/[^a-z0-9\-]/', '', strtolower($_GET['slug'] ?? ''));
 if (!$slug) { http_response_code(400); echo json_encode(['error' => 'slug manquant']); exit; }

@@ -31,10 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
 
 $username = trim($_POST['username'] ?? '');
+$email    = trim($_POST['email'] ?? '');
 $password = $_POST['password']  ?? '';
 
 if (strlen($username) < 3 || strlen($username) > 30) {
     echo json_encode(['error' => 'Le nom doit faire entre 3 et 30 caractères.']); exit;
+}
+if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 255) {
+    echo json_encode(['error' => 'Adresse email invalide.']); exit;
 }
 if (!preg_match('/^[a-zA-Z0-9_\-.]+$/', $username)) {
     echo json_encode(['error' => 'Caractères autorisés : lettres, chiffres, _ - .']); exit;
@@ -53,11 +57,17 @@ if ($res && mysqli_num_rows($res) > 0) {
 
 $hash = password_hash($password, PASSWORD_BCRYPT);
 $u    = mysqli_real_escape_string($c, $username);
+$e    = mysqli_real_escape_string($c, $email);
 
-$ok = mysqli_query($c, "INSERT INTO users (username, password_hash, isAdmin) VALUES ('$u', '$hash', 1)");
+// email_verifie = 1 : le compte fondateur est créé depuis le serveur lui-même,
+// il n'y a personne pour lui envoyer un lien de confirmation.
+$ok = mysqli_query($c, "INSERT INTO users (username, email, password_hash, isAdmin, email_verifie)
+                        VALUES ('$u', '$e', '$hash', 1, 1)");
 if (!$ok) {
     $errno = mysqli_errno($c);
-    echo json_encode(['error' => $errno === 1062 ? 'Ce nom d\'utilisateur est déjà pris.' : 'Erreur base de données.']);
+    echo json_encode(['error' => $errno === 1062
+        ? 'Ce nom d\'utilisateur ou cette adresse email est déjà pris.'
+        : 'Erreur base de données.']);
     exit;
 }
 

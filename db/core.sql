@@ -6,9 +6,12 @@ SET time_zone = "+00:00";
 -- ── UTILISATEURS ───────────────────────────────────────────────────────────
 CREATE TABLE `users` (
   `id`            int          NOT NULL AUTO_INCREMENT,
-  `email`         varchar(255) DEFAULT NULL,
+  `email`         varchar(255) NOT NULL,
   `username`      varchar(100) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
+  -- Tant que l'email n'est pas confirmé, la lecture des cours est refusée
+  -- (cf. courses-api/cours/get.php). Le reste du site reste accessible.
+  `email_verifie` tinyint(1)   NOT NULL DEFAULT 0,
   `created_at`    datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `xp`            int          NOT NULL DEFAULT 0,
   `niveau`        int          NOT NULL DEFAULT 1,
@@ -16,6 +19,23 @@ CREATE TABLE `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── JETONS À USAGE UNIQUE (vérification d'email, réinitialisation de mot de passe) ──
+-- Seul le SHA-256 du jeton est stocké : une fuite de la base ne permet donc pas
+-- de forger un lien valide. Le jeton en clair n'existe que dans le mail envoyé.
+CREATE TABLE `user_tokens` (
+  `id`         int      NOT NULL AUTO_INCREMENT,
+  `user_id`    int      NOT NULL,
+  `type`       enum('verification','reset') NOT NULL,
+  `token_hash` char(64) NOT NULL,
+  `expire_at`  datetime NOT NULL,
+  `used_at`    datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `token_hash` (`token_hash`),
+  KEY `user_type` (`user_id`, `type`),
+  CONSTRAINT `tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ── COURS ──────────────────────────────────────────────────────────────────

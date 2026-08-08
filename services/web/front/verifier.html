@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <title>CompoSmart – Confirmation de l'email</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+
+    .auth-card { background: #fff; border-radius: 24px; box-shadow: 0 4px 32px rgba(30,110,62,0.12); width: 100%; max-width: 430px; overflow: hidden; }
+    .auth-header { background: linear-gradient(160deg, #145228 0%, #1e6e3e 60%, #2a9450 100%); padding: 28px 24px 24px; text-align: center; }
+    .auth-logo { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; display: block; margin-bottom: 16px; }
+    .auth-logo span { color: #a8e6bf; }
+    .auth-title { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; }
+    .auth-body { padding: 30px 26px 32px; text-align: center; }
+
+    .etat-icone { font-size: 3rem; line-height: 1; margin-bottom: 14px; }
+    .etat-titre { font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 900; color: #1a3a25; margin-bottom: 8px; }
+    .etat-texte { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; line-height: 1.6; }
+    .etat-texte strong { color: #1e6e3e; }
+
+    .btn-submit { display: block; width: 100%; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 13px; font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 800; cursor: pointer; transition: opacity 0.15s; margin-top: 20px; text-decoration: none; }
+    .btn-submit:hover { opacity: 0.85; }
+    .btn-submit:disabled { opacity: 0.5; cursor: default; }
+    .lien-secondaire { display: inline-block; margin-top: 16px; font-size: 0.85rem; font-weight: 700; color: #4a7a5a; text-decoration: underline; text-underline-offset: 3px; background: none; border: none; cursor: pointer; font-family: inherit; }
+    .lien-secondaire:hover { color: #1e6e3e; }
+    .avis { border-radius: 10px; padding: 10px 14px; font-size: 0.85rem; font-weight: 600; margin-top: 16px; display: none; }
+    .avis.ok { background: #e8f5e9; color: #1b5e20; }
+    .avis.ko { background: #fdecea; color: #c0392b; }
+
+    html.dark body { background: #121c14; }
+    html.dark .auth-card { background: #1a2b1e; box-shadow: 0 4px 32px rgba(0,0,0,0.4); }
+    html.dark .etat-titre { color: #c8e6d4; }
+    html.dark .etat-texte { color: #7ab88e; }
+    html.dark .etat-texte strong { color: #52b788; }
+    html.dark .lien-secondaire { color: #7ab88e; }
+    html.dark .lien-secondaire:hover { color: #52b788; }
+    html.dark .avis.ok { background: #16291c; color: #7fc99a; }
+    html.dark .avis.ko { background: #3d1a1a; color: #ef9a9a; }
+  </style>
+  <link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+
+  <div class="auth-card">
+    <div class="auth-header">
+      <a href="/" class="auth-logo">Compos<span>mart</span></a>
+      <div class="auth-title" id="cardTitre">Confirmation de l'email</div>
+    </div>
+    <div class="auth-body" id="corps">
+      <div class="etat-icone">⏳</div>
+      <div class="etat-titre">Un instant…</div>
+    </div>
+  </div>
+
+  <script>
+    var corps  = document.getElementById('corps');
+    var token  = new URLSearchParams(location.search).get('token');
+
+    function vue(icone, titre, texte, boutons) {
+      corps.innerHTML =
+        '<div class="etat-icone">' + icone + '</div>'
+        + '<div class="etat-titre">' + titre + '</div>'
+        + '<div class="etat-texte">' + texte + '</div>'
+        + (boutons || '')
+        + '<div class="avis" id="avis"></div>';
+    }
+
+    function avis(texte, ok) {
+      var el = document.getElementById('avis');
+      if (!el) return;
+      el.textContent = texte;
+      el.className = 'avis ' + (ok ? 'ok' : 'ko');
+      el.style.display = 'block';
+    }
+
+    // ── Cas 1 : on arrive depuis le lien du mail ──
+    if (token) {
+      // Le jeton part en POST : un GET peut être préchargé par un antivirus ou
+      // un client mail, ce qui consommerait le lien avant le clic de la personne.
+      fetch('/api/auth/verify.php', {
+        method: 'POST',
+        body: new URLSearchParams({ token: token })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.ok) {
+            document.getElementById('cardTitre').textContent = 'Compte confirmé';
+            vue('✅', 'C\'est confirmé !',
+                'Ton adresse email est validée. Les cours te sont maintenant accessibles.',
+                '<a href="/cours" class="btn-submit">Découvrir les cours</a>');
+          } else {
+            document.getElementById('cardTitre').textContent = 'Lien invalide';
+            vue('⚠️', 'Ce lien ne fonctionne plus',
+                d.error || 'Le lien est invalide ou a expiré.',
+                '<button type="button" class="btn-submit" id="btnRenvoi">Recevoir un nouveau lien</button>'
+                + '<a href="/login" class="lien-secondaire">Se connecter</a>');
+            brancherRenvoi();
+          }
+        })
+        .catch(function () {
+          vue('⚠️', 'Erreur réseau', 'Réessaie dans un instant.');
+        });
+    }
+
+    // ── Cas 2 : on vient de s'inscrire, on attend le mail ──
+    else {
+      fetch('/api/auth/me.php')
+        .then(function (r) { return r.json(); })
+        .then(function (me) {
+          if (!me.logged_in) {
+            vue('✉️', 'Confirme ton adresse',
+                'Ouvre le lien reçu par email pour activer ton compte.',
+                '<a href="/login" class="btn-submit">Se connecter</a>');
+            return;
+          }
+          if (me.email_verifie) {
+            document.getElementById('cardTitre').textContent = 'Compte confirmé';
+            vue('✅', 'Ton compte est déjà confirmé',
+                'Rien à faire de plus, bonne lecture !',
+                '<a href="/cours" class="btn-submit">Découvrir les cours</a>');
+            return;
+          }
+          vue('✉️', 'Vérifie ta boîte mail',
+              'Un lien de confirmation vient d\'être envoyé à <strong>' + (me.email || 'ton adresse') + '</strong>.'
+              + '<br>Pense à regarder dans les indésirables.',
+              '<button type="button" class="btn-submit" id="btnRenvoi">Renvoyer le lien</button>'
+              + '<a href="/compte" class="lien-secondaire">Aller sur mon profil</a>');
+          brancherRenvoi();
+        })
+        .catch(function () {
+          vue('⚠️', 'Erreur réseau', 'Réessaie dans un instant.');
+        });
+    }
+
+    function brancherRenvoi() {
+      var btn = document.getElementById('btnRenvoi');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        btn.textContent = 'Envoi…';
+        fetch('/api/auth/resend.php', { method: 'POST' })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (d.ok) {
+              avis('Email envoyé ! Vérifie ta boîte de réception.', true);
+              btn.textContent = 'Lien renvoyé';
+            } else {
+              // 401 : la session a expiré, il faut se reconnecter pour renvoyer.
+              avis(d.error || 'Envoi impossible.', false);
+              btn.disabled = false;
+              btn.textContent = 'Renvoyer le lien';
+            }
+          })
+          .catch(function () {
+            avis('Erreur réseau.', false);
+            btn.disabled = false;
+            btn.textContent = 'Renvoyer le lien';
+          });
+      });
+    }
+  </script>
+
+  <script src="/assets/js/theme.js"></script>
+</body>
+</html>

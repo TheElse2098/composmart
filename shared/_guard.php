@@ -131,6 +131,79 @@ function send_mail($to, $subject, $body, $replyTo = null) {
     }
 }
 
+/* ─────────────────── JETONS À USAGE UNIQUE (email / mot de passe) ───────────────────
+ * Deux usages : confirmer une adresse à l'inscription, et réinitialiser un mot
+ * de passe oublié. Même mécanique dans les deux cas :
+ *   - 48 octets tirés d'une source cryptographique, encodés en base64 URL-safe
+ *     → 64 caractères, 384 bits d'entropie : impossible à deviner ou à énumérer ;
+ *   - la base ne garde que le SHA-256 du jeton, jamais sa valeur en clair ;
+ *   - usage unique (used_at) et durée de validité limitée (expire_at).
+ * Le base64 URL-safe (A–Z a–z 0–9 - _) est retenu plutôt qu'un alphabet plus
+ * exotique : tout autre caractère devrait être réencodé dans l'URL, ce qui
+ * allongerait le lien sans rien ajouter à sa robustesse.
+ */
+function generer_token() {
+    return rtrim(strtr(base64_encode(random_bytes(48)), '+/', '-_'), '=');
+}
+
+function hash_token($token) {
+    return hash('sha256', $token);
+}
+
+/**
+ * Crée un jeton pour $uid et renvoie sa valeur en clair (à mettre dans le mail).
+ * Les jetons du même type encore en attente sont invalidés : un nouveau lien
+ * demandé annule le précédent.
+ */
+function creer_token($conn, $uid, $type, $duree_minutes) {
+    $uid = (int)$uid;
+    $t = mysqli_real_escape_string($conn, $type);
+    mysqli_query($conn, "UPDATE user_tokens SET used_at = NOW()
+                         WHERE user_id = $uid AND type = '$t' AND used_at IS NULL");
+
+    $token = generer_token();
+    $hash  = hash_token($token);
+    $stmt  = mysqli_prepare($conn,
+        'INSERT INTO user_tokens (user_id, type, token_hash, expire_at)
+         VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE))');
+    $stmt->bind_param('issi', $uid, $type, $hash, $duree_minutes);
+    return $stmt->execute() ? $token : null;
+}
+
+/**
+ * Valide un jeton et le consomme. Renvoie l'id utilisateur, ou 0 si le jeton est
+ * inconnu, déjà utilisé ou expiré — sans distinguer ces cas, pour ne pas
+ * renseigner un attaquant sur ce qui a échoué.
+ */
+function consommer_token($conn, $token, $type) {
+    if (!is_string($token) || $token === '') return 0;
+    $hash = hash_token($token);
+    $stmt = mysqli_prepare($conn,
+        "SELECT id, user_id FROM user_tokens
+         WHERE token_hash = ? AND type = ? AND used_at IS NULL AND expire_at > NOW()");
+    $stmt->bind_param('ss', $hash, $type);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    if (!$row) return 0;
+
+    // Marqué utilisé immédiatement : deux clics simultanés sur le même lien ne
+    // peuvent pas déclencher deux fois l'action.
+    $id = (int)$row['id'];
+    mysqli_query($conn, "UPDATE user_tokens SET used_at = NOW() WHERE id = $id AND used_at IS NULL");
+    if (mysqli_affected_rows($conn) !== 1) return 0;
+
+    return (int)$row['user_id'];
+}
+
+/** Base publique du site, pour construire les liens envoyés par mail. */
+function site_url() {
+    $base = getenv('SITE_URL') ?: '';
+    if ($base !== '') return rtrim($base, '/');
+    $proto = (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+          || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    return $proto . '://' . ($_SERVER['HTTP_HOST'] ?? 'composmart.fr');
+}
+
 /**
  * Renvoie un message d'erreur si le mot de passe est trop faible, '' sinon.
  * Règle : 8 caractères min, au moins une lettre et un chiffre.
