@@ -50,8 +50,35 @@ function table_exists($c, $name) {
     $r = mysqli_query($c, "SHOW TABLES LIKE '$n'");
     return $r && mysqli_num_rows($r) > 0;
 }
+/** Additionne deux comptages date => nombre. */
+function fusion($a, $b) {
+    foreach ($b as $k => $v) $a[$k] = ($a[$k] ?? 0) + $v;
+    return $a;
+}
 
 $a_logins = table_exists($c, 'logins');
+$a_anon   = table_exists($c, 'stats_anonymes');
+
+// ── COMPTES SUPPRIMÉS ───────────────────────────────────────────────────────
+// Leurs lignes ont disparu de users/logins, mais leur activité a été reversée
+// dans stats_anonymes au moment de la suppression. Sans ces agrégats, les
+// courbes reculeraient dans le passé à chaque suppression de compte.
+function qs_anon($c, $type, $from) {
+    $t = mysqli_real_escape_string($c, $type);
+    $res = mysqli_query($c, "SELECT jour AS d, total AS n FROM stats_anonymes
+                             WHERE type = '$t' AND jour >= '$from'");
+    $map = [];
+    if ($res) while ($r = mysqli_fetch_assoc($res)) $map[$r['d']] = (int)$r['n'];
+    return $map;
+}
+function qs_anon_mois($c, $type) {
+    $t = mysqli_real_escape_string($c, $type);
+    $res = mysqli_query($c, "SELECT DATE_FORMAT(jour, '%Y-%m') AS m, SUM(total) AS n
+                             FROM stats_anonymes WHERE type = '$t' GROUP BY m");
+    $map = [];
+    if ($res) while ($r = mysqli_fetch_assoc($res)) $map[$r['m']] = (int)$r['n'];
+    return $map;
+}
 
 // Les composteurs vivent en db-map : leur évolution est servie à part par
 // /api/carte/evolution.php (comptage sur composts.created_at, pas sur l'audit).
@@ -62,6 +89,13 @@ $a_logins = table_exists($c, 'logins');
 if ($periode === 'tout') {
     $row = mysqli_fetch_row(mysqli_query($c, "SELECT DATE_FORMAT(MIN(created_at), '%Y-%m') FROM users"));
     $debut = $row[0] ?? null;
+    // Le plus ancien compte est peut-être un compte supprimé : l'historique
+    // doit alors démarrer au premier mois connu des agrégats anonymes.
+    if ($a_anon) {
+        $row = mysqli_fetch_row(mysqli_query($c, "SELECT DATE_FORMAT(MIN(jour), '%Y-%m') FROM stats_anonymes"));
+        $anc = $row[0] ?? null;
+        if ($anc && (!$debut || $anc < $debut)) $debut = $anc;
+    }
     if (!$debut) {
         echo json_encode(['labels' => [], 'inscrits' => [], 'connexions' => null], JSON_UNESCAPED_UNICODE);
         exit;
@@ -81,8 +115,14 @@ if ($periode === 'tout') {
         $cur->modify('+1 month');
     }
 
-    $inscrits   = fill(qs_mois($c, 'users', 'created_at'), $cles);
-    $connexions = $a_logins ? fill(qs_mois($c, 'logins', 'logged_at'), $cles) : null;
+    $m_ins = qs_mois($c, 'users', 'created_at');
+    $m_con = $a_logins ? qs_mois($c, 'logins', 'logged_at') : [];
+    if ($a_anon) {
+        $m_ins = fusion($m_ins, qs_anon_mois($c, 'inscription'));
+        $m_con = fusion($m_con, qs_anon_mois($c, 'connexion'));
+    }
+    $inscrits   = fill($m_ins, $cles);
+    $connexions = $a_logins ? fill($m_con, $cles) : null;
 }
 
 // ── VUE JOURNALIÈRE (fenêtre glissante) ────────────────────────────────────
@@ -95,8 +135,14 @@ else {
     }
     $from = mysqli_real_escape_string($c, $labels[0]);
 
-    $inscrits   = fill(qs($c, 'users', 'created_at', $from), $labels);
-    $connexions = $a_logins ? fill(qs($c, 'logins', 'logged_at', $from), $labels) : null;
+    $d_ins = qs($c, 'users', 'created_at', $from);
+    $d_con = $a_logins ? qs($c, 'logins', 'logged_at', $from) : [];
+    if ($a_anon) {
+        $d_ins = fusion($d_ins, qs_anon($c, 'inscription', $from));
+        $d_con = fusion($d_con, qs_anon($c, 'connexion', $from));
+    }
+    $inscrits   = fill($d_ins, $labels);
+    $connexions = $a_logins ? fill($d_con, $labels) : null;
 
     // Formater les labels DD/MM
     $short = array_map(fn($d) => substr($d, 8, 2) . '/' . substr($d, 5, 2), $labels);

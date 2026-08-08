@@ -453,10 +453,25 @@ spec:
             - { name: DB_HOST, value: db-core }
             - { name: REDIS_HOST, value: redis }
             - { name: REDIS_PORT, value: "6379" }
+            # Suppression de compte : les tables des autres bases (scores,
+            # signalements) sont purgées/anonymisées via ces endpoints internes.
+            - { name: GAMES_PURGE_URL, value: "http://games-api/api/jeux/purge.php" }
+            - { name: MAP_PURGE_URL,   value: "http://map-api/api/carte/purge.php" }
+            # Adresse publique du site : sert à construire les liens de
+            # vérification d'email et de réinitialisation de mot de passe.
+            - { name: SITE_URL, value: "https://composmart.fr" }
             - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
             - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
             - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
             - { name: AUDIT_SECRET, valueFrom: { secretKeyRef: { name: composmart-secrets, key: AUDIT_SECRET } } }
+            # SMTP (vérification d'email, mot de passe oublié). optional: true →
+            # le pod démarre même sans ces clés ; send_mail() renvoie false.
+            - { name: SMTP_HOST,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_HOST,     optional: true } } }
+            - { name: SMTP_PORT,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_PORT,     optional: true } } }
+            - { name: SMTP_SECURE,   valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_SECURE,   optional: true } } }
+            - { name: SMTP_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_USER,     optional: true } } }
+            - { name: SMTP_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: SMTP_PASSWORD, optional: true } } }
+            - { name: MAIL_FROM,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: MAIL_FROM,     optional: true } } }
           resources:
             requests: { cpu: "50m", memory: "96Mi" }
             limits:   { cpu: "500m", memory: "256Mi" }

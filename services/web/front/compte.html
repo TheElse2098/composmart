@@ -138,6 +138,28 @@
     .btn-logout { background: none; border: none; color: #c0392b; font-family: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; padding: 10px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(192,57,43,0.35); }
     .btn-logout:hover { text-decoration-color: currentColor; }
 
+    /* Suppression de compte : irréversible, donc repliée par défaut et bien
+       séparée de la déconnexion — on ne clique pas l'une en visant l'autre. */
+    .danger-sep { max-width: 420px; margin: 4px auto 14px; height: 1px; background: #e3efe5; }
+    .btn-danger-open { background: none; border: none; color: #9aa8a0; font-family: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 6px 10px; }
+    .btn-danger-open:hover { color: #c0392b; }
+    .danger-panel { max-width: 460px; margin: 14px auto 0; background: #fff5f4; border: 1.5px solid #f0c9c4; border-radius: 16px; padding: 20px; text-align: left; }
+    .danger-panel[hidden] { display: none; }
+    .danger-title { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #c0392b; margin-bottom: 8px; }
+    .danger-text { font-size: 0.84rem; color: #6b4a46; font-weight: 600; line-height: 1.6; margin-bottom: 14px; }
+    .danger-text b { color: #c0392b; }
+    .danger-label { display: block; font-size: 0.78rem; font-weight: 800; color: #6b4a46; margin-bottom: 6px; }
+    .danger-input { width: 100%; padding: 11px 13px; border-radius: 10px; border: 1.5px solid #f0c9c4; background: #fff; font-family: inherit; font-size: 0.9rem; color: #1a3a25; margin-bottom: 12px; }
+    .danger-input:focus { outline: none; border-color: #c0392b; }
+    .danger-actions { display: flex; gap: 10px; }
+    .btn-danger-go, .btn-danger-cancel { flex: 1; padding: 11px; border-radius: 50px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.9rem; cursor: pointer; border: none; transition: background 0.18s, opacity 0.18s; }
+    .btn-danger-go { background: #c0392b; color: #fff; }
+    .btn-danger-go:hover { background: #a5301f; }
+    .btn-danger-go:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-danger-cancel { background: #fff; color: #6b4a46; border: 1.5px solid #f0c9c4; }
+    .btn-danger-cancel:hover { background: #fdecea; }
+    .danger-msg { font-size: 0.8rem; font-weight: 700; color: #c0392b; margin-top: 10px; }
+
     /* ── Non connecté ── */
     .guest { max-width: 460px; margin: 0 auto; text-align: center; }
     .guest .panel { padding: 34px 26px; }
@@ -199,6 +221,20 @@
     html.dark .btn-secondary { background: #16211a; color: #52b788; border-color: #2d4030; }
     html.dark .btn-secondary:hover { background: #1e2d22; }
     html.dark .btn-logout { color: #e57373; }
+    html.dark .danger-sep { background: #243328; }
+    html.dark .btn-danger-open { color: #5f7a68; }
+    html.dark .btn-danger-open:hover { color: #e57373; }
+    html.dark .danger-panel { background: #1f1614; border-color: #4a2b27; }
+    html.dark .danger-title { color: #e57373; }
+    html.dark .danger-text, html.dark .danger-label { color: #c9a9a4; }
+    html.dark .danger-text b { color: #e57373; }
+    html.dark .danger-input { background: #16211a; border-color: #4a2b27; color: #e8f5ee; }
+    html.dark .danger-input:focus { border-color: #e57373; }
+    html.dark .btn-danger-go { background: #b0392b; }
+    html.dark .btn-danger-go:hover { background: #c94a3b; }
+    html.dark .btn-danger-cancel { background: #16211a; color: #c9a9a4; border-color: #4a2b27; }
+    html.dark .btn-danger-cancel:hover { background: #241a18; }
+    html.dark .danger-msg { color: #e57373; }
     html.dark .drawer { background: #1a2b1e; }
     html.dark .drawer-menu li a { color: #b0d4be; }
     html.dark .drawer-menu li a:hover, html.dark .drawer-menu li a.active { background: #243328; color: #52b788; border-left-color: #52b788; }
@@ -404,12 +440,89 @@
             </a>`).join('')}
         </section>`;
 
-      // ── Déconnexion ──
+      // ── Déconnexion + suppression de compte ──
       const wrap = document.getElementById('logoutWrap');
-      wrap.innerHTML = `<button class="btn-logout" id="btnLogout">Se déconnecter</button>`;
+      wrap.innerHTML = `
+        <button class="btn-logout" id="btnLogout">Se déconnecter</button>
+        <div class="danger-sep"></div>
+        <button class="btn-danger-open" id="btnDangerOpen">Supprimer mon compte</button>
+        <div class="danger-panel" id="dangerPanel" hidden>
+          <div class="danger-title">Supprimer définitivement mon compte</div>
+          <div class="danger-text">
+            Ton compte, ton pseudo, ton adresse email et tes scores seront <b>effacés
+            et irrécupérables</b>. Ton activité (XP gagnée, cours terminés, connexions)
+            est conservée sous forme de <b>statistiques anonymes</b>, sans aucun lien
+            avec toi. Tes signalements de composteurs restent traités, mais sans ton nom.
+          </div>
+          <label class="danger-label" for="dangerConfirm">Pour confirmer, saisis ton nom d'utilisateur : <b>${esc(u.username)}</b></label>
+          <input class="danger-input" id="dangerConfirm" type="text" autocomplete="off" spellcheck="false" placeholder="Nom d'utilisateur">
+          <div class="danger-actions">
+            <button class="btn-danger-cancel" id="btnDangerCancel">Annuler</button>
+            <button class="btn-danger-go" id="btnDangerGo" disabled>Supprimer</button>
+          </div>
+          <div class="danger-msg" id="dangerMsg" hidden></div>
+        </div>`;
+
       document.getElementById('btnLogout').addEventListener('click', () => {
         fetch('/api/auth/logout.php', { method: 'POST' })
           .then(() => location.reload());
+      });
+
+      const panel   = document.getElementById('dangerPanel');
+      const champ   = document.getElementById('dangerConfirm');
+      const btnGo   = document.getElementById('btnDangerGo');
+      const msg     = document.getElementById('dangerMsg');
+
+      document.getElementById('btnDangerOpen').addEventListener('click', () => {
+        panel.hidden = false;
+        document.getElementById('btnDangerOpen').hidden = true;
+        champ.focus();
+      });
+      document.getElementById('btnDangerCancel').addEventListener('click', () => {
+        panel.hidden = true;
+        document.getElementById('btnDangerOpen').hidden = false;
+        champ.value = '';
+        btnGo.disabled = true;
+        msg.hidden = true;
+      });
+
+      // Le bouton ne s'active qu'une fois le pseudo saisi exactement : la
+      // confirmation doit demander un geste conscient, pas un clic réflexe.
+      champ.addEventListener('input', () => {
+        btnGo.disabled = champ.value !== u.username;
+      });
+
+      btnGo.addEventListener('click', () => {
+        btnGo.disabled = true;
+        btnGo.textContent = 'Suppression…';
+        msg.hidden = true;
+        fetch('/api/auth/delete_account.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ confirmation: champ.value }),
+        })
+          .then(r => r.json().catch(() => ({ error: 'Réponse inattendue du serveur.' })))
+          .then(d => {
+            if (d.ok) {
+              // Confirmation sur place (l'accueil n'a pas de zone de message),
+              // puis retour à l'accueil déconnecté.
+              panel.innerHTML = `
+                <div class="danger-title">Compte supprimé</div>
+                <div class="danger-text">Tes données personnelles ont été effacées. Merci d'avoir fait un bout de chemin avec Composmart 🌱</div>`;
+              setTimeout(() => { location.href = '/'; }, 3000);
+              return;
+            }
+            msg.textContent = d.error || 'La suppression a échoué.';
+            msg.hidden = false;
+            btnGo.textContent = 'Supprimer';
+            btnGo.disabled = champ.value !== u.username;
+          })
+          .catch(() => {
+            msg.textContent = 'Connexion au serveur impossible.';
+            msg.hidden = false;
+            btnGo.textContent = 'Supprimer';
+            btnGo.disabled = false;
+          });
       });
     }
 

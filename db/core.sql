@@ -99,6 +99,20 @@ CREATE TABLE `xp_log` (
   CONSTRAINT `xp_log_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ── STATISTIQUES ANONYMES (comptes supprimés) ───────────────────────────────
+-- Quand un compte est supprimé, ses lignes personnelles disparaissent (cascade)
+-- mais son activité est d'abord reversée ici, agrégée PAR JOUR et sans aucun
+-- identifiant. Deux événements de la même personne ne sont donc plus reliables
+-- entre eux : c'est ce qui distingue cette table d'une simple pseudonymisation.
+-- Les graphes de l'admin additionnent ces totaux aux données encore vivantes.
+CREATE TABLE `stats_anonymes` (
+  `jour`  date NOT NULL,
+  `type`  enum('inscription','connexion','cours_termine','xp') NOT NULL,
+  `total` int  NOT NULL DEFAULT 0,  -- nombre d'événements ce jour-là
+  `somme` int  NOT NULL DEFAULT 0,  -- cumul des valeurs (XP gagnée) ; 0 sinon
+  PRIMARY KEY (`jour`, `type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ── JOURNAL D'AUDIT (actions admin, écrit aussi par map-api via auth-api) ────
 CREATE TABLE `audit_log` (
   `id`          int          NOT NULL AUTO_INCREMENT,

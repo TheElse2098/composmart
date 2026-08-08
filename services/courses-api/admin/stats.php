@@ -38,6 +38,12 @@ function count_of($c, $sql) {
     return (int) (mysqli_fetch_row($res)[0] ?? 0);
 }
 
+// Les cours terminés par des comptes depuis supprimés ont été reversés dans
+// stats_anonymes : sans eux, le total reculerait à chaque suppression.
+// « users » en revanche reste un décompte de comptes VIVANTS : un compte
+// supprimé n'est plus un compte.
+$anon_cours = count_of($c, "SELECT COALESCE(SUM(total), 0) FROM stats_anonymes WHERE type = 'cours_termine'");
+
 // composts/parties/signalements vivent dans db-map et db-games : le front admin
 // les complète via /api/carte/count.php et /api/jeux/count.php. On expose null ici.
 $stats = [
@@ -45,7 +51,7 @@ $stats = [
     'admins'       => count_of($c, 'SELECT COUNT(*) FROM users WHERE isAdmin = 1'),
     'composts'     => null,  // db-map (front)
     'cours'        => count_of($c, 'SELECT COUNT(*) FROM cours'),
-    'completions'  => count_of($c, 'SELECT COUNT(*) FROM user_progress'),
+    'completions'  => count_of($c, 'SELECT COUNT(*) FROM user_progress') + $anon_cours,
     'parties'      => null,  // db-games (front)
     'signalements' => null,  // db-map (front)
 ];
