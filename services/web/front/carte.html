@@ -597,8 +597,9 @@
         });
         map.addControl(new ResetVue());
 
-        // Handler dédié : celui du rechargement de zone (plus bas) sort avant
-        // pour les zooms < 10, on ne peut donc pas y greffer la mémorisation.
+        // Handler dédié : celui du rechargement de zone (plus bas) est débouncé et
+        // sort avant au zoom « monde », on ne peut donc pas y greffer la
+        // mémorisation — une vue doit être retenue même sans rechargement.
         map.on('moveend', enregistrerVue);
         map.on('click', onMapClick);
         map.on('movestart', function() {
@@ -675,37 +676,53 @@
                 });
         }
 
+        // Compteur : le total en base ne bouge pas quand on déplace la carte, mais
+        // le nombre de points réellement chargés, si — les deux sont donc affichés
+        // séparément, sinon « 11 407 recensés » sur un écran qui en montre 300
+        // ressemble à un bug.
+        let totalEnBase = null;
+        function majCompteur() {
+            const affiches = markerMap.size.toLocaleString('fr-FR');
+            nb_compost.textContent = totalEnBase === null
+                ? affiches + ' composteurs affichés'
+                : totalEnBase.toLocaleString('fr-FR')
+                  + ' bacs à biodéchets et composteurs recensés · ' + affiches + ' affichés';
+        }
+
         // Chargement initial limité à la zone visible : depuis que l'import OSM
         // couvre le monde entier, un appel sans bornes ramènerait des dizaines de
         // milliers de points et figerait le navigateur. Le reste se charge au fil
         // des déplacements (cf. le moveend juste en dessous).
         nb_compost.textContent = "Recherche des composteurs…";
         chargerZone(map.getBounds())
+            .then(majCompteur)
             .catch((e) => console.error("Erreur JSON:", e));
 
-        // Le total affiché est le total en base, pas ce qui est chargé à l'écran :
-        // sinon le compteur changerait à chaque déplacement de carte.
         fetch('/api/carte/count.php')
             .then(function (r) { return r.json(); })
             .then(function (d) {
-                if (d && typeof d.composts === 'number') {
-                    nb_compost.textContent = d.composts.toLocaleString('fr-FR')
-                        + ' bacs à biodéchets et composteurs recensés';
-                }
+                if (d && typeof d.composts === 'number') { totalEnBase = d.composts; majCompteur(); }
             })
-            .catch(function () { nb_compost.textContent = ''; });
+            .catch(function () { /* le compteur reste sur le nombre affiché */ });
 
         // Recharge la zone visible après chaque déplacement/zoom (bounding-box).
         // Debounce 400ms : évite une rafale de requêtes pendant un zoom/pan continu.
-        // Ne recharge que si la vue est assez proche (zoom ≥ 10) : dézoomé sur la
-        // France entière, on a déjà tout via le chargement initial (cache Redis).
+        //
+        // Pas de plancher de zoom élevé ici : le chargement initial est lui aussi
+        // borné à la vue depuis le passage de l'import OSM au monde entier. Sortir
+        // avant le fetch en dessous d'un certain zoom (c'était < 10, alors que la
+        // vue par défaut est au zoom 6) laissait la carte figée sur les seuls
+        // points du premier écran — se déplacer n'en ramenait aucun autre.
+        // Seul le niveau « monde » reste écarté : la requête y est plafonnée à
+        // 20 000 points côté serveur, donc un sous-ensemble arbitraire.
+        const ZOOM_MIN_CHARGEMENT = 5;
         let zoneReloadTimer = null;
         map.on('moveend', function () {
-            if (map.getZoom() < 10) return;
+            if (map.getZoom() < ZOOM_MIN_CHARGEMENT) return;
             clearTimeout(zoneReloadTimer);
             zoneReloadTimer = setTimeout(function () {
                 chargerZone(map.getBounds())
-                    .then((n) => { nb_compost.textContent = markerMap.size + " bacs à biodéchets et composts trouvés en France"; })
+                    .then(majCompteur)
                     .catch((e) => console.error("Erreur JSON:", e));
             }, 400);
         });
