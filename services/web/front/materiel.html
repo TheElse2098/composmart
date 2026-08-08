@@ -488,7 +488,11 @@
       card.classList.add('achetable');
       card.addEventListener('click', function() {
         var name = card.querySelector('.item-name').textContent.trim();
-        window.open('https://www.ecosia.org/shopping?q=' + encodeURIComponent(name), '_blank');
+        // URLSearchParams sérialise en application/x-www-form-urlencoded, donc
+        // les espaces deviennent « + » — la forme attendue par Ecosia, là où
+        // encodeURIComponent produisait des « %20 ».
+        var url = 'https://www.ecosia.org/shopping?' + new URLSearchParams({ q: name });
+        window.open(url, '_blank', 'noopener');
       });
     });
 
