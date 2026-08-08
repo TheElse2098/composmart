@@ -667,6 +667,9 @@
                             nouveauxComposts.push(marker);
                         }
                         marker.options.id = compost_id;
+                        // Mémorisé sur le marqueur : à la purge, il faut savoir de
+                        // quel groupe le retirer sans interroger les deux.
+                        marker.options.estConteneur = (compost.t === 'C');
                         markerMap.set(compost_id, marker);
                         L.DomEvent.on(marker, 'click', function () { info_compost(compost_id, lat, lon) });
                     });
@@ -674,6 +677,32 @@
                     if (nouveauxComposts.length)   composteursLayer.addLayers(nouveauxComposts);
                     return nouveauxConteneurs.length + nouveauxComposts.length;
                 });
+        }
+
+        // Retire les marqueurs sortis du champ de vision. Sans ça, markerMap ne
+        // fait que grossir : une longue session de navigation accumule tous les
+        // points visités, et le clustering ralentit d'autant.
+        //
+        // La zone conservée est élargie de 50 % (pad) : sinon un petit déplacement
+        // purgerait des marqueurs juste en bordure, que la requête suivante irait
+        // aussitôt rechercher — un aller-retour réseau à chaque glissement.
+        //
+        // La suppression de markerMap est indispensable, pas seulement du calque :
+        // c'est lui qui sert de test « déjà affiché », un marqueur retiré de la
+        // carte mais laissé dans la Map ne reviendrait jamais.
+        function purgerHorsChamp(bounds) {
+            const zone = bounds.pad(0.5);
+            const sortisConteneurs = [];
+            const sortisComposts = [];
+            // Supprimer pendant un forEach sur une Map est sûr : une entrée retirée
+            // n'est simplement plus visitée.
+            markerMap.forEach((marker, id) => {
+                if (zone.contains(marker.getLatLng())) return;
+                (marker.options.estConteneur ? sortisConteneurs : sortisComposts).push(marker);
+                markerMap.delete(id);
+            });
+            if (sortisConteneurs.length) conteneursLayer.removeLayers(sortisConteneurs);
+            if (sortisComposts.length)   composteursLayer.removeLayers(sortisComposts);
         }
 
         // Compteur : le total en base ne bouge pas quand on déplace la carte, mais
@@ -721,6 +750,12 @@
             if (map.getZoom() < ZOOM_MIN_CHARGEMENT) return;
             clearTimeout(zoneReloadTimer);
             zoneReloadTimer = setTimeout(function () {
+                // Purge avant le chargement : la mémoire est libérée d'abord, et
+                // les points de la nouvelle zone n'ont aucun risque d'être purgés
+                // dans la foulée (la requête porte sur des bornes plus étroites
+                // que la zone conservée).
+                purgerHorsChamp(map.getBounds());
+                majCompteur();
                 chargerZone(map.getBounds())
                     .then(majCompteur)
                     .catch((e) => console.error("Erreur JSON:", e));
