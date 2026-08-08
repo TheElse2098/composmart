@@ -36,16 +36,29 @@
     .item-emoji { font-size: 4rem; margin: 6px 0 4px; }
     .item-nom { font-family: 'Baloo 2', cursive; font-size: 1.25rem; font-weight: 900; color: #1a3a25; min-height: 36px; }
 
-    .choices { display: flex; justify-content: center; gap: 12px; margin-top: 20px; }
+    /* Trois choix : les boutons partagent la largeur (min-width:0, sinon un item
+       flex refuse de descendre sous la largeur de son texte et déborde), et
+       passent en colonne sur les petits écrans où trois côte à côte deviennent
+       illisibles. */
+    .choices { display: flex; justify-content: center; gap: 9px; margin-top: 20px; }
     .choices button {
-      border: none; border-radius: 16px; padding: 14px 22px;
-      font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; cursor: pointer;
-      transition: transform 0.12s; flex: 1; max-width: 180px;
+      border: none; border-radius: 16px; padding: 13px 10px;
+      font-family: 'Baloo 2', cursive; font-size: 0.92rem; font-weight: 900; cursor: pointer;
+      transition: transform 0.12s; flex: 1; min-width: 0;
     }
     .choices button:hover { transform: translateY(-2px); }
     .btn-oui { background: #1e6e3e; color: #fff; box-shadow: 0 3px 0 #14502c; }
+    .btn-attention { background: #ef8f1c; color: #fff; box-shadow: 0 3px 0 #b96a09; }
     .btn-non { background: #e53935; color: #fff; box-shadow: 0 3px 0 #a02622; }
     .choices button:disabled { opacity: 0.45; cursor: default; transform: none; }
+    @media (max-width: 430px) {
+      .choices { flex-direction: column; }
+    }
+
+    /* Rappel de ce que veut dire le choix du milieu : sans lui, « avec prudence »
+       ne veut rien dire pour quelqu'un qui découvre le jeu. */
+    .regle { font-size: 0.76rem; font-weight: 700; color: #7a8f80; line-height: 1.45; margin-top: 14px; }
+    .regle b { color: #ef8f1c; }
 
     .feedback {
       margin-top: 16px; border-radius: 14px; padding: 12px 14px;
@@ -86,6 +99,8 @@
     html.dark h1 { color: #e8f5ee; }
     html.dark .feedback.ok { background: #16291c; color: #7fc99a; }
     html.dark .feedback.ko { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .regle { color: #7ab88e; }
+    html.dark .regle b { color: #f0a94a; }
     html.dark .btn-retour { background: #1e2d22; color: #7fc99a; }
     html.dark .lb-row { color: #e8f5ee; }
     html.dark .lb-row:nth-child(even) { background: #1e2d22; }
@@ -119,10 +134,12 @@
         <div class="item-emoji" id="itemEmoji"></div>
         <div class="item-nom" id="itemNom"></div>
         <div class="choices">
-          <button type="button" class="btn-oui" id="btnOui">✅ Au compost !</button>
+          <button type="button" class="btn-oui" id="btnOui">✅ Au compost</button>
+          <button type="button" class="btn-attention" id="btnAttention">⚠️ Avec prudence</button>
           <button type="button" class="btn-non" id="btnNon">🗑️ Poubelle</button>
         </div>
         <div class="feedback" id="feedback"></div>
+        <div class="regle"><b>Avec prudence</b> = acceptable seulement dans un compost mûr et bien géré, en petite quantité et enfoui. À éviter en bac de balcon ou en compost jeune.</div>
       </div>
 
       <div class="end-screen" id="endScreen">
@@ -155,24 +172,31 @@
   <script>
     const JEU_ID = 'compost-ou-pas';
     const NB_ITEMS = 12;
+    // cat : 'oui' au compost sans réserve · 'attention' réservé à un compost mûr
+    // et bien conduit · 'non' jamais. Un booléen ne suffisait plus, et il forçait
+    // à trancher arbitrairement pour la viande et le poisson — qui étaient de ce
+    // fait retirés du jeu.
     const POOL = [
-      { nom: 'Épluchures de légumes', emoji: '🥕', ok: true,  info: 'Parfaites pour le compost, c\'est la base !' },
-      { nom: 'Marc de café',          emoji: '☕', ok: true,  info: 'Excellent ! Les vers en raffolent, filtre papier compris.' },
-      { nom: 'Coquilles d\'œuf',      emoji: '🥚', ok: true,  info: 'Oui ! Écrasées, elles apportent du calcium.' },
-//      { nom: 'Viande',                emoji: '🥩', ok: false, info: 'Non : odeurs et nuisibles garantis dans un bac classique.' },
-//      { nom: 'Poisson',               emoji: '🐟', ok: false, info: 'Non, comme la viande : ça attire les nuisibles.' },
-      { nom: 'Os',                    emoji: '🦴', ok: false, info: 'Beaucoup trop longs à se décomposer.' },
-      { nom: 'Produits laitiers',     emoji: '🧀', ok: false, info: 'Non : ils rancissent et déséquilibrent le compost.' },
-      { nom: 'Huile de friture',      emoji: '🛢️', ok: false, info: 'Non : elle étouffe les micro-organismes.' },
-      { nom: 'Essuie-tout',           emoji: '🧻', ok: true,  info: 'Oui, s\'il n\'a pas touché de produits chimiques.' },
-      { nom: 'Tonte de pelouse',      emoji: '🌱', ok: true,  info: 'Oui, en couches fines pour éviter que ça fermente.' },
-      { nom: 'Feuilles mortes',       emoji: '🍂', ok: true,  info: 'Oui ! Une super source de carbone.' },
-      { nom: 'Sac plastique « biodégradable »', emoji: '🛍️', ok: false, info: 'Méfiance : la plupart ne se dégradent pas en compost domestique.' },
-      { nom: 'Cendres de bois',       emoji: '🔥', ok: false, info: 'En quantité, elles bloquent le compost. Une pincée maximum !' },
-      { nom: 'Sachets de thé',        emoji: '🍵', ok: true,  info: 'Oui si le sachet est en papier (retire l\'agrafe).' },
-      { nom: 'Pain rassis',           emoji: '🍞', ok: true,  info: 'Oui, en petits morceaux humides.' },
-      { nom: 'Plantes malades',       emoji: '🥀', ok: false, info: 'Non : les maladies peuvent survivre et contaminer le jardin.' }
+      { nom: 'Épluchures de légumes', emoji: '🥕', cat: 'oui', info: 'Parfaites pour le compost, c\'est la base !' },
+      { nom: 'Marc de café',          emoji: '☕', cat: 'oui', info: 'Excellent ! Les vers en raffolent, filtre papier compris.' },
+      { nom: 'Coquilles d\'œuf',      emoji: '🥚', cat: 'oui', info: 'Oui ! Écrasées, elles apportent du calcium.' },
+      { nom: 'Tonte de pelouse',      emoji: '🌱', cat: 'oui', info: 'Oui, en couches fines pour éviter que ça fermente.' },
+      { nom: 'Feuilles mortes',       emoji: '🍂', cat: 'oui', info: 'Oui ! Une super source de carbone.' },
+
+      { nom: 'Viande',                emoji: '🥩', cat: 'attention', info: 'Possible dans un compost mûr et actif : en petits morceaux, enfouis au centre. Dans un bac jeune ou peu brassé, odeurs et rongeurs garantis.' },
+      { nom: 'Poisson',               emoji: '🐟', cat: 'attention', info: 'Même règle que la viande : seulement dans un compost bien établi, enfoui et recouvert. À proscrire sur un balcon.' },
+      { nom: 'Pain rassis',           emoji: '🍞', cat: 'attention', info: 'En petits morceaux humidifiés et enfouis. Laissé sec en surface, il moisit et attire les rongeurs.' },
+      { nom: 'Cendres de bois',       emoji: '🔥', cat: 'attention', info: 'Une fine poignée de temps en temps, bien répartie : elles apportent du potassium. En quantité, elles rendent le compost trop basique et le bloquent.' },
+      { nom: 'Essuie-tout',           emoji: '🧻', cat: 'attention', info: 'Oui s\'il n\'a servi qu\'à essuyer de l\'eau ou des aliments. Imbibé de produit ménager, il contamine tout le bac.' },
+      { nom: 'Sachets de thé',        emoji: '🍵', cat: 'attention', info: 'Le thé, toujours. Le sachet, seulement s\'il est en papier non plastifié, et sans l\'agrafe : beaucoup contiennent du polypropylène.' },
+
+      { nom: 'Os',                    emoji: '🦴', cat: 'non', info: 'Beaucoup trop longs à se décomposer.' },
+      { nom: 'Produits laitiers',     emoji: '🧀', cat: 'non', info: 'Non : ils rancissent et déséquilibrent le compost.' },
+      { nom: 'Huile de friture',      emoji: '🛢️', cat: 'non', info: 'Non : elle étouffe les micro-organismes.' },
+      { nom: 'Sac plastique « biodégradable »', emoji: '🛍️', cat: 'non', info: 'Méfiance : la plupart ne se dégradent pas en compost domestique.' },
+      { nom: 'Plantes malades',       emoji: '🥀', cat: 'non', info: 'Non : les maladies peuvent survivre et contaminer le jardin.' }
     ];
+    const LIBELLE_CAT = { oui: 'Au compost', attention: 'Avec prudence', non: 'Poubelle' };
 
     let items = [], round = 0, score = 0, verrou = false;
 
@@ -201,31 +225,40 @@
       document.getElementById('itemEmoji').textContent = it.emoji;
       document.getElementById('itemNom').textContent = it.nom;
       document.getElementById('feedback').className = 'feedback';
-      document.getElementById('btnOui').disabled = false;
-      document.getElementById('btnNon').disabled = false;
+      BOUTONS.forEach((b) => { document.getElementById(b.id).disabled = false; });
     }
 
-    function repondre(choixCompost) {
+    function repondre(choix) {
       if (verrou) return;
       verrou = true;
-      document.getElementById('btnOui').disabled = true;
-      document.getElementById('btnNon').disabled = true;
+      BOUTONS.forEach((b) => { document.getElementById(b.id).disabled = true; });
       const it = items[round];
-      const correct = choixCompost === it.ok;
+      const correct = choix === it.cat;
       if (correct) score++;
       document.getElementById('statusScore').textContent = 'Score : ' + score;
       const fb = document.getElementById('feedback');
       fb.className = 'feedback ' + (correct ? 'ok' : 'ko');
-      fb.textContent = (correct ? '✓ Bien vu ! ' : '✗ Raté ! ') + it.info;
+      // Avec trois réponses possibles, « raté » ne suffit plus : on nomme la
+      // bonne catégorie, sinon le joueur ignore laquelle des deux autres c'était.
+      fb.textContent = correct
+        ? '✓ Bien vu ! ' + it.info
+        : '✗ Raté, c\'était « ' + LIBELLE_CAT[it.cat] +' ». ' + it.info;
+      // Un peu plus de temps qu'avant : le retour est plus long à lire.
       setTimeout(() => {
         round++;
         if (round >= NB_ITEMS) finJeu();
         else afficherRound();
-      }, 1700);
+      }, 2400);
     }
 
-    document.getElementById('btnOui').addEventListener('click', () => repondre(true));
-    document.getElementById('btnNon').addEventListener('click', () => repondre(false));
+    const BOUTONS = [
+      { id: 'btnOui',       cat: 'oui' },
+      { id: 'btnAttention', cat: 'attention' },
+      { id: 'btnNon',       cat: 'non' }
+    ];
+    BOUTONS.forEach((b) => {
+      document.getElementById(b.id).addEventListener('click', () => repondre(b.cat));
+    });
 
     function finJeu() {
       document.getElementById('gameZone').style.display = 'none';
