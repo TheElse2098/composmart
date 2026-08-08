@@ -20,7 +20,7 @@ if (!$c) { echo json_encode(['logged_in' => false]); exit; }
 $uid = (int)$_SESSION['user_id'];
 
 // ── Utilisateur ────────────────────────────────────────────────────────────
-$stmt = mysqli_prepare($c, 'SELECT username, xp, niveau, isAdmin, created_at FROM users WHERE id = ?');
+$stmt = mysqli_prepare($c, 'SELECT username, email, email_verifie, xp, niveau, isAdmin, created_at FROM users WHERE id = ?');
 $stmt->bind_param('i', $uid);
 $stmt->execute();
 $u = $stmt->get_result()->fetch_assoc();
@@ -79,6 +79,8 @@ $rank = (int)($rank_row[0] ?? 0) + 1;
 echo json_encode([
     'logged_in'   => true,
     'username'    => $u['username'],
+    'email'         => $u['email'],
+    'email_verifie' => (bool)$u['email_verifie'],
     'xp'          => (int)$u['xp'],
     'niveau'      => $niveau,
     'isAdmin'     => (bool)$u['isAdmin'],

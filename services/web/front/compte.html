@@ -133,6 +133,24 @@
     .xp-curve-axis { display: flex; justify-content: space-between; font-size: 0.7rem; color: #7aaa8a; font-weight: 700; margin-top: 6px; }
     .xp-chart-empty { font-size: 0.85rem; color: #7aaa8a; font-weight: 600; }
 
+    /* Bloc « Mon compte » : libellé à gauche, valeur à droite. La valeur peut
+       être une adresse email longue dans une colonne étroite → elle doit pouvoir
+       se couper (overflow-wrap) et le conteneur flex l'autoriser (min-width:0). */
+    .info-list { display: flex; flex-direction: column; gap: 2px; }
+    .info-row { display: flex; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 1px solid #eef4ec; }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { flex-shrink: 0; font-size: 0.74rem; font-weight: 800; color: #7aaa8a; text-transform: uppercase; letter-spacing: 0.4px; }
+    .info-value { flex: 1; min-width: 0; text-align: right; font-size: 0.86rem; font-weight: 700; color: #1a3a25; overflow-wrap: anywhere; }
+    .info-tag { display: inline-block; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+    .info-tag.ok { background: #e4f6ea; color: #1e6e3e; }
+    .info-tag.pending { background: #fdf1d8; color: #8a6100; }
+    .info-link { display: inline-block; margin-top: 14px; font-size: 0.8rem; font-weight: 800; color: #1e6e3e; text-decoration: underline; text-underline-offset: 3px; }
+    .info-btn { width: 100%; margin-top: 14px; padding: 10px; border-radius: 50px; border: 1.5px solid #f0d49a; background: #fdf1d8; color: #8a6100; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.85rem; cursor: pointer; }
+    .info-btn:hover { background: #fbe7bd; }
+    .info-btn:disabled { opacity: 0.6; cursor: default; }
+    .info-msg { margin-top: 8px; font-size: 0.78rem; font-weight: 700; color: #8a6100; text-align: center; }
+    .info-msg[hidden] { display: none; }
+
     /* Déconnexion : action rare, en lien discret plutôt qu'en gros bouton rouge */
     .logout-wrap { max-width: 1120px; margin: 0 auto; padding: 26px 20px 48px; text-align: center; }
     .btn-logout { background: none; border: none; color: #c0392b; font-family: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; padding: 10px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(192,57,43,0.35); }
@@ -220,6 +238,16 @@
     html.dark .btn-primary { background: #2d9959; }
     html.dark .btn-secondary { background: #16211a; color: #52b788; border-color: #2d4030; }
     html.dark .btn-secondary:hover { background: #1e2d22; }
+    html.dark .info-row { border-bottom-color: #243328; }
+    html.dark .info-key { color: #7ab88e; }
+    html.dark .info-value { color: #e8f5ee; }
+    html.dark .info-tag.ok { background: #14301f; color: #52b788; }
+    html.dark .info-tag.pending { background: #2e2410; color: #e0b95f; }
+    html.dark .info-link { color: #52b788; }
+    html.dark .info-btn { background: #2e2410; border-color: #4a3a15; color: #e0b95f; }
+    html.dark .info-btn:hover { background: #3b2f14; }
+    html.dark .info-msg { color: #e0b95f; }
+
     html.dark .btn-logout { color: #e57373; }
     html.dark .danger-sep { background: #243328; }
     html.dark .btn-danger-open { color: #5f7a68; }
@@ -412,8 +440,40 @@
             : `<div class="course-empty">Aucun cours terminé pour l'instant. <a href="/cours">Commence ici !</a></div>`}
         </section>`;
 
-      // ── Colonne d'appoint : badges + records ──
+      // ── Colonne d'appoint : identité, badges, records ──
+      // L'adresse email conditionne l'accès aux cours et la récupération du mot
+      // de passe : elle doit être consultable, pas seulement dans le bandeau
+      // d'avertissement qui disparaît une fois le compte vérifié.
       document.getElementById('colSide').innerHTML = `
+        <section class="panel">
+          <div class="panel-head">👤 Mon compte</div>
+          <div class="info-list">
+            <div class="info-row">
+              <span class="info-key">Nom d'utilisateur</span>
+              <span class="info-value">${esc(u.username)}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Adresse email</span>
+              <span class="info-value">${esc(u.email || '—')}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Statut</span>
+              <span class="info-value">
+                ${u.email_verifie
+                  ? `<span class="info-tag ok">✓ Adresse confirmée</span>`
+                  : `<span class="info-tag pending">⏳ En attente de confirmation</span>`}
+              </span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Membre depuis</span>
+              <span class="info-value">${formatMoisAnnee(u.membre_depuis)}</span>
+            </div>
+          </div>
+          ${u.email_verifie ? '' : `
+            <button class="info-btn" id="btnRenvoi">Renvoyer le lien de confirmation</button>
+            <div class="info-msg" id="renvoiMsg" hidden></div>`}
+          <a href="/mot-de-passe-oublie" class="info-link">Réinitialiser mon mot de passe</a>
+        </section>
         <section class="panel">
           <div class="panel-head">🎖️ Badges <span class="panel-count">${badgesOk} / ${u.badges.length}</span></div>
           <div class="badge-grid">
@@ -439,6 +499,33 @@
                 : `<div class="game-row-best none">Jouer →</div>`}
             </a>`).join('')}
         </section>`;
+
+      // Renvoi du lien de confirmation (bouton présent seulement si non vérifié).
+      // Le serveur limite à 3 envois par heure et répond 429 au-delà.
+      const btnRenvoi = document.getElementById('btnRenvoi');
+      if (btnRenvoi) {
+        btnRenvoi.addEventListener('click', () => {
+          const m = document.getElementById('renvoiMsg');
+          btnRenvoi.disabled = true;
+          btnRenvoi.textContent = 'Envoi…';
+          fetch('/api/auth/resend.php', { method: 'POST' })
+            .then(r => r.json().catch(() => ({})))
+            .then(d => {
+              m.textContent = d.ok
+                ? 'Lien envoyé, regarde ta boîte mail.'
+                : (d.error || "L'envoi a échoué.");
+              m.hidden = false;
+              btnRenvoi.textContent = d.ok ? 'Lien envoyé ✓' : 'Réessayer';
+              btnRenvoi.disabled = !!d.ok;
+            })
+            .catch(() => {
+              m.textContent = 'Connexion au serveur impossible.';
+              m.hidden = false;
+              btnRenvoi.textContent = 'Réessayer';
+              btnRenvoi.disabled = false;
+            });
+        });
+      }
 
       // ── Déconnexion + suppression de compte ──
       const wrap = document.getElementById('logoutWrap');
