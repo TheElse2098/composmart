@@ -23,6 +23,11 @@ header('Content-Type: application/json; charset=utf-8');
 ob_clean();
 csrf_check();
 
+// PHP 8.1+ : mysqli lève des exceptions par défaut. Ici une requête qui échoue
+// (table stats_anonymes absente sur une base pas encore migrée) ne doit pas
+// interrompre la suppression — on revient au mode "valeur de retour".
+mysqli_report(MYSQLI_REPORT_OFF);
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405); echo json_encode(['error' => 'Méthode non autorisée']); exit;
 }

@@ -7,6 +7,10 @@ secure_session_start();
 header('Content-Type: application/json; charset=utf-8');
 ob_clean();
 
+// Les helpers de ce fichier testent la valeur de retour des requêtes (tables
+// optionnelles) : on désactive les exceptions mysqli (défaut depuis PHP 8.1).
+mysqli_report(MYSQLI_REPORT_OFF);
+
 $c = mysqli_connect(
     getenv('DB_HOST') ?: 'db',
     getenv('DB_USER') ?: 'composmart',

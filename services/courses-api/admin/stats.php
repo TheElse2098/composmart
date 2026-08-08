@@ -7,6 +7,10 @@ secure_session_start();
 header('Content-Type: application/json; charset=utf-8');
 ob_clean();
 
+// count_of() teste la valeur de retour (0 si la requête échoue) : il faut donc
+// désactiver les exceptions mysqli, activées par défaut depuis PHP 8.1.
+mysqli_report(MYSQLI_REPORT_OFF);
+
 $c = mysqli_connect(
     getenv('DB_HOST') ?: 'db',
     getenv('DB_USER') ?: 'composmart',

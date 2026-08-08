@@ -111,6 +111,11 @@
           '<form id="setupForm">' +
             '<div class="field"><label for="username">Nom d\'utilisateur</label>' +
               '<input type="text" id="username" name="username" placeholder="ex : admin" autocomplete="username" required /></div>' +
+            // Le compte fondateur est créé depuis le serveur : personne ne peut
+            // lui envoyer de lien de confirmation, il est donc marqué vérifié
+            // d'office côté serveur. L'email reste requis (mot de passe oublié).
+            '<div class="field"><label for="email">Adresse email</label>' +
+              '<input type="email" id="email" name="email" placeholder="ex : admin@composmart.fr" autocomplete="email" required /></div>' +
             '<div class="field"><label for="password">Mot de passe</label>' +
               '<div class="pass-wrap"><input type="password" id="password" name="password" placeholder="8 caractères, lettres + chiffres" autocomplete="new-password" required />' +
               '<button type="button" class="toggle-pass" data-target="password">👁</button></div></div>' +
@@ -132,6 +137,7 @@
       document.getElementById('setupForm').addEventListener('submit', function(e) {
         e.preventDefault();
         var username  = document.getElementById('username').value.trim();
+        var email     = document.getElementById('email').value.trim();
         var password  = document.getElementById('password').value;
         var password2 = document.getElementById('password2').value;
         var errorMsg  = document.getElementById('errorMsg');
@@ -148,7 +154,7 @@
         submitBtn.disabled = true;
         submitBtn.textContent = 'Création…';
 
-        var body = new URLSearchParams({ username: username, password: password });
+        var body = new URLSearchParams({ username: username, email: email, password: password });
         fetch('/api/auth/launchpad.php', { method: 'POST', body: body })
           .then(function(r) { return r.json(); })
           .then(function(data) {
