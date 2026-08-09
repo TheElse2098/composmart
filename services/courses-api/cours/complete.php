@@ -26,7 +26,14 @@ $c = mysqli_connect(
 if (!$c) { http_response_code(500); echo json_encode(['error' => 'DB error']); exit; }
 
 $s   = mysqli_real_escape_string($c, $slug);
-$res = mysqli_query($c, "SELECT titre, xp_reward, nb_questions FROM cours WHERE slug='$s'");
+// Le quiz est lu en base, comme le reste du contenu : un quiz écrit depuis
+// l'éditeur d'admin n'a pas de fichier quiz.json, et la validation ne trouvait
+// donc aucune question — le cours se validait sans qu'une seule réponse soit
+// vérifiée.
+$res = mysqli_query($c, "SELECT c.titre, c.xp_reward, c.nb_questions, k.quiz
+                         FROM cours c
+                         LEFT JOIN cours_contenu k ON k.cours_id = c.id
+                         WHERE c.slug='$s'");
 $cours = mysqli_fetch_assoc($res);
 if (!$cours) { http_response_code(404); echo json_encode(['error' => 'cours introuvable']); exit; }
 
@@ -34,9 +41,8 @@ if (!$cours) { http_response_code(404); echo json_encode(['error' => 'cours intr
 $score   = null;
 $total   = 0;
 $correct = 0;
-$quiz_file = "/var/www/html/content/cours/$slug/quiz.json";
-if (file_exists($quiz_file)) {
-    $quiz  = json_decode(file_get_contents($quiz_file), true);
+if (!empty($cours['quiz'])) {
+    $quiz  = json_decode($cours['quiz'], true);
     $total = is_array($quiz) ? count($quiz) : 0;
     if ($total > 0) {
         // Un cours avec quiz exige des réponses : pas de validation « à vide »
