@@ -106,6 +106,17 @@ CREATE TABLE `cours_versions` (
   KEY `cours_date` (`cours_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Pierres tombales : slugs supprimés depuis l'interface d'admin.
+-- content/cours/ reste embarqué dans l'image comme graine d'amorçage ; sans
+-- cette liste, le prochain passage du seed recréerait un cours qu'on vient de
+-- supprimer, et son adresse resterait réservée à jamais.
+CREATE TABLE `cours_supprimes` (
+  `slug`         varchar(80)  NOT NULL,
+  `supprime_at`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `supprime_par` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Images téléversées depuis l'éditeur. Stockées en base et non sur un volume :
 -- courses-api monte jusqu'à 3 réplicas et le stockage par défaut de k3s est
 -- ReadWriteOnce — trois pods écrivant chacun sur son disque local divergeraient.

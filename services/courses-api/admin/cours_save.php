@@ -99,6 +99,11 @@ if ($id === 0) {
     }
     $id = (int)mysqli_insert_id($c);
     $action = 'cours_cree';
+
+    // Le slug est de nouveau porté par un vrai cours : la pierre tombale n'a
+    // plus lieu d'être, et la garder ferait taire le seed pour rien.
+    $stmt = mysqli_prepare($c, 'DELETE FROM cours_supprimes WHERE slug = ?');
+    if ($stmt) { $stmt->bind_param('s', $slug); @$stmt->execute(); }
 } else {
     $stmt = mysqli_prepare($c, 'SELECT slug FROM cours WHERE id = ?');
     $stmt->bind_param('i', $id);

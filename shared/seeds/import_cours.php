@@ -40,11 +40,26 @@ if (empty($dirs)) {
 
 $themes_cache = [];
 
+// Slugs supprimés depuis l'interface d'admin. Sans cette liste, le dossier
+// content/ resté sur place ferait revenir le cours au passage suivant du seed,
+// et son adresse resterait éternellement réservée : supprimer deviendrait
+// impossible autrement qu'en reconstruisant l'image.
+$supprimes = [];
+$res_sup = mysqli_query($c, 'SELECT slug FROM cours_supprimes');
+while ($res_sup && ($r = mysqli_fetch_assoc($res_sup))) $supprimes[$r['slug']] = true;
+
 foreach ($dirs as $meta_file) {
     $slug_dir = basename(dirname($meta_file));
     $meta = json_decode(file_get_contents($meta_file), true);
     if (!$meta) {
         echo "import_cours: meta.json invalide pour $slug_dir, ignoré.\n";
+        continue;
+    }
+
+    // Test placé avant la création du thème : un cours supprimé ne doit pas non
+    // plus ressusciter le thème qui n'existait que pour lui.
+    if (isset($supprimes[$slug_dir])) {
+        echo "import_cours: [$slug_dir] supprimé depuis l'admin, non réimporté.\n";
         continue;
     }
 

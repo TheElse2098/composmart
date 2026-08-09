@@ -48,6 +48,19 @@ $stmt = mysqli_prepare($c, 'DELETE FROM cours WHERE id = ?');
 $stmt->bind_param('i', $id);
 if (!$stmt->execute()) { echo json_encode(['error' => 'La suppression a échoué.']); exit; }
 
+// Pierre tombale : le dossier content/cours/<slug> est toujours embarqué dans
+// l'image, et le seed le réimporterait au prochain passage — le cours
+// reviendrait et son adresse resterait prise. Cette ligne dit au seed de
+// passer son chemin. Elle est levée si un nouveau cours reprend ce slug.
+$stmt = mysqli_prepare($c,
+    'INSERT INTO cours_supprimes (slug, supprime_par) VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE supprime_at = NOW(), supprime_par = VALUES(supprime_par)');
+if ($stmt) {
+    $auteur = $_SESSION['username'] ?? '';
+    $stmt->bind_param('ss', $cours['slug'], $auteur);
+    @$stmt->execute();
+}
+
 audit_log($c, 'cours_supprime', $cours['titre'], [
     'target_type' => 'cours', 'target_id' => $id,
     'snapshot'    => ['slug' => $cours['slug'], 'progressions_effacees' => $progressions],

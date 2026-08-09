@@ -107,6 +107,13 @@ CREATE TABLE IF NOT EXISTS `cours_versions` (
   KEY `cours_date` (`cours_id`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `cours_supprimes` (
+  `slug`         varchar(80)  NOT NULL,
+  `supprime_at`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `supprime_par` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `cours_images` (
   `id`         int          NOT NULL AUTO_INCREMENT,
   `cours_id`   int          DEFAULT NULL,
