@@ -1,0 +1,11 @@
+# Racine de courses-api (déployé en /var/www/html/.htaccess).
+#
+# Les pages /admin ne sont pas des fichiers : elles passent toutes par le
+# contrôleur, qui vérifie la session en base avant de servir quoi que ce soit.
+# Les gabarits eux-mêmes vivent hors de la racine web (/var/www/admin-vues/),
+# donc aucune URL ne permet de les atteindre directement.
+#
+# Le motif ne touche pas /api/admin/... : la règle porte sur le chemin sans
+# barre initiale, et « api/admin/stats.php » ne commence pas par « admin ».
+RewriteEngine On
+RewriteRule ^admin(/.*)?$ /admin-controleur.php [L,QSA]

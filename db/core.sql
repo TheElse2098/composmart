@@ -64,11 +64,62 @@ CREATE TABLE `cours` (
   `has_video`    tinyint(1)   NOT NULL DEFAULT 0,
   `has_podcast`  tinyint(1)   NOT NULL DEFAULT 0,
   `nb_questions` int          NOT NULL DEFAULT 0,
+  -- Un cours en brouillon n'apparaît ni au catalogue ni en lecture : il permet
+  -- d'écrire sur plusieurs jours sans exposer un texte inachevé.
+  `statut`       enum('brouillon','publie','archive') NOT NULL DEFAULT 'publie',
   `ordre`        int          NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `slug` (`slug`),
   KEY `theme_id` (`theme_id`),
   CONSTRAINT `cours_ibfk_1` FOREIGN KEY (`theme_id`) REFERENCES `themes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ── CONTENU DES COURS ───────────────────────────────────────────────────────
+-- Table séparée de `cours` à dessein : le catalogue fait un SELECT * sur `cours`
+-- à chaque affichage (cf. cours/list.php). Y loger un longtext ferait transiter
+-- tout le corpus pour dessiner des vignettes.
+-- `texte` reste du markdown, pas une structure JSON de panneaux : c'est le
+-- format que lit déjà cours-detail.html (découpage sur les titres « ## »), et
+-- l'éditeur sait le parser puis le réécrire sans perte.
+CREATE TABLE `cours_contenu` (
+  `cours_id` int      NOT NULL,
+  `texte`    longtext DEFAULT NULL,   -- markdown, panneaux séparés par « ## »
+  `quiz`     longtext DEFAULT NULL,   -- JSON, même forme que l'ancien quiz.json
+  `video`    text     DEFAULT NULL,   -- JSON {titre, url, ...}
+  `maj_at`   datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `maj_par`  varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`cours_id`),
+  CONSTRAINT `contenu_ibfk_1` FOREIGN KEY (`cours_id`) REFERENCES `cours` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Historique : une ligne est écrite AVANT chaque sauvegarde, ce qui permet de
+-- revenir en arrière après une mauvaise manipulation dans l'éditeur.
+-- Pas de clé étrangère : l'historique doit survivre à la suppression du cours.
+CREATE TABLE `cours_versions` (
+  `id`         int      NOT NULL AUTO_INCREMENT,
+  `cours_id`   int      NOT NULL,
+  `texte`      longtext DEFAULT NULL,
+  `quiz`       longtext DEFAULT NULL,
+  `auteur`     varchar(100) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `cours_date` (`cours_id`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Images téléversées depuis l'éditeur. Stockées en base et non sur un volume :
+-- courses-api monte jusqu'à 3 réplicas et le stockage par défaut de k3s est
+-- ReadWriteOnce — trois pods écrivant chacun sur son disque local divergeraient.
+-- Bénéfice annexe : les images entrent dans le mysqldump de sauvegarde.
+CREATE TABLE `cours_images` (
+  `id`         int          NOT NULL AUTO_INCREMENT,
+  `cours_id`   int          DEFAULT NULL,   -- NULL = téléversée avant la 1re sauvegarde
+  `nom`        varchar(200) NOT NULL,
+  `mime`       varchar(80)  NOT NULL,
+  `taille`     int          NOT NULL,
+  `donnees`    longblob     NOT NULL,
+  `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `cours` (`cours_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ── PROGRESSION ────────────────────────────────────────────────────────────

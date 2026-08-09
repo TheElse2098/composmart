@@ -70,6 +70,8 @@
     .cours-card .c-level { font-size: 0.68rem; color: rgba(255,255,255,0.8); font-weight: 700; margin-top: 5px; text-align: center; }
     .cours-card .c-stars { font-size: 0.7rem; margin-top: 4px; }
     .cours-card .c-locked { position: absolute; top: 8px; right: 8px; font-size: 0.8rem; }
+    /* Visible des seuls admins : les autres ne reçoivent pas ces cours. */
+    .cours-card .c-brouillon { position: absolute; top: 7px; left: 7px; background: #fdf1d8; color: #8a6100; font-size: 0.6rem; font-weight: 900; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px; }
     .c-done { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.9); color: #1e6e3e; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.5px; }
 
     /* Cadenas recouvrant toute la tuile pour un cours inaccessible */
@@ -283,6 +285,11 @@
             var niveau = NIVEAUX[c.niveau] || c.niveau;
             var qs = c.nb_questions > 0 ? ' · ' + c.nb_questions + ' q.' : '';
             var doneBadge = c.completed ? '<div class="c-done">✓ fait</div>' : '';
+            // Un cours non publié n'est renvoyé qu'aux admins (cf. cours/list.php).
+            // Sans marqueur, il serait indiscernable d'un cours en ligne et on
+            // croirait avoir publié ce qui dort encore en brouillon.
+            var brouillon = (c.statut && c.statut !== 'publie')
+              ? '<div class="c-brouillon">' + c.statut + '</div>' : '';
             // Verrouillage :
             //  - non connecté : tout sauf le tout premier cours du site
             //  - connecté     : tout cours qui n'est pas le 1er de sa catégorie ET dont
@@ -296,6 +303,7 @@
             var catFirstSlug = theme.cours[0] ? theme.cours[0].slug : '';
             return '<a href="/cours/' + c.slug + '" class="cours-card' + lockedClass + '" data-slug="' + c.slug + '" data-locked="' + (locked ? '1' : '0') + '" data-cat-first-slug="' + catFirstSlug + '" data-cat-name="' + theme.nom.replace(/"/g, '&quot;') + '" style="background:' + grad + ';box-shadow:0 4px 14px rgba(0,0,0,0.2)">'
               + doneBadge
+              + brouillon
               + lockIcon
               + '<div class="c-emoji">' + (c.emoji || '📖') + '</div>'
               + '<div class="c-title">' + c.titre + '</div>'

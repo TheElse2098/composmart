@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <title>Thèmes et cours – Administration</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #eef4ec; font-family: 'Nunito', Arial, sans-serif; color: #1a3a25; padding-bottom: 60px; }
+
+    .barre { background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 13px 20px; gap: 14px; flex-wrap: wrap; }
+    .barre-logo { font-family: 'Baloo 2', cursive; font-size: 1.25rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .barre-logo span { color: #a8e6bf; }
+    .barre-liens { display: flex; align-items: center; gap: 16px; }
+    .barre-liens a { color: rgba(255,255,255,0.9); font-size: 0.84rem; font-weight: 800; text-decoration: none; }
+    .barre-liens a:hover { color: #a8e6bf; }
+
+    .entete { max-width: 1180px; margin: 0 auto; padding: 26px 20px 6px; }
+    .entete h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 900; }
+    .entete p { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; margin-top: 6px; line-height: 1.55; }
+
+    .actions { max-width: 1180px; margin: 0 auto; padding: 16px 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn { border: none; border-radius: 50px; padding: 10px 20px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.88rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; transition: background 0.18s, transform 0.15s; }
+    .btn-vert { background: #1e6e3e; color: #fff; }
+    .btn-vert:hover { background: #17572f; }
+    .btn-clair { background: #fff; color: #1e6e3e; border: 1.5px solid #a8e6bf; }
+    .btn-clair:hover { background: #e4f6ea; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .etat { font-size: 0.82rem; font-weight: 800; color: #7aaa8a; margin-left: auto; }
+    .etat.modifie { color: #b26a00; }
+    .etat.ok { color: #1e6e3e; }
+
+    .grille { max-width: 1180px; margin: 0 auto; padding: 0 20px; display: grid; gap: 16px; }
+    @media (min-width: 900px) { .grille { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+    .theme { background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(30,110,62,0.09); overflow: hidden; display: flex; flex-direction: column; }
+    .theme-tete { padding: 14px 16px; display: flex; align-items: center; gap: 11px; color: #fff; cursor: grab; }
+    .theme-tete:active { cursor: grabbing; }
+    .theme-emoji { font-size: 1.5rem; line-height: 1; }
+    .theme-nom { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; flex: 1; min-width: 0; }
+    .theme-desc { font-size: 0.75rem; opacity: 0.9; font-weight: 700; margin-top: 2px; }
+    .theme-outils { display: flex; gap: 6px; flex-shrink: 0; }
+    .mini { background: rgba(255,255,255,0.22); border: none; border-radius: 8px; color: #fff; width: 28px; height: 28px; font-size: 0.85rem; cursor: pointer; line-height: 1; }
+    .mini:hover { background: rgba(255,255,255,0.38); }
+
+    /* La liste doit rester survolable même vide, sinon on ne peut jamais
+       déposer un cours dans un thème qu'on vient de créer. */
+    .liste { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 74px; flex: 1; }
+    .liste.survol { background: #e4f6ea; outline: 2px dashed #52b788; outline-offset: -6px; border-radius: 10px; }
+    .vide { font-size: 0.8rem; color: #9ab3a4; font-weight: 700; text-align: center; padding: 20px 8px; }
+
+    .cours { background: #f6faf6; border: 1.5px solid #e0eee4; border-radius: 11px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: grab; transition: border-color 0.15s, box-shadow 0.15s; }
+    .cours:hover { border-color: #a8e6bf; box-shadow: 0 2px 8px rgba(30,110,62,0.1); }
+    .cours.attrape { opacity: 0.4; }
+    .cours-poignee { color: #b7cfc0; font-size: 1rem; cursor: grab; flex-shrink: 0; }
+    .cours-emoji { font-size: 1.15rem; flex-shrink: 0; }
+    .cours-corps { flex: 1; min-width: 0; }
+    .cours-titre { font-size: 0.86rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cours-meta { font-size: 0.72rem; color: #7aaa8a; font-weight: 700; margin-top: 2px; }
+    .puce { display: inline-block; font-size: 0.66rem; font-weight: 900; padding: 2px 7px; border-radius: 20px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .puce.brouillon { background: #fdf1d8; color: #8a6100; }
+    .puce.archive { background: #eceff1; color: #607d8b; }
+    .cours-modifier { background: none; border: none; color: #1e6e3e; font-family: inherit; font-size: 0.78rem; font-weight: 800; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; flex-shrink: 0; }
+
+    /* Fenêtre d'édition de thème */
+    .voile { position: fixed; inset: 0; background: rgba(15,24,17,0.55); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 200; }
+    .voile.ouvert { display: flex; }
+    .fiche { background: #fff; border-radius: 18px; padding: 24px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; }
+    .fiche h2 { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; margin-bottom: 16px; }
+    .champ { margin-bottom: 13px; }
+    .champ label { display: block; font-size: 0.74rem; font-weight: 800; color: #4a7a5a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .champ input, .champ textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-family: inherit; font-size: 0.9rem; color: #1a3a25; background: #f7fbf8; }
+    .champ input:focus, .champ textarea:focus { outline: none; border-color: #1e6e3e; background: #fff; }
+    .champ small { display: block; font-size: 0.72rem; color: #7aaa8a; font-weight: 700; margin-top: 4px; }
+    .apercu-couleur { height: 34px; border-radius: 9px; margin-top: 6px; }
+    .fiche-actions { display: flex; gap: 9px; margin-top: 18px; }
+    .fiche-actions .btn { flex: 1; justify-content: center; }
+    .erreur { background: #ffebee; color: #c0392b; border-radius: 10px; padding: 9px 12px; font-size: 0.82rem; font-weight: 700; margin-bottom: 12px; display: none; }
+    .erreur.visible { display: block; }
+    .btn-danger { background: #c0392b; color: #fff; }
+    .btn-danger:hover { background: #a5301f; }
+
+    /* ── Sombre ── */
+    html.dark body { background: #0f1811; color: #e8f5ee; }
+    html.dark .theme, html.dark .fiche { background: #16211a; box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+    html.dark .entete p, html.dark .cours-meta { color: #7ab88e; }
+    html.dark .cours { background: #101a13; border-color: #243328; }
+    html.dark .cours:hover { border-color: #2d6b45; }
+    html.dark .cours-titre { color: #e8f5ee; }
+    html.dark .cours-modifier { color: #52b788; }
+    html.dark .liste.survol { background: #14301f; outline-color: #2d9959; }
+    html.dark .vide { color: #4e6656; }
+    html.dark .btn-clair { background: #16211a; color: #52b788; border-color: #2d4030; }
+    html.dark .btn-clair:hover { background: #1e2d22; }
+    html.dark .btn-vert { background: #2d9959; }
+    html.dark .champ label { color: #7ab88e; }
+    html.dark .champ input, html.dark .champ textarea { background: #101a13; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .champ input:focus, html.dark .champ textarea:focus { background: #1e2d22; border-color: #52b788; }
+    html.dark .champ small { color: #7ab88e; }
+    html.dark .erreur { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .puce.brouillon { background: #2e2410; color: #e0b95f; }
+    html.dark .puce.archive { background: #1e2d22; color: #8fa398; }
+  </style>
+</head>
+<body>
+
+  <div class="barre">
+    <a href="/" class="barre-logo">Compos<span>mart</span></a>
+    <div class="barre-liens">
+      <a href="/admin">← Tableau de bord</a>
+      <a href="/cours">Voir le catalogue</a>
+      <button id="bascule" class="mini" title="Thème clair / sombre">🌙</button>
+    </div>
+  </div>
+
+  <div class="entete">
+    <h1>Thèmes et cours</h1>
+    <p>Fais glisser un cours pour le déplacer dans son thème ou vers un autre. L'ordre des thèmes se change en attrapant leur bandeau de couleur.</p>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-vert" id="btnNouveauTheme">＋ Nouveau thème</button>
+    <button class="btn btn-clair" id="btnEnregistrerOrdre" disabled>Enregistrer l'organisation</button>
+    <span class="etat" id="etat"></span>
+  </div>
+
+  <div class="grille" id="grille"></div>
+
+  <div class="voile" id="voile">
+    <div class="fiche">
+      <h2 id="ficheTitre">Nouveau thème</h2>
+      <div class="erreur" id="ficheErreur"></div>
+      <div class="champ">
+        <label for="fNom">Nom</label>
+        <input type="text" id="fNom" maxlength="120" placeholder="ex : Pratique">
+      </div>
+      <div class="champ" id="champSlug">
+        <label for="fSlug">Adresse</label>
+        <input type="text" id="fSlug" maxlength="80" placeholder="déduite du nom">
+        <small>Définitive : elle sert d'adresse aux pages d'édition des cours du thème.</small>
+      </div>
+      <div class="champ">
+        <label for="fEmoji">Emoji</label>
+        <input type="text" id="fEmoji" maxlength="8" placeholder="🌱">
+      </div>
+      <div class="champ">
+        <label for="fCouleur">Dégradé CSS</label>
+        <input type="text" id="fCouleur" maxlength="80" placeholder="linear-gradient(135deg,#1e6e3e,#2d9959)">
+        <div class="apercu-couleur" id="apercuCouleur"></div>
+      </div>
+      <div class="champ">
+        <label for="fDescription">Description</label>
+        <textarea id="fDescription" rows="2" maxlength="200" placeholder="Une phrase affichée sous le nom du thème."></textarea>
+      </div>
+      <div class="fiche-actions">
+        <button class="btn btn-clair" id="btnAnnuler">Annuler</button>
+        <button class="btn btn-vert" id="btnEnregistrerTheme">Enregistrer</button>
+      </div>
+      <div class="fiche-actions" id="zoneSuppression" style="display:none">
+        <button class="btn btn-danger" id="btnSupprimerTheme" style="flex:1;justify-content:center">Supprimer ce thème</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*__ROUTE__*/
+
+    var DONNEES = { themes: [] };
+    var modifie = false;      // organisation changée mais pas encore enregistrée
+    var ficheId = 0;          // 0 = création
+
+    function esc(t) { var d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+    function $(id) { return document.getElementById(id); }
+
+    function marquerModifie() {
+      modifie = true;
+      $('btnEnregistrerOrdre').disabled = false;
+      var e = $('etat');
+      e.textContent = 'Organisation modifiée — pense à enregistrer';
+      e.className = 'etat modifie';
+    }
+
+    // ── Chargement ───────────────────────────────────────────────────────────
+    function charger() {
+      fetch('/api/admin/themes_manage.php')
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.error) { $('etat').textContent = d.error; return; }
+          DONNEES = d;
+          dessiner();
+        })
+        .catch(function () { $('etat').textContent = 'Chargement impossible.'; });
+    }
+
+    function dessiner() {
+      var g = $('grille');
+      g.innerHTML = '';
+      DONNEES.themes.forEach(function (t) {
+        var bloc = document.createElement('section');
+        bloc.className = 'theme';
+        bloc.dataset.themeId = t.id;
+        bloc.draggable = false;
+
+        var cours = t.cours.map(function (c) {
+          var puce = c.statut === 'publie' ? ''
+            : '<span class="puce ' + esc(c.statut) + '">' + esc(c.statut) + '</span>';
+          var meta = c.xp + ' XP · ' + c.nb_questions + ' question' + (c.nb_questions > 1 ? 's' : '')
+                   + (c.termine_par > 0 ? ' · ' + c.termine_par + ' l\'ont terminé' : '');
+          return '<div class="cours" draggable="true" data-cours-id="' + c.id + '">'
+            + '<span class="cours-poignee">⋮⋮</span>'
+            + '<span class="cours-emoji">' + esc(c.emoji || '📖') + '</span>'
+            + '<div class="cours-corps">'
+            +   '<div class="cours-titre">' + esc(c.titre) + puce + '</div>'
+            +   '<div class="cours-meta">' + esc(meta) + '</div>'
+            + '</div>'
+            + '<button type="button" class="cours-modifier" data-slug="' + esc(c.slug) + '" data-theme="' + esc(t.slug) + '">Modifier</button>'
+            + '</div>';
+        }).join('');
+
+        bloc.innerHTML =
+            '<div class="theme-tete" draggable="true" style="background:' + esc(t.couleur || '#1e6e3e') + '">'
+          +   '<span class="theme-emoji">' + esc(t.emoji || '📂') + '</span>'
+          +   '<div class="theme-nom">' + esc(t.nom)
+          +     (t.description ? '<div class="theme-desc">' + esc(t.description) + '</div>' : '')
+          +   '</div>'
+          +   '<div class="theme-outils">'
+          +     '<button type="button" class="mini" data-editer="' + t.id + '" title="Modifier le thème">✎</button>'
+          +     '<button type="button" class="mini" data-ajouter="' + esc(t.slug) + '" title="Nouveau cours dans ce thème">＋</button>'
+          +   '</div>'
+          + '</div>'
+          + '<div class="liste" data-theme-id="' + t.id + '">'
+          +   (cours || '<div class="vide">Aucun cours — dépose-en un ici</div>')
+          + '</div>';
+
+        g.appendChild(bloc);
+      });
+      brancherGlisser();
+    }
+
+    // ── Glisser-déposer ──────────────────────────────────────────────────────
+    // API HTML5 native plutôt qu'une bibliothèque : pas de dépendance externe à
+    // charger, et le besoin (réordonner, changer de conteneur) tient en peu de code.
+    var attrape = null;      // élément .cours en cours de déplacement
+    var attrapeTheme = null; // élément .theme en cours de déplacement
+
+    function brancherGlisser() {
+      document.querySelectorAll('.cours').forEach(function (el) {
+        el.addEventListener('dragstart', function (e) {
+          attrape = el;
+          el.classList.add('attrape');
+          e.dataTransfer.effectAllowed = 'move';
+          // Firefox n'amorce pas le glisser sans données attachées.
+          e.dataTransfer.setData('text/plain', el.dataset.coursId);
+          e.stopPropagation();
+        });
+        el.addEventListener('dragend', function () {
+          el.classList.remove('attrape');
+          attrape = null;
+          document.querySelectorAll('.liste').forEach(function (l) { l.classList.remove('survol'); });
+        });
+      });
+
+      document.querySelectorAll('.liste').forEach(function (liste) {
+        liste.addEventListener('dragover', function (e) {
+          if (!attrape) return;
+          e.preventDefault();
+          liste.classList.add('survol');
+          var apres = elementApres(liste, e.clientY);
+          var vide = liste.querySelector('.vide');
+          if (vide) vide.remove();
+          if (apres == null) liste.appendChild(attrape);
+          else liste.insertBefore(attrape, apres);
+        });
+        liste.addEventListener('dragleave', function (e) {
+          // dragleave se déclenche aussi en passant sur un enfant : on ne
+          // retire le surlignage que si le curseur quitte vraiment la liste.
+          if (!liste.contains(e.relatedTarget)) liste.classList.remove('survol');
+        });
+        liste.addEventListener('drop', function (e) {
+          e.preventDefault();
+          liste.classList.remove('survol');
+          marquerModifie();
+        });
+      });
+
+      document.querySelectorAll('.theme-tete').forEach(function (tete) {
+        var bloc = tete.closest('.theme');
+        tete.addEventListener('dragstart', function (e) {
+          attrapeTheme = bloc;
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', 'theme');
+        });
+        tete.addEventListener('dragend', function () { attrapeTheme = null; });
+      });
+
+      var grille = $('grille');
+      grille.addEventListener('dragover', function (e) {
+        if (!attrapeTheme) return;
+        e.preventDefault();
+        var apres = themeApres(grille, e.clientX, e.clientY);
+        if (apres == null) grille.appendChild(attrapeTheme);
+        else grille.insertBefore(attrapeTheme, apres);
+      });
+      grille.addEventListener('drop', function (e) {
+        if (!attrapeTheme) return;
+        e.preventDefault();
+        marquerModifie();
+      });
+
+      document.querySelectorAll('[data-editer]').forEach(function (b) {
+        b.addEventListener('click', function () { ouvrirFiche(parseInt(b.dataset.editer, 10)); });
+      });
+      document.querySelectorAll('[data-ajouter]').forEach(function (b) {
+        b.addEventListener('click', function () { location.href = '/admin/themes/' + b.dataset.ajouter + '/nouveau'; });
+      });
+      document.querySelectorAll('.cours-modifier').forEach(function (b) {
+        b.addEventListener('click', function () {
+          location.href = '/admin/themes/' + b.dataset.theme + '/' + b.dataset.slug;
+        });
+      });
+    }
+
+    /* Élément devant lequel insérer : le premier dont le milieu passe sous le
+       curseur. Se calcule sur les éléments NON attrapés, sinon la carte
+       déplacée se compare à elle-même et l'insertion oscille. */
+    function elementApres(conteneur, y) {
+      var candidats = [].slice.call(conteneur.querySelectorAll('.cours:not(.attrape)'));
+      var meilleur = null, distance = Number.NEGATIVE_INFINITY;
+      candidats.forEach(function (el) {
+        var boite = el.getBoundingClientRect();
+        var ecart = y - boite.top - boite.height / 2;
+        if (ecart < 0 && ecart > distance) { distance = ecart; meilleur = el; }
+      });
+      return meilleur;
+    }
+
+    function themeApres(conteneur, x, y) {
+      var candidats = [].slice.call(conteneur.querySelectorAll('.theme')).filter(function (el) { return el !== attrapeTheme; });
+      var meilleur = null, distance = Number.NEGATIVE_INFINITY;
+      candidats.forEach(function (el) {
+        var boite = el.getBoundingClientRect();
+        // Grille à deux colonnes : on compare d'abord la ligne, puis la colonne.
+        var ecart = (y - boite.top - boite.height / 2) * 10000 + (x - boite.left - boite.width / 2);
+        if (ecart < 0 && ecart > distance) { distance = ecart; meilleur = el; }
+      });
+      return meilleur;
+    }
+
+    // ── Enregistrement de l'organisation ─────────────────────────────────────
+    $('btnEnregistrerOrdre').addEventListener('click', function () {
+      var themes = [].slice.call(document.querySelectorAll('.theme')).map(function (bloc) {
+        var liste = bloc.querySelector('.liste');
+        return {
+          id: parseInt(bloc.dataset.themeId, 10),
+          cours: [].slice.call(liste.querySelectorAll('.cours')).map(function (c) {
+            return parseInt(c.dataset.coursId, 10);
+          })
+        };
+      });
+      var b = this;
+      b.disabled = true;
+      $('etat').textContent = 'Enregistrement…';
+      fetch('/api/admin/cours_reorder.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ themes: themes })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.error) { $('etat').textContent = d.error; b.disabled = false; return; }
+          modifie = false;
+          var e = $('etat');
+          e.textContent = 'Organisation enregistrée ✓';
+          e.className = 'etat ok';
+          charger();
+        })
+        .catch(function () { $('etat').textContent = 'Enregistrement impossible.'; b.disabled = false; });
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+      if (!modifie) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
+
+    // ── Fiche thème ──────────────────────────────────────────────────────────
+    function ouvrirFiche(id) {
+      ficheId = id || 0;
+      var t = DONNEES.themes.filter(function (x) { return x.id === ficheId; })[0];
+      $('ficheTitre').textContent = t ? 'Modifier « ' + t.nom + ' »' : 'Nouveau thème';
+      $('fNom').value = t ? t.nom : '';
+      $('fSlug').value = t ? t.slug : '';
+      $('fEmoji').value = t ? (t.emoji || '') : '📂';
+      $('fCouleur').value = t ? (t.couleur || '') : 'linear-gradient(135deg,#1e6e3e,#2d9959)';
+      $('fDescription').value = t ? (t.description || '') : '';
+      // Le slug est figé après création : il compose l'URL des pages d'édition.
+      $('fSlug').disabled = !!t;
+      $('zoneSuppression').style.display = t ? 'flex' : 'none';
+      majApercu();
+      $('ficheErreur').className = 'erreur';
+      $('voile').classList.add('ouvert');
+      $('fNom').focus();
+    }
+    function fermerFiche() { $('voile').classList.remove('ouvert'); }
+
+    function majApercu() { $('apercuCouleur').style.background = $('fCouleur').value || '#1e6e3e'; }
+    $('fCouleur').addEventListener('input', majApercu);
+
+    $('btnNouveauTheme').addEventListener('click', function () { ouvrirFiche(0); });
+    $('btnAnnuler').addEventListener('click', fermerFiche);
+    $('voile').addEventListener('click', function (e) { if (e.target === $('voile')) fermerFiche(); });
+
+    function erreurFiche(msg) {
+      var e = $('ficheErreur');
+      e.textContent = msg;
+      e.className = 'erreur visible';
+    }
+
+    $('btnEnregistrerTheme').addEventListener('click', function () {
+      var corps = {
+        action: 'save',
+        id: ficheId,
+        nom: $('fNom').value,
+        slug: $('fSlug').value,
+        emoji: $('fEmoji').value,
+        couleur: $('fCouleur').value,
+        description: $('fDescription').value
+      };
+      var b = this;
+      b.disabled = true;
+      fetch('/api/admin/themes_manage.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          b.disabled = false;
+          if (d.error) { erreurFiche(d.error); return; }
+          fermerFiche();
+          charger();
+        })
+        .catch(function () { b.disabled = false; erreurFiche('Enregistrement impossible.'); });
+    });
+
+    $('btnSupprimerTheme').addEventListener('click', function () {
+      var t = DONNEES.themes.filter(function (x) { return x.id === ficheId; })[0];
+      if (!t) return;
+      if (!confirm('Supprimer le thème « ' + t.nom + ' » ?')) return;
+      fetch('/api/admin/themes_manage.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id: ficheId })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.error) { erreurFiche(d.error); return; }
+          fermerFiche();
+          charger();
+        })
+        .catch(function () { erreurFiche('Suppression impossible.'); });
+    });
+
+    charger();
+  </script>
+  <script src="/assets/js/theme.js"></script>
+</body>
+</html>

@@ -551,5 +551,10 @@ spec:
           - { path: /api/cours, pathType: Prefix, backend: { service: { name: courses-api, port: { number: 80 } } } }
           - { path: /api/contact, pathType: Prefix, backend: { service: { name: courses-api, port: { number: 80 } } } }
           - { path: /api/admin, pathType: Prefix, backend: { service: { name: courses-api, port: { number: 80 } } } }
+          # Pages d'administration : servies par courses-api et non par « web »,
+          # car elles doivent être contrôlées côté serveur. Un .html statique
+          # laisserait sa coquille téléchargeable par n'importe qui ; ici un
+          # non-admin reçoit une 404 indiscernable d'une URL inexistante.
+          - { path: /admin,     pathType: Prefix, backend: { service: { name: courses-api, port: { number: 80 } } } }
           - { path: /api/auth,  pathType: Prefix, backend: { service: { name: auth-api,    port: { number: 80 } } } }
           - { path: /,          pathType: Prefix, backend: { service: { name: web,         port: { number: 80 } } } }

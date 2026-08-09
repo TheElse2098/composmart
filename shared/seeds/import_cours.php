@@ -1,8 +1,20 @@
 <?php
 /**
- * Parcourt content/cours/ et peuple les tables themes + cours en DB.
- * Appelé depuis seed.php au démarrage.
+ * Amorce les tables themes + cours + cours_contenu depuis content/cours/.
+ * Appelé par le Job seed-core.
+ *
+ * ATTENTION — CE SCRIPT N'ÉCRASE JAMAIS UN COURS EXISTANT.
+ * Depuis que les cours s'éditent depuis /admin/themes, la base fait autorité et
+ * les fichiers content/ ne sont plus qu'une graine pour une base vierge. Un
+ * `ON DUPLICATE KEY UPDATE` réécrirait ici le travail des administrateurs avec
+ * la version figée dans l'image, à chaque `kubectl apply` de routine — et sans
+ * le moindre message d'erreur. Le seul cas où les fichiers gagnent est celui où
+ * le cours n'existe pas encore en base.
  */
+
+// Ce script teste la valeur de retour de chaque requête ; sans ça, mysqli lève
+// des exceptions depuis PHP 8.1 et une table absente ferait tout échouer.
+mysqli_report(MYSQLI_REPORT_OFF);
 
 $host = getenv('DB_HOST') ?: 'db';
 $user = getenv('DB_USER') ?: 'composmart';
@@ -52,10 +64,14 @@ foreach ($dirs as $meta_file) {
     $has_video   = (int) file_exists("$dir/video.json");
     $has_podcast = (int) file_exists("$dir/podcast.json");
     $nb_questions = 0;
+    $quiz_json = null;
     if (file_exists("$dir/quiz.json")) {
         $quiz = json_decode(file_get_contents("$dir/quiz.json"), true);
         $nb_questions = is_array($quiz) ? count($quiz) : 0;
+        if (is_array($quiz)) $quiz_json = json_encode($quiz, JSON_UNESCAPED_UNICODE);
     }
+    $texte_md  = $has_text  ? file_get_contents("$dir/texte.md")   : null;
+    $video_json = $has_video ? file_get_contents("$dir/video.json") : null;
 
     // Insérer ou retrouver le thème
     if (!isset($themes_cache[$theme_slug])) {
@@ -82,9 +98,10 @@ foreach ($dirs as $meta_file) {
             $te = mysqli_real_escape_string($c, $theme_emoji);
             $tc = mysqli_real_escape_string($c, $theme_couleur);
             $td = $theme_description !== null ? "'" . mysqli_real_escape_string($c, $theme_description) . "'" : 'NULL';
-            mysqli_query($c, "INSERT INTO themes (slug,nom,emoji,couleur,description,ordre)
-                              VALUES ('$ts','$tn','$te','$tc',$td,$theme_ordre)
-                              ON DUPLICATE KEY UPDATE nom='$tn',emoji='$te',couleur='$tc',description=$td,ordre=$theme_ordre");
+            // INSERT IGNORE : les thèmes s'éditent eux aussi depuis /admin/themes,
+            // un renommage ne doit pas être annulé au prochain seed.
+            mysqli_query($c, "INSERT IGNORE INTO themes (slug,nom,emoji,couleur,description,ordre)
+                              VALUES ('$ts','$tn','$te','$tc',$td,$theme_ordre)");
             $res2 = mysqli_query($c, "SELECT id FROM themes WHERE slug='$ts'");
             $themes_cache[$theme_slug] = mysqli_fetch_assoc($res2)['id'];
         }
@@ -98,16 +115,40 @@ foreach ($dirs as $meta_file) {
     $ce  = mysqli_real_escape_string($c, $emoji);
     $cn  = mysqli_real_escape_string($c, $niveau);
 
-    mysqli_query($c, "INSERT INTO cours
-        (slug,theme_id,titre,description,emoji,niveau,xp_reward,has_text,has_video,has_podcast,nb_questions,ordre)
-        VALUES ('$cs',$theme_id,'$ct','$cd','$ce','$cn',$xp_reward,$has_text,$has_video,$has_podcast,$nb_questions,$ordre)
-        ON DUPLICATE KEY UPDATE
-          theme_id=$theme_id, titre='$ct', description='$cd', emoji='$ce',
-          niveau='$cn', xp_reward=$xp_reward, has_text=$has_text,
-          has_video=$has_video, has_podcast=$has_podcast,
-          nb_questions=$nb_questions, ordre=$ordre");
+    // INSERT IGNORE et non ON DUPLICATE KEY UPDATE : voir l'avertissement en
+    // tête de fichier. Un cours déjà en base a pu être modifié depuis
+    // l'interface d'admin, il est intouchable.
+    $res_exist = mysqli_query($c, "SELECT id FROM cours WHERE slug='$cs'");
+    $ligne_exist = $res_exist ? mysqli_fetch_assoc($res_exist) : null;
 
-    echo "import_cours: [$cours_slug] OK (thème: $theme_slug)\n";
+    if ($ligne_exist) {
+        echo "import_cours: [$cours_slug] déjà en base, laissé tel quel.\n";
+        $cours_id = (int)$ligne_exist['id'];
+    } else {
+        mysqli_query($c, "INSERT INTO cours
+            (slug,theme_id,titre,description,emoji,niveau,xp_reward,has_text,has_video,has_podcast,nb_questions,statut,ordre)
+            VALUES ('$cs',$theme_id,'$ct','$cd','$ce','$cn',$xp_reward,$has_text,$has_video,$has_podcast,$nb_questions,'publie',$ordre)");
+        $cours_id = (int)mysqli_insert_id($c);
+        echo "import_cours: [$cours_slug] créé (thème: $theme_slug)\n";
+    }
+
+    // Contenu : même règle, on ne remplit que si la ligne n'existe pas encore.
+    // C'est ce qui verse les 9 cours historiques en base au premier passage
+    // après la migration, sans jamais les réécrire ensuite.
+    if ($cours_id > 0) {
+        $res_k = mysqli_query($c, "SELECT cours_id FROM cours_contenu WHERE cours_id=$cours_id");
+        if ($res_k && mysqli_num_rows($res_k) === 0) {
+            $stmt_k = mysqli_prepare($c,
+                'INSERT INTO cours_contenu (cours_id, texte, quiz, video, maj_par)
+                 VALUES (?, ?, ?, ?, ?)');
+            if ($stmt_k) {
+                $auteur = 'import';
+                $stmt_k->bind_param('issss', $cours_id, $texte_md, $quiz_json, $video_json, $auteur);
+                @$stmt_k->execute();
+                echo "import_cours: [$cours_slug] contenu versé en base.\n";
+            }
+        }
+    }
 }
 
 // ── Rattrapage des admins ───────────────────────────────────────────────────

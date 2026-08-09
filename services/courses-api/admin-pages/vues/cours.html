@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <!-- Même moteur de rendu que la page de lecture : c'est ce qui rend l'aperçu fiable. -->
+  <script src="/assets/js/markdown-sur.js"></script>
+  <title>Éditeur de cours – Administration</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #eef4ec; font-family: 'Nunito', Arial, sans-serif; color: #1a3a25; padding-bottom: 90px; }
+
+    .barre { background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 13px 20px; gap: 14px; flex-wrap: wrap; }
+    .barre-logo { font-family: 'Baloo 2', cursive; font-size: 1.25rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .barre-logo span { color: #a8e6bf; }
+    .barre-liens { display: flex; align-items: center; gap: 16px; }
+    .barre-liens a { color: rgba(255,255,255,0.9); font-size: 0.84rem; font-weight: 800; text-decoration: none; }
+    .barre-liens a:hover { color: #a8e6bf; }
+    .mini { background: rgba(255,255,255,0.22); border: none; border-radius: 8px; color: #fff; width: 28px; height: 28px; font-size: 0.85rem; cursor: pointer; }
+
+    .page { max-width: 1400px; margin: 0 auto; padding: 22px 20px 0; }
+    .fil { font-size: 0.78rem; font-weight: 800; color: #7aaa8a; margin-bottom: 8px; }
+    .fil a { color: #1e6e3e; text-decoration: none; }
+    .fil a:hover { text-decoration: underline; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.4rem, 4vw, 1.9rem); font-weight: 900; }
+
+    .onglets { display: flex; gap: 6px; margin: 18px 0 14px; flex-wrap: wrap; border-bottom: 2px solid #dbeade; }
+    .onglet { background: none; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px; padding: 9px 15px; font-family: 'Baloo 2', cursive; font-size: 0.9rem; font-weight: 800; color: #7aaa8a; cursor: pointer; }
+    .onglet.actif { color: #1e6e3e; border-bottom-color: #1e6e3e; }
+    .onglet:hover { color: #1e6e3e; }
+    .vue { display: none; }
+    .vue.actif { display: block; }
+
+    .carte { background: #fff; border-radius: 15px; padding: 18px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); margin-bottom: 14px; }
+    .carte-tete { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+    .carte-titre { font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; flex: 1; min-width: 0; }
+
+    .champs { display: grid; gap: 12px; }
+    @media (min-width: 760px) { .champs.deux { grid-template-columns: repeat(2, minmax(0, 1fr)); } .champs.trois { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    .champ label { display: block; font-size: 0.72rem; font-weight: 800; color: #4a7a5a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .champ input, .champ textarea, .champ select { width: 100%; padding: 10px 12px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-family: inherit; font-size: 0.9rem; color: #1a3a25; background: #f7fbf8; }
+    .champ input:focus, .champ textarea:focus, .champ select:focus { outline: none; border-color: #1e6e3e; background: #fff; }
+    .champ small { display: block; font-size: 0.72rem; color: #7aaa8a; font-weight: 700; margin-top: 4px; }
+    textarea { resize: vertical; }
+    textarea.corps { min-height: 200px; font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; font-size: 0.84rem; line-height: 1.6; }
+
+    .btn { border: none; border-radius: 50px; padding: 9px 18px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.85rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-vert { background: #1e6e3e; color: #fff; }
+    .btn-vert:hover { background: #17572f; }
+    .btn-clair { background: #fff; color: #1e6e3e; border: 1.5px solid #a8e6bf; }
+    .btn-clair:hover { background: #e4f6ea; }
+    .btn-danger { background: #c0392b; color: #fff; }
+    .btn-danger:hover { background: #a5301f; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn-petit { padding: 5px 11px; font-size: 0.76rem; border-radius: 8px; }
+
+    /* Barre d'outils d'un panneau : insertions markdown les plus fréquentes. */
+    .outils { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 7px; }
+    .outil { background: #eef4ec; border: 1px solid #dbeade; border-radius: 7px; padding: 4px 9px; font-family: inherit; font-size: 0.75rem; font-weight: 800; color: #4a7a5a; cursor: pointer; }
+    .outil:hover { background: #d9ecdd; color: #1e6e3e; }
+
+    /* Sources */
+    .source { display: flex; gap: 7px; margin-bottom: 6px; align-items: center; }
+    .source input { flex: 1; min-width: 0; padding: 7px 10px; font-size: 0.82rem; border: 1.5px solid #c8dfc8; border-radius: 8px; background: #f7fbf8; font-family: inherit; }
+    .source .sup { background: none; border: none; color: #c0392b; font-size: 1rem; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+
+    /* Quiz */
+    .option { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+    .option input[type=text] { flex: 1; min-width: 0; padding: 7px 10px; font-size: 0.84rem; border: 1.5px solid #c8dfc8; border-radius: 8px; background: #f7fbf8; font-family: inherit; }
+    .option input[type=radio] { flex-shrink: 0; width: 17px; height: 17px; accent-color: #1e6e3e; }
+    .option .sup { background: none; border: none; color: #c0392b; font-size: 1rem; cursor: pointer; padding: 0 4px; }
+
+    /* Aperçu */
+    .split { display: grid; gap: 14px; }
+    @media (min-width: 1100px) { .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+    .apercu { background: #fff; border-radius: 15px; padding: 18px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); }
+    .apercu-titre { font-family: 'Baloo 2', cursive; font-size: 0.8rem; font-weight: 900; color: #7aaa8a; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .rendu { font-size: 0.92rem; line-height: 1.7; }
+    .rendu h2 { font-family: 'Baloo 2', cursive; font-size: 1.2rem; margin: 18px 0 8px; }
+    .rendu h3 { font-family: 'Baloo 2', cursive; font-size: 1rem; margin: 14px 0 6px; }
+    .rendu p { margin-bottom: 11px; }
+    .rendu ul, .rendu ol { margin: 0 0 11px 20px; }
+    .rendu li { margin-bottom: 5px; }
+    .rendu a { color: #1e6e3e; font-weight: 700; }
+    .rendu img { max-width: 100%; height: auto; border-radius: 10px; margin: 8px 0; }
+    .rendu table { border-collapse: collapse; width: 100%; margin-bottom: 12px; font-size: 0.85rem; }
+    .rendu th, .rendu td { border: 1px solid #dbeade; padding: 7px 9px; text-align: left; }
+    .rendu th { background: #eef4ec; font-weight: 800; }
+    .rendu blockquote { border-left: 4px solid #a8e6bf; padding-left: 12px; color: #4a7a5a; margin-bottom: 11px; }
+    /* Le rendu peut contenir des tableaux larges ou des schémas : ils défilent
+       dans leur boîte plutôt que d'élargir toute la page. */
+    .rendu { overflow-x: auto; }
+
+    /* Barre d'enregistrement fixe : on ne perd jamais le bouton de vue. */
+    .pied { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1.5px solid #dbeade; padding: 11px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; z-index: 50; }
+    .pied-inner { max-width: 1400px; margin: 0 auto; width: 100%; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .etat { font-size: 0.8rem; font-weight: 800; color: #7aaa8a; margin-left: auto; }
+    .etat.modifie { color: #b26a00; }
+    .etat.ok { color: #1e6e3e; }
+    .etat.ko { color: #c0392b; }
+    .badge-statut { font-size: 0.7rem; font-weight: 900; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge-statut.publie { background: #e4f6ea; color: #1e6e3e; }
+    .badge-statut.brouillon { background: #fdf1d8; color: #8a6100; }
+    .badge-statut.archive { background: #eceff1; color: #607d8b; }
+
+    .erreur { background: #ffebee; color: #c0392b; border-radius: 10px; padding: 10px 13px; font-size: 0.83rem; font-weight: 700; margin-bottom: 12px; display: none; }
+    .erreur.visible { display: block; }
+    .aide { background: #f1f8f2; border-left: 4px solid #a8e6bf; border-radius: 8px; padding: 10px 13px; font-size: 0.8rem; color: #4a7a5a; font-weight: 600; line-height: 1.6; margin-bottom: 13px; }
+    .aide code { background: #e0eee4; border-radius: 4px; padding: 1px 5px; font-size: 0.9em; }
+
+    /* ── Sombre ── */
+    html.dark body { background: #0f1811; color: #e8f5ee; }
+    html.dark .carte, html.dark .apercu, html.dark .pied { background: #16211a; box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
+    html.dark .pied { border-top-color: #243328; }
+    html.dark .onglets { border-bottom-color: #243328; }
+    html.dark .onglet { color: #7ab88e; }
+    html.dark .onglet.actif { color: #52b788; border-bottom-color: #52b788; }
+    html.dark .champ label { color: #7ab88e; }
+    html.dark .champ input, html.dark .champ textarea, html.dark .champ select,
+    html.dark .source input, html.dark .option input[type=text] { background: #101a13; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .champ input:focus, html.dark .champ textarea:focus, html.dark .champ select:focus { background: #1e2d22; border-color: #52b788; }
+    html.dark .champ small, html.dark .fil, html.dark .etat { color: #7ab88e; }
+    html.dark .fil a, html.dark .rendu a { color: #52b788; }
+    html.dark .btn-clair { background: #16211a; color: #52b788; border-color: #2d4030; }
+    html.dark .btn-clair:hover { background: #1e2d22; }
+    html.dark .btn-vert { background: #2d9959; }
+    html.dark .outil { background: #1e2d22; border-color: #2d4030; color: #7ab88e; }
+    html.dark .outil:hover { background: #243328; color: #52b788; }
+    html.dark .apercu-titre { color: #7ab88e; }
+    html.dark .rendu th { background: #1e2d22; }
+    html.dark .rendu th, html.dark .rendu td { border-color: #243328; }
+    html.dark .rendu blockquote { border-left-color: #2d6b45; color: #7ab88e; }
+    html.dark .erreur { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .aide { background: #14231a; border-left-color: #2d6b45; color: #7ab88e; }
+    html.dark .aide code { background: #1e2d22; }
+    html.dark .badge-statut.publie { background: #14301f; color: #52b788; }
+    html.dark .badge-statut.brouillon { background: #2e2410; color: #e0b95f; }
+    html.dark .badge-statut.archive { background: #1e2d22; color: #8fa398; }
+  </style>
+</head>
+<body>
+
+  <div class="barre">
+    <a href="/" class="barre-logo">Compos<span>mart</span></a>
+    <div class="barre-liens">
+      <a href="/admin/themes">← Thèmes et cours</a>
+      <a id="lienLecture" href="#" style="display:none">Voir la page publique</a>
+      <button id="bascule" class="mini" title="Thème clair / sombre">🌙</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="fil"><a href="/admin/themes">Thèmes</a> › <span id="filTheme"></span> › <span id="filCours">Nouveau cours</span></div>
+    <h1 id="pageTitre">Nouveau cours</h1>
+
+    <div class="onglets">
+      <button class="onglet actif" data-vue="contenu">📝 Contenu</button>
+      <button class="onglet" data-vue="quiz">❓ Quiz</button>
+      <button class="onglet" data-vue="fiche">⚙️ Fiche</button>
+    </div>
+
+    <div class="erreur" id="erreur"></div>
+
+    <!-- ── CONTENU ── -->
+    <div class="vue actif" id="vueContenu">
+      <div class="aide">
+        Chaque panneau devient une section du cours (un titre <code>##</code> dans le texte final,
+        soit un écran pour le lecteur). Tu peux y écrire du markdown, coller un schéma en HTML,
+        insérer une formule LaTeX entre <code>$…$</code> ou une image.
+      </div>
+      <div class="split">
+        <div>
+          <div id="panneaux"></div>
+          <button class="btn btn-clair" id="btnAjouterPanneau">＋ Ajouter un panneau</button>
+        </div>
+        <div class="apercu">
+          <div class="apercu-titre">Aperçu — rendu identique à la page de lecture</div>
+          <div class="rendu" id="rendu"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── QUIZ ── -->
+    <div class="vue" id="vueQuiz">
+      <div class="aide">
+        Le quiz s'affiche après la dernière section. Coche la bonne réponse ; il faut au moins deux
+        options pour qu'une question soit conservée.
+      </div>
+      <div id="questions"></div>
+      <button class="btn btn-clair" id="btnAjouterQuestion">＋ Ajouter une question</button>
+    </div>
+
+    <!-- ── FICHE ── -->
+    <div class="vue" id="vueFiche">
+      <div class="carte">
+        <div class="carte-tete"><div class="carte-titre">Identité</div></div>
+        <div class="champs deux">
+          <div class="champ">
+            <label for="fTitre">Titre</label>
+            <input type="text" id="fTitre" maxlength="200" placeholder="ex : Les vers de terre et le compost">
+          </div>
+          <div class="champ">
+            <label for="fSlug">Adresse</label>
+            <input type="text" id="fSlug" maxlength="80" placeholder="déduite du titre">
+            <small id="aideSlug">Déduite du titre. Définitive une fois le cours créé.</small>
+          </div>
+        </div>
+        <div class="champs" style="margin-top:12px">
+          <div class="champ">
+            <label for="fDescription">Description</label>
+            <textarea id="fDescription" rows="2" maxlength="500" placeholder="Une phrase affichée sur la vignette du catalogue."></textarea>
+          </div>
+        </div>
+        <div class="champs trois" style="margin-top:12px">
+          <div class="champ">
+            <label for="fEmoji">Emoji</label>
+            <input type="text" id="fEmoji" maxlength="8" placeholder="📖">
+          </div>
+          <div class="champ">
+            <label for="fNiveau">Niveau</label>
+            <select id="fNiveau">
+              <option value="debutant">Débutant</option>
+              <option value="intermediaire">Intermédiaire</option>
+              <option value="expert">Expert</option>
+            </select>
+          </div>
+          <div class="champ">
+            <label for="fXp">XP accordée</label>
+            <input type="number" id="fXp" min="0" max="1000" step="10" value="50">
+            <small id="aideXp"></small>
+          </div>
+        </div>
+        <div class="champs deux" style="margin-top:12px">
+          <div class="champ">
+            <label for="fTheme">Thème</label>
+            <select id="fTheme"></select>
+          </div>
+          <div class="champ">
+            <label for="fStatut">Statut</label>
+            <select id="fStatut">
+              <option value="brouillon">Brouillon — invisible des lecteurs</option>
+              <option value="publie">Publié — visible au catalogue</option>
+              <option value="archive">Archivé — retiré du catalogue</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="carte">
+        <div class="carte-tete"><div class="carte-titre">Images du cours</div></div>
+        <div class="aide" style="margin-bottom:10px">
+          Téléverse une image puis clique sur « Insérer » : le lien est placé à l'endroit du curseur
+          dans le panneau sélectionné. JPEG, PNG, GIF ou WebP, 2 Mo maximum.
+        </div>
+        <input type="file" id="fichierImage" accept="image/jpeg,image/png,image/gif,image/webp" style="margin-bottom:10px">
+        <div id="listeImages"></div>
+      </div>
+
+      <div class="carte" id="carteSuppression" style="display:none">
+        <div class="carte-tete"><div class="carte-titre" style="color:#c0392b">Supprimer ce cours</div></div>
+        <div class="champ">
+          <label for="fConfirmation">Saisis l'adresse du cours pour confirmer</label>
+          <input type="text" id="fConfirmation" placeholder="">
+          <small id="aideSuppression"></small>
+        </div>
+        <button class="btn btn-danger" id="btnSupprimer" style="margin-top:10px">Supprimer définitivement</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pied">
+    <div class="pied-inner">
+      <span class="badge-statut brouillon" id="badgeStatut">brouillon</span>
+      <button class="btn btn-vert" id="btnEnregistrer">Enregistrer</button>
+      <button class="btn btn-clair" id="btnPublier">Publier</button>
+      <span class="etat" id="etat"></span>
+    </div>
+  </div>
+
+  <script>
+    /*__ROUTE__*/
+
+    var R = window.ROUTE || { mode: 'nouveau', theme_id: 0, theme_slug: '', theme_nom: '', slug: null };
+    var COURS = { id: 0, statut: 'brouillon', termine_par: 0 };
+    var panneaux = [];   // [{titre, corps, sources:[{libelle,url}]}]
+    var questions = [];  // [{question, options:[], correct}]
+    var images = [];
+    var modifie = false;
+    var dernierFocus = null;   // <textarea> de panneau ayant eu le focus
+
+    function $(id) { return document.getElementById(id); }
+    function esc(t) { var d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+
+    function toucher() {
+      modifie = true;
+      var e = $('etat');
+      e.textContent = 'Modifications non enregistrées';
+      e.className = 'etat modifie';
+    }
+    function message(txt, type) {
+      var e = $('etat');
+      e.textContent = txt;
+      e.className = 'etat ' + (type || '');
+    }
+    function erreur(txt) {
+      var e = $('erreur');
+      if (!txt) { e.className = 'erreur'; return; }
+      e.textContent = txt;
+      e.className = 'erreur visible';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ══ MARKDOWN ↔ PANNEAUX ═══════════════════════════════════════════════
+       Le stockage reste du markdown : c'est ce que lit la page de lecture, et
+       ce dans quoi sont écrits les cours historiques. L'éditeur ne fait que le
+       découper à l'ouverture et le recomposer à l'enregistrement — aucune
+       conversion de format, donc aucune perte possible sur un aller-retour. */
+
+    var RE_SOURCES = /^###\s+Sources?\s*$/i;
+
+    function parserMarkdown(md) {
+      var res = [];
+      var parts = String(md || '').split(/(?=^## )/m);
+      parts.forEach(function (part) {
+        var brut = part.replace(/^\s+|\s+$/g, '');
+        if (!brut) return;
+        var titre = '';
+        var corps = brut;
+        if (brut.indexOf('## ') === 0) {
+          var saut = brut.indexOf('\n');
+          titre = (saut === -1 ? brut : brut.slice(0, saut)).replace(/^##\s*/, '').trim();
+          corps = saut === -1 ? '' : brut.slice(saut + 1).replace(/^\s+/, '');
+        }
+        res.push(extraireSources(titre, corps));
+      });
+      if (!res.length) res.push({ titre: '', corps: '', sources: [] });
+      return res;
+    }
+
+    /* Isole le bloc « ### Sources » d'un panneau. Attention : « ### » sert AUSSI
+       aux sous-titres ordinaires du cours (« ### La méthanisation »…). On ne
+       capture donc que le titre exact Source/Sources, et on s'arrête au premier
+       titre suivant, quel qu'il soit. */
+    function extraireSources(titre, corps) {
+      var lignes = String(corps).split('\n');
+      var sources = [];
+      var reste = [];
+      var dansSources = false;
+      lignes.forEach(function (l) {
+        if (RE_SOURCES.test(l.trim())) { dansSources = true; return; }
+        if (dansSources && /^#{2,3}\s/.test(l.trim())) { dansSources = false; }
+        if (dansSources) {
+          var m = l.match(/^\s*-\s*\[([^\]]*)\]\(([^)]*)\)\s*$/);
+          if (m) { sources.push({ libelle: m[1], url: m[2] }); return; }
+          if (l.trim() === '') return;
+          // Ligne non conforme dans le bloc sources : conservée telle quelle
+          // plutôt que perdue silencieusement.
+          sources.push({ libelle: l.trim(), url: '' });
+          return;
+        }
+        reste.push(l);
+      });
+      return { titre: titre, corps: reste.join('\n').replace(/\s+$/, ''), sources: sources };
+    }
+
+    function composerMarkdown() {
+      return panneaux.map(function (p) {
+        var out = [];
+        if (p.titre.trim()) out.push('## ' + p.titre.trim());
+        if (p.corps.trim()) out.push(p.corps.trim());
+        var src = p.sources.filter(function (s) { return (s.libelle || '').trim() || (s.url || '').trim(); });
+        if (src.length) {
+          out.push('### Sources');
+          out.push(src.map(function (s) {
+            var lib = (s.libelle || '').trim() || s.url;
+            return (s.url || '').trim() ? '- [' + lib + '](' + s.url.trim() + ')' : '- ' + lib;
+          }).join('\n'));
+        }
+        return out.join('\n\n');
+      }).filter(function (b) { return b.trim(); }).join('\n\n');
+    }
+
+    /* ══ PANNEAUX ══════════════════════════════════════════════════════════ */
+    function dessinerPanneaux() {
+      var c = $('panneaux');
+      c.innerHTML = '';
+      panneaux.forEach(function (p, i) {
+        var carte = document.createElement('div');
+        carte.className = 'carte';
+        carte.innerHTML =
+            '<div class="carte-tete">'
+          +   '<div class="carte-titre">Panneau ' + (i + 1) + '</div>'
+          +   '<button type="button" class="btn btn-clair btn-petit" data-monter="' + i + '"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
+          +   '<button type="button" class="btn btn-clair btn-petit" data-descendre="' + i + '"' + (i === panneaux.length - 1 ? ' disabled' : '') + '>↓</button>'
+          +   '<button type="button" class="btn btn-clair btn-petit" data-supprimer="' + i + '" style="color:#c0392b">Supprimer</button>'
+          + '</div>'
+          + '<div class="champ" style="margin-bottom:11px">'
+          +   '<label>Titre de la section</label>'
+          +   '<input type="text" data-titre="' + i + '" maxlength="180" value="' + esc(p.titre) + '" placeholder="' + (i === 0 ? 'facultatif pour une introduction' : 'ex : Le bac de compostage') + '">'
+          + '</div>'
+          + '<div class="outils">'
+          +   '<button type="button" class="outil" data-ins="' + i + '" data-avant="**" data-apres="**">gras</button>'
+          +   '<button type="button" class="outil" data-ins="' + i + '" data-avant="*" data-apres="*">italique</button>'
+          +   '<button type="button" class="outil" data-ins="' + i + '" data-avant="### " data-apres="">sous-titre</button>'
+          +   '<button type="button" class="outil" data-ins="' + i + '" data-avant="- " data-apres="">liste</button>'
+          +   '<button type="button" class="outil" data-ins="' + i + '" data-avant="[" data-apres="](https://)">lien</button>'
+          +   '<button type="button" class="outil" data-ins="' + i + '" data-avant="$" data-apres="$">formule</button>'
+          +   '<button type="button" class="outil" data-ins="' + i + '" data-avant="$$\\n" data-apres="\\n$$">formule centrée</button>'
+          +   '<button type="button" class="outil" data-tableau="' + i + '">tableau</button>'
+          +   '<button type="button" class="outil" data-schema="' + i + '">schéma HTML</button>'
+          + '</div>'
+          + '<div class="champ">'
+          +   '<textarea class="corps" data-corps="' + i + '" placeholder="Texte du panneau, en markdown.">' + esc(p.corps) + '</textarea>'
+          + '</div>'
+          + '<div class="champ" style="margin-top:11px">'
+          +   '<label>Sources</label>'
+          +   '<div data-sources="' + i + '">' + p.sources.map(function (s, j) {
+                return '<div class="source">'
+                  + '<input type="text" data-src-lib="' + i + '-' + j + '" value="' + esc(s.libelle) + '" placeholder="Intitulé">'
+                  + '<input type="text" data-src-url="' + i + '-' + j + '" value="' + esc(s.url) + '" placeholder="https://">'
+                  + '<button type="button" class="sup" data-src-sup="' + i + '-' + j + '" title="Retirer">✕</button>'
+                  + '</div>';
+              }).join('') + '</div>'
+          +   '<button type="button" class="btn btn-clair btn-petit" data-src-ajout="' + i + '" style="margin-top:5px">＋ Ajouter une source</button>'
+          + '</div>';
+        c.appendChild(carte);
+      });
+      brancherPanneaux();
+      majApercu();
+    }
+
+    function brancherPanneaux() {
+      document.querySelectorAll('[data-titre]').forEach(function (el) {
+        el.addEventListener('input', function () {
+          panneaux[+el.dataset.titre].titre = el.value; toucher(); majApercu();
+        });
+      });
+      document.querySelectorAll('[data-corps]').forEach(function (el) {
+        el.addEventListener('focus', function () { dernierFocus = el; });
+        el.addEventListener('input', function () {
+          panneaux[+el.dataset.corps].corps = el.value; toucher(); majApercu();
+        });
+      });
+      document.querySelectorAll('[data-src-lib]').forEach(function (el) {
+        el.addEventListener('input', function () {
+          var p = el.dataset.srcLib.split('-');
+          panneaux[+p[0]].sources[+p[1]].libelle = el.value; toucher(); majApercu();
+        });
+      });
+      document.querySelectorAll('[data-src-url]').forEach(function (el) {
+        el.addEventListener('input', function () {
+          var p = el.dataset.srcUrl.split('-');
+          panneaux[+p[0]].sources[+p[1]].url = el.value; toucher(); majApercu();
+        });
+      });
+      document.querySelectorAll('[data-src-sup]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var p = el.dataset.srcSup.split('-');
+          panneaux[+p[0]].sources.splice(+p[1], 1); toucher(); dessinerPanneaux();
+        });
+      });
+      document.querySelectorAll('[data-src-ajout]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          panneaux[+el.dataset.srcAjout].sources.push({ libelle: '', url: '' }); toucher(); dessinerPanneaux();
+        });
+      });
+      document.querySelectorAll('[data-monter]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var i = +el.dataset.monter;
+          var t = panneaux[i - 1]; panneaux[i - 1] = panneaux[i]; panneaux[i] = t;
+          toucher(); dessinerPanneaux();
+        });
+      });
+      document.querySelectorAll('[data-descendre]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var i = +el.dataset.descendre;
+          var t = panneaux[i + 1]; panneaux[i + 1] = panneaux[i]; panneaux[i] = t;
+          toucher(); dessinerPanneaux();
+        });
+      });
+      document.querySelectorAll('[data-supprimer]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var i = +el.dataset.supprimer;
+          if (!confirm('Supprimer le panneau « ' + (panneaux[i].titre || 'sans titre') + ' » ?')) return;
+          panneaux.splice(i, 1);
+          if (!panneaux.length) panneaux.push({ titre: '', corps: '', sources: [] });
+          toucher(); dessinerPanneaux();
+        });
+      });
+      document.querySelectorAll('[data-ins]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          entourer(+el.dataset.ins, el.dataset.avant.replace(/\\n/g, '\n'), el.dataset.apres.replace(/\\n/g, '\n'));
+        });
+      });
+      document.querySelectorAll('[data-tableau]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          inserer(+el.dataset.tableau,
+            '\n| Colonne A | Colonne B |\n| --- | --- |\n| valeur | valeur |\n');
+        });
+      });
+      document.querySelectorAll('[data-schema]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          // Gabarit auto-porteur : styles en ligne, donc rendu identique côté
+          // lecteur sans avoir à toucher au CSS de cours-detail.html.
+          inserer(+el.dataset.schema,
+            '\n<figure style="display:grid;gap:10px;margin:6px 0 14px">\n'
+            + '  <div style="background:#f4f9f4;border-radius:14px;padding:14px;text-align:center">\n'
+            + '    <div style="font-weight:900;color:#1e6e3e;margin-bottom:6px">Titre du bloc</div>\n'
+            + '    <div style="font-size:0.9rem">Contenu du bloc</div>\n'
+            + '  </div>\n'
+            + '</figure>\n');
+        });
+      });
+    }
+
+    function zone(i) {
+      return document.querySelector('[data-corps="' + i + '"]');
+    }
+    function inserer(i, texte) {
+      var t = zone(i);
+      if (!t) return;
+      var d = t.selectionStart, f = t.selectionEnd;
+      t.value = t.value.slice(0, d) + texte + t.value.slice(f);
+      panneaux[i].corps = t.value;
+      t.focus();
+      t.selectionStart = t.selectionEnd = d + texte.length;
+      toucher(); majApercu();
+    }
+    function entourer(i, avant, apres) {
+      var t = zone(i);
+      if (!t) return;
+      var d = t.selectionStart, f = t.selectionEnd;
+      var sel = t.value.slice(d, f);
+      t.value = t.value.slice(0, d) + avant + sel + apres + t.value.slice(f);
+      panneaux[i].corps = t.value;
+      t.focus();
+      t.selectionStart = d + avant.length;
+      t.selectionEnd = d + avant.length + sel.length;
+      toucher(); majApercu();
+    }
+
+    /* ══ APERÇU ════════════════════════════════════════════════════════════ */
+    var minuteurApercu = null;
+    function majApercu() {
+      clearTimeout(minuteurApercu);
+      // Débouncé : KaTeX et DOMPurify sur un cours entier à chaque frappe
+      // rendraient la saisie saccadée.
+      minuteurApercu = setTimeout(function () {
+        MarkdownSur.rendreDans($('rendu'), composerMarkdown());
+      }, 250);
+    }
+
+    /* ══ QUIZ ══════════════════════════════════════════════════════════════ */
+    function dessinerQuestions() {
+      var c = $('questions');
+      c.innerHTML = '';
+      questions.forEach(function (q, i) {
+        var carte = document.createElement('div');
+        carte.className = 'carte';
+        carte.innerHTML =
+            '<div class="carte-tete">'
+          +   '<div class="carte-titre">Question ' + (i + 1) + '</div>'
+          +   '<button type="button" class="btn btn-clair btn-petit" data-q-monter="' + i + '"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
+          +   '<button type="button" class="btn btn-clair btn-petit" data-q-descendre="' + i + '"' + (i === questions.length - 1 ? ' disabled' : '') + '>↓</button>'
+          +   '<button type="button" class="btn btn-clair btn-petit" data-q-sup="' + i + '" style="color:#c0392b">Supprimer</button>'
+          + '</div>'
+          + '<div class="champ" style="margin-bottom:11px">'
+          +   '<label>Énoncé</label>'
+          +   '<textarea data-q-texte="' + i + '" rows="2">' + esc(q.question) + '</textarea>'
+          + '</div>'
+          + '<div class="champ"><label>Réponses — coche la bonne</label>'
+          +   q.options.map(function (o, j) {
+                return '<div class="option">'
+                  + '<input type="radio" name="correct-' + i + '" data-q-correct="' + i + '-' + j + '"' + (q.correct === j ? ' checked' : '') + '>'
+                  + '<input type="text" data-q-opt="' + i + '-' + j + '" value="' + esc(o) + '" placeholder="Réponse ' + (j + 1) + '">'
+                  + '<button type="button" class="sup" data-q-opt-sup="' + i + '-' + j + '" title="Retirer">✕</button>'
+                  + '</div>';
+              }).join('')
+          +   '<button type="button" class="btn btn-clair btn-petit" data-q-opt-ajout="' + i + '" style="margin-top:5px">＋ Ajouter une réponse</button>'
+          + '</div>';
+        c.appendChild(carte);
+      });
+      brancherQuestions();
+    }
+
+    function brancherQuestions() {
+      document.querySelectorAll('[data-q-texte]').forEach(function (el) {
+        el.addEventListener('input', function () { questions[+el.dataset.qTexte].question = el.value; toucher(); });
+      });
+      document.querySelectorAll('[data-q-opt]').forEach(function (el) {
+        el.addEventListener('input', function () {
+          var p = el.dataset.qOpt.split('-');
+          questions[+p[0]].options[+p[1]] = el.value; toucher();
+        });
+      });
+      document.querySelectorAll('[data-q-correct]').forEach(function (el) {
+        el.addEventListener('change', function () {
+          var p = el.dataset.qCorrect.split('-');
+          questions[+p[0]].correct = +p[1]; toucher();
+        });
+      });
+      document.querySelectorAll('[data-q-opt-sup]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var p = el.dataset.qOptSup.split('-');
+          var q = questions[+p[0]];
+          if (q.options.length <= 2) { erreur('Une question doit garder au moins deux réponses.'); return; }
+          q.options.splice(+p[1], 1);
+          // L'index de la bonne réponse suit la suppression, sinon il désigne
+          // silencieusement une autre option.
+          if (q.correct === +p[1]) q.correct = 0;
+          else if (q.correct > +p[1]) q.correct--;
+          toucher(); dessinerQuestions();
+        });
+      });
+      document.querySelectorAll('[data-q-opt-ajout]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          questions[+el.dataset.qOptAjout].options.push(''); toucher(); dessinerQuestions();
+        });
+      });
+      document.querySelectorAll('[data-q-sup]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          if (!confirm('Supprimer cette question ?')) return;
+          questions.splice(+el.dataset.qSup, 1); toucher(); dessinerQuestions();
+        });
+      });
+      document.querySelectorAll('[data-q-monter]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var i = +el.dataset.qMonter;
+          var t = questions[i - 1]; questions[i - 1] = questions[i]; questions[i] = t;
+          toucher(); dessinerQuestions();
+        });
+      });
+      document.querySelectorAll('[data-q-descendre]').forEach(function (el) {
+        el.addEventListener('click', function () {
+          var i = +el.dataset.qDescendre;
+          var t = questions[i + 1]; questions[i + 1] = questions[i]; questions[i] = t;
+          toucher(); dessinerQuestions();
+        });
+      });
+    }
+
+    /* ══ IMAGES ════════════════════════════════════════════════════════════ */
+    $('fichierImage').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      if (!f) return;
+      var fd = new FormData();
+      fd.append('image', f);
+      if (COURS.id) fd.append('cours_id', COURS.id);
+      message('Téléversement…');
+      fetch('/api/admin/image_upload.php', { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.error) { erreur(d.error); message(''); return; }
+          erreur('');
+          images.push(d);
+          dessinerImages();
+          message('Image ajoutée ✓', 'ok');
+        })
+        .catch(function () { erreur('Téléversement impossible.'); message(''); });
+      this.value = '';
+    });
+
+    function dessinerImages() {
+      var c = $('listeImages');
+      if (!images.length) { c.innerHTML = '<div style="font-size:0.82rem;color:#7aaa8a;font-weight:700">Aucune image téléversée pour l\'instant.</div>'; return; }
+      c.innerHTML = images.map(function (im, i) {
+        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+          + '<img src="' + esc(im.url) + '" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px">'
+          + '<span style="flex:1;min-width:0;font-size:0.83rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(im.nom) + '</span>'
+          + '<button type="button" class="btn btn-clair btn-petit" data-img="' + i + '">Insérer</button>'
+          + '</div>';
+      }).join('');
+      c.querySelectorAll('[data-img]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var im = images[+b.dataset.img];
+          // Insertion dans le dernier panneau où le curseur a été posé ; à
+          // défaut le premier, pour que le bouton ne reste jamais sans effet.
+          var i = dernierFocus ? +dernierFocus.dataset.corps : 0;
+          basculerVue('contenu');
+          inserer(i, '\n![' + im.nom + '](' + im.url + ')\n');
+        });
+      });
+    }
+
+    /* ══ ONGLETS ═══════════════════════════════════════════════════════════ */
+    function basculerVue(nom) {
+      document.querySelectorAll('.onglet').forEach(function (o) { o.classList.toggle('actif', o.dataset.vue === nom); });
+      document.querySelectorAll('.vue').forEach(function (v) { v.classList.remove('actif'); });
+      var cible = { contenu: 'vueContenu', quiz: 'vueQuiz', fiche: 'vueFiche' }[nom];
+      if (cible) $(cible).classList.add('actif');
+    }
+    document.querySelectorAll('.onglet').forEach(function (o) {
+      o.addEventListener('click', function () { basculerVue(o.dataset.vue); });
+    });
+
+    /* ══ CHARGEMENT ════════════════════════════════════════════════════════ */
+    $('filTheme').textContent = R.theme_nom || '';
+
+    function chargerThemes(selection) {
+      return fetch('/api/admin/themes_manage.php')
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var s = $('fTheme');
+          // Le slug est porté par l'option : après un changement de thème, la
+          // nouvelle URL doit pointer vers le thème choisi, pas celui d'arrivée.
+          s.innerHTML = (d.themes || []).map(function (t) {
+            return '<option value="' + t.id + '" data-slug="' + esc(t.slug) + '"'
+                 + (t.id === selection ? ' selected' : '') + '>'
+                 + esc(t.emoji || '') + ' ' + esc(t.nom) + '</option>';
+          }).join('');
+        })
+        .catch(function () {});
+    }
+
+    function charger() {
+      chargerThemes(R.theme_id);
+      if (R.mode !== 'edition' || !R.slug) {
+        panneaux = [{ titre: '', corps: '', sources: [] }];
+        questions = [];
+        dessinerPanneaux(); dessinerQuestions(); dessinerImages();
+        majBadge('brouillon');
+        return;
+      }
+      fetch('/api/admin/cours_get.php?slug=' + encodeURIComponent(R.slug))
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.error) { erreur(d.error); return; }
+          COURS = d;
+          $('pageTitre').textContent = d.titre;
+          $('filCours').textContent = d.titre;
+          $('fTitre').value = d.titre;
+          $('fSlug').value = d.slug;
+          $('fSlug').disabled = true;   // figé : cf. cours_save.php
+          $('fDescription').value = d.description || '';
+          $('fEmoji').value = d.emoji || '';
+          $('fNiveau').value = d.niveau;
+          $('fXp').value = d.xp;
+          $('fStatut').value = d.statut;
+          chargerThemes(d.theme_id);
+          panneaux = parserMarkdown(d.texte);
+          questions = (d.quiz || []).map(function (q) {
+            return { question: q.question || '', options: (q.options || []).slice(), correct: q.correct || 0 };
+          });
+          majBadge(d.statut);
+          var lien = $('lienLecture');
+          lien.href = '/cours/' + d.slug;
+          lien.style.display = '';
+          $('carteSuppression').style.display = '';
+          $('fConfirmation').placeholder = d.slug;
+          $('aideSuppression').textContent = d.termine_par > 0
+            ? d.termine_par + ' personne(s) ont terminé ce cours : leur progression sera effacée, mais l\'XP déjà gagnée leur reste acquise.'
+            : 'Personne n\'a encore terminé ce cours.';
+          $('aideXp').textContent = d.termine_par > 0
+            ? 'Modifier l\'XP ne change rien pour les ' + d.termine_par + ' personnes qui ont déjà terminé le cours.'
+            : '';
+          dessinerPanneaux(); dessinerQuestions(); dessinerImages();
+        })
+        .catch(function () { erreur('Chargement impossible.'); });
+    }
+
+    function majBadge(statut) {
+      var b = $('badgeStatut');
+      b.textContent = statut;
+      b.className = 'badge-statut ' + statut;
+      $('btnPublier').textContent = statut === 'publie' ? 'Repasser en brouillon' : 'Publier';
+    }
+
+    /* ══ ENREGISTREMENT ════════════════════════════════════════════════════ */
+    function corpsRequete(statut) {
+      return {
+        id: COURS.id || 0,
+        theme_id: parseInt($('fTheme').value, 10) || R.theme_id,
+        titre: $('fTitre').value,
+        slug: $('fSlug').value,
+        description: $('fDescription').value,
+        emoji: $('fEmoji').value,
+        niveau: $('fNiveau').value,
+        xp: parseInt($('fXp').value, 10) || 0,
+        statut: statut || $('fStatut').value,
+        texte: composerMarkdown(),
+        quiz: questions
+      };
+    }
+
+    function enregistrer(statut) {
+      erreur('');
+      if (!$('fTitre').value.trim()) {
+        basculerVue('fiche'); erreur('Le titre est obligatoire.'); return Promise.resolve(false);
+      }
+      $('btnEnregistrer').disabled = true;
+      $('btnPublier').disabled = true;
+      message('Enregistrement…');
+      return fetch('/api/admin/cours_save.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corpsRequete(statut))
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          $('btnEnregistrer').disabled = false;
+          $('btnPublier').disabled = false;
+          if (d.error) { erreur(d.error); message('Échec', 'ko'); return false; }
+          modifie = false;
+          message('Enregistré ✓', 'ok');
+          $('fStatut').value = d.statut;
+          majBadge(d.statut);
+          // Création : l'URL devient celle du cours, pour que le rechargement
+          // et le partage du lien tombent sur la bonne page.
+          if (!COURS.id) {
+            COURS.id = d.id;
+            var opt = $('fTheme').selectedOptions[0];
+            var themeSlug = (opt && opt.dataset.slug) || R.theme_slug;
+            history.replaceState({}, '', '/admin/themes/' + themeSlug + '/' + d.slug);
+            R.mode = 'edition'; R.slug = d.slug; R.theme_slug = themeSlug;
+            $('fSlug').value = d.slug;
+            $('fSlug').disabled = true;
+            $('aideSlug').textContent = 'Définitive : la progression des lecteurs y est rattachée.';
+            $('carteSuppression').style.display = '';
+            $('fConfirmation').placeholder = d.slug;
+            var lien = $('lienLecture'); lien.href = '/cours/' + d.slug; lien.style.display = '';
+          }
+          return true;
+        })
+        .catch(function () {
+          $('btnEnregistrer').disabled = false;
+          $('btnPublier').disabled = false;
+          erreur('Enregistrement impossible.'); message('Échec', 'ko');
+          return false;
+        });
+    }
+
+    $('btnEnregistrer').addEventListener('click', function () { enregistrer(null); });
+    $('btnPublier').addEventListener('click', function () {
+      var vise = $('fStatut').value === 'publie' ? 'brouillon' : 'publie';
+      enregistrer(vise);
+    });
+
+    $('btnSupprimer').addEventListener('click', function () {
+      erreur('');
+      fetch('/api/admin/cours_delete.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: COURS.id, confirmation: $('fConfirmation').value })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.error) { erreur(d.error); return; }
+          modifie = false;
+          location.href = '/admin/themes';
+        })
+        .catch(function () { erreur('Suppression impossible.'); });
+    });
+
+    $('btnAjouterPanneau').addEventListener('click', function () {
+      panneaux.push({ titre: '', corps: '', sources: [] }); toucher(); dessinerPanneaux();
+    });
+    $('btnAjouterQuestion').addEventListener('click', function () {
+      questions.push({ question: '', options: ['', ''], correct: 0 }); toucher(); dessinerQuestions();
+    });
+
+    ['fTitre', 'fDescription', 'fEmoji', 'fNiveau', 'fXp', 'fTheme', 'fStatut', 'fSlug'].forEach(function (id) {
+      $(id).addEventListener('input', toucher);
+      $(id).addEventListener('change', function () {
+        toucher();
+        if (id === 'fStatut') majBadge($('fStatut').value);
+      });
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+      if (!modifie) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
+
+    charger();
+  </script>
+  <script src="/assets/js/theme.js"></script>
+</body>
+</html>

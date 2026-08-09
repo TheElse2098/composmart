@@ -23,9 +23,18 @@ COPY services/courses-api/contact/ /var/www/html/api/contact/
 COPY content/                     /var/www/html/content/
 COPY shared/seeds/                /docker-seeds/
 
+# ── Pages d'administration ─────────────────────────────────────────────────
+# Le contrôleur est le SEUL fichier exposé : il vérifie la session en base puis
+# lit le gabarit demandé. Les gabarits sont volontairement déposés hors de
+# /var/www/html — sans quoi une URL du type /admin-vues/themes.html servirait
+# l'interface à n'importe qui, ce que le contrôle de session est censé empêcher.
+COPY services/courses-api/admin-pages/controleur.php /var/www/html/admin-controleur.php
+COPY services/courses-api/admin-pages/vues/          /var/www/admin-vues/
+COPY services/courses-api/htaccess-racine            /var/www/html/.htaccess
+
 # PHPMailer (envoi SMTP des messages de contact) : installé à côté de _guard.php,
 # qui charge vendor/autoload.php par chemin relatif.
 COPY shared/composer.json    /var/www/html/api/composer.json
 RUN cd /var/www/html/api && composer install --no-dev --no-interaction --optimize-autoloader
 
-RUN chown -R www-data:www-data /var/www/html
+RUN chown -R www-data:www-data /var/www/html /var/www/admin-vues

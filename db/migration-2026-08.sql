@@ -70,3 +70,55 @@ CREATE TABLE IF NOT EXISTS `xp_log` (
 -- (dénormalisé, mis à NULL par delete_account.php ; la FK passe en SET NULL)
 ALTER TABLE `contact_messages`
   ADD COLUMN IF NOT EXISTS `username` varchar(100) DEFAULT NULL AFTER `user_id`;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- ÉDITION DES COURS DEPUIS LE SITE
+-- Le contenu quitte les fichiers content/cours/ pour la base : c'est ce qui
+-- permet à l'interface d'admin de l'écrire, et aux 3 réplicas de courses-api
+-- de lire la même chose.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- 'publie' par défaut : les cours déjà en ligne ne doivent pas disparaître du
+-- catalogue au moment de la migration. Seuls les cours créés depuis l'éditeur
+-- démarrent en brouillon (statut posé explicitement à la création).
+ALTER TABLE `cours`
+  ADD COLUMN IF NOT EXISTS `statut` enum('brouillon','publie','archive')
+    NOT NULL DEFAULT 'publie' AFTER `nb_questions`;
+
+CREATE TABLE IF NOT EXISTS `cours_contenu` (
+  `cours_id` int      NOT NULL,
+  `texte`    longtext DEFAULT NULL,
+  `quiz`     longtext DEFAULT NULL,
+  `video`    text     DEFAULT NULL,
+  `maj_at`   datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `maj_par`  varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`cours_id`),
+  CONSTRAINT `contenu_ibfk_1` FOREIGN KEY (`cours_id`) REFERENCES `cours` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `cours_versions` (
+  `id`         int      NOT NULL AUTO_INCREMENT,
+  `cours_id`   int      NOT NULL,
+  `texte`      longtext DEFAULT NULL,
+  `quiz`       longtext DEFAULT NULL,
+  `auteur`     varchar(100) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `cours_date` (`cours_id`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `cours_images` (
+  `id`         int          NOT NULL AUTO_INCREMENT,
+  `cours_id`   int          DEFAULT NULL,
+  `nom`        varchar(200) NOT NULL,
+  `mime`       varchar(80)  NOT NULL,
+  `taille`     int          NOT NULL,
+  `donnees`    longblob     NOT NULL,
+  `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `cours` (`cours_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Le contenu des 9 cours existants est versé dans cours_contenu par le Job
+-- seed-core (import_cours.php), qui n'écrase jamais une ligne déjà présente.
+-- Rien à faire ici : relancer le Job après cette migration suffit.

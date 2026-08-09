@@ -7,6 +7,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Assainissement du HTML des cours : chargé AVANT markdown-sur.js, qui le
+       consomme. Sans lui, ce dernier retombe sur un rendu en texte brut. -->
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <!-- Rendu partagé avec l'aperçu de l'éditeur d'admin : même moteur des deux
+       côtés, sinon l'aperçu mentirait sur le résultat. -->
+  <script src="/assets/js/markdown-sur.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
@@ -386,27 +392,12 @@
   <script>
     /**
      * Rend les formules d'un fragment déjà inséré dans le DOM.
-     *
-     * On passe par auto-render de KaTeX plutôt que par une extension de marked :
-     * marked est chargé sans version épinglée, et une extension figée finit par
-     * ne plus s'accrocher à son API interne — elle s'enregistre alors sans
-     * erreur mais ne convertit plus rien, ce qui laissait « $O_2$ » en clair.
-     * Ici le traitement se fait sur le HTML produit, donc indépendamment de marked.
-     *
-     * Les délimiteurs sont explicites : auto-render ne reconnaît PAS « $…$ » par
-     * défaut (pour éviter de confondre avec des montants en dollars).
+     * La configuration (choix d'auto-render, délimiteurs) vit dans
+     * markdown-sur.js, partagée avec l'aperçu de l'éditeur d'admin : deux
+     * copies finiraient par diverger et l'aperçu ne vaudrait plus rien.
      */
     function rendreMath(el) {
-      if (!el || typeof renderMathInElement !== 'function') return;
-      renderMathInElement(el, {
-        delimiters: [
-          { left: '$$', right: '$$', display: true },
-          { left: '$',  right: '$',  display: false },
-          { left: '\\[', right: '\\]', display: true },
-          { left: '\\(', right: '\\)', display: false },
-        ],
-        throwOnError: false,
-      });
+      if (window.MarkdownSur) MarkdownSur.rendreMaths(el);
     }
 
     var slug = location.pathname.replace(/^\/cours\//, '').replace(/\/$/, '');
@@ -616,7 +607,9 @@
         div.innerHTML =
           '<div class="lesson-card">' +
           (s.title ? '<div class="lesson-title">' + esc(s.title) + '</div>' : '') +
-          '<div class="lesson-body">' + marked.parse(s.content) + '</div>' +
+          // Assaini : depuis que les cours s'écrivent depuis /admin, le markdown
+          // n'est plus systématiquement relu avant mise en ligne (cf. markdown-sur.js).
+          '<div class="lesson-body">' + MarkdownSur.rendre(s.content) + '</div>' +
           '</div>' +
           '<div class="lesson-nav">' + btnPrev +
           '<button class="btn-next" onclick="' + btnAction + '">' + btnLabel + '</button>' +

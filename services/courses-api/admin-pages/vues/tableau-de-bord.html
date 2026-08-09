@@ -40,6 +40,9 @@
 
     .hero { text-align: center; padding: 26px 20px 12px; }
     .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    .hero-lien { display: inline-block; margin-top: 12px; background: #1e6e3e; color: #fff; font-family: 'Baloo 2', cursive; font-size: 0.88rem; font-weight: 800; padding: 9px 20px; border-radius: 50px; text-decoration: none; }
+    .hero-lien:hover { background: #17572f; }
+    html.dark .hero-lien { background: #2d9959; }
     h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; color: #1a3a25; }
 
     /* Onglets */
@@ -258,6 +261,10 @@
   <div class="hero">
     <div class="hero-badge">🔧 Administration</div>
     <h1>Tableau de bord</h1>
+    <!-- L'édition des cours est une page à part et non un onglet : elle a ses
+         propres URL (/admin/themes/<theme>/<cours>), donc un état partageable
+         et rechargeable, ce qu'un onglet du tableau de bord ne permet pas. -->
+    <a href="/admin/themes" class="hero-lien">📚 Thèmes et cours →</a>
   </div>
 
   <div id="dashboard" style="display:none">

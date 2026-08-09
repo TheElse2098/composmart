@@ -316,6 +316,43 @@ kubectl rollout restart deployment -n composmart   # recharge les images :latest
 kubectl rollout status deployment/map-api -n composmart
 ```
 
+## Migrations de schéma
+
+`db/*.sql` n'est joué que par **initdb**, c'est-à-dire sur un volume vierge : un
+cluster déjà en service ne les rejoue jamais. Toute colonne ou table ajoutée
+doit donc passer par un fichier de migration appliqué à la main :
+
+```bash
+kubectl -n composmart exec -i db-core-0 -- \
+  mariadb -u root -p"$MDP" Composmart < db/migration-2026-08.sql
+```
+
+Les migrations sont idempotentes (`IF NOT EXISTS`) : les rejouer ne casse rien.
+
+## Édition des cours depuis le site
+
+Depuis août 2026, le contenu des cours vit en base (`cours_contenu`) et non plus
+seulement dans `content/cours/`. Deux conséquences pratiques :
+
+- **`content/` n'est plus la source de vérité**, seulement une graine. Le Job
+  `seed-core` (`import_cours.php`) n'écrase jamais un cours déjà présent en base
+  — sans quoi un `kubectl apply` de routine annulerait le travail fait depuis
+  `/admin/themes`, silencieusement. Pour repartir des fichiers, il faut d'abord
+  supprimer le cours en base.
+- **Les pages `/admin` sont servies par `courses-api`**, pas par `web` : elles
+  passent par un contrôleur qui vérifie la session avant de servir quoi que ce
+  soit, et renvoie une 404 indiscernable aux autres. D'où la règle Ingress
+  `/admin → courses-api`, à ne pas retirer sous peine de tomber sur le
+  catch-all `/ → web` et donc sur une 404 permanente.
+
+Après la migration, relancer le seed pour verser les cours historiques en base :
+
+```bash
+kubectl delete job seed-core -n composmart      # les Jobs sont immuables
+kubectl apply -f k8s/composmart.yaml
+kubectl logs job/seed-core -n composmart -f
+```
+
 ## Rollback / arrêt
 
 ```bash
