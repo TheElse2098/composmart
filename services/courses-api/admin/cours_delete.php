@@ -42,7 +42,8 @@ $stmt->bind_param('s', $cours['slug']);
 $stmt->execute();
 $progressions = mysqli_stmt_affected_rows($stmt);
 
-// cours_contenu et cours_images partent en cascade ; cours_versions est
+// cours_contenu part en cascade ; cours_medias garde ses lignes (pas de FK,
+// pour qu'un média encore référencé ailleurs ne disparaisse pas) ; cours_versions est
 // volontairement conservée (historique consultable après coup).
 $stmt = mysqli_prepare($c, 'DELETE FROM cours WHERE id = ?');
 $stmt->bind_param('i', $id);

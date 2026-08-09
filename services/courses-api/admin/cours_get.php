@@ -17,7 +17,7 @@ if (!$slug) { http_response_code(400); echo json_encode(['error' => 'slug manqua
 $stmt = mysqli_prepare($c,
     'SELECT c.id, c.slug, c.theme_id, c.titre, c.description, c.emoji, c.niveau,
             c.xp_reward, c.statut, c.ordre, t.slug AS theme_slug,
-            k.texte, k.quiz, k.video, k.maj_at, k.maj_par
+            k.texte, k.quiz, k.video, k.podcast, k.maj_at, k.maj_par
      FROM cours c
      JOIN themes t ON t.id = c.theme_id
      LEFT JOIN cours_contenu k ON k.cours_id = c.id
@@ -28,7 +28,8 @@ $row = $stmt->get_result()->fetch_assoc();
 if (!$row) { http_response_code(404); echo json_encode(['error' => 'cours introuvable']); exit; }
 
 $quiz = $row['quiz'] ? json_decode($row['quiz'], true) : [];
-$video = $row['video'] ? json_decode($row['video'], true) : null;
+$video   = $row['video']   ? json_decode($row['video'], true)   : null;
+$podcast = $row['podcast'] ? json_decode($row['podcast'], true) : null;
 
 // Nombre de personnes ayant déjà terminé ce cours : l'éditeur s'en sert pour
 // prévenir avant un changement d'XP ou une suppression.
@@ -50,6 +51,7 @@ echo json_encode([
     'texte'       => $row['texte'] ?? '',
     'quiz'        => is_array($quiz) ? $quiz : [],
     'video'       => $video,
+    'podcast'     => $podcast,
     'maj_at'      => $row['maj_at'],
     'maj_par'     => $row['maj_par'],
     'termine_par' => $termine_par,

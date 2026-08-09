@@ -5,9 +5,10 @@
  * d'écrire un cours sans reconstruction d'image, et aux réplicas de
  * courses-api de servir tous la même version.
  *
- * Seul le podcast reste lu sur disque : c'est le seul média binaire, il ne
- * change qu'au rythme des releases, et l'embarquer en base imposerait de
- * charger plusieurs mégaoctets pour rendre une page de texte.
+ * Le podcast fait exception partielle : sa fiche vit en base comme le reste,
+ * mais si aucune n'est renseignée on retombe sur le fichier déposé dans
+ * content/cours/<slug>/ — c'est ainsi que le podcast antérieur à l'éditeur
+ * continue d'être servi sans reprise manuelle.
  */
 ob_start();
 error_reporting(0);
@@ -53,7 +54,7 @@ if (!empty($_SESSION['user_id'])) {
 $stmt = mysqli_prepare($c,
     'SELECT c.id, c.slug, c.titre, c.description, c.emoji, c.niveau, c.xp_reward,
             c.statut, t.slug AS theme_slug,
-            k.texte, k.quiz, k.video
+            k.texte, k.quiz, k.video, k.podcast
      FROM cours c
      JOIN themes t ON t.id = c.theme_id
      LEFT JOIN cours_contenu k ON k.cours_id = c.id
@@ -92,9 +93,16 @@ if ($row['video'] !== null && $row['video'] !== '') {
     if (is_array($video)) $data['video'] = $video;
 }
 
-// ── Podcast : toujours sur disque ──────────────────────────────────────────
+// ── Podcast ────────────────────────────────────────────────────────────────
+// La fiche saisie dans l'éditeur fait foi. À défaut, on retombe sur le fichier
+// déposé dans content/cours/<slug>/ : c'est ainsi que le podcast historique,
+// antérieur à l'éditeur, continue d'être servi.
+if ($row['podcast'] !== null && $row['podcast'] !== '') {
+    $p = json_decode($row['podcast'], true);
+    if (is_array($p) && !empty($p['url'])) $data['podcast'] = $p;
+}
 $base = "/var/www/html/content/cours/$slug";
-if (is_dir($base)) {
+if (!isset($data['podcast']) && is_dir($base)) {
     if (file_exists("$base/podcast.json")) {
         $data['podcast'] = json_decode(file_get_contents("$base/podcast.json"), true);
         // Raccourci : "fichier" (nom du fichier audio dans le dossier du cours)

@@ -129,3 +129,31 @@ CREATE TABLE IF NOT EXISTS `cours_images` (
 -- Le contenu des 9 cours existants est versé dans cours_contenu par le Job
 -- seed-core (import_cours.php), qui n'écrase jamais une ligne déjà présente.
 -- Rien à faire ici : relancer le Job après cette migration suffit.
+
+-- ── Vidéo et podcast éditables depuis l'interface ──────────────────────────
+-- La fiche du podcast rejoint celle de la vidéo dans cours_contenu ; le fichier
+-- audio, lui, va dans la table des médias (voir juste en dessous).
+ALTER TABLE `cours_contenu`
+  ADD COLUMN IF NOT EXISTS `podcast` text DEFAULT NULL AFTER `video`;
+
+-- cours_images devient cours_medias : elle accueille désormais aussi les
+-- fichiers audio des podcasts. Les deux instructions se complètent — la
+-- première agit sur une base déjà migrée, la seconde sur une base neuve —
+-- et l'une des deux est toujours sans effet.
+RENAME TABLE IF EXISTS `cours_images` TO `cours_medias`;
+
+CREATE TABLE IF NOT EXISTS `cours_medias` (
+  `id`         int          NOT NULL AUTO_INCREMENT,
+  `cours_id`   int          DEFAULT NULL,
+  `type`       enum('image','audio') NOT NULL DEFAULT 'image',
+  `nom`        varchar(200) NOT NULL,
+  `mime`       varchar(80)  NOT NULL,
+  `taille`     int          NOT NULL,
+  `donnees`    longblob     NOT NULL,
+  `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `cours` (`cours_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE `cours_medias`
+  ADD COLUMN IF NOT EXISTS `type` enum('image','audio') NOT NULL DEFAULT 'image' AFTER `cours_id`;

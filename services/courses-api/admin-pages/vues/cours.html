@@ -167,6 +167,7 @@
 
     <div class="onglets">
       <button class="onglet actif" data-vue="contenu">📝 Contenu</button>
+      <button class="onglet" data-vue="medias">🎬 Vidéo & podcast</button>
       <button class="onglet" data-vue="quiz">❓ Quiz</button>
       <button class="onglet" data-vue="fiche">⚙️ Fiche</button>
     </div>
@@ -188,6 +189,54 @@
         <div class="apercu">
           <div class="apercu-titre">Aperçu — rendu identique à la page de lecture</div>
           <div class="rendu" id="rendu"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VIDÉO & PODCAST ── -->
+    <div class="vue" id="vueMedias">
+      <div class="aide">
+        Chacun ajoute un onglet à la page du cours. Laisse l'adresse vide pour qu'il n'apparaisse pas.
+      </div>
+
+      <div class="carte">
+        <div class="carte-tete"><div class="carte-titre">🎬 Vidéo</div></div>
+        <div class="champ">
+          <label for="vUrl">Adresse de la vidéo</label>
+          <input type="text" id="vUrl" maxlength="500" placeholder="https://www.youtube.com/watch?v=…">
+          <small>YouTube, Vimeo ou lien direct. Le lecteur est construit à partir de l'adresse.</small>
+        </div>
+        <div class="champs trois" style="margin-top:12px">
+          <div class="champ"><label for="vTitre">Titre</label><input type="text" id="vTitre" maxlength="200"></div>
+          <div class="champ"><label for="vAuteur">Auteur</label><input type="text" id="vAuteur" maxlength="120" placeholder="ex : ADEME"></div>
+          <div class="champ"><label for="vDuree">Durée</label><input type="text" id="vDuree" maxlength="20" placeholder="3:47"></div>
+        </div>
+        <div class="champ" style="margin-top:12px">
+          <label for="vDescription">Description</label>
+          <textarea id="vDescription" rows="2" maxlength="600"></textarea>
+        </div>
+      </div>
+
+      <div class="carte">
+        <div class="carte-tete"><div class="carte-titre">🎧 Podcast</div></div>
+        <div class="champ">
+          <label for="fichierAudio">Téléverser un fichier audio</label>
+          <input type="file" id="fichierAudio" accept="audio/*,.mp3,.m4a,.mp4,.wav,.ogg">
+          <small>MP3, M4A, MP4, WAV ou OGG, 20 Mo maximum. L'adresse ci-dessous se remplit toute seule.</small>
+        </div>
+        <div class="champ" style="margin-top:12px">
+          <label for="pUrl">Adresse du fichier</label>
+          <input type="text" id="pUrl" maxlength="500" placeholder="/api/cours/media.php?id=… ou une adresse externe">
+        </div>
+        <div id="apercuAudio" style="margin-top:10px"></div>
+        <div class="champs trois" style="margin-top:12px">
+          <div class="champ"><label for="pTitre">Titre</label><input type="text" id="pTitre" maxlength="200"></div>
+          <div class="champ"><label for="pAuteur">Auteur</label><input type="text" id="pAuteur" maxlength="120" placeholder="Composmart"></div>
+          <div class="champ"><label for="pDuree">Durée</label><input type="text" id="pDuree" maxlength="20" placeholder="12:30"></div>
+        </div>
+        <div class="champ" style="margin-top:12px">
+          <label for="pDescription">Description</label>
+          <textarea id="pDescription" rows="2" maxlength="600"></textarea>
         </div>
       </div>
     </div>
@@ -266,6 +315,11 @@
         </div>
         <input type="file" id="fichierImage" accept="image/jpeg,image/png,image/gif,image/webp" style="margin-bottom:10px">
         <div id="listeImages"></div>
+      </div>
+
+      <div class="carte">
+        <div class="carte-tete"><div class="carte-titre">Historique</div></div>
+        <div id="infoMaj" style="font-size:0.83rem;font-weight:700;color:#7aaa8a">—</div>
       </div>
 
       <div class="carte" id="carteSuppression" style="display:none">
@@ -651,26 +705,59 @@
       });
     }
 
-    /* ══ IMAGES ════════════════════════════════════════════════════════════ */
-    $('fichierImage').addEventListener('change', function () {
-      var f = this.files && this.files[0];
-      if (!f) return;
+    /* ══ MÉDIAS ════════════════════════════════════════════════════════════ */
+    // Un seul endpoint pour les images et l'audio : même stockage, mêmes
+    // contrôles, seul le plafond de taille et la validation du format diffèrent.
+    function televerser(fichier, type) {
       var fd = new FormData();
-      fd.append('image', f);
+      fd.append('media', fichier);
+      fd.append('type', type);
       if (COURS.id) fd.append('cours_id', COURS.id);
       message('Téléversement…');
-      fetch('/api/admin/image_upload.php', { method: 'POST', body: fd })
+      return fetch('/api/admin/media_upload.php', { method: 'POST', body: fd })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          if (d.error) { erreur(d.error); message(''); return; }
+          if (d.error) { erreur(d.error); message('Échec', 'ko'); return null; }
           erreur('');
-          images.push(d);
-          dessinerImages();
-          message('Image ajoutée ✓', 'ok');
+          message('Fichier ajouté ✓', 'ok');
+          return d;
         })
-        .catch(function () { erreur('Téléversement impossible.'); message(''); });
+        .catch(function () { erreur('Téléversement impossible.'); message('Échec', 'ko'); return null; });
+    }
+
+    $('fichierImage').addEventListener('change', function () {
+      var f = this.files && this.files[0];
       this.value = '';
+      if (!f) return;
+      televerser(f, 'image').then(function (d) {
+        if (!d) return;
+        images.push(d);
+        dessinerImages();
+      });
     });
+
+    $('fichierAudio').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      this.value = '';
+      if (!f) return;
+      televerser(f, 'audio').then(function (d) {
+        if (!d) return;
+        $('pUrl').value = d.url;
+        // Titre pré-rempli au nom du fichier s'il est vide : mieux que rien
+        // côté lecteur, où le titre s'affiche au-dessus du lecteur audio.
+        if (!$('pTitre').value.trim()) $('pTitre').value = d.nom.replace(/\.[^.]+$/, '');
+        majApercuAudio();
+        toucher();
+      });
+    });
+
+    function majApercuAudio() {
+      var url = $('pUrl').value.trim();
+      $('apercuAudio').innerHTML = url
+        ? '<audio controls src="' + esc(url) + '" style="width:100%"></audio>'
+        : '';
+    }
+    $('pUrl').addEventListener('input', majApercuAudio);
 
     function dessinerImages() {
       var c = $('listeImages');
@@ -698,7 +785,7 @@
     function basculerVue(nom) {
       document.querySelectorAll('.onglet').forEach(function (o) { o.classList.toggle('actif', o.dataset.vue === nom); });
       document.querySelectorAll('.vue').forEach(function (v) { v.classList.remove('actif'); });
-      var cible = { contenu: 'vueContenu', quiz: 'vueQuiz', fiche: 'vueFiche' }[nom];
+      var cible = { contenu: 'vueContenu', medias: 'vueMedias', quiz: 'vueQuiz', fiche: 'vueFiche' }[nom];
       if (cible) $(cible).classList.add('actif');
     }
     document.querySelectorAll('.onglet').forEach(function (o) {
@@ -753,6 +840,12 @@
           questions = (d.quiz || []).map(function (q) {
             return { question: q.question || '', options: (q.options || []).slice(), correct: q.correct || 0 };
           });
+          remplirFicheMedia('v', d.video);
+          remplirFicheMedia('p', d.podcast);
+          majApercuAudio();
+          $('infoMaj').textContent = d.maj_at
+            ? 'Dernière modification le ' + d.maj_at + (d.maj_par ? ' par ' + d.maj_par : '')
+            : 'Jamais modifié depuis l\'éditeur.';
           majBadge(d.statut);
           var lien = $('lienLecture');
           lien.href = '/cours/' + d.slug;
@@ -778,9 +871,31 @@
     }
 
     /* ══ ENREGISTREMENT ════════════════════════════════════════════════════ */
+    // Une fiche sans adresse vaut absence : le serveur la ramène à null, et
+    // l'onglet correspondant disparaît de la page du cours.
+    function ficheMedia(prefixe) {
+      return {
+        url:         $(prefixe + 'Url').value,
+        titre:       $(prefixe + 'Titre').value,
+        auteur:      $(prefixe + 'Auteur').value,
+        duree:       $(prefixe + 'Duree').value,
+        description: $(prefixe + 'Description').value
+      };
+    }
+    function remplirFicheMedia(prefixe, f) {
+      f = f || {};
+      $(prefixe + 'Url').value = f.url || '';
+      $(prefixe + 'Titre').value = f.titre || '';
+      $(prefixe + 'Auteur').value = f.auteur || '';
+      $(prefixe + 'Duree').value = f.duree || '';
+      $(prefixe + 'Description').value = f.description || '';
+    }
+
     function corpsRequete(statut) {
       return {
         id: COURS.id || 0,
+        video: ficheMedia('v'),
+        podcast: ficheMedia('p'),
         theme_id: parseInt($('fTheme').value, 10) || R.theme_id,
         titre: $('fTitre').value,
         slug: $('fSlug').value,
@@ -868,7 +983,9 @@
       questions.push({ question: '', options: ['', ''], correct: 0 }); toucher(); dessinerQuestions();
     });
 
-    ['fTitre', 'fDescription', 'fEmoji', 'fNiveau', 'fXp', 'fTheme', 'fStatut', 'fSlug'].forEach(function (id) {
+    ['fTitre', 'fDescription', 'fEmoji', 'fNiveau', 'fXp', 'fTheme', 'fStatut', 'fSlug',
+     'vUrl', 'vTitre', 'vAuteur', 'vDuree', 'vDescription',
+     'pUrl', 'pTitre', 'pAuteur', 'pDuree', 'pDescription'].forEach(function (id) {
       $(id).addEventListener('input', toucher);
       $(id).addEventListener('change', function () {
         toucher();

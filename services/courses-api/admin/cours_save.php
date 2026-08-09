@@ -66,6 +66,29 @@ $has_text     = $m['has_text'];
 $nb_questions = $m['nb_questions'];
 $quiz_json = $quiz ? json_encode($quiz, JSON_UNESCAPED_UNICODE) : null;
 
+// ── Vidéo et podcast ───────────────────────────────────────────────────────
+// Ce sont des fiches (titre, auteur, durée, description) accompagnées d'une
+// URL : celle d'un hébergeur pour la vidéo, celle de /api/cours/media.php pour
+// un podcast téléversé. Sans URL, la fiche n'a rien à jouer et vaut absence.
+function fiche_media($brut) {
+    if (!is_array($brut)) return null;
+    $url = trim((string)($brut['url'] ?? ''));
+    if ($url === '') return null;
+    return [
+        'url'         => mb_substr($url, 0, 500),
+        'titre'       => mb_substr(trim((string)($brut['titre'] ?? '')), 0, 200),
+        'auteur'      => mb_substr(trim((string)($brut['auteur'] ?? '')), 0, 120),
+        'duree'       => mb_substr(trim((string)($brut['duree'] ?? '')), 0, 20),
+        'description' => mb_substr(trim((string)($brut['description'] ?? '')), 0, 600),
+    ];
+}
+$video   = fiche_media($d['video'] ?? null);
+$podcast = fiche_media($d['podcast'] ?? null);
+$video_json   = $video   ? json_encode($video,   JSON_UNESCAPED_UNICODE) : null;
+$podcast_json = $podcast ? json_encode($podcast, JSON_UNESCAPED_UNICODE) : null;
+$has_video   = $video   ? 1 : 0;
+$has_podcast = $podcast ? 1 : 0;
+
 // ── Slug ───────────────────────────────────────────────────────────────────
 // Il est figé après création : user_progress.cours_id stocke le slug en clair,
 // sans clé étrangère (cf. db/core.sql). Le renommer orphelinerait la
@@ -90,10 +113,10 @@ if ($id === 0) {
     $stmt = mysqli_prepare($c,
         'INSERT INTO cours (slug, theme_id, titre, description, emoji, niveau, xp_reward,
                             has_text, has_video, has_podcast, nb_questions, statut, ordre)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)');
-    //          slug theme titre desc emoji niveau xp has_text nb_q statut ordre
-    $stmt->bind_param('sissssiiisi', $slug, $theme_id, $titre, $description, $emoji, $niveau,
-                      $xp, $has_text, $nb_questions, $statut, $ordre);
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    //          slug theme titre desc emoji niveau xp has_text has_video has_pod nb_q statut ordre
+    $stmt->bind_param('sissssiiiiisi', $slug, $theme_id, $titre, $description, $emoji, $niveau,
+                      $xp, $has_text, $has_video, $has_podcast, $nb_questions, $statut, $ordre);
     if (!$stmt->execute()) {
         echo json_encode(['error' => 'La création a échoué.']); exit;
     }
@@ -123,11 +146,12 @@ if ($id === 0) {
 
     $stmt = mysqli_prepare($c,
         'UPDATE cours SET theme_id = ?, titre = ?, description = ?, emoji = ?,
-                          niveau = ?, xp_reward = ?, has_text = ?, nb_questions = ?, statut = ?
+                          niveau = ?, xp_reward = ?, has_text = ?, has_video = ?,
+                          has_podcast = ?, nb_questions = ?, statut = ?
          WHERE id = ?');
-    //          theme titre desc emoji niveau xp has_text nb_q statut id
-    $stmt->bind_param('issssiiisi', $theme_id, $titre, $description, $emoji, $niveau,
-                      $xp, $has_text, $nb_questions, $statut, $id);
+    //          theme titre desc emoji niveau xp has_text has_video has_pod nb_q statut id
+    $stmt->bind_param('issssiiiiisi', $theme_id, $titre, $description, $emoji, $niveau,
+                      $xp, $has_text, $has_video, $has_podcast, $nb_questions, $statut, $id);
     if (!$stmt->execute()) {
         echo json_encode(['error' => "L'enregistrement a échoué."]); exit;
     }
@@ -137,13 +161,15 @@ if ($id === 0) {
 // ── Contenu ────────────────────────────────────────────────────────────────
 $auteur = $_SESSION['username'] ?? '';
 $stmt = mysqli_prepare($c,
-    'INSERT INTO cours_contenu (cours_id, texte, quiz, maj_par) VALUES (?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE texte = VALUES(texte), quiz = VALUES(quiz), maj_par = VALUES(maj_par)');
-$stmt->bind_param('isss', $id, $texte, $quiz_json, $auteur);
+    'INSERT INTO cours_contenu (cours_id, texte, quiz, video, podcast, maj_par) VALUES (?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE texte = VALUES(texte), quiz = VALUES(quiz),
+                             video = VALUES(video), podcast = VALUES(podcast),
+                             maj_par = VALUES(maj_par)');
+$stmt->bind_param('isssss', $id, $texte, $quiz_json, $video_json, $podcast_json, $auteur);
 $stmt->execute();
 
-// Les images téléversées avant la première sauvegarde sont rattachées au cours.
-mysqli_query($c, "UPDATE cours_images SET cours_id = $id
+// Les médias téléversés avant la première sauvegarde sont rattachés au cours.
+mysqli_query($c, "UPDATE cours_medias SET cours_id = $id
                   WHERE cours_id IS NULL AND created_at > (NOW() - INTERVAL 1 DAY)");
 
 // ── Rattrapage des admins ──────────────────────────────────────────────────

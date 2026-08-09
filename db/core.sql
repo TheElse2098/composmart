@@ -85,7 +85,8 @@ CREATE TABLE `cours_contenu` (
   `cours_id` int      NOT NULL,
   `texte`    longtext DEFAULT NULL,   -- markdown, panneaux séparés par « ## »
   `quiz`     longtext DEFAULT NULL,   -- JSON, même forme que l'ancien quiz.json
-  `video`    text     DEFAULT NULL,   -- JSON {titre, url, ...}
+  `video`    text     DEFAULT NULL,   -- JSON {titre, url, auteur, duree, description}
+  `podcast`  text     DEFAULT NULL,   -- JSON {titre, url, auteur, duree, description}
   `maj_at`   datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `maj_par`  varchar(100) DEFAULT NULL,
   PRIMARY KEY (`cours_id`),
@@ -117,13 +118,15 @@ CREATE TABLE `cours_supprimes` (
   PRIMARY KEY (`slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Images téléversées depuis l'éditeur. Stockées en base et non sur un volume :
+-- Médias téléversés depuis l'éditeur (illustrations, fichiers audio des
+-- podcasts). Stockés en base et non sur un volume :
 -- courses-api monte jusqu'à 3 réplicas et le stockage par défaut de k3s est
 -- ReadWriteOnce — trois pods écrivant chacun sur son disque local divergeraient.
 -- Bénéfice annexe : les images entrent dans le mysqldump de sauvegarde.
-CREATE TABLE `cours_images` (
+CREATE TABLE `cours_medias` (
   `id`         int          NOT NULL AUTO_INCREMENT,
-  `cours_id`   int          DEFAULT NULL,   -- NULL = téléversée avant la 1re sauvegarde
+  `cours_id`   int          DEFAULT NULL,   -- NULL = téléversé avant la 1re sauvegarde
+  `type`       enum('image','audio') NOT NULL DEFAULT 'image',
   `nom`        varchar(200) NOT NULL,
   `mime`       varchar(80)  NOT NULL,
   `taille`     int          NOT NULL,
