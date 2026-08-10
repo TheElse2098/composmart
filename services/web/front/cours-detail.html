@@ -73,6 +73,13 @@
     .tab-btn.active { background: #fff; color: #1e6e3e; box-shadow: 0 2px 8px rgba(30,110,62,0.13); }
     .tab-btn:hover:not(.active):not(.disabled) { background: rgba(255,255,255,0.5); }
     .tab-btn.disabled { opacity: 0.38; cursor: not-allowed; }
+    /* Vidéo et podcast n'existent que sur certains cours : absents, leurs onglets
+       sont retirés plutôt que grisés — un onglet grisé promet un contenu à venir,
+       alors qu'ici il n'y en aura jamais pour ce cours. Le Quiz, lui, reste grisé :
+       il fait partie du parcours attendu et son absence est l'exception.
+       enableTab() retire « disabled » quand le média existe, ce qui suffit à
+       faire réapparaître l'onglet — aucune logique JS supplémentaire. */
+    .tab-btn.tab-media.disabled { display: none; }
 
     /* ── PROGRESS BAR ── */
     .progress-wrap { padding: 12px 0 0; }
@@ -323,8 +330,8 @@
   <div class="tabs-wrap">
     <div class="tabs-nav">
       <button class="tab-btn active" id="tabBtnCours" onclick="switchTab('cours')">📖 Cours</button>
-      <button class="tab-btn disabled" id="tabBtnVideo" onclick="switchTab('video')">▶️ Vidéo</button>
-      <button class="tab-btn disabled" id="tabBtnPodcast" onclick="switchTab('podcast')">🎧 Podcast</button>
+      <button class="tab-btn tab-media disabled" id="tabBtnVideo" onclick="switchTab('video')">▶️ Vidéo</button>
+      <button class="tab-btn tab-media disabled" id="tabBtnPodcast" onclick="switchTab('podcast')">🎧 Podcast</button>
       <button class="tab-btn disabled" id="tabBtnQuiz" onclick="switchTab('quiz')">🧠 Quiz</button>
     </div>
   </div>
