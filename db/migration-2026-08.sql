@@ -174,11 +174,12 @@ ALTER TABLE `cours_contenu`
   ADD COLUMN IF NOT EXISTS `podcast` text DEFAULT NULL AFTER `video`;
 
 -- cours_images devient cours_medias : elle accueille désormais aussi les
--- fichiers audio des podcasts. Les deux instructions se complètent — la
--- première agit sur une base déjà migrée, la seconde sur une base neuve —
--- et l'une des deux est toujours sans effet.
-RENAME TABLE IF EXISTS `cours_images` TO `cours_medias`;
-
+-- fichiers audio des podcasts.
+-- « RENAME TABLE IF EXISTS » n'existe pas en SQL : MariaDB l'exécute comme un
+-- RENAME normal et échoue dès que la table cible existe déjà — ce qui arrive
+-- au 2e passage de cette migration, puisque le CREATE TABLE juste après crée
+-- justement cette cible. D'où la procédure ci-dessous, réellement rejouable :
+-- SELECT COUNT + IF détermine s'il y a quelque chose à renommer avant d'agir.
 CREATE TABLE IF NOT EXISTS `cours_medias` (
   `id`         int          NOT NULL AUTO_INCREMENT,
   `cours_id`   int          DEFAULT NULL,
@@ -194,3 +195,22 @@ CREATE TABLE IF NOT EXISTS `cours_medias` (
 
 ALTER TABLE `cours_medias`
   ADD COLUMN IF NOT EXISTS `type` enum('image','audio') NOT NULL DEFAULT 'image' AFTER `cours_id`;
+
+-- Bascule des données de l'ancienne table si elle existe encore et n'a pas
+-- déjà été vidée par un passage précédent.
+SET @ancienne_existe = (
+  SELECT COUNT(*) FROM information_schema.TABLES
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cours_images'
+);
+SET @sql_copie = IF(@ancienne_existe > 0,
+  'INSERT INTO cours_medias (cours_id, type, nom, mime, taille, donnees, created_at)
+   SELECT cours_id, \'image\', nom, mime, taille, donnees, created_at FROM cours_images',
+  'DO 0');
+PREPARE stmt_copie FROM @sql_copie;
+EXECUTE stmt_copie;
+DEALLOCATE PREPARE stmt_copie;
+
+SET @sql_drop = IF(@ancienne_existe > 0, 'DROP TABLE cours_images', 'DO 0');
+PREPARE stmt_drop FROM @sql_drop;
+EXECUTE stmt_drop;
+DEALLOCATE PREPARE stmt_drop;
