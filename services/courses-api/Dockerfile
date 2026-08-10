@@ -14,6 +14,13 @@ RUN apt-get update \
     && a2enmod rewrite \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
+# Téléversement des médias de cours (audio des podcasts, illustrations).
+# php:8.3-apache plafonne à 2 Mo par défaut, ce qui rejetait tout podcast avant
+# même que le code ne voie le fichier. post_max_size doit rester au-dessus de
+# upload_max_filesize : il englobe le fichier ET les autres champs du formulaire.
+RUN printf 'upload_max_filesize=25M\npost_max_size=27M\nmemory_limit=192M\n' \
+    > /usr/local/etc/php/conf.d/composmart-uploads.ini
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY shared/_guard.php            /var/www/html/api/_guard.php

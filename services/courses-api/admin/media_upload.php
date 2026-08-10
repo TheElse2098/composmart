@@ -26,21 +26,43 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Un audio pèse bien plus qu'une illustration : les deux plafonds diffèrent.
 $type = ($_POST['type'] ?? 'image') === 'audio' ? 'audio' : 'image';
 $MAX  = $type === 'audio' ? 20 * 1024 * 1024 : 2 * 1024 * 1024;
-$max_lisible = $type === 'audio' ? '20 Mo' : '2 Mo';
+
+/**
+ * Plafond réellement applicable, en octets. PHP refuse le fichier AVANT que ce
+ * script ne s'exécute si upload_max_filesize est dépassé : annoncer notre
+ * propre limite sans tenir compte de la sienne produit un message faux — c'est
+ * exactement ce qui faisait dire « maximum 20 Mo » pour un refus survenu à 2 Mo.
+ */
+function octets_ini($valeur) {
+    $v = trim((string)$valeur);
+    $n = (int)$v;
+    switch (strtolower(substr($v, -1))) {
+        case 'g': return $n * 1024 * 1024 * 1024;
+        case 'm': return $n * 1024 * 1024;
+        case 'k': return $n * 1024;
+    }
+    return $n;
+}
+$plafond_php = min(octets_ini(ini_get('upload_max_filesize')), octets_ini(ini_get('post_max_size')));
+if ($plafond_php > 0) $MAX = min($MAX, $plafond_php);
+$max_lisible = round($MAX / (1024 * 1024), 1) . ' Mo';
 
 if (empty($_FILES['media']) || $_FILES['media']['error'] !== UPLOAD_ERR_OK) {
-    // UPLOAD_ERR_INI_SIZE arrive quand le fichier dépasse upload_max_filesize
-    // de PHP : le message générique serait incompréhensible.
+    // UPLOAD_ERR_INI_SIZE : dépassement d'upload_max_filesize. Un POST plus gros
+    // que post_max_size, lui, vide complètement $_FILES et $_POST — d'où le test
+    // sur CONTENT_LENGTH, sans lequel on afficherait « aucun fichier reçu ».
     $code = $_FILES['media']['error'] ?? -1;
-    echo json_encode(['error' => in_array($code, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)
-        ? "Fichier trop lourd (maximum $max_lisible)."
+    $trop_gros = in_array($code, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)
+              || (empty($_FILES) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0);
+    echo json_encode(['error' => $trop_gros
+        ? "Fichier trop lourd (maximum $max_lisible sur ce serveur)."
         : 'Aucun fichier reçu.']);
     exit;
 }
 
 $f = $_FILES['media'];
 if ($f['size'] > $MAX) {
-    echo json_encode(['error' => "Fichier trop lourd (maximum $max_lisible)."]); exit;
+    echo json_encode(['error' => "Fichier trop lourd (maximum $max_lisible sur ce serveur)."]); exit;
 }
 
 if ($type === 'image') {
