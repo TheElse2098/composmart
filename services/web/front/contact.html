@@ -150,7 +150,7 @@
           .then(r => r.json())
           .then(d => {
             if (d.ok) {
-              msg.className = 'msg ok'; msg.textContent = '✅ Message envoyé, merci ! Notre équipe te répondra bientôt.';
+              msg.className = 'msg ok'; msg.textContent = '✅ Message envoyé, merci ! Tu peux suivre la réponse depuis ta page de compte, rubrique « Mes signalements ».';
               msg.style.display = 'block';
               form.reset();
             } else {

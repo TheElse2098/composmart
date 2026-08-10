@@ -122,6 +122,46 @@
     .course-empty { font-size: 0.85rem; color: #7aaa8a; font-weight: 600; }
     .course-empty a { color: #1e6e3e; font-weight: 800; }
 
+    /* ── Mes signalements ── */
+    .ticket-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-bottom: 1px solid #eef4ec; cursor: pointer; border-radius: 8px; background: none; border-left: none; border-right: none; border-top: none; width: 100%; text-align: left; font-family: inherit; }
+    .ticket-row:hover { background: #f6faf6; }
+    .ticket-row:last-child { border-bottom: none; }
+    .ticket-chip { font-size: 0.64rem; font-weight: 900; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; }
+    .ticket-chip.ouvert { background: #e4f6ea; color: #1e6e3e; }
+    .ticket-chip.clos { background: #eceff1; color: #607d8b; }
+    .ticket-chip.clos_definitif { background: #fdecea; color: #c0392b; }
+    .ticket-sujet { flex: 1; min-width: 0; font-size: 0.85rem; font-weight: 700; color: #1a3a25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ticket-date { font-size: 0.7rem; color: #7aaa8a; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    .ticket-reponse { background: #e53935; color: #fff; font-size: 0.62rem; font-weight: 900; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; text-transform: uppercase; }
+    .ticket-voir-clos { background: none; border: none; color: #7aaa8a; font-family: inherit; font-size: 0.78rem; font-weight: 800; cursor: pointer; margin-top: 8px; text-decoration: underline; text-underline-offset: 3px; }
+    .ticket-voir-clos:hover { color: #1e6e3e; }
+
+    /* Fil de discussion (boîte modale) */
+    .tchat-voile { position: fixed; inset: 0; background: rgba(15,24,17,0.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 300; }
+    .tchat-voile.ouvert { display: flex; }
+    .tchat { background: #fff; border-radius: 18px; width: 100%; max-width: 520px; max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; }
+    .tchat-tete { padding: 13px 16px; border-bottom: 1.5px solid #eef4ec; display: flex; align-items: center; gap: 10px; }
+    .tchat-titre { flex: 1; min-width: 0; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.92rem; color: #1a3a25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tchat-fermer { background: none; border: none; font-size: 1.05rem; cursor: pointer; color: #7aaa8a; }
+    .tchat-fil { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: #f6faf6; min-height: 160px; }
+    /* overflow-wrap:anywhere — une URL collée sans espaces ne doit pas élargir
+       la bulle au-delà de la fenêtre. */
+    .bulle { max-width: 82%; border-radius: 14px; padding: 8px 12px; font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .bulle.moi { align-self: flex-end; background: #1e6e3e; color: #fff; border-bottom-right-radius: 4px; }
+    .bulle.admin { align-self: flex-start; background: #fff; color: #1a3a25; border: 1px solid #e0eee4; border-bottom-left-radius: 4px; }
+    .bulle-meta { font-size: 0.64rem; font-weight: 800; opacity: 0.75; margin-bottom: 3px; }
+    .tchat-info { padding: 8px 14px; font-size: 0.78rem; font-weight: 700; text-align: center; background: #fdf1d8; color: #8a6100; }
+    .tchat-saisie { padding: 10px 12px; border-top: 1.5px solid #eef4ec; display: flex; gap: 8px; align-items: flex-end; }
+    .tchat-saisie textarea { flex: 1; min-width: 0; resize: none; border: 1.5px solid #c8dfc8; border-radius: 12px; padding: 9px 12px; font-family: inherit; font-size: 0.86rem; background: #f7fbf8; color: #1a3a25; }
+    .tchat-saisie textarea:focus { outline: none; border-color: #1e6e3e; background: #fff; }
+    .tchat-envoyer { background: #1e6e3e; color: #fff; border: none; border-radius: 12px; padding: 10px 16px; font-family: 'Baloo 2', cursive; font-weight: 800; cursor: pointer; }
+    .tchat-envoyer:disabled { opacity: 0.5; cursor: default; }
+    .tchat-actions { display: flex; gap: 8px; padding: 0 12px 12px; }
+    .tchat-btn { flex: 1; background: #fff; border: 1.5px solid #d4e6d8; color: #4a7a5a; border-radius: 10px; padding: 8px; font-size: 0.76rem; font-weight: 800; cursor: pointer; font-family: 'Baloo 2', cursive; }
+    .tchat-btn:hover { border-color: #1e6e3e; color: #1e6e3e; }
+    .tchat-err { padding: 0 14px 10px; font-size: 0.76rem; font-weight: 700; color: #c0392b; text-align: center; }
+    .tchat-err[hidden] { display: none; }
+
     /* Courbe de progression XP (une seule série → pas de légende) */
     .xp-curve { width: 100%; height: 120px; display: block; overflow: visible; }
     .xp-curve-grid { stroke: #e3efe5; stroke-width: 1; }
@@ -238,6 +278,25 @@
     html.dark .btn-primary { background: #2d9959; }
     html.dark .btn-secondary { background: #16211a; color: #52b788; border-color: #2d4030; }
     html.dark .btn-secondary:hover { background: #1e2d22; }
+    html.dark .ticket-row { border-bottom-color: #243328; }
+    html.dark .ticket-row:hover { background: #101a13; }
+    html.dark .ticket-sujet { color: #e8f5ee; }
+    html.dark .ticket-date, html.dark .ticket-voir-clos { color: #7ab88e; }
+    html.dark .ticket-voir-clos:hover { color: #52b788; }
+    html.dark .ticket-chip.ouvert { background: #14301f; color: #52b788; }
+    html.dark .ticket-chip.clos { background: #1e2d22; color: #8fa398; }
+    html.dark .ticket-chip.clos_definitif { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .tchat { background: #16211a; }
+    html.dark .tchat-tete, html.dark .tchat-saisie { border-color: #243328; }
+    html.dark .tchat-titre { color: #e8f5ee; }
+    html.dark .tchat-fil { background: #101a13; }
+    html.dark .bulle.admin { background: #16211a; color: #e8f5ee; border-color: #243328; }
+    html.dark .bulle.moi { background: #2d9959; }
+    html.dark .tchat-info { background: #2e2410; color: #e0b95f; }
+    html.dark .tchat-saisie textarea { background: #101a13; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .tchat-saisie textarea:focus { background: #1e2d22; border-color: #52b788; }
+    html.dark .tchat-btn { background: #16211a; border-color: #2d4030; color: #7ab88e; }
+    html.dark .tchat-err { color: #ef9a9a; }
     html.dark .info-row { border-bottom-color: #243328; }
     html.dark .info-key { color: #7ab88e; }
     html.dark .info-value { color: #e8f5ee; }
@@ -298,6 +357,25 @@
   <div id="site-footer"></div>
 
   <div class="bottom-leaf"></div>
+
+  <!-- Fil de discussion d'un signalement -->
+  <div class="tchat-voile" id="tchatVoile">
+    <div class="tchat">
+      <div class="tchat-tete">
+        <span class="ticket-chip" id="tchatChip"></span>
+        <div class="tchat-titre" id="tchatTitre"></div>
+        <button type="button" class="tchat-fermer" id="tchatFermer" aria-label="Fermer">✕</button>
+      </div>
+      <div class="tchat-fil" id="tchatFil"></div>
+      <div class="tchat-info" id="tchatInfo" style="display:none"></div>
+      <div class="tchat-saisie" id="tchatSaisie">
+        <textarea id="tchatTexte" rows="2" maxlength="3000" placeholder="Écrire un message…"></textarea>
+        <button type="button" class="tchat-envoyer" id="tchatEnvoyer">Envoyer</button>
+      </div>
+      <div class="tchat-err" id="tchatErr" hidden></div>
+      <div class="tchat-actions" id="tchatActions"></div>
+    </div>
+  </div>
 
   <script>
     function esc(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
@@ -438,7 +516,15 @@
                   <span class="history-date">${formatDate(c.completed_at)}</span>
                 </a>`).join('')}</div>`
             : `<div class="course-empty">Aucun cours terminé pour l'instant. <a href="/cours">Commence ici !</a></div>`}
+        </section>
+        <section class="panel" id="ticketsPanel" hidden>
+          <div class="panel-head">📨 Mes signalements <span class="panel-count" id="ticketsCount"></span></div>
+          <div id="ticketsOuverts"></div>
+          <button type="button" class="ticket-voir-clos" id="ticketsToggleClos" hidden></button>
+          <div id="ticketsClos" hidden></div>
         </section>`;
+
+      chargerTickets();
 
       // ── Colonne d'appoint : identité, badges, records ──
       // L'adresse email conditionne l'accès aux cours et la récupération du mot
@@ -612,6 +698,223 @@
           });
       });
     }
+
+    /* ══ MES SIGNALEMENTS ═══════════════════════════════════════════════════
+       L'API (contact/tickets.php) ne renvoie QUE les tickets de la session en
+       cours — la propriété est vérifiée côté serveur, jamais ici. Tout le rendu
+       des contenus passe par textContent : rien de ce qu'un interlocuteur a
+       écrit n'est interprété comme du HTML. */
+    const CAT_TICKET = { bug: '🐛', suggestion: '💡', question: '❓', autre: '✉️' };
+    const CHIP_TICKET = { ouvert: 'Ouvert', clos: 'Clos', clos_definitif: 'Fermé' };
+    let tchatId = null, tchatTimer = null, tchatNb = -1;
+
+    function formatActivite(s) {
+      return String(s || '').slice(0, 16).replace('T', ' ');
+    }
+
+    function chargerTickets() {
+      fetch('/api/contact/tickets.php')
+        .then(r => r.json())
+        .then(d => { if (d && Array.isArray(d.tickets)) renderTickets(d.tickets); })
+        .catch(() => {});
+    }
+
+    function ligneTicket(t) {
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'ticket-row';
+      const chip = document.createElement('span');
+      chip.className = 'ticket-chip ' + t.statut;
+      chip.textContent = CHIP_TICKET[t.statut] || t.statut;
+      const sujet = document.createElement('span');
+      sujet.className = 'ticket-sujet';
+      sujet.textContent = (CAT_TICKET[t.categorie] || '✉️') + ' #' + t.id + ' · ' + t.sujet;
+      row.append(chip, sujet);
+      if (t.non_lu) {
+        const badge = document.createElement('span');
+        badge.className = 'ticket-reponse';
+        badge.textContent = 'Réponse';
+        row.appendChild(badge);
+      }
+      const date = document.createElement('span');
+      date.className = 'ticket-date';
+      date.textContent = formatDate(t.activite);
+      row.appendChild(date);
+      row.addEventListener('click', () => ouvrirTchat(t.id));
+      return row;
+    }
+
+    function renderTickets(tickets) {
+      const panel = document.getElementById('ticketsPanel');
+      if (!panel) return;
+      // Pas de panneau vide sur le profil : la section n'existe que si un
+      // signalement a déjà été envoyé.
+      if (!tickets.length) { panel.hidden = true; return; }
+      panel.hidden = false;
+
+      const ouverts = tickets.filter(t => t.statut === 'ouvert');
+      const clos    = tickets.filter(t => t.statut !== 'ouvert');
+      const nonLus  = tickets.filter(t => t.non_lu).length;
+      document.getElementById('ticketsCount').textContent =
+        nonLus > 0 ? nonLus + ' réponse' + (nonLus > 1 ? 's' : '') + ' non lue' + (nonLus > 1 ? 's' : '') : ouverts.length + ' ouvert' + (ouverts.length > 1 ? 's' : '');
+
+      const boxO = document.getElementById('ticketsOuverts');
+      boxO.innerHTML = '';
+      if (ouverts.length) {
+        ouverts.forEach(t => boxO.appendChild(ligneTicket(t)));
+      } else {
+        const vide = document.createElement('div');
+        vide.className = 'course-empty';
+        vide.textContent = 'Aucun signalement ouvert.';
+        boxO.appendChild(vide);
+      }
+
+      const toggle = document.getElementById('ticketsToggleClos');
+      const boxC = document.getElementById('ticketsClos');
+      boxC.innerHTML = '';
+      if (clos.length) {
+        clos.forEach(t => boxC.appendChild(ligneTicket(t)));
+        toggle.hidden = false;
+        toggle.textContent = (boxC.hidden ? 'Voir' : 'Masquer') + ' les signalements clos (' + clos.length + ')';
+        toggle.onclick = function () {
+          boxC.hidden = !boxC.hidden;
+          toggle.textContent = (boxC.hidden ? 'Voir' : 'Masquer') + ' les signalements clos (' + clos.length + ')';
+        };
+      } else {
+        toggle.hidden = true;
+        boxC.hidden = true;
+      }
+    }
+
+    // ── Fil de discussion ──
+    function ouvrirTchat(id) {
+      tchatId = id;
+      tchatNb = -1;
+      document.getElementById('tchatFil').innerHTML = '';
+      document.getElementById('tchatErr').hidden = true;
+      document.getElementById('tchatVoile').classList.add('ouvert');
+      chargerFil();
+      // Poll léger tant que la boîte est ouverte : un admin peut répondre
+      // pendant qu'on lit.
+      clearInterval(tchatTimer);
+      tchatTimer = setInterval(chargerFil, 8000);
+    }
+
+    function fermerTchat() {
+      clearInterval(tchatTimer);
+      tchatTimer = null;
+      tchatId = null;
+      document.getElementById('tchatVoile').classList.remove('ouvert');
+      chargerTickets();   // la pastille « Réponse » vient de s'éteindre
+    }
+
+    function chargerFil() {
+      if (!tchatId) return;
+      fetch('/api/contact/tickets.php?id=' + tchatId)
+        .then(r => r.json())
+        .then(d => { if (d && d.ticket) renderFil(d); })
+        .catch(() => {});
+    }
+
+    function renderFil(d) {
+      const t = d.ticket;
+      const chip = document.getElementById('tchatChip');
+      chip.className = 'ticket-chip ' + t.statut;
+      chip.textContent = CHIP_TICKET[t.statut] || t.statut;
+      document.getElementById('tchatTitre').textContent = '#' + t.id + ' · ' + t.sujet;
+
+      // Re-rendu seulement quand le nombre de messages change : le poll ne doit
+      // pas casser une sélection de texte ou la position de lecture.
+      const fil = document.getElementById('tchatFil');
+      if (d.messages.length !== tchatNb) {
+        tchatNb = d.messages.length;
+        fil.innerHTML = '';
+        d.messages.forEach(m => {
+          const b = document.createElement('div');
+          b.className = 'bulle ' + (m.est_admin ? 'admin' : 'moi');
+          const meta = document.createElement('div');
+          meta.className = 'bulle-meta';
+          meta.textContent = (m.est_admin ? m.auteur + ' · ADMIN' : 'Moi')
+            + ' · ' + formatActivite(m.created_at);
+          const corps = document.createElement('div');
+          corps.textContent = m.corps;
+          b.append(meta, corps);
+          fil.appendChild(b);
+        });
+        fil.scrollTop = fil.scrollHeight;
+      }
+
+      const ouvert = t.statut === 'ouvert';
+      document.getElementById('tchatSaisie').style.display = ouvert ? 'flex' : 'none';
+      const info = document.getElementById('tchatInfo');
+      info.style.display = ouvert ? 'none' : 'block';
+      info.textContent = t.statut === 'clos'
+        ? 'Signalement clos — rouvre-le pour répondre.'
+        : 'Signalement définitivement clos : il reste lisible, mais plus modifiable.';
+
+      const act = document.getElementById('tchatActions');
+      act.innerHTML = '';
+      if (t.statut === 'ouvert' || t.statut === 'clos') {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tchat-btn';
+        b.textContent = t.statut === 'ouvert' ? '✓ Marquer comme résolu' : '↺ Rouvrir ce signalement';
+        b.addEventListener('click', () => actionTicket(t.statut === 'ouvert' ? 'clore' : 'rouvrir'));
+        act.appendChild(b);
+      }
+    }
+
+    function erreurTchat(msg) {
+      const e = document.getElementById('tchatErr');
+      e.textContent = msg;
+      e.hidden = false;
+    }
+
+    function actionTicket(action) {
+      fetch('/api/contact/tickets.php', {
+        method: 'POST',
+        body: new URLSearchParams({ action: action, id: tchatId })
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) { erreurTchat(d.error); return; }
+          document.getElementById('tchatErr').hidden = true;
+          tchatNb = -1;
+          chargerFil();
+        })
+        .catch(() => erreurTchat('Connexion au serveur impossible.'));
+    }
+
+    function envoyerTchat() {
+      const zone = document.getElementById('tchatTexte');
+      const corps = zone.value.trim();
+      if (!corps || !tchatId) return;
+      const btn = document.getElementById('tchatEnvoyer');
+      btn.disabled = true;
+      fetch('/api/contact/tickets.php', {
+        method: 'POST',
+        body: new URLSearchParams({ action: 'repondre', id: tchatId, corps: corps })
+      })
+        .then(r => r.json())
+        .then(d => {
+          btn.disabled = false;
+          if (d.error) { erreurTchat(d.error); return; }
+          document.getElementById('tchatErr').hidden = true;
+          zone.value = '';
+          tchatNb = -1;
+          chargerFil();
+        })
+        .catch(() => { btn.disabled = false; erreurTchat('Connexion au serveur impossible.'); });
+    }
+
+    document.getElementById('tchatEnvoyer').addEventListener('click', envoyerTchat);
+    document.getElementById('tchatTexte').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) envoyerTchat();
+    });
+    document.getElementById('tchatFermer').addEventListener('click', fermerTchat);
+    document.getElementById('tchatVoile').addEventListener('click', function (e) {
+      if (e.target === this) fermerTchat();
+    });
 
     function renderGuest() {
       document.getElementById('heroAvatar').textContent = '🌱';

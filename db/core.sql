@@ -203,17 +203,46 @@ CREATE TABLE `logins` (
   CONSTRAINT `logins_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ── MESSAGES DE CONTACT (formulaire "nous contacter", réservé aux connectés) ──
+-- ── SIGNALEMENTS / TICKETS (formulaire "nous contacter", réservé aux connectés) ──
+-- Chaque message envoyé via « nous contacter » ouvre un ticket : une
+-- conversation entre son auteur et les administrateurs (table ticket_messages).
+-- Cycle de vie : ouvert ⇄ clos (chaque camp peut clore et rouvrir), puis
+-- clos_definitif — terminal, posé par un admin seulement, lecture seule.
+-- Les colonnes derniere_activite / dernier_auteur_admin / lu_par_*_at portent
+-- les pastilles « réponse non lue » des deux côtés sans table supplémentaire.
 CREATE TABLE `contact_messages` (
   `id`         int          NOT NULL AUTO_INCREMENT,
   `user_id`    int          DEFAULT NULL,
   `username`   varchar(100) DEFAULT NULL,   -- dénormalisé (survit à la suppression du compte)
   `categorie`  enum('bug','suggestion','question','autre') NOT NULL DEFAULT 'autre',
   `sujet`      varchar(150) NOT NULL,
-  `message`    text         NOT NULL,
-  `statut`     enum('nouveau','lu','traite') NOT NULL DEFAULT 'nouveau',
+  `message`    text         NOT NULL,       -- premier message du fil
+  `statut`     enum('ouvert','clos','clos_definitif') NOT NULL DEFAULT 'ouvert',
+  `derniere_activite`    datetime   DEFAULT NULL,
+  `dernier_auteur_admin` tinyint(1) NOT NULL DEFAULT 0,
+  `lu_par_user_at`       datetime   DEFAULT NULL,
+  `lu_par_admin_at`      datetime   DEFAULT NULL,
   `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `statut_date` (`statut`, `created_at`),
+  KEY `user_statut` (`user_id`, `statut`),
   CONSTRAINT `contact_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Fil de discussion d'un ticket. L'accès est verrouillé côté serveur : un
+-- utilisateur ne lit que les fils dont contact_messages.user_id est le sien
+-- (la requête intègre la condition), les admins lisent tout.
+-- user_id et auteur sont mis à NULL à la suppression du compte
+-- (delete_account.php), comme pour le ticket lui-même.
+CREATE TABLE `ticket_messages` (
+  `id`         int          NOT NULL AUTO_INCREMENT,
+  `ticket_id`  int          NOT NULL,
+  `user_id`    int          DEFAULT NULL,
+  `auteur`     varchar(100) DEFAULT NULL,   -- pseudo dénormalisé (affichage)
+  `est_admin`  tinyint(1)   NOT NULL DEFAULT 0,
+  `corps`      text         NOT NULL,
+  `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `ticket_date` (`ticket_id`, `created_at`),
+  CONSTRAINT `tmsg_ibfk_1` FOREIGN KEY (`ticket_id`) REFERENCES `contact_messages` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

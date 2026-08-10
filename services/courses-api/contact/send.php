@@ -52,10 +52,15 @@ if (!$c) { http_response_code(500); echo json_encode(['error' => 'DB error']); e
 $uid   = (int)$_SESSION['user_id'];
 $uname = $_SESSION['username'] ?? '';
 
+// Le message ouvre un TICKET (statut 'ouvert' par défaut) : une conversation
+// que l'auteur retrouve sur sa page de compte et où les admins répondent.
+// lu_par_user_at = NOW() : l'auteur a évidemment lu son propre message.
 $stmt = mysqli_prepare($c,
-    'INSERT INTO contact_messages (user_id, username, categorie, sujet, message) VALUES (?, ?, ?, ?, ?)');
+    'INSERT INTO contact_messages (user_id, username, categorie, sujet, message, derniere_activite, lu_par_user_at)
+     VALUES (?, ?, ?, ?, ?, NOW(), NOW())');
 $stmt->bind_param('issss', $uid, $uname, $cat, $sujet, $message);
 if ($stmt->execute()) {
+    $ticket_id = (int)mysqli_insert_id($c);
     // Notification mail (best-effort : ne bloque jamais l'enregistrement du message).
     $CAT_LABELS = ['bug' => 'Bug', 'suggestion' => 'Suggestion', 'question' => 'Question', 'autre' => 'Autre'];
     $mailSujet = '[SUPPORT] [' . ($CAT_LABELS[$cat] ?? $cat) . '] ' . $sujet;
@@ -76,7 +81,7 @@ if ($stmt->execute()) {
         ],
     ]);
 
-    echo json_encode(['ok' => true]);
+    echo json_encode(['ok' => true, 'ticket' => $ticket_id]);
 } else {
     http_response_code(500);
     echo json_encode(['error' => "Erreur lors de l'envoi."]);

@@ -130,6 +130,43 @@ CREATE TABLE IF NOT EXISTS `cours_images` (
 -- seed-core (import_cours.php), qui n'écrase jamais une ligne déjà présente.
 -- Rien à faire ici : relancer le Job après cette migration suffit.
 
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SIGNALEMENTS / TICKETS
+-- Les messages « nous contacter » deviennent des conversations (tickets).
+-- Décision : l'historique existant est converti en tickets DÉFINITIVEMENT clos
+-- avec leur unique message — lisibles par leur auteur, figés.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- L'enum passe par une étape élargie (anciennes + nouvelles valeurs) : MariaDB
+-- refuserait de retirer une valeur encore utilisée par des lignes. Rejouable :
+-- l'UPDATE devient sans effet une fois la conversion faite.
+ALTER TABLE `contact_messages`
+  MODIFY `statut` enum('nouveau','lu','traite','ouvert','clos','clos_definitif') NOT NULL DEFAULT 'ouvert';
+UPDATE `contact_messages` SET `statut` = 'clos_definitif' WHERE `statut` IN ('nouveau','lu','traite');
+ALTER TABLE `contact_messages`
+  MODIFY `statut` enum('ouvert','clos','clos_definitif') NOT NULL DEFAULT 'ouvert';
+
+ALTER TABLE `contact_messages`
+  ADD COLUMN IF NOT EXISTS `derniere_activite`    datetime   DEFAULT NULL AFTER `statut`,
+  ADD COLUMN IF NOT EXISTS `dernier_auteur_admin` tinyint(1) NOT NULL DEFAULT 0 AFTER `derniere_activite`,
+  ADD COLUMN IF NOT EXISTS `lu_par_user_at`       datetime   DEFAULT NULL AFTER `dernier_auteur_admin`,
+  ADD COLUMN IF NOT EXISTS `lu_par_admin_at`      datetime   DEFAULT NULL AFTER `lu_par_user_at`,
+  ADD KEY IF NOT EXISTS `user_statut` (`user_id`, `statut`);
+UPDATE `contact_messages` SET `derniere_activite` = `created_at` WHERE `derniere_activite` IS NULL;
+
+CREATE TABLE IF NOT EXISTS `ticket_messages` (
+  `id`         int          NOT NULL AUTO_INCREMENT,
+  `ticket_id`  int          NOT NULL,
+  `user_id`    int          DEFAULT NULL,
+  `auteur`     varchar(100) DEFAULT NULL,
+  `est_admin`  tinyint(1)   NOT NULL DEFAULT 0,
+  `corps`      text         NOT NULL,
+  `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `ticket_date` (`ticket_id`, `created_at`),
+  CONSTRAINT `tmsg_ibfk_1` FOREIGN KEY (`ticket_id`) REFERENCES `contact_messages` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ── Vidéo et podcast éditables depuis l'interface ──────────────────────────
 -- La fiche du podcast rejoint celle de la vidéo dans cours_contenu ; le fichier
 -- audio, lui, va dans la table des médias (voir juste en dessous).

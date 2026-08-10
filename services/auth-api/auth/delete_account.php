@@ -119,6 +119,10 @@ $purges = [
 ];
 
 // ── 3. Messages de contact : contenu gardé, auteur détaché ─────────────────
+// Les messages du fil de tickets suivent la même règle que le ticket lui-même,
+// y compris ceux écrits comme admin : le pseudo disparaît partout, l'affichage
+// retombe sur « Admin ». (Table absente sur une base non migrée : échec silencieux.)
+mysqli_query($c, "UPDATE ticket_messages SET user_id = NULL, auteur = NULL WHERE user_id = $uid");
 mysqli_query($c, "UPDATE contact_messages SET user_id = NULL, username = NULL WHERE user_id = $uid");
 
 // ── 4. Journal d'audit SANS identifiant ────────────────────────────────────
