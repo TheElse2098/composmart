@@ -23,6 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405); echo json_encode(['error' => 'Méthode non autorisée']); exit;
 }
 
+// Défense en profondeur : une session admin est déjà exigée pour atteindre ce
+// point, mais une session compromise ne doit pas pouvoir remplir le stockage
+// de la base en boucle avec des fichiers de plusieurs mégaoctets.
+if (!rate_limit('media_upload', 30, 3600)) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Trop de téléversements récents. Réessaie plus tard.']); exit;
+}
+
 // Un audio pèse bien plus qu'une illustration : les deux plafonds diffèrent.
 $type = ($_POST['type'] ?? 'image') === 'audio' ? 'audio' : 'image';
 $MAX  = $type === 'audio' ? 20 * 1024 * 1024 : 2 * 1024 * 1024;
