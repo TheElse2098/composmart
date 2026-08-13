@@ -81,12 +81,25 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            /* Empêche tout scroll de PAGE : la carte doit remplir l'écran restant
+               sous le nav, ni plus ni moins. #nb_compost est passé en position
+               absolute à l'intérieur de ce conteneur (cf. plus bas) précisément pour
+               qu'aucun élément ne pousse .map-wrapper au-delà de cette hauteur. */
+            overflow: hidden;
         }
 
         #map {
             flex: 1;
             width: 100%;
-            height: calc(100vh - 52px); /* full height minus nav */
+            /* 100vh compte la barre d'adresse du navigateur mobile, qui peut être
+               affichée OU rétractée selon le scroll — la carte calculée sur 100vh
+               déborde donc de l'écran réellement visible, et le NAVIGATEUR (pas
+               nous) ajoute un scroll de page pour compenser. dvh est la hauteur du
+               viewport RÉELLEMENT visible à l'instant : garanti de tenir à l'écran.
+               100vh reste le repli pour les navigateurs qui ne connaissent pas dvh
+               (la ligne suivante l'écrase partout ailleurs). */
+            height: calc(100vh - 52px);
+            height: calc(100dvh - 52px);
             z-index: 100;
         }
 
@@ -280,34 +293,46 @@
         .plus-proche-clic:hover { opacity: 0.9; }
         .plus-proche-clic:disabled { opacity: 0.6; cursor: default; }
 
-        /* ── BOUTON RAJOUTER ── */
-        .rajouter {
+        /* ── PILE DE CONTRÔLES DU BAS (mobile) ───────────────────────────────────
+           .rajouter, #nb_compost et .trouver formaient trois blocs positionnés
+           indépendamment, chacun centré horizontalement à des hauteurs bricolées
+           (bottom: 58px, 12px…) — sur un écran étroit, un texte un peu long dans
+           l'un débordait sur l'autre, et #nb_compost, hors de .map-wrapper à
+           l'origine, poussait carrément la PAGE entière à défiler.
+           Ici les trois sont réunis en une pile verticale unique, ancrée en bas,
+           en pleine largeur, chacun sur sa ligne : plus aucune superposition
+           possible, quelle que soit la longueur du texte affiché. */
+        .pile-bas {
             position: absolute;
-            bottom: 58px;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0; right: 0; bottom: 0;
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+            padding: 0 12px 12px;
+            /* Empêche les taps de traverser jusqu'à la carte dans les zones vides
+               entre deux blocs (gap) tout en laissant chaque bouton cliquable. */
+            pointer-events: none;
+        }
+        .pile-bas > * { pointer-events: auto; }
+
+        .rajouter {
             background: #fff;
             border: 2px solid #1e6e3e;
             border-radius: 12px;
             padding: 8px 16px;
-            width: calc(100% - 40px);
-            max-width: 400px;
             text-align: center;
             font-size: 0.9rem;
         }
+        /* visibility:hidden (posé par le JS, cf. onMapClick) réserve quand même sa
+           place dans le flex : sans ce garde-fou, un bandeau vide (bordure +
+           padding) flotterait en permanence au-dessus du bouton « trouver »,
+           même quand rien n'a encore été cliqué sur la carte. */
+        .rajouter[style*="hidden"] { padding: 0; border-width: 0; }
         .rajouter-connexion { color: #2c4a34; font-weight: 600; }
         .rajouter-connexion a { color: #1e6e3e; font-weight: 800; text-decoration: underline; }
 
-        /* ── BOUTON TROUVER ── */
-        .trouver {
-            position: absolute;
-            bottom: 12px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            white-space: nowrap;
-        }
         .trouver button, .rajouter button, #valid_rajout {
             background: #1e6e3e;
             color: #fff;
@@ -318,6 +343,7 @@
             font-weight: 700;
             cursor: pointer;
             transition: opacity 0.2s;
+            width: 100%;
         }
         .trouver button:hover, .rajouter button:hover, #valid_rajout:hover { opacity: 0.85; }
 
@@ -328,9 +354,10 @@
             color: #2c6e49;
             font-weight: 600;
             padding: 6px 16px;
-            background: #eef4ec;
-            flex-shrink: 0;
+            background: #eef4ecf2;
+            border-radius: 10px;
         }
+        #nb_compost:empty { display: none; }
 
         /* Boutons modifier / trajet */
         .tabl button, .tabl input[type=submit] {
@@ -368,20 +395,16 @@
                 text-align: center;
             }
 
-            .rajouter {
-                bottom: 58px;
-                top: auto;
-                left: 50%;
-                transform: translateX(-50%);
-                width: auto;
-                max-width: 400px;
+            /* Desktop : la pile occupe toute la largeur en mobile (chaque ligne à
+               pleine largeur pour ne jamais chevaucher) ; ici on la recentre et on
+               reprend une largeur de contenu, comme avant l'unification en pile. */
+            .pile-bas {
+                align-items: center;
+                padding: 0 0 12px;
             }
-
-            .trouver {
-                bottom: 12px;
-                left: 50%;
-                transform: translateX(-50%);
-            }
+            .rajouter { width: auto; max-width: 400px; }
+            .trouver button, .rajouter button, #valid_rajout { width: auto; }
+            #nb_compost { width: auto; }
         }
 
         /* Bouton « vue par défaut » : hérite du cadre .leaflet-bar (et de son dark
@@ -437,14 +460,20 @@
         .signal-msg.err { color: #c0392b; }
 
         /* ── PANNEAU ADMIN SIGNALEMENTS ── */
+        /* En bas à droite à l'origine (bottom: 12px), exactement dans la zone que
+           .pile-bas occupe maintenant en pleine largeur — la pile grandit jusqu'à
+           3 lignes (ajout + compteur + trouver), donc aucune marge fixe ne suffit
+           à les séparer de façon fiable. En haut à droite à la place : loin de la
+           pile quelle que soit sa hauteur, et voisin naturel de .info_compost /
+           .plus-proche-clic, les deux autres éléments flottants du haut d'écran. */
         #signalAdminBtn {
-            position: absolute; bottom: 12px; right: 12px; z-index: 1000;
+            position: absolute; top: 12px; right: 12px; z-index: 1000;
             background: #e53935; color: #fff; border: none; border-radius: 50px;
             padding: 10px 16px; font-size: 0.85rem; font-weight: 800; cursor: pointer;
             box-shadow: 0 3px 10px rgba(229,57,53,0.4); display: none;
         }
         #signalAdminPanel {
-            position: absolute; bottom: 60px; right: 12px; z-index: 1001;
+            position: absolute; top: 60px; right: 12px; z-index: 1001;
             width: 300px; max-width: calc(100% - 24px); max-height: 55vh;
             background: #fff; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.25);
             display: none; flex-direction: column; overflow: hidden;
@@ -504,11 +533,17 @@
             📍 Trouver le composteur le plus proche d'ici
         </button>
 
-        <div class="trouver">
-            <button onclick="lieu()">📍 Trouver le compost le plus proche</button>
+        <!-- Les trois blocs suivants vivaient séparément, chacun positionné à la
+             main (bottom: 12px, 58px…) : sur un petit écran, un texte un peu long
+             dans l'un débordait par-dessus l'autre. Réunis ici dans une seule pile,
+             chacun prend sa propre ligne, quelle que soit sa longueur. -->
+        <div class="pile-bas">
+            <div id="rajouter_compost" class="rajouter" style="visibility:hidden"></div>
+            <div id="nb_compost"></div>
+            <div class="trouver">
+                <button onclick="lieu()">📍 Trouver le compost le plus proche</button>
+            </div>
         </div>
-
-        <div id="rajouter_compost" class="rajouter" style="visibility:hidden"></div>
 
         <button type="button" id="signalAdminBtn">🚩 <span id="signalCount">0</span></button>
         <div id="signalAdminPanel">
@@ -563,8 +598,6 @@
             </form>
         </div>
     </div>
-
-    <div id="nb_compost"></div>
 
     <script>
         // ── BURGER ──
