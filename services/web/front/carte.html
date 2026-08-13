@@ -643,7 +643,15 @@
         map.on('movestart', function() {
             var r = document.getElementById('rajouter_compost');
             if (r) { r.style.visibility = 'hidden'; r.innerHTML = ''; }
-            if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); currentMarker_click = null; }
+            // currentMarker_click DEVIENT marqueurOrigineProche une fois une
+            // recherche affichée (même objet Leaflet, cf. chercherPlusProcheDuClic) :
+            // le retirer ici supprimait le point de départ du résultat au premier
+            // mouvement de caméra — y compris celui que fitBounds() déclenche
+            // lui-même en centrant la vue sur le résultat qu'on vient d'afficher.
+            if (currentMarker_click !== null && currentMarker_click !== marqueurOrigineProche) {
+                map.removeLayer(currentMarker_click);
+                currentMarker_click = null;
+            }
             // Le résultat d'une recherche « plus proche » (marqueurs + trait) n'est
             // volontairement PAS effacé ici : le premier essai le supprimait dès le
             // moindre déplacement, y compris pour simplement regarder le résultat
@@ -1148,8 +1156,12 @@
             // savoir si l'utilisateur est connecté.
             document.getElementById("supprimer_compost").style.display = "none";
             current_lat_click = e.latlng.lat; current_lon_click = e.latlng.lng;
-            if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); }
+            // nettoyerRecherecheProche() d'abord : si currentMarker_click est aussi
+            // marqueurOrigineProche (résultat affiché depuis un précédent clic), il
+            // est retiré ici — le removeLayer suivant n'a alors plus rien à faire,
+            // au lieu de cibler deux fois la même couche dans un ordre qui prête à confusion.
             nettoyerRecherecheProche();   // un nouveau clic invalide la recherche précédente
+            if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); }
             var greenIcon = L.icon({ iconUrl: '/assets/img/compost_proche.png', iconSize: [30, 30], iconAnchor: [12, 20] });
             currentMarker_click = L.marker(L.latLng(current_lat_click, current_lon_click), {icon: greenIcon});
             currentMarker_click.addTo(map);
