@@ -285,6 +285,10 @@ spec:
             - { name: REDIS_HOST, value: redis }
             - { name: REDIS_PORT, value: "6379" }
             - { name: AUDIT_REMOTE_URL, value: "http://auth-api/api/auth/audit.php" }
+            # Ouvre un ticket dans courses-api (db-core) quand une demande d'ajout
+            # de composteur est envoyée — même motif que GAMES_PURGE_URL/MAP_PURGE_URL :
+            # appel interne en DNS de cluster, protégé par AUDIT_SECRET.
+            - { name: MAP_TICKET_URL, value: "http://courses-api/api/admin/ticket_interne.php" }
             - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
             - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
             - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }

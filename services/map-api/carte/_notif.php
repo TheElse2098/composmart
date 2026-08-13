@@ -131,3 +131,48 @@ function notif_signalement_cree($conn, $id) {
         notif_batch_restore($conn, 'signalements', $lot);
     }
 }
+
+/**
+ * Ouvre un ticket de suivi (db-core, via courses-api) pour une demande d'ajout
+ * de composteur tout juste envoyée. Best-effort et silencieux : un ticket qui
+ * échoue à s'ouvrir ne doit jamais faire échouer la demande elle-même — la
+ * modération reste possible depuis /admin (page pending), le ticket n'est
+ * qu'un canal de discussion en plus.
+ *
+ * $snapshot est celui déjà construit par le bloc appelant (type, accès, règles).
+ */
+function ouvrir_ticket_compost($compost_id, $lat, $lon, $snapshot) {
+    $url = getenv('MAP_TICKET_URL') ?: '';
+    if ($url === '' || empty($_SESSION['user_id'])) return;
+
+    $sujet = 'Proposition de composteur #' . $compost_id;
+    $regles = array_merge(
+        array_map(fn($e) => "✅ $e", $snapshot['mettre'] ?? []),
+        array_map(fn($e) => "❌ $e", $snapshot['pas_mettre'] ?? [])
+    );
+    $message = "Nouvelle proposition de composteur sur la carte.\n\n"
+        . 'Type : ' . ($snapshot['type'] ?? '?') . "\n"
+        . 'Accès : ' . ($snapshot['acces'] ?? '?') . "\n"
+        . 'Position : ' . round($lat, 5) . ', ' . round($lon, 5) . "\n"
+        . 'Carte : https://composmart.fr/carte#compost-' . $compost_id . "\n"
+        . ($snapshot['gestion'] ? "Gestion : {$snapshot['gestion']}\n" : '')
+        . ($regles ? "\nÉléments :\n- " . implode("\n- ", $regles) . "\n" : '')
+        . "\nCe ticket permet d'échanger avec le proposant avant validation ou refus.";
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode([
+            'uid'       => (int)$_SESSION['user_id'],
+            'username'  => $_SESSION['username'] ?? '',
+            'categorie' => 'suggestion',
+            'sujet'     => $sujet,
+            'message'   => $message,
+        ]),
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'X-Audit-Secret: ' . (getenv('AUDIT_SECRET') ?: '')],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 3,
+    ]);
+    @curl_exec($ch);
+    curl_close($ch);
+}

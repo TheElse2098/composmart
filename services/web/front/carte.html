@@ -292,6 +292,8 @@
             text-align: center;
             font-size: 0.9rem;
         }
+        .rajouter-connexion { color: #2c4a34; font-weight: 600; }
+        .rajouter-connexion a { color: #1e6e3e; font-weight: 800; text-decoration: underline; }
 
         /* ── BOUTON TROUVER ── */
         .trouver {
@@ -652,10 +654,18 @@
         });
 
         // ── ADMIN : modifier/supprimer réservés aux admins ──
+        // isLoggedIn conditionne aussi le clic-ajout de composteur (onMapClick) :
+        // un seul appel à me.php sert les deux besoins plutôt que d'en dupliquer un.
+        // etatConnuPromise : onMapClick attend cette promesse avant de décider quel
+        // panneau afficher — sans elle, un clic assez rapide après le chargement de
+        // la page verrait encore isLoggedIn=false et inviterait à se connecter un
+        // utilisateur pourtant déjà connecté.
         let isAdmin = false;
-        fetch('/api/auth/me.php')
+        let isLoggedIn = false;
+        const etatConnuPromise = fetch('/api/auth/me.php')
             .then(r => r.json())
             .then(d => {
+                isLoggedIn = !!(d && d.logged_in);
                 isAdmin = !!(d && d.logged_in && d.isAdmin);
                 if (isAdmin) chargerSignalements();
             })
@@ -1050,6 +1060,7 @@
 
         currentMarker_click = null;
         var current_lat_click = null; var current_lon_click = null;
+        var dernierJetonClic = 0;   // voir onMapClick : annule un affichage de panneau devenu obsolète
 
         /* ══ « Plus proche d'ici » (bouton apparu au clic sur la carte) ═══════════
            Distinct de trouverPlusProche() : celle-ci part de la géoloc ou d'une
@@ -1132,9 +1143,11 @@
         document.getElementById('btnPlusProcheClic').addEventListener('click', chercherPlusProcheDuClic);
 
         function onMapClick(e) {
+            // Coordonnées et marqueur posés tout de suite : la recherche « plus
+            // proche d'ici » ne dépend pas de la connexion et ne doit pas attendre
+            // etatConnuPromise. Seul le panneau d'ajout, lui, patiente le temps de
+            // savoir si l'utilisateur est connecté.
             document.getElementById("supprimer_compost").style.display = "none";
-            var contenu_modi = document.getElementById("rajouter_compost");
-            contenu_modi.innerHTML = '<button type="button" id="valid_rajout">📍 Cliquez ici pour rajouter le compost</button>';
             current_lat_click = e.latlng.lat; current_lon_click = e.latlng.lng;
             if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); }
             nettoyerRecherecheProche();   // un nouveau clic invalide la recherche précédente
@@ -1147,29 +1160,44 @@
             btnProche.style.display = 'block';
             btnProche.disabled = false;
             btnProche.textContent = "📍 Trouver le composteur le plus proche d'ici";
-            document.getElementById('valid_rajout').addEventListener('click', function () {
-                fetch("/api/carte/sites.php", { method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({lat_click: current_lat_click, lon_click: current_lon_click}) })
-                .then((response) => response.text())
-                .then((data) => {
-                    const number = parseInt(data.replace(/"/g, '').trim(), 10);
-                    if (!Number.isFinite(number)) {
-                        let msg = "Ajout impossible pour le moment.";
-                        try { const d = JSON.parse(data); if (d && d.error) msg = d.error; } catch(e) {}
-                        document.getElementById("rajouter_compost").innerHTML = '';
-                        document.getElementById("rajouter_compost").textContent = '⚠️ ' + msg;
-                        return;
-                    }
-                    document.getElementById("tableau").style.display = "block";
-                    document.getElementById("rajouter_compost").style.visibility = "hidden";
-                    // Autor/Inter doivent être les vrais conteneurs : passés en chaînes
-                    // vides, le .innerHTML des cases autorisé/interdit tombait dans le
-                    // vide et le formulaire de création n'affichait aucune règle.
-                    let Acces = document.getElementById("acces");
-                    let Type  = document.getElementById("type");
-                    let Autor = document.getElementById("Autor");
-                    let Inter = document.getElementById("Inter");
-                    current_compost_id = number; nouv = 1;
-                    modifier_compost(number, Autor, Inter, "", Acces, "", Type, null, null, "", "");
+
+            // Jeton de clic : si l'utilisateur reclique ailleurs pendant l'attente
+            // de etatConnuPromise, le panneau du clic PRÉCÉDENT ne doit pas
+            // s'afficher en retard par-dessus le nouveau.
+            var jetonClic = ++dernierJetonClic;
+            var contenu_modi = document.getElementById("rajouter_compost");
+            contenu_modi.innerHTML = '<div class="rajouter-connexion">…</div>';
+            etatConnuPromise.then(function () {
+                if (jetonClic !== dernierJetonClic) return;
+                contenu_modi.innerHTML = isLoggedIn
+                    ? '<button type="button" id="valid_rajout">📍 Cliquez ici pour rajouter le compost</button>'
+                    : '<div class="rajouter-connexion">Connecte-toi pour proposer un composteur ici.'
+                      + ' <a href="/login">Se connecter</a></div>';
+                if (!isLoggedIn) return;   // pas de bouton #valid_rajout à câbler
+                document.getElementById('valid_rajout').addEventListener('click', function () {
+                    fetch("/api/carte/sites.php", { method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({lat_click: current_lat_click, lon_click: current_lon_click}) })
+                    .then((response) => response.text())
+                    .then((data) => {
+                        const number = parseInt(data.replace(/"/g, '').trim(), 10);
+                        if (!Number.isFinite(number)) {
+                            let msg = "Ajout impossible pour le moment.";
+                            try { const d = JSON.parse(data); if (d && d.error) msg = d.error; } catch(e) {}
+                            document.getElementById("rajouter_compost").innerHTML = '';
+                            document.getElementById("rajouter_compost").textContent = '⚠️ ' + msg;
+                            return;
+                        }
+                        document.getElementById("tableau").style.display = "block";
+                        document.getElementById("rajouter_compost").style.visibility = "hidden";
+                        // Autor/Inter doivent être les vrais conteneurs : passés en chaînes
+                        // vides, le .innerHTML des cases autorisé/interdit tombait dans le
+                        // vide et le formulaire de création n'affichait aucune règle.
+                        let Acces = document.getElementById("acces");
+                        let Type  = document.getElementById("type");
+                        let Autor = document.getElementById("Autor");
+                        let Inter = document.getElementById("Inter");
+                        current_compost_id = number; nouv = 1;
+                        modifier_compost(number, Autor, Inter, "", Acces, "", Type, null, null, "", "");
+                    });
                 });
             });
         }

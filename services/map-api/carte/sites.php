@@ -376,6 +376,14 @@ elseif (isset($_POST['type'])) {
             'snapshot'    => $snapshot + ['propose_par' => $_SESSION['username'] ?? 'Anonyme'],
         ]);
         notif_compost_ajoute($connexion, $id);
+        // Coordonnées relues en base plutôt que reprises du formulaire : ce sont
+        // celles réellement enregistrées au clic sur la carte, pas une valeur que
+        // le client pourrait avoir altérée entre-temps.
+        $resPos = mysqli_query($connexion, "SELECT latitude, longitude FROM composts WHERE id=$id");
+        $pos = $resPos ? mysqli_fetch_assoc($resPos) : null;
+        if ($pos) {
+            ouvrir_ticket_compost($id, (float)$pos['latitude'], (float)$pos['longitude'], $snapshot);
+        }
         $response = "Demande envoyée.";
     } else {
         audit_log($connexion, 'compost_modifie', "id=$id", [
@@ -392,6 +400,15 @@ elseif (isset($_POST['type'])) {
 
 // ── AJOUTER UN COMPOST VIA CLIC CARTE ─────────────────────────────────────
 if (isset($_POST['lat_click']) && isset($_POST['lon_click'])) {
+    // Connexion obligatoire : l'ajout ouvre maintenant un ticket de suivi avec
+    // les admins, et un ticket doit avoir un auteur identifiable pour que la
+    // conversation ait un destinataire (cf. contact_messages.user_id).
+    if (empty($_SESSION['user_id'])) {
+        http_response_code(401);
+        echo json_encode(["error" => "Connecte-toi pour proposer un composteur."]);
+        exit();
+    }
+
     $lat = (double)$_POST['lat_click'];
     $lon = (double)$_POST['lon_click'];
 
