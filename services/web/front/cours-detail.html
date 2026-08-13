@@ -90,7 +90,13 @@
     .progress-fill { height: 100%; background: linear-gradient(90deg, #1e6e3e, #52b788); border-radius: 10px; transition: width 0.55s cubic-bezier(.4,0,.2,1); }
 
     /* ── PAGE CONTENT ── */
-    .page-content { width: 100%; max-width: 640px; padding: 0 16px; }
+    /* padding-bottom : .btn-next et .lesson-nav (plus bas) portent un
+       margin-top NÉGATIF pour mordre légèrement sur le bas de la carte
+       au-dessus — un effet voulu. Mais rien ne compensait cet effet quand le
+       bouton est le DERNIER élément de la page : il finissait collé au footer.
+       Cette valeur couvre le cas le plus haut du lot (.lesson-nav, deux boutons
+       sur une ligne) et laisse un espace visible même sur le plus petit écran. */
+    .page-content { width: 100%; max-width: 640px; padding: 0 16px 40px; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
