@@ -254,11 +254,15 @@
 
         /* ── BOUTON « PLUS PROCHE D'ICI » (apparaît en haut au clic sur la carte) ── */
         .plus-proche-clic {
+            /* Sous .info_compost (top:10px, ~34px de haut) et non à côté : les deux
+               partagent la même bande horizontale, et à côté elles se chevauchaient
+               dès que l'écran devenait un peu étroit — texte de l'une par-dessus
+               l'autre, illisible. */
             position: absolute;
-            top: 12px;
+            top: 54px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 1000;
+            z-index: 999;
             background: #1e6e3e;
             color: #fff;
             border: none;
@@ -635,20 +639,16 @@
         // mémorisation — une vue doit être retenue même sans rechargement.
         map.on('moveend', enregistrerVue);
         map.on('click', onMapClick);
-        // true entre le fitBounds() de chercherPlusProcheDuClic() et le movestart
-        // qu'il déclenche lui-même : sans cette distinction, le handler ci-dessous
-        // effacerait le résultat au moment même où il vient de l'afficher.
-        var mouvementProgrammeProche = false;
 
         map.on('movestart', function() {
             var r = document.getElementById('rajouter_compost');
             if (r) { r.style.visibility = 'hidden'; r.innerHTML = ''; }
             if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); currentMarker_click = null; }
-            if (mouvementProgrammeProche) {
-                mouvementProgrammeProche = false;
-            } else if (typeof nettoyerRecherecheProche === 'function') {
-                nettoyerRecherecheProche();
-            }
+            // Le résultat d'une recherche « plus proche » (marqueurs + trait) n'est
+            // volontairement PAS effacé ici : le premier essai le supprimait dès le
+            // moindre déplacement, y compris pour simplement regarder le résultat
+            // qu'on venait d'afficher. Seul un nouveau clic sur la carte (onMapClick,
+            // via nettoyerRecherecheProche()) remplace un résultat par le suivant.
             var btnProche = document.getElementById('btnPlusProcheClic');
             if (btnProche) btnProche.style.display = 'none';
         });
@@ -1122,7 +1122,6 @@
 
                     // Les deux points doivent rester visibles ensemble : flyTo seul
                     // recentrerait sur l'un des deux et pourrait sortir l'autre du cadre.
-                    mouvementProgrammeProche = true;
                     map.fitBounds(traitProche.getBounds(), { padding: [60, 60], maxZoom: 17 });
 
                     var dist = d.distance_m < 1000

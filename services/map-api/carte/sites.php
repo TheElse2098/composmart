@@ -261,7 +261,11 @@ elseif (isset($_POST['plus_proche'])) {
                AND latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?
              ORDER BY distance_m ASC
              LIMIT 1");
-        $stmt->bind_param('dddddddd', $lat, $lat, $lon, $south, $north, $west, $east);
+        // 7 placeholders dans la requête ci-dessus, donc 7 lettres 'd' — un
+        // décompte faux ici fait lever mysqli_sql_exception (mode strict par
+        // défaut depuis PHP 8.1), qui casse le JSON de sortie sans message utile :
+        // c'est ce qui produisait « Erreur réseau » côté front quel que soit le point cliqué.
+        $stmt->bind_param('ddddddd', $lat, $lat, $lon, $south, $north, $west, $east);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_array(MYSQLI_ASSOC);
         if ($row) { $trouve = $row; break; }
