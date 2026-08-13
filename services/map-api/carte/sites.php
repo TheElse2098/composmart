@@ -217,6 +217,71 @@ elseif (isset($_POST['france'])) {
     exit();
 }
 
+// ── COMPOST LE PLUS PROCHE D'UN POINT ──────────────────────────────────────
+// Utilisé par le bouton « Trouver le plus proche d'ici » quand on clique sur
+// la carte : évite de rejouer trouverPlusProche() qui télécharge la France
+// entière côté client rien que pour comparer des distances.
+//
+// Stratégie « boîte qui grandit » : un vrai calcul de distance sur toute la
+// table serait un scan complet malgré l'index (lat/lng), puisqu'il n'existe
+// pas d'index géospatial ici. On restreint donc d'abord par une bounding box
+// (l'index (latitude, longitude) s'applique), on trie par Haversine ce
+// sous-ensemble réduit, et si la boîte est vide on double son rayon — jusqu'à
+// une limite de 200 km, au-delà de laquelle « le plus proche » n'a plus grand
+// sens pour un usage carte.
+elseif (isset($_POST['plus_proche'])) {
+    $lat = (float)($_POST['lat'] ?? '');
+    $lon = (float)($_POST['lon'] ?? '');
+    if ($lat < -90 || $lat > 90 || $lon < -180 || $lon > 180) {
+        echo json_encode(["error" => "Coordonnées invalides."]); exit();
+    }
+
+    $trouve = null;
+    // 0.05° ≈ 5,5 km à l'équateur : suffisant en zone urbaine dense, où la
+    // plupart des recherches ont lieu. Les paliers suivants élargissent vite
+    // (×4 à chaque fois) pour ne pas multiplier les allers-retours en zone rurale.
+    foreach ([0.05, 0.2, 0.8, 2.0] as $rayon_deg) {
+        $north = $lat + $rayon_deg; $south = $lat - $rayon_deg;
+        // Correction de méridien : 1° de longitude vaut de moins en moins de
+        // distance réelle en s'éloignant de l'équateur. Sans elle, la boîte
+        // serait trop étroite en longitude près des pôles et trop large près
+        // de l'équateur.
+        $rayon_lon = $rayon_deg / max(0.1, cos(deg2rad($lat)));
+        $east = $lon + $rayon_lon; $west = $lon - $rayon_lon;
+
+        $stmt = mysqli_prepare($connexion,
+            "SELECT id, longitude, latitude, type,
+                    (6371000 * 2 * ASIN(SQRT(
+                        POWER(SIN(RADIANS(latitude - ?) / 2), 2) +
+                        COS(RADIANS(?)) * COS(RADIANS(latitude)) *
+                        POWER(SIN(RADIANS(longitude - ?) / 2), 2)
+                    ))) AS distance_m
+             FROM composts
+             WHERE statut = 'valide'
+               AND latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?
+             ORDER BY distance_m ASC
+             LIMIT 1");
+        $stmt->bind_param('dddddddd', $lat, $lat, $lon, $south, $north, $west, $east);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_array(MYSQLI_ASSOC);
+        if ($row) { $trouve = $row; break; }
+    }
+
+    if (!$trouve) {
+        echo json_encode(["error" => "Aucun composteur recensé à proximité."]); exit();
+    }
+
+    echo json_encode([
+        "id"        => (int)$trouve["id"],
+        "lat"       => (float)$trouve["latitude"],
+        "lon"       => (float)$trouve["longitude"],
+        "t"         => $trouve["type"] === 'Conteneur' ? 'C' : 'X',
+        "distance_m"=> (int)round((float)$trouve["distance_m"]),
+    ], JSON_UNESCAPED_UNICODE);
+    mysqli_close($connexion);
+    exit();
+}
+
 // ── DÉTAIL D'UN COMPOST (autorisé/interdit) ────────────────────────────────
 elseif (isset($_POST['autorinter'])) {
     $id = intval($_POST['autorinter']);

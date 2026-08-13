@@ -252,6 +252,30 @@
             flex-shrink: 0; cursor: pointer;
         }
 
+        /* ── BOUTON « PLUS PROCHE D'ICI » (apparaît en haut au clic sur la carte) ── */
+        .plus-proche-clic {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: #1e6e3e;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 18px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+            white-space: nowrap;
+            max-width: calc(100% - 24px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .plus-proche-clic:hover { opacity: 0.9; }
+        .plus-proche-clic:disabled { opacity: 0.6; cursor: default; }
+
         /* ── BOUTON RAJOUTER ── */
         .rajouter {
             position: absolute;
@@ -467,6 +491,13 @@
             Cliquez sur un point pour avoir des informations ou cliquez sur la carte pour en rajouter un.
         </div>
 
+        <!-- Apparaît au clic sur la carte (onMapClick) : cherche le composteur le
+             plus proche du POINT CLIQUÉ, distinct du bouton .trouver plus bas qui
+             part de la position GPS ou d'une ville recherchée. -->
+        <button type="button" id="btnPlusProcheClic" class="plus-proche-clic" style="display:none">
+            📍 Trouver le composteur le plus proche d'ici
+        </button>
+
         <div class="trouver">
             <button onclick="lieu()">📍 Trouver le compost le plus proche</button>
         </div>
@@ -602,10 +633,22 @@
         // mémorisation — une vue doit être retenue même sans rechargement.
         map.on('moveend', enregistrerVue);
         map.on('click', onMapClick);
+        // true entre le fitBounds() de chercherPlusProcheDuClic() et le movestart
+        // qu'il déclenche lui-même : sans cette distinction, le handler ci-dessous
+        // effacerait le résultat au moment même où il vient de l'afficher.
+        var mouvementProgrammeProche = false;
+
         map.on('movestart', function() {
             var r = document.getElementById('rajouter_compost');
             if (r) { r.style.visibility = 'hidden'; r.innerHTML = ''; }
             if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); currentMarker_click = null; }
+            if (mouvementProgrammeProche) {
+                mouvementProgrammeProche = false;
+            } else if (typeof nettoyerRecherecheProche === 'function') {
+                nettoyerRecherecheProche();
+            }
+            var btnProche = document.getElementById('btnPlusProcheClic');
+            if (btnProche) btnProche.style.display = 'none';
         });
 
         // ── ADMIN : modifier/supprimer réservés aux admins ──
@@ -1008,17 +1051,102 @@
         currentMarker_click = null;
         var current_lat_click = null; var current_lon_click = null;
 
+        /* ══ « Plus proche d'ici » (bouton apparu au clic sur la carte) ═══════════
+           Distinct de trouverPlusProche() : celle-ci part de la géoloc ou d'une
+           ville recherchée et télécharge toute la France côté client pour comparer
+           les distances. Ici on part d'un point cliqué et on interroge un endpoint
+           dédié (sites.php, plus_proche) qui fait le calcul en SQL — pas de bonne
+           raison de retélécharger des dizaines de milliers de points pour une
+           simple distance. */
+        var marqueurOrigineProche = null;   // le point cliqué
+        var marqueurCibleProche   = null;   // le composteur trouvé
+        var traitProche           = null;   // ligne entre les deux
+
+        function nettoyerRecherecheProche() {
+            [marqueurOrigineProche, marqueurCibleProche, traitProche].forEach(function (l) {
+                if (l) map.removeLayer(l);
+            });
+            marqueurOrigineProche = marqueurCibleProche = traitProche = null;
+        }
+
+        function chercherPlusProcheDuClic() {
+            if (current_lat_click === null || current_lon_click === null) return;
+            var btn = document.getElementById('btnPlusProcheClic');
+            btn.disabled = true;
+            var texteInitial = btn.textContent;
+            btn.textContent = '⏳ Recherche…';
+
+            fetch('/api/carte/sites.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ plus_proche: '1', lat: current_lat_click, lon: current_lon_click })
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    btn.disabled = false;
+                    btn.textContent = texteInitial;
+                    if (!d || d.error || typeof d.lat !== 'number') {
+                        alert((d && d.error) || "Recherche impossible pour l'instant.");
+                        return;
+                    }
+                    nettoyerRecherecheProche();
+
+                    // Origine : réutilise l'icône déjà posée par onMapClick plutôt que
+                    // d'en créer une deuxième superposée au même endroit.
+                    marqueurOrigineProche = currentMarker_click;
+
+                    // Mêmes icônes que le chargement normal des marqueurs (cf. iconConteneur
+                    // / iconCompost plus haut) : la cible retrouvée doit se reconnaître comme
+                    // un composteur de la carte, pas comme un pin générique.
+                    var iconCible = d.t === 'C'
+                        ? L.icon({ iconUrl: '/assets/img/marker-bleu.png', iconSize: [20, 38], iconAnchor: [10, 38], popupAnchor: [0, -38] })
+                        : L.icon({ iconUrl: '/assets/img/icon_vert.png',  iconSize: [25, 38], iconAnchor: [19, 38], popupAnchor: [0, -38] });
+                    marqueurCibleProche = L.marker([d.lat, d.lon], { icon: iconCible }).addTo(map);
+                    marqueurCibleProche.on('click', function () { info_compost(d.id, d.lat, d.lon); });
+
+                    traitProche = L.polyline(
+                        [[current_lat_click, current_lon_click], [d.lat, d.lon]],
+                        { color: '#1e6e3e', weight: 3, dashArray: '6 8', opacity: 0.85 }
+                    ).addTo(map);
+
+                    // Les deux points doivent rester visibles ensemble : flyTo seul
+                    // recentrerait sur l'un des deux et pourrait sortir l'autre du cadre.
+                    mouvementProgrammeProche = true;
+                    map.fitBounds(traitProche.getBounds(), { padding: [60, 60], maxZoom: 17 });
+
+                    var dist = d.distance_m < 1000
+                        ? Math.round(d.distance_m) + ' m'
+                        : (d.distance_m / 1000).toFixed(1) + ' km';
+                    nb_compost.textContent = 'Composteur le plus proche : ' + dist + '.';
+
+                    // Le clic a fait son office : le bouton n'a plus lieu d'être tant
+                    // qu'un nouveau point n'est pas choisi.
+                    btn.style.display = 'none';
+                })
+                .catch(function () {
+                    btn.disabled = false;
+                    btn.textContent = texteInitial;
+                    alert('Erreur réseau, réessaie.');
+                });
+        }
+        document.getElementById('btnPlusProcheClic').addEventListener('click', chercherPlusProcheDuClic);
+
         function onMapClick(e) {
             document.getElementById("supprimer_compost").style.display = "none";
             var contenu_modi = document.getElementById("rajouter_compost");
             contenu_modi.innerHTML = '<button type="button" id="valid_rajout">📍 Cliquez ici pour rajouter le compost</button>';
             current_lat_click = e.latlng.lat; current_lon_click = e.latlng.lng;
             if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); }
+            nettoyerRecherecheProche();   // un nouveau clic invalide la recherche précédente
             var greenIcon = L.icon({ iconUrl: '/assets/img/compost_proche.png', iconSize: [30, 30], iconAnchor: [12, 20] });
             currentMarker_click = L.marker(L.latLng(current_lat_click, current_lon_click), {icon: greenIcon});
             currentMarker_click.addTo(map);
             document.getElementById("rajouter_compost").style.visibility = "visible";
             document.getElementById("tableau").style.display = "none";
+            var btnProche = document.getElementById('btnPlusProcheClic');
+            btnProche.style.display = 'block';
+            btnProche.disabled = false;
+            btnProche.textContent = "📍 Trouver le composteur le plus proche d'ici";
             document.getElementById('valid_rajout').addEventListener('click', function () {
                 fetch("/api/carte/sites.php", { method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({lat_click: current_lat_click, lon_click: current_lon_click}) })
                 .then((response) => response.text())
