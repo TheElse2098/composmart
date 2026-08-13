@@ -641,22 +641,16 @@
         map.on('click', onMapClick);
 
         map.on('movestart', function() {
+            // Seul le TEXTE du panneau se cache au déplacement (le formulaire visait
+            // un point précis, perdu de vue une fois qu'on a bougé) — mais ni
+            // currentMarker_click ni le résultat d'une recherche « plus proche » ne
+            // sont retirés de la carte ici. Ils l'ont été à un moment : le point posé
+            // au clic disparaissait dès le moindre pan ou zoom, y compris pour
+            // simplement le regarder de plus près en dézoomant. Un marqueur ne doit
+            // disparaître que sur une action explicite : un nouveau clic sur la carte
+            // (onMapClick) ou la validation/fermeture du formulaire d'ajout.
             var r = document.getElementById('rajouter_compost');
             if (r) { r.style.visibility = 'hidden'; r.innerHTML = ''; }
-            // currentMarker_click DEVIENT marqueurOrigineProche une fois une
-            // recherche affichée (même objet Leaflet, cf. chercherPlusProcheDuClic) :
-            // le retirer ici supprimait le point de départ du résultat au premier
-            // mouvement de caméra — y compris celui que fitBounds() déclenche
-            // lui-même en centrant la vue sur le résultat qu'on vient d'afficher.
-            if (currentMarker_click !== null && currentMarker_click !== marqueurOrigineProche) {
-                map.removeLayer(currentMarker_click);
-                currentMarker_click = null;
-            }
-            // Le résultat d'une recherche « plus proche » (marqueurs + trait) n'est
-            // volontairement PAS effacé ici : le premier essai le supprimait dès le
-            // moindre déplacement, y compris pour simplement regarder le résultat
-            // qu'on venait d'afficher. Seul un nouveau clic sur la carte (onMapClick,
-            // via nettoyerRecherecheProche()) remplace un résultat par le suivant.
             var btnProche = document.getElementById('btnPlusProcheClic');
             if (btnProche) btnProche.style.display = 'none';
         });
