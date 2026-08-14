@@ -72,6 +72,10 @@ if ($action === 'rejoindre') {
     $stmt->execute();
     $evt = $stmt->get_result()->fetch_assoc();
 
+    if ($evt && $evt['statut'] === 'annule') {
+        echo json_encode(['error' => 'Cet événement a été annulé.']);
+        exit;
+    }
     if (!$evt || $evt['statut'] !== 'ouvert') {
         echo json_encode(['error' => "Cet événement n'accepte pas d'inscription pour le moment."]);
         exit;

@@ -42,14 +42,21 @@
     .evt-statut.brouillon { background: #fff3e0; color: #b26a00; }
     .evt-statut.ouvert { background: #e8f5e9; color: #1e6e3e; }
     .evt-statut.ferme { background: #eceff1; color: #607d8b; }
+    .evt-statut.en_cours { background: #e3f2fd; color: #1565c0; }
+    .evt-statut.termine { background: #ede7f6; color: #5e35b1; }
+    .evt-statut.annule { background: #fff3e0; color: #e65100; }
     .evt-statut.archive { background: #fdecea; color: #c0392b; }
-    .evt-actions { display: flex; gap: 6px; }
+    .evt-actions { display: flex; gap: 6px; flex-wrap: wrap; }
     .evt-actions a, .evt-actions button { border: none; border-radius: 12px; padding: 6px 12px; font-size: 0.75rem; font-weight: 800; cursor: pointer; text-decoration: none; font-family: inherit; }
     .btn-suivi { background: #eef4ec; color: #1e6e3e; }
-    .btn-ouvrir { background: #e8f5e9; color: #1e6e3e; }
-    .btn-fermer { background: #fdecea; color: #c0392b; }
+    .btn-ouvrir, .btn-demarrer, .btn-restaurer { background: #e8f5e9; color: #1e6e3e; }
+    .btn-fermer, .btn-terminer { background: #eceff1; color: #607d8b; }
+    .btn-annuler { background: #fff3e0; color: #e65100; }
+    .btn-supprimer { background: #fdecea; color: #c0392b; }
     .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 18px; background: #fff; border-radius: 12px; }
     .loader { text-align: center; padding: 40px; color: #4a7a5a; font-weight: 700; }
+    .vue-toggle { text-align: center; margin: -6px 0 18px; }
+    .vue-toggle button { background: none; border: none; color: #4a7a5a; font-size: 0.8rem; font-weight: 700; text-decoration: underline; cursor: pointer; font-family: inherit; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
 
@@ -59,8 +66,14 @@
     html.dark .create-card, html.dark .evt-item, html.dark .empty-msg { background: #16211a; }
     html.dark .field label { color: #7ab88e; }
     html.dark .field input { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
-    html.dark .btn-suivi, html.dark .btn-ouvrir { background: #16291c; color: #7fc99a; }
-    html.dark .btn-fermer { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .btn-suivi, html.dark .btn-ouvrir, html.dark .btn-demarrer, html.dark .btn-restaurer { background: #16291c; color: #7fc99a; }
+    html.dark .btn-fermer, html.dark .btn-terminer { background: #1e2d22; color: #9fb0a5; }
+    html.dark .btn-annuler { background: #2e2410; color: #e0b95f; }
+    html.dark .btn-supprimer { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .evt-statut.en_cours { background: #16283d; color: #7ab3e6; }
+    html.dark .evt-statut.termine { background: #241b3d; color: #b39ddb; }
+    html.dark .evt-statut.annule { background: #2e2410; color: #e0b95f; }
+    html.dark .vue-toggle button { color: #7ab88e; }
   </style>
   <link rel="stylesheet" href="/assets/css/desktop.css">
 </head>
@@ -90,8 +103,11 @@
       </form>
     </div>
 
-    <div class="section-title">📋 Événements</div>
+    <div class="section-title" id="listTitle">📋 Événements</div>
     <div id="evtList"></div>
+    <div class="vue-toggle">
+      <button type="button" id="vueToggleBtn">🗑️ Voir les événements supprimés</button>
+    </div>
   </div>
 
   <div class="bottom-leaf"></div>
@@ -99,30 +115,57 @@
   <script>
     function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
 
+    let vueArchives = false;
+
     function chargerListe() {
-      fetch('/api/evenements/admin.php?action=liste')
+      const url = '/api/evenements/admin.php?action=liste' + (vueArchives ? '&vue=archives' : '');
+      fetch(url)
         .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); })
         .then(d => renderListe(d.evenements || []))
         .catch(() => {});
     }
 
-    const STATUT_LABEL = { brouillon: 'Brouillon', ouvert: 'Ouvert', ferme: 'Fermé', archive: 'Archivé' };
+    const STATUT_LABEL = {
+      brouillon: 'Brouillon', ouvert: 'Ouvert', ferme: 'Fermé',
+      en_cours: 'En cours', termine: 'Terminé', annule: 'Annulé', archive: 'Supprimé',
+    };
+
+    // Boutons proposés selon le statut courant, hors "Suivi" (toujours présent)
+    // et hors vue archives (qui n'affiche que "Restaurer").
+    const ACTIONS_PAR_STATUT = {
+      brouillon: [['ouvrir', 'btn-ouvrir', '▶ Ouvrir']],
+      ouvert:    [['fermer', 'btn-fermer', '⏸ Fermer'], ['demarrer', 'btn-demarrer', '🟢 Démarrer']],
+      ferme:     [['ouvrir', 'btn-ouvrir', '▶ Rouvrir']],
+      en_cours:  [['terminer', 'btn-terminer', '🏁 Terminer']],
+      termine:   [],
+      annule:    [],
+    };
 
     function renderListe(evenements) {
+      document.getElementById('listTitle').textContent = vueArchives ? '🗑️ Événements supprimés' : '📋 Événements';
+      document.getElementById('vueToggleBtn').textContent = vueArchives ? '← Retour aux événements actifs' : '🗑️ Voir les événements supprimés';
+
       const box = document.getElementById('evtList');
       if (!evenements.length) {
-        box.innerHTML = '<div class="empty-msg">Aucun événement pour le moment.</div>';
+        box.innerHTML = '<div class="empty-msg">' + (vueArchives ? 'Aucun événement supprimé.' : 'Aucun événement pour le moment.') + '</div>';
         return;
       }
       box.innerHTML = evenements.map(e => {
         const date = new Date(e.date_debut.replace(' ', 'T')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
         let actions = '<a href="/evenements-admin/' + e.id + '" class="btn-suivi">👁 Suivi</a>';
-        if (e.statut === 'brouillon' || e.statut === 'ferme') {
-          actions += ' <button class="btn-ouvrir" data-act="ouvrir" data-id="' + e.id + '">▶ Ouvrir</button>';
+
+        if (vueArchives) {
+          actions += ' <button class="btn-restaurer" data-act="restaurer" data-id="' + e.id + '">↩ Restaurer</button>';
+        } else {
+          (ACTIONS_PAR_STATUT[e.statut] || []).forEach(([act, cls, label]) => {
+            actions += ' <button class="' + cls + '" data-act="' + act + '" data-id="' + e.id + '">' + label + '</button>';
+          });
+          if (e.statut !== 'annule') {
+            actions += ' <button class="btn-annuler" data-act="annuler" data-id="' + e.id + '">✕ Annuler</button>';
+          }
+          actions += ' <button class="btn-supprimer" data-act="supprimer" data-id="' + e.id + '">🗑 Supprimer</button>';
         }
-        if (e.statut === 'ouvert') {
-          actions += ' <button class="btn-fermer" data-act="fermer" data-id="' + e.id + '">⏸ Fermer</button>';
-        }
+
         return '<div class="evt-item">'
           + '<div class="evt-main">'
           + '<div class="evt-titre">' + echap(e.titre) + '</div>'
@@ -137,12 +180,23 @@
       });
     }
 
+    const CONFIRM_MSG = {
+      supprimer: 'Supprimer cet événement ? Il disparaîtra de la liste mais restera consultable dans les supprimés.',
+      annuler: "Annuler cet événement ? Les participants qui tentent de rejoindre verront un message d'annulation.",
+    };
+
     function basculerStatut(action, id) {
+      if (CONFIRM_MSG[action] && !confirm(CONFIRM_MSG[action])) return;
       fetch('/api/evenements/admin.php?action=' + action, { method: 'POST', body: new URLSearchParams({ id }) })
         .then(r => r.json())
         .then(d => { if (d.ok) chargerListe(); else alert(d.error || 'Action impossible.'); })
         .catch(() => alert('Erreur réseau.'));
     }
+
+    document.getElementById('vueToggleBtn').addEventListener('click', () => {
+      vueArchives = !vueArchives;
+      chargerListe();
+    });
 
     document.getElementById('createForm').addEventListener('submit', e => {
       e.preventDefault();

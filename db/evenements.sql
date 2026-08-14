@@ -13,7 +13,12 @@ CREATE TABLE `evenements` (
   -- Code court affiché/projeté en salle (façon Kahoot). Alphabet sans caractères
   -- ambigus (pas de 0/O/1/I) pour rester lisible à l'oral et sur écran.
   `code`          char(6)      NOT NULL,
-  `statut`        enum('brouillon','ouvert','ferme','archive') NOT NULL DEFAULT 'brouillon',
+  -- 'ferme' = inscriptions closes avant le jour J (ex. complet). 'en_cours' /
+  -- 'termine' = bascules manuelles le jour de l'atelier, indépendantes de
+  -- date_debut/date_fin (pas de calcul automatique par horloge).
+  -- 'archive' = supprimé (suppression douce, les données restent en base).
+  -- 'annule' = l'atelier n'aura pas lieu, distinct de 'ferme'.
+  `statut`        enum('brouillon','ouvert','ferme','en_cours','termine','archive','annule') NOT NULL DEFAULT 'brouillon',
   `cree_par`      varchar(100) DEFAULT NULL,       -- username admin, dénormalisé (cf. cours_versions.auteur)
   `created_at`    datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

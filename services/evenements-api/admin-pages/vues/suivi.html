@@ -30,9 +30,18 @@
     .join-statut { display: inline-block; font-size: 0.7rem; font-weight: 900; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; margin-top: 14px; }
     .join-statut.ouvert { background: #e8f5e9; color: #1e6e3e; }
     .join-statut.ferme, .join-statut.brouillon { background: #eceff1; color: #607d8b; }
-    .toggle-btn { margin-top: 16px; border: none; border-radius: 50px; padding: 10px 22px; font-size: 0.85rem; font-weight: 800; cursor: pointer; font-family: 'Baloo 2', cursive; }
-    .toggle-btn.ouvrir { background: #1e6e3e; color: #fff; }
-    .toggle-btn.fermer { background: #fdecea; color: #c0392b; }
+    .join-statut.en_cours { background: #e3f2fd; color: #1565c0; }
+    .join-statut.termine { background: #ede7f6; color: #5e35b1; }
+    .join-statut.annule { background: #fff3e0; color: #e65100; }
+    .join-statut.archive { background: #fdecea; color: #c0392b; }
+    .join-actions { margin-top: 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .join-actions button { border: none; border-radius: 50px; padding: 10px 20px; font-size: 0.85rem; font-weight: 800; cursor: pointer; font-family: 'Baloo 2', cursive; }
+    .btn-principal { background: #1e6e3e; color: #fff; }
+    .btn-secondaire { background: #eceff1; color: #607d8b; }
+    .btn-annuler { background: #fff3e0; color: #e65100; }
+    .btn-supprimer { background: #fdecea; color: #c0392b; }
+    .btn-restaurer { background: #e8f5e9; color: #1e6e3e; }
+    .lecture-seule-msg { font-size: 0.82rem; color: #888; font-weight: 700; margin-top: 14px; }
 
     .section-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin: 8px 4px 12px; display: flex; align-items: center; justify-content: space-between; }
     .part-count { font-size: 0.8rem; color: #4a7a5a; font-weight: 700; }
@@ -50,6 +59,14 @@
     html.dark .join-titre, html.dark .section-title, html.dark .part-item { color: #e8f5ee; }
     html.dark .join-link { background: #1e2d22; color: #7ab88e; }
     html.dark .part-item { border-top-color: #243a2c; }
+    html.dark .join-statut.en_cours { background: #16283d; color: #7ab3e6; }
+    html.dark .join-statut.termine { background: #241b3d; color: #b39ddb; }
+    html.dark .join-statut.annule { background: #2e2410; color: #e0b95f; }
+    html.dark .btn-secondaire { background: #1e2d22; color: #9fb0a5; }
+    html.dark .btn-annuler { background: #2e2410; color: #e0b95f; }
+    html.dark .btn-supprimer { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .btn-restaurer { background: #16291c; color: #7fc99a; }
+    html.dark .lecture-seule-msg { color: #7ab88e; }
   </style>
   <link rel="stylesheet" href="/assets/css/desktop.css">
 </head>
@@ -78,9 +95,7 @@
       <div>
         <span class="join-statut" id="evtStatutBadge"></span>
       </div>
-      <div>
-        <button class="toggle-btn" id="btnToggle"></button>
-      </div>
+      <div class="join-actions" id="evtActions"></div>
     </div>
 
     <div class="section-title">👥 Participants <span class="part-count" id="partCount"></span></div>
@@ -120,17 +135,48 @@
       document.getElementById('evtLink').textContent = lien;
       document.getElementById('evtQr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(lien);
 
+      const STATUT_LABEL = {
+        brouillon: 'Brouillon', ouvert: 'Ouvert aux inscriptions', ferme: 'Fermé',
+        en_cours: 'En cours', termine: 'Terminé', annule: 'Annulé', archive: 'Supprimé',
+      };
       const badge = document.getElementById('evtStatutBadge');
       badge.className = 'join-statut ' + evt.statut;
-      badge.textContent = evt.statut === 'ouvert' ? 'Ouvert aux inscriptions' : (evt.statut === 'brouillon' ? 'Brouillon' : 'Fermé');
+      badge.textContent = STATUT_LABEL[evt.statut] || evt.statut;
 
-      const btn = document.getElementById('btnToggle');
-      if (evt.statut === 'ouvert') {
-        btn.className = 'toggle-btn fermer'; btn.textContent = '⏸ Fermer les inscriptions';
-        btn.onclick = () => basculer('fermer');
+      // Boutons proposés selon le statut courant. Un événement annulé ou
+      // supprimé reste consultable (participants toujours listés) mais en
+      // lecture seule : pas de bascule ouvrir/fermer/démarrer/terminer.
+      const ACTIONS_PAR_STATUT = {
+        brouillon: [['ouvrir', 'btn-principal', '▶ Ouvrir les inscriptions']],
+        ouvert:    [['fermer', 'btn-secondaire', '⏸ Fermer'], ['demarrer', 'btn-principal', '🟢 Démarrer']],
+        ferme:     [['ouvrir', 'btn-principal', '▶ Rouvrir']],
+        en_cours:  [['terminer', 'btn-secondaire', '🏁 Terminer']],
+        termine:   [],
+      };
+      const zone = document.getElementById('evtActions');
+      zone.innerHTML = '';
+      if (evt.statut === 'archive') {
+        zone.innerHTML = '<div class="lecture-seule-msg">🗑️ Événement supprimé — lecture seule.</div>'
+          + '<button class="btn-restaurer" id="btnRestaurer">↩ Restaurer</button>';
+        document.getElementById('btnRestaurer').onclick = () => basculer('restaurer');
+      } else if (evt.statut === 'annule') {
+        zone.innerHTML = '<div class="lecture-seule-msg">✕ Événement annulé.</div>';
       } else {
-        btn.className = 'toggle-btn ouvrir'; btn.textContent = '▶ Ouvrir les inscriptions';
-        btn.onclick = () => basculer('ouvrir');
+        (ACTIONS_PAR_STATUT[evt.statut] || []).forEach(([act, cls, label]) => {
+          const b = document.createElement('button');
+          b.className = cls; b.textContent = label;
+          b.onclick = () => basculer(act);
+          zone.appendChild(b);
+        });
+        const annulerBtn = document.createElement('button');
+        annulerBtn.className = 'btn-annuler'; annulerBtn.textContent = '✕ Annuler';
+        annulerBtn.onclick = () => { if (confirm("Annuler cet événement ? Les participants qui tentent de rejoindre verront un message d'annulation.")) basculer('annuler'); };
+        zone.appendChild(annulerBtn);
+
+        const supprimerBtn = document.createElement('button');
+        supprimerBtn.className = 'btn-supprimer'; supprimerBtn.textContent = '🗑 Supprimer';
+        supprimerBtn.onclick = () => { if (confirm('Supprimer cet événement ? Il restera consultable dans les supprimés.')) basculer('supprimer'); };
+        zone.appendChild(supprimerBtn);
       }
 
       document.getElementById('partCount').textContent = '(' + participants.length + ')';
