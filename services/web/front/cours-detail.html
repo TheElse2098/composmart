@@ -208,7 +208,12 @@
     .xp-gained { display: inline-block; background: linear-gradient(135deg, #f9a825, #ff8f00); color: #fff; font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 900; padding: 8px 20px; border-radius: 20px; margin-bottom: 18px; }
 
     /* ── BUTTONS ── */
-    .btn-next { width: 100%; background: linear-gradient(135deg, #1e6e3e, #2d9959); color: #fff; border: none; border-radius: 16px; padding: 15px; font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; cursor: pointer; margin-top: -14px; position: relative; z-index: 1; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 4px 12px rgba(30,110,62,0.32); }
+    /* margin-top négatif volontaire : le bouton mord légèrement sur le bas
+       arrondi de la carte au-dessus. Mais combiné au padding-bottom de 32px de
+       .lesson-card, -14px ne laissait que 18px net entre la dernière ligne de
+       texte et le bouton — trop serré, le texte semblait toucher le bouton.
+       -8px : l'effet de recouvrement reste visible, l'écart net passe à 24px. */
+    .btn-next { width: 100%; background: linear-gradient(135deg, #1e6e3e, #2d9959); color: #fff; border: none; border-radius: 16px; padding: 15px; font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; cursor: pointer; margin-top: -8px; position: relative; z-index: 1; transition: transform 0.15s ease, box-shadow 0.15s ease; box-shadow: 0 4px 12px rgba(30,110,62,0.32); }
     .btn-next:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(30,110,62,0.4); }
     .btn-next:active { transform: scale(0.97); }
     /* Désactivé : gris-vert de la palette plutôt qu'un gris neutre, et texte
@@ -216,8 +221,8 @@
     .btn-next:disabled { background: #dbe7dd; color: #8aa694; box-shadow: none; cursor: not-allowed; transform: none; }
     /* Barre de navigation des sections. Le décalage négatif qui faisait chevaucher
        la carte portait sur .btn-next : il remonte ici, sinon les deux boutons
-       se désaligneraient verticalement. */
-    .lesson-nav { display: flex; gap: 10px; margin-top: -14px; position: relative; z-index: 1; }
+       se désaligneraient verticalement. Même ajustement que .btn-next ci-dessus. */
+    .lesson-nav { display: flex; gap: 10px; margin-top: -8px; position: relative; z-index: 1; }
     .lesson-nav .btn-next { margin-top: 0; flex: 1; }
     .btn-prev { flex: 0 0 auto; background: #fff; color: #1e6e3e; border: 2px solid #a8e6bf; border-radius: 16px; padding: 15px 16px; font-family: 'Baloo 2', cursive; font-size: 0.92rem; font-weight: 900; cursor: pointer; transition: background 0.15s ease, transform 0.15s ease; }
     .btn-prev:hover { background: #eef4ec; transform: translateY(-2px); }
