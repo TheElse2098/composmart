@@ -643,6 +643,19 @@
         map.addControl(fsControl);
         L.control.scale({metric: true, imperial: false}).addTo(map);
 
+        // Sortir du plein-écran carte avant d'ouvrir le menu latéral. Sans ça, le
+        // plugin plein-écran pose .leaflet-pseudo-fullscreen en position:fixed avec
+        // z-index:99999 (cf. Control.FullScreen.css) — bien au-dessus du drawer
+        // (z-index:3000) — et le menu s'ouvre littéralement DERRIÈRE la carte,
+        // invisible. Délégation d'événement sur document : #burgerBtn est injecté
+        // de façon asynchrone par site-nav.js, donc absent du DOM au moment où ce
+        // script s'exécute — un addEventListener direct sur l'élément le raterait.
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('#burgerBtn') && map._isFullscreen) {
+                fsControl.toggleFullScreen();
+            }
+        });
+
         // Bouton « revenir à la vue par défaut ». Indispensable dès lors que la vue
         // est mémorisée : sans lui, quelqu'un zoomé sur une rue n'aurait aucun moyen
         // simple de retrouver la France entière, même en rechargeant.
