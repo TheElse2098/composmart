@@ -1,0 +1,12 @@
+# Racine de evenements-api (déployé en /var/www/html/.htaccess).
+#
+# Les pages /evenements-admin ne sont pas des fichiers : elles passent par le
+# contrôleur, qui vérifie isAdmin via auth-api avant de servir quoi que ce soit
+# (cf. courses-api/htaccess-racine, même principe). Les gabarits vivent hors
+# de la racine web (/var/www/evenements-admin-vues/).
+#
+# Le motif ne touche pas /api/evenements/... : la règle porte sur le chemin
+# sans barre initiale, et « api/evenements/admin.php » ne commence pas par
+# « evenements-admin ».
+RewriteEngine On
+RewriteRule ^evenements-admin(/.*)?$ /evenements-admin-controleur.php [L,QSA]

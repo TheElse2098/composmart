@@ -19,6 +19,7 @@ services:
       - games-api
       - courses-api
       - auth-api
+      - evenements-api
     networks: [composmart]
 
   map-api:
@@ -108,6 +109,28 @@ services:
       redis: { condition: service_started }
     networks: [composmart]
 
+  evenements-api:
+    build:
+      context: .
+      dockerfile: services/evenements-api/Dockerfile
+    environment:
+      DB_HOST: db-evenements
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # evenements-api n'a pas la table audit_log : il l'écrit via auth-api.
+      AUDIT_REMOTE_URL: http://auth-api/api/auth/audit.php
+      # Vérification isAdmin des pages /evenements-admin (pas d'accès direct à
+      # `users`, db-core) — même secret partagé que l'audit.
+      AUTH_ADMIN_CHECK_URL: http://auth-api/api/auth/est_admin.php
+      AUDIT_SECRET: ${AUDIT_SECRET}
+    depends_on:
+      db-evenements: { condition: service_healthy }
+      redis: { condition: service_started }
+    networks: [composmart]
+
   redis:
     image: redis:7-alpine
     command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
@@ -158,6 +181,23 @@ services:
     volumes:
       - db_core_data:/var/lib/mysql
       - ./db/core.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [composmart]
+
+  db-evenements:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_evenements_data:/var/lib/mysql
+      - ./db/evenements.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
@@ -242,3 +282,4 @@ volumes:
   db_map_data:
   db_games_data:
   db_core_data:
+  db_evenements_data:

@@ -42,11 +42,12 @@ Le port 8080 de la machine est mappé vers l'Ingress → le site sera sur **http
 ## Étape 2 — Builder les 5 images
 
 ```bash
-docker build -f services/web/Dockerfile         -t composmart/web:local .
-docker build -f services/map-api/Dockerfile     -t composmart/map-api:local .
-docker build -f services/games-api/Dockerfile   -t composmart/games-api:local .
-docker build -f services/courses-api/Dockerfile -t composmart/courses-api:local .
-docker build -f services/auth-api/Dockerfile    -t composmart/auth-api:local .
+docker build -f services/web/Dockerfile          -t composmart/web:local .
+docker build -f services/map-api/Dockerfile      -t composmart/map-api:local .
+docker build -f services/games-api/Dockerfile    -t composmart/games-api:local .
+docker build -f services/courses-api/Dockerfile  -t composmart/courses-api:local .
+docker build -f services/auth-api/Dockerfile     -t composmart/auth-api:local .
+docker build -f services/evenements-api/Dockerfile -t composmart/evenements-api:local .
 ```
 
 ## Étape 3 — Importer les images dans k3d
@@ -57,17 +58,18 @@ pas les images du démon Docker local).
 ```bash
 k3d image import -c composmart \
   composmart/web:local composmart/map-api:local composmart/games-api:local \
-  composmart/courses-api:local composmart/auth-api:local
+  composmart/courses-api:local composmart/auth-api:local composmart/evenements-api:local
 ```
 
 ## Étape 4 — Namespace + ConfigMaps (schémas SQL + seeds)
 
 ```bash
 kubectl create namespace composmart
-kubectl create configmap map-schema   --from-file=schema.sql=db/map.sql   -n composmart
-kubectl create configmap games-schema --from-file=schema.sql=db/games.sql -n composmart
-kubectl create configmap core-schema  --from-file=schema.sql=db/core.sql  -n composmart
-kubectl create configmap seeds        --from-file=shared/seeds/            -n composmart
+kubectl create configmap map-schema       --from-file=schema.sql=db/map.sql       -n composmart
+kubectl create configmap games-schema     --from-file=schema.sql=db/games.sql     -n composmart
+kubectl create configmap core-schema      --from-file=schema.sql=db/core.sql      -n composmart
+kubectl create configmap evenements-schema --from-file=schema.sql=db/evenements.sql -n composmart
+kubectl create configmap seeds            --from-file=shared/seeds/                -n composmart
 ```
 
 > ⚠️ La ConfigMap `seeds` se met à jour par **delete + create**, jamais par
@@ -112,6 +114,7 @@ kubectl get hpa  -n composmart          # autoscalers actifs (metrics-server inc
 curl -s localhost:8080/                        # page d'accueil (HTML)
 curl -s localhost:8080/api/carte/health.php    # {"status":"ok"}
 curl -s localhost:8080/api/auth/me.php         # {"logged_in":false}
+curl -s localhost:8080/api/evenements/health.php   # {"status":"ok"}
 curl -s localhost:8080/api/carte/sites.php -d 'france=1' | head -c 80   # JSON composts
 ```
 
@@ -219,7 +222,7 @@ kubectl create secret docker-registry ghcr-creds \
 Builder avec Docker puis importer dans containerd de k3s :
 
 ```bash
-for s in web map-api games-api courses-api auth-api; do
+for s in web map-api games-api courses-api auth-api evenements-api; do
   docker build -f services/$s/Dockerfile -t composmart/$s:local .
   docker save composmart/$s:local | sudo k3s ctr images import -
 done
@@ -259,10 +262,11 @@ supprimer le bloc Secret du YAML en prod).
 ## 5. ConfigMaps (schémas + seeds)
 
 ```bash
-kubectl create configmap map-schema   --from-file=schema.sql=db/map.sql   -n composmart
-kubectl create configmap games-schema --from-file=schema.sql=db/games.sql -n composmart
-kubectl create configmap core-schema  --from-file=schema.sql=db/core.sql  -n composmart
-kubectl create configmap seeds        --from-file=shared/seeds/            -n composmart
+kubectl create configmap map-schema       --from-file=schema.sql=db/map.sql       -n composmart
+kubectl create configmap games-schema     --from-file=schema.sql=db/games.sql     -n composmart
+kubectl create configmap core-schema      --from-file=schema.sql=db/core.sql      -n composmart
+kubectl create configmap evenements-schema --from-file=schema.sql=db/evenements.sql -n composmart
+kubectl create configmap seeds            --from-file=shared/seeds/                -n composmart
 ```
 
 ## 6. Déployer

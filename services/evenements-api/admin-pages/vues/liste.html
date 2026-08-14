@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <title>CompoSmart – Admin Événements</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+
+    .hero { text-align: center; padding: 26px 20px 12px; }
+    .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; color: #1a3a25; }
+
+    .page-content { width: 100%; max-width: 760px; padding: 16px; }
+    .section-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin: 12px 4px 12px; }
+
+    .create-card { background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); margin-bottom: 24px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 0.75rem; font-weight: 800; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .field input { display: block; width: 100%; padding: 10px 13px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.9rem; color: #1a3a25; background: #f7fbf8; outline: none; font-family: inherit; }
+    .field input:focus { border-color: #1e6e3e; background: #fff; }
+    .btn-create { background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 11px 24px; font-size: 0.9rem; font-weight: 800; cursor: pointer; font-family: 'Baloo 2', cursive; }
+    .btn-create:disabled { opacity: 0.5; cursor: default; }
+    .create-err { color: #c0392b; font-size: 0.82rem; font-weight: 700; margin-top: 10px; display: none; }
+
+    .evt-item { background: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .evt-main { flex: 1; min-width: 200px; }
+    .evt-titre { font-weight: 800; color: #1a3a25; font-size: 0.95rem; }
+    .evt-meta { font-size: 0.78rem; color: #888; margin-top: 3px; }
+    .evt-code { font-family: 'Baloo 2', cursive; font-weight: 900; letter-spacing: 2px; color: #1e6e3e; }
+    .evt-statut { font-size: 0.66rem; font-weight: 900; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; }
+    .evt-statut.brouillon { background: #fff3e0; color: #b26a00; }
+    .evt-statut.ouvert { background: #e8f5e9; color: #1e6e3e; }
+    .evt-statut.ferme { background: #eceff1; color: #607d8b; }
+    .evt-statut.archive { background: #fdecea; color: #c0392b; }
+    .evt-actions { display: flex; gap: 6px; }
+    .evt-actions a, .evt-actions button { border: none; border-radius: 12px; padding: 6px 12px; font-size: 0.75rem; font-weight: 800; cursor: pointer; text-decoration: none; font-family: inherit; }
+    .btn-suivi { background: #eef4ec; color: #1e6e3e; }
+    .btn-ouvrir { background: #e8f5e9; color: #1e6e3e; }
+    .btn-fermer { background: #fdecea; color: #c0392b; }
+    .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 18px; background: #fff; border-radius: 12px; }
+    .loader { text-align: center; padding: 40px; color: #4a7a5a; font-weight: 700; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+
+    html.dark body { background: #101a13; }
+    html.dark nav { background: #14301f; }
+    html.dark h1, html.dark .section-title, html.dark .evt-titre { color: #e8f5ee; }
+    html.dark .create-card, html.dark .evt-item, html.dark .empty-msg { background: #16211a; }
+    html.dark .field label { color: #7ab88e; }
+    html.dark .field input { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .btn-suivi, html.dark .btn-ouvrir { background: #16291c; color: #7fc99a; }
+    html.dark .btn-fermer { background: #3d1a1a; color: #ef9a9a; }
+  </style>
+  <link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+
+  <nav><a href="/" class="nav-logo">Compo<span>Smart</span></a></nav>
+
+  <div class="hero">
+    <div class="hero-badge">🎟️ Administration</div>
+    <h1>Événements</h1>
+  </div>
+
+  <div class="loader" id="loader">Chargement…</div>
+
+  <div class="page-content" id="content" style="display:none">
+    <div class="section-title">➕ Créer un événement</div>
+    <div class="create-card">
+      <form id="createForm">
+        <div class="field"><label>Titre</label>
+          <input type="text" id="titre" maxlength="150" placeholder="Atelier compostage — Entreprise X" required></div>
+        <div class="field"><label>Lieu</label>
+          <input type="text" id="lieu" maxlength="200" placeholder="Salle de réunion, 12 rue…"></div>
+        <div class="field"><label>Date et heure</label>
+          <input type="datetime-local" id="dateDebut" required></div>
+        <button type="submit" class="btn-create" id="btnCreate">Créer</button>
+        <div class="create-err" id="createErr"></div>
+      </form>
+    </div>
+
+    <div class="section-title">📋 Événements</div>
+    <div id="evtList"></div>
+  </div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+
+    function chargerListe() {
+      fetch('/api/evenements/admin.php?action=liste')
+        .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); })
+        .then(d => renderListe(d.evenements || []))
+        .catch(() => {});
+    }
+
+    const STATUT_LABEL = { brouillon: 'Brouillon', ouvert: 'Ouvert', ferme: 'Fermé', archive: 'Archivé' };
+
+    function renderListe(evenements) {
+      const box = document.getElementById('evtList');
+      if (!evenements.length) {
+        box.innerHTML = '<div class="empty-msg">Aucun événement pour le moment.</div>';
+        return;
+      }
+      box.innerHTML = evenements.map(e => {
+        const date = new Date(e.date_debut.replace(' ', 'T')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+        let actions = '<a href="/evenements-admin/' + e.id + '" class="btn-suivi">👁 Suivi</a>';
+        if (e.statut === 'brouillon' || e.statut === 'ferme') {
+          actions += ' <button class="btn-ouvrir" data-act="ouvrir" data-id="' + e.id + '">▶ Ouvrir</button>';
+        }
+        if (e.statut === 'ouvert') {
+          actions += ' <button class="btn-fermer" data-act="fermer" data-id="' + e.id + '">⏸ Fermer</button>';
+        }
+        return '<div class="evt-item">'
+          + '<div class="evt-main">'
+          + '<div class="evt-titre">' + echap(e.titre) + '</div>'
+          + '<div class="evt-meta">' + date + (e.lieu ? ' · ' + echap(e.lieu) : '') + ' · code <span class="evt-code">' + echap(e.code) + '</span> · ' + e.nb_participants + ' inscrit(s)</div>'
+          + '</div>'
+          + '<span class="evt-statut ' + e.statut + '">' + STATUT_LABEL[e.statut] + '</span>'
+          + '<div class="evt-actions">' + actions + '</div>'
+          + '</div>';
+      }).join('');
+      box.querySelectorAll('[data-act]').forEach(btn => {
+        btn.addEventListener('click', () => basculerStatut(btn.dataset.act, btn.dataset.id));
+      });
+    }
+
+    function basculerStatut(action, id) {
+      fetch('/api/evenements/admin.php?action=' + action, { method: 'POST', body: new URLSearchParams({ id }) })
+        .then(r => r.json())
+        .then(d => { if (d.ok) chargerListe(); else alert(d.error || 'Action impossible.'); })
+        .catch(() => alert('Erreur réseau.'));
+    }
+
+    document.getElementById('createForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const err = document.getElementById('createErr');
+      err.style.display = 'none';
+      const btn = document.getElementById('btnCreate');
+      btn.disabled = true; btn.textContent = 'Création…';
+
+      const dateVal = document.getElementById('dateDebut').value; // format datetime-local
+      const body = new URLSearchParams({
+        titre: document.getElementById('titre').value.trim(),
+        lieu: document.getElementById('lieu').value.trim(),
+        date_debut: dateVal.replace('T', ' '),
+      });
+      fetch('/api/evenements/admin.php?action=creer', { method: 'POST', body })
+        .then(r => r.json())
+        .then(d => {
+          if (!d.ok) { err.textContent = d.error || 'Erreur inconnue.'; err.style.display = 'block'; return; }
+          document.getElementById('createForm').reset();
+          chargerListe();
+        })
+        .catch(() => { err.textContent = 'Erreur réseau, réessaie.'; err.style.display = 'block'; })
+        .finally(() => { btn.disabled = false; btn.textContent = 'Créer'; });
+    });
+
+    // Chargement initial : la garde a déjà vérifié la session côté serveur
+    // (contrôleur), l'appel API confirme juste que le back n'a pas divergé.
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    chargerListe();
+  </script>
+  <script src="/assets/js/theme.js"></script>
+</body>
+</html>

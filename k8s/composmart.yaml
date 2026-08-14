@@ -4,13 +4,14 @@
 #
 # Images attendues (à builder puis importer dans k3d, cf. k8s/README.md) :
 #   composmart/web composmart/map-api composmart/games-api
-#   composmart/courses-api composmart/auth-api   (tag :local)
+#   composmart/courses-api composmart/auth-api composmart/evenements-api  (tag :local)
 #
 # Les schémas SQL (db/*.sql) sont injectés via ConfigMaps générées au déploiement :
-#   kubectl create configmap map-schema   --from-file=schema.sql=db/map.sql   -n composmart
-#   kubectl create configmap games-schema --from-file=schema.sql=db/games.sql -n composmart
-#   kubectl create configmap core-schema  --from-file=schema.sql=db/core.sql  -n composmart
-#   kubectl create configmap seeds        --from-file=shared/seeds/            -n composmart
+#   kubectl create configmap map-schema       --from-file=schema.sql=db/map.sql       -n composmart
+#   kubectl create configmap games-schema     --from-file=schema.sql=db/games.sql     -n composmart
+#   kubectl create configmap core-schema      --from-file=schema.sql=db/core.sql      -n composmart
+#   kubectl create configmap evenements-schema --from-file=schema.sql=db/evenements.sql -n composmart
+#   kubectl create configmap seeds            --from-file=shared/seeds/                -n composmart
 # (content/ est embarqué dans l'image courses-api via COPY, pas de ConfigMap.)
 # ============================================================================
 apiVersion: v1
@@ -177,6 +178,49 @@ kind: Service
 metadata: { name: db-core, namespace: composmart }
 spec:
   selector: { app: db-core }
+  ports: [{ port: 3306, targetPort: 3306 }]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: db-evenements, namespace: composmart }
+spec:
+  serviceName: db-evenements
+  replicas: 1
+  selector: { matchLabels: { app: db-evenements } }
+  template:
+    metadata: { labels: { app: db-evenements } }
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:11
+          env:
+            - { name: MARIADB_ROOT_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_ROOT_PASSWORD } } }
+            - { name: MARIADB_DATABASE,      valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: MARIADB_USER,          valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: MARIADB_PASSWORD,      valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+          ports: [{ containerPort: 3306 }]
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/mysql }
+            - { name: init, mountPath: /docker-entrypoint-initdb.d }
+          resources:
+            requests: { cpu: "50m", memory: "192Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
+          readinessProbe:
+            exec: { command: ["healthcheck.sh", "--connect", "--innodb_initialized"] }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: init
+          configMap: { name: evenements-schema }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec: { accessModes: ["ReadWriteOnce"], resources: { requests: { storage: 1Gi } } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: db-evenements, namespace: composmart }
+spec:
+  selector: { app: db-evenements }
   ports: [{ port: 3306, targetPort: 3306 }]
 ---
 # ════════════════════════ SEEDS (Jobs one-shot) ════════════════════════
@@ -502,6 +546,64 @@ spec:
     - type: Resource
       resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
 ---
+# evenements-api — ateliers B2B privés (inscription par code/QR, suivi live).
+# Base et déploiement séparés du reste : profil de charge différent (pics
+# ponctuels le jour d'un atelier, polling de suivi), isolé pour ne pas
+# impacter courses-api/auth-api. Cf. shared/_guard.php pour is_admin_session().
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: evenements-api, namespace: composmart }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: evenements-api } }
+  template:
+    metadata: { labels: { app: evenements-api } }
+    spec:
+      imagePullSecrets: [{ name: ghcr-creds }]
+      containers:
+        - name: evenements-api
+          image: composmart/evenements-api:local
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 80 }]
+          env:
+            - { name: DB_HOST, value: db-evenements }
+            - { name: REDIS_HOST, value: redis }
+            - { name: REDIS_PORT, value: "6379" }
+            # evenements-api n'a pas la table audit_log : il l'écrit via auth-api.
+            - { name: AUDIT_REMOTE_URL, value: "http://auth-api/api/auth/audit.php" }
+            # Vérification isAdmin des pages /evenements-admin (pas d'accès direct
+            # à `users`, db-core) — même secret partagé que l'audit.
+            - { name: AUTH_ADMIN_CHECK_URL, value: "http://auth-api/api/auth/est_admin.php" }
+            - { name: AUDIT_SECRET, valueFrom: { secretKeyRef: { name: composmart-secrets, key: AUDIT_SECRET } } }
+            - { name: DB_NAME,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_NAME } } }
+            - { name: DB_USER,     valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_USER } } }
+            - { name: DB_PASSWORD, valueFrom: { secretKeyRef: { name: composmart-secrets, key: DB_PASSWORD } } }
+          resources:
+            requests: { cpu: "50m", memory: "96Mi" }
+            limits:   { cpu: "500m", memory: "256Mi" }
+          readinessProbe:
+            httpGet: { path: /api/evenements/health.php, port: 80 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata: { name: evenements-api, namespace: composmart }
+spec:
+  selector: { app: evenements-api }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: evenements-api, namespace: composmart }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: evenements-api }
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }
+---
 # ════════════════════════ WEB (front + reverse-proxy) ════════════════════════
 apiVersion: apps/v1
 kind: Deployment
@@ -561,4 +663,9 @@ spec:
           # non-admin reçoit une 404 indiscernable d'une URL inexistante.
           - { path: /admin,     pathType: Prefix, backend: { service: { name: courses-api, port: { number: 80 } } } }
           - { path: /api/auth,  pathType: Prefix, backend: { service: { name: auth-api,    port: { number: 80 } } } }
+          - { path: /api/evenements, pathType: Prefix, backend: { service: { name: evenements-api, port: { number: 80 } } } }
+          # Pages d'administration événements : servies par evenements-api et non
+          # par « web », même principe que /admin (contrôleur + session vérifiée
+          # côté serveur, 404 indiscernable pour un non-admin).
+          - { path: /evenements-admin, pathType: Prefix, backend: { service: { name: evenements-api, port: { number: 80 } } } }
           - { path: /,          pathType: Prefix, backend: { service: { name: web,         port: { number: 80 } } } }
