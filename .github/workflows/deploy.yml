@@ -33,6 +33,8 @@ jobs:
             dockerfile: services/courses-api/Dockerfile
           - service: auth-api
             dockerfile: services/auth-api/Dockerfile
+          - service: evenements-api
+            dockerfile: services/evenements-api/Dockerfile
 
     steps:
       - uses: actions/checkout@v4
