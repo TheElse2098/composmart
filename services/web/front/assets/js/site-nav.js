@@ -30,6 +30,18 @@
     var overlay = document.getElementById('overlay');
     var closeBtn = document.getElementById('closeBtn');
 
+    // #site-nav est `position: sticky` (cf. desktop.css) pour coller le bandeau
+    // en haut de page. Un ancêtre en position non-static — sticky y compris —
+    // crée un nouveau contexte de positionnement : les descendants en
+    // `position: fixed` (le drawer et son overlay) se calent alors sur CET
+    // ancêtre plutôt que sur la fenêtre. #site-nav ne fait dans son flux normal
+    // que la hauteur du <nav> (~52px), donc le drawer — top:0, height:100vh —
+    // se retrouvait comprimé dans cette bande au lieu de couvrir tout l'écran.
+    // On les sort du sous-arbre AVANT tout affichage : plus aucun ancêtre
+    // positionné entre eux et <body>.
+    if (drawer)  document.body.appendChild(drawer);
+    if (overlay) document.body.appendChild(overlay);
+
     function openMenu() {
       drawer.classList.add('open'); overlay.classList.add('open');
       burger.classList.add('open'); document.body.style.overflow = 'hidden';
@@ -45,9 +57,12 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
 
     // Marque le lien actif d'après l'URL courante (data-match = liste de chemins).
-    // Cible à la fois la barre desktop (.nav-links) et la sidebar mobile (.drawer-menu).
+    // Cible à la fois la barre desktop (.nav-links, restée dans #site-nav) et la
+    // sidebar mobile (.drawer-menu, déplacée sous <body> juste au-dessus) : le
+    // drawer n'étant plus un descendant de #site-nav, le sélecteur doit couvrir
+    // les deux emplacements plutôt que de se limiter à #site-nav.
     var path = window.location.pathname.replace(/\/+$/, '') || '/';
-    document.querySelectorAll('#site-nav a[data-match]').forEach(function (a) {
+    document.querySelectorAll('#site-nav a[data-match], #drawer a[data-match]').forEach(function (a) {
       var matches = a.getAttribute('data-match').split(',');
       for (var i = 0; i < matches.length; i++) {
         var m = matches[i].trim().replace(/\/+$/, '') || '/';
