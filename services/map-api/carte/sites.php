@@ -398,7 +398,11 @@ elseif (isset($_POST['type'])) {
         $stmt = mysqli_prepare($connexion,
             "INSERT INTO composts (longitude, latitude, statut, propose_par, type, publique, gestion, info_gestion)
              VALUES (?, ?, 'en_attente', ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ddssssss", $lon, $lat, $propose_par, $type, $acces, $gestion, $info_gest);
+        // 7 placeholders ci-dessus, donc 7 lettres de type — un décompte faux ici
+        // fait lever mysqli_sql_exception (mode strict par défaut depuis PHP 8.1),
+        // qui casse la réponse JSON en silence : exactement le bug déjà rencontré
+        // et corrigé sur la requête « plus_proche » plus haut dans ce fichier.
+        $stmt->bind_param("ddsssss", $lon, $lat, $propose_par, $type, $acces, $gestion, $info_gest);
         if (!$stmt->execute()) {
             echo json_encode(["error" => "La création a échoué."]); exit();
         }
@@ -500,8 +504,10 @@ if (isset($_POST['supprimer'])) {
 
     // Instantané du composteur avant suppression
     $snap = ['id' => $id];
-    $resSnap = mysqli_query($connexion, "SELECT type, publique, latitude, longitude FROM composts WHERE id=$id");
+    $statut_avant = null;
+    $resSnap = mysqli_query($connexion, "SELECT statut, type, publique, latitude, longitude FROM composts WHERE id=$id");
     if ($rowSnap = mysqli_fetch_assoc($resSnap)) {
+        $statut_avant  = $rowSnap['statut'];
         $snap['type']  = $rowSnap['type'];
         $snap['acces'] = $rowSnap['publique'];
         $snap['lat']   = (double)$rowSnap['latitude'];
@@ -510,11 +516,18 @@ if (isset($_POST['supprimer'])) {
 
     mysqli_query($connexion, "DELETE FROM regles WHERE id_compost=$id");
     mysqli_query($connexion, "DELETE FROM composts WHERE id=$id");
-    audit_log($connexion, 'compost_supprime', "id=$id", [
-        'target_type' => 'compost',
-        'target_id'   => $id,
-        'snapshot'    => $snap,
-    ]);
+    // Un point encore 'en_attente' n'a jamais été publié : le supprimer revient à
+    // annuler une proposition (équivalent du refus normalement traité par
+    // pending.php), pas à effacer une donnée réelle de la carte. Ça ne mérite
+    // pas une ligne dans le journal d'audit, qui doit rester réservé aux actions
+    // ayant un effet visible sur ce qui a existé publiquement.
+    if ($statut_avant !== 'en_attente') {
+        audit_log($connexion, 'compost_supprime', "id=$id", [
+            'target_type' => 'compost',
+            'target_id'   => $id,
+            'snapshot'    => $snap,
+        ]);
+    }
     $response = "Compost supprimé.";
 }
 
