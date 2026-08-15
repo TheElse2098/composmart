@@ -782,20 +782,45 @@
     function reloadDashboard() { rafraichirApresAction(); }
 
     // ── Journal d'audit ──
+    // Une entrée par valeur d'action possible (cf. tous les appels audit_log()
+    // du backend) : sans ça, le fallback plus bas ({icon:'•', txt: a.action})
+    // affiche le nom brut de la constante PHP — lisible mais terne au milieu
+    // des lignes illustrées, comme ticket_ferme_definitif sans rien pour l'accompagner.
     const AUDIT_LABELS = {
-      compost_cree:        { icon: '📍', txt: 'Composteur ajouté' },
-      compost_demande:     { icon: '🌱', txt: "Demande d'ajout" },
-      compost_valide:      { icon: '✅', txt: 'Demande validée' },
-      compost_refuse:      { icon: '⛔', txt: 'Demande refusée' },
-      compost_modifie:     { icon: '✏️', txt: 'Composteur modifié' },
-      compost_supprime:    { icon: '🗑️', txt: 'Composteur supprimé' },
-      signalement_cree:    { icon: '🚩', txt: 'Signalement créé' },
-      signalement_resolu:  { icon: '✓', txt: 'Signalement résolu' },
-      signalement_rejete:  { icon: '✗', txt: 'Signalement rejeté' },
-      user_promu:          { icon: '⬆️', txt: 'Utilisateur promu admin' },
-      user_retrograde:     { icon: '⬇️', txt: 'Admin rétrogradé' },
-      user_supprime:       { icon: '🚫', txt: 'Utilisateur supprimé' },
-      mail_envoye:         { icon: '📧', txt: 'Email envoyé' }
+      compost_cree:            { icon: '📍', txt: 'Composteur ajouté' },
+      compost_demande:         { icon: '🌱', txt: "Demande d'ajout" },
+      compost_valide:          { icon: '✅', txt: 'Demande validée' },
+      compost_refuse:          { icon: '⛔', txt: 'Demande refusée' },
+      compost_modifie:         { icon: '✏️', txt: 'Composteur modifié' },
+      compost_supprime:        { icon: '🗑️', txt: 'Composteur supprimé' },
+      signalement_cree:        { icon: '🚩', txt: 'Signalement créé' },
+      signalement_resolu:      { icon: '✓', txt: 'Signalement résolu' },
+      signalement_rejete:      { icon: '✗', txt: 'Signalement rejeté' },
+      user_promu:              { icon: '⬆️', txt: 'Utilisateur promu admin' },
+      user_retrograde:         { icon: '⬇️', txt: 'Admin rétrogradé' },
+      user_supprime:           { icon: '🚫', txt: 'Utilisateur supprimé' },
+      mdp_reinitialise:        { icon: '🔑', txt: 'Mot de passe réinitialisé' },
+      mail_envoye:             { icon: '📧', txt: 'Email envoyé' },
+      cours_cree:              { icon: '📚', txt: 'Cours créé' },
+      cours_modifie:           { icon: '📝', txt: 'Cours modifié' },
+      cours_supprime:          { icon: '🗑️', txt: 'Cours supprimé' },
+      cours_reorganises:       { icon: '🔀', txt: 'Cours réorganisés' },
+      theme_cree:              { icon: '🗂️', txt: 'Thème créé' },
+      theme_modifie:           { icon: '🖊️', txt: 'Thème modifié' },
+      theme_supprime:          { icon: '🗑️', txt: 'Thème supprimé' },
+      media_televerse:         { icon: '🖼️', txt: 'Média téléversé' },
+      ticket_repondu:          { icon: '💬', txt: 'Réponse à un ticket' },
+      ticket_rouvert:          { icon: '🔓', txt: 'Ticket rouvert' },
+      ticket_clos:             { icon: '🔒', txt: 'Ticket clos' },
+      ticket_ferme_definitif:  { icon: '⛔', txt: 'Ticket fermé définitivement' },
+      evenement_cree:          { icon: '🎉', txt: 'Événement créé' },
+      evenement_ouvert:        { icon: '📢', txt: 'Inscriptions ouvertes' },
+      evenement_prevu:         { icon: '📅', txt: 'Événement reprévu' },
+      evenement_en_cours:      { icon: '▶️', txt: 'Événement démarré' },
+      evenement_termine:       { icon: '🏁', txt: 'Événement terminé' },
+      evenement_annule:        { icon: '🚫', txt: 'Événement annulé' },
+      evenement_supprime:      { icon: '🗑️', txt: 'Événement supprimé' },
+      evenement_restaure:      { icon: '♻️', txt: 'Événement restauré' }
     };
 
     function row(key, val, isEmpty) {
