@@ -1006,7 +1006,14 @@
             let liste_type = ["Conteneur", "Compost bois", "Compost plastique"];
             let contenu_changer = '<select name="type" id="type_change" class="edit-select" form="formulaire_changer">';
             liste_type.forEach((t) => { contenu_changer += '<option value="' + t + '"' + (t === type ? ' selected' : '') + '>' + t + '</option>'; });
-            contenu_changer += '</select><input type="hidden" name="id" value="' + compost_id + '" form="formulaire_changer">';
+            // compost_id est null pour une CRÉATION : aucun champ « id » n'est posé
+            // dans ce cas, ce qui indique au serveur (bloc « MODIFIER UN COMPOST »
+            // de sites.php) qu'il doit insérer une nouvelle ligne plutôt que d'en
+            // mettre une à jour. lat/lon prennent le relais pour lui donner sa position.
+            contenu_changer += '</select>' + (compost_id
+                ? '<input type="hidden" name="id" value="' + compost_id + '" form="formulaire_changer">'
+                : '<input type="hidden" name="lat" value="' + current_lat + '" form="formulaire_changer">'
+                  + '<input type="hidden" name="lon" value="' + current_lon + '" form="formulaire_changer">');
             Type.innerHTML = contenu_changer;
             let acces_changer = '<select name="acces" id="acces_change" class="edit-select" form="formulaire_changer">';
             ["public", "privé", "institution"].forEach((a) => { acces_changer += '<option value="' + a + '"' + (a === acces ? ' selected' : '') + '>' + a + '</option>'; });
@@ -1218,15 +1225,17 @@
                       + ' <a href="/login">Se connecter</a></div>';
                 if (!isLoggedIn) return;   // pas de bouton #valid_rajout à câbler
                 document.getElementById('valid_rajout').addEventListener('click', function () {
+                    // Ne fait plus qu'une vérification de position (doublon à proximité) :
+                    // AUCUNE ligne composts n'est créée ici. La création réelle n'a lieu
+                    // qu'à l'envoi du formulaire type/accès/règles ci-dessous — sinon un
+                    // composteur vide restait en base si l'utilisateur abandonnait avant
+                    // d'aller au bout, polluant la file d'attente admin pour de bon.
                     fetch("/api/carte/sites.php", { method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({lat_click: current_lat_click, lon_click: current_lon_click}) })
-                    .then((response) => response.text())
-                    .then((data) => {
-                        const number = parseInt(data.replace(/"/g, '').trim(), 10);
-                        if (!Number.isFinite(number)) {
-                            let msg = "Ajout impossible pour le moment.";
-                            try { const d = JSON.parse(data); if (d && d.error) msg = d.error; } catch(e) {}
+                    .then((response) => response.json())
+                    .then((d) => {
+                        if (!d || !d.ok) {
                             document.getElementById("rajouter_compost").innerHTML = '';
-                            document.getElementById("rajouter_compost").textContent = '⚠️ ' + msg;
+                            document.getElementById("rajouter_compost").textContent = '⚠️ ' + ((d && d.error) || "Ajout impossible pour le moment.");
                             return;
                         }
                         document.getElementById("tableau").style.display = "block";
@@ -1238,8 +1247,13 @@
                         let Type  = document.getElementById("type");
                         let Autor = document.getElementById("Autor");
                         let Inter = document.getElementById("Inter");
-                        current_compost_id = number; nouv = 1;
-                        modifier_compost(number, Autor, Inter, "", Acces, "", Type, null, null, "", "");
+                        // Pas encore d'id : le composteur n'existe pas en base tant que ce
+                        // formulaire n'est pas envoyé. current_compost_id sert de simple
+                        // marqueur « il y a un point en cours de création » pour la garde du
+                        // formulaire (cf. plus bas) — la vraie création lit lat/lon, pas cet id.
+                        current_compost_id = 'nouveau'; current_lat = current_lat_click; current_lon = current_lon_click;
+                        nouv = 1;
+                        modifier_compost(null, Autor, Inter, "", Acces, "", Type, null, null, "", "");
                     });
                 });
             });

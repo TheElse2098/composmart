@@ -309,14 +309,66 @@ elseif (isset($_POST['autorinter'])) {
 }
 
 // ── MODIFIER UN COMPOST (admin, ou créateur du point dans cette session) ───
+// OU CRÉER UN NOUVEAU COMPOST (id absent, lat/lon présents) ─────────────────
+// Les deux partagent la validation type/accès/règles ; ne divergent qu'à la
+// fin (INSERT vs UPDATE). Fusionnés ici plutôt qu'un bloc séparé pour
+// lat_click/lon_click : la ligne composts n'existe désormais QU'à partir du
+// moment où le formulaire complet est envoyé — plus de brouillon vide en base
+// entre le clic sur la carte et la validation. Avant ce changement, chaque
+// clic sur « rajouter un compost » insérait immédiatement une ligne
+// 'en_attente' sans aucune donnée ; si l'utilisateur abandonnait avant
+// d'envoyer le formulaire, ce composteur vide restait en base pour toujours
+// et polluait la file d'attente admin (pending.php) de propositions
+// impossibles à traiter.
 elseif (isset($_POST['type'])) {
-    $id = intval($_POST['id']);
-    $cree_par_session = in_array($id, $_SESSION['created_composts'] ?? [], true);
-    if (!is_admin($connexion) && !$cree_par_session) {
-        http_response_code(403);
-        echo json_encode(["error" => "Action réservée aux administrateurs."]);
-        exit();
+    $id = intval($_POST['id'] ?? 0);
+    $creation = $id === 0;
+
+    if ($creation) {
+        // Connexion obligatoire : la création ouvre un ticket de suivi avec les
+        // admins, et un ticket doit avoir un auteur identifiable (cf.
+        // contact_messages.user_id, et ouvrir_ticket_compost plus bas).
+        if (empty($_SESSION['user_id'])) {
+            http_response_code(401);
+            echo json_encode(["error" => "Connecte-toi pour proposer un composteur."]);
+            exit();
+        }
+        if (!isset($_POST['lat'], $_POST['lon'])) {
+            echo json_encode(["error" => "Position manquante."]); exit();
+        }
+        $lat = (double)$_POST['lat'];
+        $lon = (double)$_POST['lon'];
+        if ($lat < -90 || $lat > 90 || $lon < -180 || $lon > 180) {
+            echo json_encode(["error" => "Position invalide."]); exit();
+        }
+        if (!rate_limit('add_compost', 15, 3600)) {
+            echo json_encode(["error" => "Trop d'ajouts récents. Réessaie plus tard."]); exit();
+        }
+        // Doublon : re-vérifié ici (déjà fait par le bloc « VÉRIFIER UNE POSITION »
+        // avant l'affichage du formulaire) car un autre utilisateur a pu proposer
+        // le même point entre-temps, pendant que celui-ci remplissait le sien.
+        $sql_check = "SELECT id, (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))) AS distance
+                      FROM composts WHERE statut <> 'refuse'
+                      HAVING distance < 0.005
+                      LIMIT 1";
+        $stmt = mysqli_prepare($connexion, $sql_check);
+        $stmt->bind_param("ddd", $lat, $lon, $lat);
+        $stmt->execute();
+        if ($stmt->get_result()->num_rows > 0) {
+            echo json_encode(["error" => "Un point identique existe déjà à moins de 5 m."]); exit();
+        }
+    } else {
+        // Modifier un point existant reste réservé aux admins : la création se
+        // fait maintenant en un seul appel (voir plus haut), il n'y a donc plus
+        // de scénario où un non-admin « finalise » un point déjà en base créé
+        // par lui — created_composts (session) n'a plus lieu d'être.
+        if (!is_admin($connexion)) {
+            http_response_code(403);
+            echo json_encode(["error" => "Action réservée aux administrateurs."]);
+            exit();
+        }
     }
+
     $type       = $_POST['type']      ?? '';
     $acces      = $_POST['acces']     ?? '';
     $mettre     = $_POST['mettre']    ?? [];
@@ -338,9 +390,24 @@ elseif (isset($_POST['type'])) {
         }
     }
 
-    $stmt = mysqli_prepare($connexion, "UPDATE composts SET type=?, publique=?, gestion=?, info_gestion=? WHERE id=$id");
-    $stmt->bind_param("ssss", $type, $acces, $gestion, $info_gest);
-    $stmt->execute();
+    if ($creation) {
+        // 'en_attente' : invisible sur la carte publique tant qu'un admin ne
+        // valide pas — mais désormais avec toutes ses données dès la naissance
+        // de la ligne, plus de brouillon vide.
+        $propose_par = $_SESSION['username'] ?? null;
+        $stmt = mysqli_prepare($connexion,
+            "INSERT INTO composts (longitude, latitude, statut, propose_par, type, publique, gestion, info_gestion)
+             VALUES (?, ?, 'en_attente', ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ddssssss", $lon, $lat, $propose_par, $type, $acces, $gestion, $info_gest);
+        if (!$stmt->execute()) {
+            echo json_encode(["error" => "La création a échoué."]); exit();
+        }
+        $id = (int)$connexion->insert_id;
+    } else {
+        $stmt = mysqli_prepare($connexion, "UPDATE composts SET type=?, publique=?, gestion=?, info_gestion=? WHERE id=$id");
+        $stmt->bind_param("ssss", $type, $acces, $gestion, $info_gest);
+        $stmt->execute();
+    }
 
     mysqli_query($connexion, "DELETE FROM regles WHERE id_compost=$id");
 
@@ -356,12 +423,6 @@ elseif (isset($_POST['type'])) {
         $ins->execute();
     }
 
-    $created_ids = $_SESSION['created_composts'] ?? [];
-    $is_new = in_array($id, $created_ids, true);
-    if ($is_new) {
-        $_SESSION['created_composts'] = array_values(array_filter($created_ids, fn($v) => $v !== $id));
-    }
-
     $snapshot = [
         'type'       => $type,
         'acces'      => $acces,
@@ -370,25 +431,15 @@ elseif (isset($_POST['type'])) {
         'pas_mettre' => array_values($pas_mettre),
     ];
 
-    if ($is_new) {
-        // Fin du parcours d'ajout : la demande part en validation (le point reste
-        // 'en_attente', donc toujours absent de la carte publique). C'est ici — et
-        // pas à la création du brouillon — que l'audit et le mail se déclenchent.
+    if ($creation) {
         audit_log($connexion, 'compost_demande', "id=$id", [
             'target_type' => 'compost',
             'target_id'   => $id,
             'snapshot'    => $snapshot + ['propose_par' => $_SESSION['username'] ?? 'Anonyme'],
         ]);
         notif_compost_ajoute($connexion, $id);
-        // Coordonnées relues en base plutôt que reprises du formulaire : ce sont
-        // celles réellement enregistrées au clic sur la carte, pas une valeur que
-        // le client pourrait avoir altérée entre-temps.
-        $resPos = mysqli_query($connexion, "SELECT latitude, longitude FROM composts WHERE id=$id");
-        $pos = $resPos ? mysqli_fetch_assoc($resPos) : null;
-        if ($pos) {
-            ouvrir_ticket_compost($id, (float)$pos['latitude'], (float)$pos['longitude'], $snapshot);
-        }
-        $response = "Demande envoyée.";
+        ouvrir_ticket_compost($id, $lat, $lon, $snapshot);
+        $response = $id;
     } else {
         audit_log($connexion, 'compost_modifie', "id=$id", [
             'target_type' => 'compost',
@@ -402,11 +453,12 @@ elseif (isset($_POST['type'])) {
     }
 }
 
-// ── AJOUTER UN COMPOST VIA CLIC CARTE ─────────────────────────────────────
+// ── VÉRIFIER UNE POSITION (avant d'afficher le formulaire d'ajout) ─────────
+// Remplace l'ancien INSERT immédiat au clic sur « rajouter un compost » :
+// on vérifie juste qu'il n'existe pas déjà un point à cet endroit, sans rien
+// écrire en base. La création réelle se fait au bloc ci-dessus, à l'envoi du
+// formulaire complet.
 if (isset($_POST['lat_click']) && isset($_POST['lon_click'])) {
-    // Connexion obligatoire : l'ajout ouvre maintenant un ticket de suivi avec
-    // les admins, et un ticket doit avoir un auteur identifiable pour que la
-    // conversation ait un destinataire (cf. contact_messages.user_id).
     if (empty($_SESSION['user_id'])) {
         http_response_code(401);
         echo json_encode(["error" => "Connecte-toi pour proposer un composteur."]);
@@ -421,9 +473,10 @@ if (isset($_POST['lat_click']) && isset($_POST['lon_click'])) {
         exit();
     }
 
-    // Doublon : on compare aux points validés ET aux demandes déjà en attente
-    // (un point refusé ne bloque pas une nouvelle proposition au même endroit).
-    $sql_check = "SELECT id, (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))) AS distance FROM composts WHERE statut <> 'refuse' HAVING distance < 0.005 LIMIT 1";
+    $sql_check = "SELECT id, (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude))))) AS distance
+                  FROM composts WHERE statut <> 'refuse'
+                  HAVING distance < 0.005
+                  LIMIT 1";
     $stmt = mysqli_prepare($connexion, $sql_check);
     $stmt->bind_param("ddd", $lat, $lon, $lat);
     $stmt->execute();
@@ -432,20 +485,8 @@ if (isset($_POST['lat_click']) && isset($_POST['lon_click'])) {
         exit();
     }
 
-    // Brouillon de demande : 'en_attente' tant que le formulaire n'est pas envoyé,
-    // donc invisible sur la carte publique. La notification mail et l'audit ne
-    // partent qu'à l'envoi effectif de la demande (cf. bloc « modifier »).
-    $propose_par = $_SESSION['username'] ?? null;
-    $stmt = mysqli_prepare($connexion, "INSERT INTO composts (longitude, latitude, statut, propose_par) VALUES (?, ?, 'en_attente', ?)");
-    $stmt->bind_param("dds", $lon, $lat, $propose_par);
-    if ($stmt->execute()) {
-        $new_id = (int)$connexion->insert_id;
-        if (!isset($_SESSION['created_composts'])) $_SESSION['created_composts'] = [];
-        $_SESSION['created_composts'][] = $new_id;
-        $response = $new_id;
-    } else {
-        $response = ["error" => $stmt->error];
-    }
+    echo json_encode(["ok" => true]);
+    exit();
 }
 
 // ── SUPPRIMER UN COMPOST (admin uniquement) ────────────────────────────────
