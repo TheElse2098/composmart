@@ -13,12 +13,16 @@ CREATE TABLE `evenements` (
   -- Code court affiché/projeté en salle (façon Kahoot). Alphabet sans caractères
   -- ambigus (pas de 0/O/1/I) pour rester lisible à l'oral et sur écran.
   `code`          char(6)      NOT NULL,
-  -- 'ferme' = inscriptions closes avant le jour J (ex. complet). 'en_cours' /
-  -- 'termine' = bascules manuelles le jour de l'atelier, indépendantes de
-  -- date_debut/date_fin (pas de calcul automatique par horloge).
-  -- 'archive' = supprimé (suppression douce, les données restent en base).
-  -- 'annule' = l'atelier n'aura pas lieu, distinct de 'ferme'.
-  `statut`        enum('brouillon','ouvert','ferme','en_cours','termine','archive','annule') NOT NULL DEFAULT 'brouillon',
+  -- 5 statuts de cycle de vie, mutuellement exclusifs. 'en_cours'/'termine'
+  -- sont des bascules manuelles le jour de l'atelier, indépendantes de
+  -- date_debut/date_fin (pas de calcul automatique par horloge). 'ouvert' peut
+  -- revenir à 'prevu' (inscriptions temporairement coupées sans annuler).
+  `statut`        enum('prevu','ouvert','en_cours','annule','termine') NOT NULL DEFAULT 'prevu',
+  -- Suppression douce, indépendante du statut de cycle de vie ci-dessus : un
+  -- événement supprimé garde son statut inchangé mais est masqué de la vue
+  -- par défaut. Jamais de DELETE SQL, les données (dont les participants) ne
+  -- sont jamais effacées.
+  `supprime`      tinyint(1)   NOT NULL DEFAULT 0,
   `cree_par`      varchar(100) DEFAULT NULL,       -- username admin, dénormalisé (cf. cours_versions.auteur)
   `created_at`    datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

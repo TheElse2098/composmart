@@ -76,17 +76,23 @@ if ($action === 'creer') {
     exit;
 }
 
-// ── OUVRIR / FERMER / DÉMARRER / TERMINER ───────────────────────────────────
-// Bascules manuelles du cycle de vie, indépendantes de date_debut/date_fin :
-// l'admin déclenche "En cours" au moment réel où l'atelier démarre, pas selon
-// une horloge (cf. discussion conception — pas d'auto-calcul par date).
-$STATUTS_ACTION = ['ouvrir' => 'ouvert', 'fermer' => 'ferme', 'demarrer' => 'en_cours', 'terminer' => 'termine'];
+// ── TRANSITIONS DE STATUT ────────────────────────────────────────────────────
+// 5 statuts mutuellement exclusifs. 'en_cours'/'termine' sont des bascules
+// manuelles le jour de l'atelier (pas de calcul automatique par horloge).
+// 'ouvert' peut revenir à 'prevu' (couper les inscriptions sans annuler).
+$STATUTS_ACTION = [
+    'ouvrir'    => 'ouvert',
+    'reprevoir' => 'prevu',
+    'demarrer'  => 'en_cours',
+    'terminer'  => 'termine',
+    'annuler'   => 'annule',
+];
 if (isset($STATUTS_ACTION[$action])) {
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
 
     $nouveau_statut = $STATUTS_ACTION[$action];
-    $stmt = mysqli_prepare($conn, "UPDATE evenements SET statut = ? WHERE id = ? AND statut != 'archive'");
+    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET statut = ? WHERE id = ? AND supprime = 0');
     $stmt->bind_param('si', $nouveau_statut, $id);
     $stmt->execute();
 
@@ -97,28 +103,12 @@ if (isset($STATUTS_ACTION[$action])) {
     exit;
 }
 
-// ── ANNULER (l'atelier n'aura pas lieu, distinct de "fermé") ───────────────
-if ($action === 'annuler') {
-    $id = (int)($_POST['id'] ?? 0);
-    if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
-
-    $stmt = mysqli_prepare($conn, "UPDATE evenements SET statut = 'annule' WHERE id = ? AND statut != 'archive'");
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
-
-    if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Événement introuvable ou supprimé.']); exit; }
-
-    audit_log($conn, 'evenement_annule', '', ['target_type' => 'evenement', 'target_id' => $id]);
-    echo json_encode(['ok' => true]);
-    exit;
-}
-
-// ── SUPPRIMER (doux : bascule sur 'archive', aucune donnée n'est effacée) ──
+// ── SUPPRIMER (doux : flag indépendant du statut, aucune donnée effacée) ───
 if ($action === 'supprimer') {
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
 
-    $stmt = mysqli_prepare($conn, "UPDATE evenements SET statut = 'archive' WHERE id = ? AND statut != 'archive'");
+    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET supprime = 1 WHERE id = ? AND supprime = 0');
     $stmt->bind_param('i', $id);
     $stmt->execute();
 
@@ -129,12 +119,12 @@ if ($action === 'supprimer') {
     exit;
 }
 
-// ── RESTAURER (sort un événement de 'archive') ──────────────────────────────
+// ── RESTAURER (retire le flag de suppression, statut de cycle de vie inchangé) ──
 if ($action === 'restaurer') {
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
 
-    $stmt = mysqli_prepare($conn, "UPDATE evenements SET statut = 'ferme' WHERE id = ? AND statut = 'archive'");
+    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET supprime = 0 WHERE id = ? AND supprime = 1');
     $stmt->bind_param('i', $id);
     $stmt->execute();
 
@@ -146,19 +136,34 @@ if ($action === 'restaurer') {
 }
 
 // ── LISTE DES ÉVÉNEMENTS ─────────────────────────────────────────────────────
-// ?vue=archives → uniquement les supprimés ; par défaut → tout sauf les supprimés.
+// ?supprimes=1 → uniquement les supprimés ; par défaut → tout sauf les supprimés.
+// ?statut=<prevu|ouvert|en_cours|annule|termine> → filtre en plus par statut.
 if ($action === 'liste') {
-    $vue = ($_GET['vue'] ?? '') === 'archives' ? 'archives' : 'actifs';
-    $filtre = $vue === 'archives' ? "e.statut = 'archive'" : "e.statut != 'archive'";
-    $res = mysqli_query($conn,
-        "SELECT e.id, e.titre, e.lieu, e.date_debut, e.code, e.statut, e.created_at,
+    $supprimes = ($_GET['supprimes'] ?? '') === '1' ? 1 : 0;
+    $statuts_valides = ['prevu', 'ouvert', 'en_cours', 'annule', 'termine'];
+    $statut_filtre = in_array($_GET['statut'] ?? '', $statuts_valides, true) ? $_GET['statut'] : null;
+
+    $sql = 'SELECT e.id, e.titre, e.lieu, e.date_debut, e.code, e.statut, e.supprime, e.created_at,
                 (SELECT COUNT(*) FROM participants p WHERE p.evenement_id = e.id) AS nb_participants
          FROM evenements e
-         WHERE $filtre
-         ORDER BY e.date_debut DESC");
+         WHERE e.supprime = ?';
+    $types = 'i';
+    $params = [$supprimes];
+    if ($statut_filtre !== null) {
+        $sql .= ' AND e.statut = ?';
+        $types .= 's';
+        $params[] = $statut_filtre;
+    }
+    $sql .= ' ORDER BY e.date_debut DESC';
+
+    $stmt = mysqli_prepare($conn, $sql);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $res = $stmt->get_result();
     $evenements = [];
     while ($row = $res->fetch_assoc()) {
         $row['id'] = (int)$row['id'];
+        $row['supprime'] = (int)$row['supprime'] === 1;
         $row['nb_participants'] = (int)$row['nb_participants'];
         $evenements[] = $row;
     }
@@ -171,12 +176,13 @@ if ($action === 'suivi') {
     $id = (int)($_GET['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
 
-    $stmt = mysqli_prepare($conn, 'SELECT id, titre, lieu, date_debut, code, statut FROM evenements WHERE id = ?');
+    $stmt = mysqli_prepare($conn, 'SELECT id, titre, lieu, date_debut, code, statut, supprime FROM evenements WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $evt = $stmt->get_result()->fetch_assoc();
     if (!$evt) { echo json_encode(['error' => 'Événement introuvable.']); exit; }
     $evt['id'] = (int)$evt['id'];
+    $evt['supprime'] = (int)$evt['supprime'] === 1;
 
     $stmt = mysqli_prepare($conn, 'SELECT nom_affiche, rejoint_at FROM participants WHERE evenement_id = ? ORDER BY rejoint_at DESC');
     $stmt->bind_param('i', $id);

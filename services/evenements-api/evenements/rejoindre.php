@@ -34,12 +34,14 @@ if ($action === 'verifier_code') {
     $code = normaliser_code($_GET['code'] ?? $_POST['code'] ?? '');
     if ($code === '') { echo json_encode(['error' => 'Code manquant.']); exit; }
 
-    $stmt = mysqli_prepare($conn, 'SELECT id, titre, lieu, date_debut, statut FROM evenements WHERE code = ?');
+    $stmt = mysqli_prepare($conn, 'SELECT id, titre, lieu, date_debut, statut, supprime FROM evenements WHERE code = ?');
     $stmt->bind_param('s', $code);
     $stmt->execute();
     $evt = $stmt->get_result()->fetch_assoc();
 
-    if (!$evt || $evt['statut'] === 'brouillon' || $evt['statut'] === 'archive') {
+    // Un événement supprimé est indiscernable d'un code inexistant : jamais de
+    // signal qui distinguerait "ça n'existe pas" de "on l'a retiré".
+    if (!$evt || (int)$evt['supprime'] === 1 || $evt['statut'] === 'prevu') {
         echo json_encode(['error' => 'Code invalide.']);
         exit;
     }
@@ -67,16 +69,20 @@ if ($action === 'rejoindre') {
         exit;
     }
 
-    $stmt = mysqli_prepare($conn, 'SELECT id, titre, statut FROM evenements WHERE code = ?');
+    $stmt = mysqli_prepare($conn, 'SELECT id, titre, statut, supprime FROM evenements WHERE code = ?');
     $stmt->bind_param('s', $code);
     $stmt->execute();
     $evt = $stmt->get_result()->fetch_assoc();
 
-    if ($evt && $evt['statut'] === 'annule') {
+    if (!$evt || (int)$evt['supprime'] === 1) {
+        echo json_encode(['error' => 'Code invalide.']);
+        exit;
+    }
+    if ($evt['statut'] === 'annule') {
         echo json_encode(['error' => 'Cet événement a été annulé.']);
         exit;
     }
-    if (!$evt || $evt['statut'] !== 'ouvert') {
+    if ($evt['statut'] !== 'ouvert') {
         echo json_encode(['error' => "Cet événement n'accepte pas d'inscription pour le moment."]);
         exit;
     }
