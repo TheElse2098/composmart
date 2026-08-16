@@ -80,9 +80,11 @@ ALTER TABLE `participants`
   ADD KEY IF NOT EXISTS `token`  (`token_hash`),
   ADD KEY IF NOT EXISTS `equipe` (`equipe_id`);
 
+-- En MariaDB, IF NOT EXISTS se place APRÈS « FOREIGN KEY », pas après
+-- « ADD CONSTRAINT <nom> » : la forme inverse est une erreur de syntaxe.
 ALTER TABLE `participants`
-  ADD CONSTRAINT IF NOT EXISTS `participants_ibfk_2`
-    FOREIGN KEY (`equipe_id`) REFERENCES `equipes` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `participants_ibfk_2`
+    FOREIGN KEY IF NOT EXISTS (`equipe_id`) REFERENCES `equipes` (`id`) ON DELETE SET NULL;
 
 -- ── Réponses (source unique du scoring) ─────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `reponses` (
