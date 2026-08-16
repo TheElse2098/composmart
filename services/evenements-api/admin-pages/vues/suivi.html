@@ -321,9 +321,30 @@
     });
 
     // ══════════ EN-TÊTE (statut, actions, code/QR) ══════════
+    /** Transforme une réponse en JSON, en remontant une erreur lisible si le
+     *  serveur a renvoyé autre chose (500, page HTML d'erreur…). Sans ça, le
+     *  .catch() silencieux laissait la page figée sur « Chargement… ». */
+    function lireJson(r) {
+      if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); }
+      return r.text().then(t => {
+        try { return JSON.parse(t); }
+        catch (e) { throw new Error('Réponse inattendue du serveur (HTTP ' + r.status + ').'); }
+      });
+    }
+
+    function panne(e) {
+      const l = document.getElementById('loader');
+      if (l && l.style.display !== 'none') {
+        l.innerHTML = '⚠️ ' + echap(e && e.message ? e.message : 'Erreur de chargement')
+          + '<div style="font-size:0.82rem;font-weight:400;margin-top:8px">Vérifie les logs du service : kubectl logs -n composmart -l app=evenements-api</div>';
+      } else {
+        afficher(e && e.message ? e.message : 'Erreur de chargement', false);
+      }
+    }
+
     function chargerSuivi() {
       fetch(API + '/admin.php?action=suivi&id=' + EVT)
-        .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); })
+        .then(lireJson)
         .then(d => {
           if (d.error) { document.getElementById('loader').textContent = d.error; return; }
           evenement = d.evenement;
@@ -350,7 +371,7 @@
           document.getElementById('loader').style.display = 'none';
           document.getElementById('content').style.display = 'block';
         })
-        .catch(() => {});
+        .catch(panne);
     }
 
     const STATUT_LABEL = { prevu: 'Prévu', ouvert: 'Ouvert aux inscriptions', en_cours: 'En cours', termine: 'Terminé', annule: 'Annulé' };
@@ -523,8 +544,11 @@
           .then(() => chargerAnimation());
       });
 
-      // Résultats de la slide en cours
-      if (d.slide && d.nb_reponses > 0) {
+      // Résultats de la slide en cours. Les types à notation humaine s'affichent
+      // même sans réponse : un défi ne se répond pas depuis le téléphone, donc
+      // attendre des réponses masquerait à jamais l'interface de notation.
+      const notationManuelle = d.slide && ['defi', 'question_ouverte'].includes(d.slide.type);
+      if (d.slide && (d.nb_reponses > 0 || notationManuelle)) {
         document.getElementById('zoneResultats').style.display = 'block';
         chargerResultats(d.slide.id);
       } else {
@@ -567,13 +591,21 @@
 
           // Notation manuelle : question ouverte et défi
           if (d.type === 'question_ouverte' || d.type === 'defi') {
+            // Un défi se note souvent par équipe : un bouton par équipe pose la
+            // même note à tous ses membres (le score d'équipe étant leur somme).
+            if (d.type === 'defi' && equipesCache.length) {
+              h += '<div class="hint" style="margin-bottom:8px">Noter une équipe entière :</div><ul class="liste">'
+                + equipesCache.map(e =>
+                  '<li><span class="rang" style="color:' + echap(e.couleur) + '">■</span>'
+                  + '<span class="nom">' + echap(e.nom) + '</span>'
+                  + '<input class="note-input" type="number" min="0" max="' + d.points + '" value="' + d.points + '" data-eq="' + e.id + '">'
+                  + '<button class="btn-mini" data-noter-eq="' + e.id + '">Noter l\'équipe</button></li>').join('') + '</ul>';
+            }
+            h += '<div class="hint" style="margin:10px 0 8px">Noter individuellement :</div>';
             h += '<ul class="liste">' + (d.reponses || []).map(r =>
               '<li><span class="nom">' + echap(r.nom) + (r.reponse ? ' — <i>' + echap(r.reponse) + '</i>' : '') + '</span>'
               + '<input class="note-input" type="number" min="0" max="' + d.points + '" value="' + r.points + '" data-p="' + r.participant_id + '">'
               + '<button class="btn-mini" data-noter="' + r.participant_id + '">Noter</button></li>').join('') + '</ul>';
-            if (d.type === 'defi') {
-              h += '<div class="hint">Le défi ne se répond pas depuis le téléphone : note directement les participants ou les équipes.</div>';
-            }
           } else if (d.reponses && d.reponses.length && !['quiz', 'sondage', 'vrai_faux'].includes(d.type)) {
             h += '<ul class="liste">' + d.reponses.map(r =>
               '<li><span class="nom">' + echap(r.nom) + '</span><span class="pts">' + r.points + '</span></li>').join('') + '</ul>';
@@ -585,7 +617,18 @@
               const pid = b.dataset.noter;
               const val = z.querySelector('[data-p="' + pid + '"]').value;
               post('animation.php', 'noter', { slide_id: slide_id, participant_id: pid, points: val })
-                .then(d2 => { if (d2.ok) { afficher('Noté.', true); chargerAnimation(); } });
+                .then(d2 => { if (d2.ok) { afficher('Noté.', true); chargerAnimation(); } else afficher(d2.error || 'Notation impossible.', false); });
+            };
+          });
+          z.querySelectorAll('[data-noter-eq]').forEach(b => {
+            b.onclick = () => {
+              const eid = b.dataset.noterEq;
+              const val = z.querySelector('[data-eq="' + eid + '"]').value;
+              post('animation.php', 'noter_equipe', { slide_id: slide_id, equipe_id: eid, points: val })
+                .then(d2 => {
+                  if (d2.ok) { afficher(d2.notes + ' participant(s) noté(s).', true); chargerAnimation(); }
+                  else afficher(d2.error || 'Notation impossible.', false);
+                });
             };
           });
         })

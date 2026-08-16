@@ -202,6 +202,24 @@
       if (ok) setTimeout(() => { el.style.display = 'none'; }, 2500);
     }
 
+    /** JSON, ou erreur lisible si le serveur renvoie autre chose (500, HTML).
+     *  Sans ça, un .catch() muet laisse la page figée sur « Chargement… ». */
+    function lireJson(r) {
+      if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); }
+      return r.text().then(t => {
+        try { return JSON.parse(t); }
+        catch (e) { throw new Error('Réponse inattendue du serveur (HTTP ' + r.status + ').'); }
+      });
+    }
+
+    function panne(e) {
+      const l = document.getElementById('loader');
+      if (l && l.style.display !== 'none') {
+        l.innerHTML = '⚠️ ' + echap(e && e.message ? e.message : 'Erreur de chargement')
+          + '<div style="font-size:0.82rem;font-weight:400;margin-top:8px">Vérifie les logs : kubectl logs -n composmart -l app=evenements-api</div>';
+      }
+    }
+
     function post(action, body, json) {
       const opts = { method: 'POST' };
       if (json) {
@@ -210,8 +228,7 @@
       } else {
         opts.body = new URLSearchParams(body);
       }
-      return fetch(API + '?action=' + action, opts)
-        .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); });
+      return fetch(API + '?action=' + action, opts).then(lireJson);
     }
 
     // ══════════ DÉCLARATION DES CHAMPS PAR TYPE ══════════
@@ -479,7 +496,7 @@
     // ══════════ MODE ÉDITEUR ══════════
     function chargerParcours() {
       fetch(API + '?action=detail&id=' + PARCOURS_ID)
-        .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); })
+        .then(lireJson)
         .then(d => {
           if (d.error) { afficher('msgEdit', d.error, false); return; }
           document.getElementById('editNom').textContent = d.parcours.nom;
@@ -492,7 +509,7 @@
           document.getElementById('loader').style.display = 'none';
           document.getElementById('vueEdit').style.display = 'block';
         })
-        .catch(() => {});
+        .catch(panne);
     }
 
     function rendreSlides() {
@@ -554,7 +571,7 @@
     // ══════════ MODE BIBLIOTHÈQUE ══════════
     function chargerListe() {
       fetch(API + '?action=liste')
-        .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); })
+        .then(lireJson)
         .then(d => {
           const box = document.getElementById('listeParcours');
           const liste = d.parcours || [];
@@ -590,7 +607,7 @@
           document.getElementById('loader').style.display = 'none';
           document.getElementById('vueListe').style.display = 'block';
         })
-        .catch(() => {});
+        .catch(panne);
     }
 
     if (!PARCOURS_ID) {
@@ -612,7 +629,7 @@
     // Le registre des types vient du serveur : l'éditeur ne code en dur ni les
     // libellés ni la notion de « slide notée ».
     fetch(API + '?action=types')
-      .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); })
+      .then(lireJson)
       .then(d => {
         REGISTRE = d.types || {};
         const sel = document.getElementById('nouveauType');
@@ -623,7 +640,7 @@
         });
         if (PARCOURS_ID) chargerParcours(); else chargerListe();
       })
-      .catch(() => {});
+      .catch(panne);
   </script>
   <script src="/assets/js/theme.js"></script>
 </body>

@@ -191,11 +191,26 @@ if ($action === 'resultats') {
     if (!$s) { echo json_encode(['error' => 'Slide introuvable.']); exit; }
     $contenu = json_decode($s['contenu'] ?? '', true) ?: [];
 
-    $stmt = mysqli_prepare($conn,
-        'SELECT r.participant_id, r.reponse, r.points, r.correct, p.nom_affiche
-         FROM reponses r JOIN participants p ON p.id = r.participant_id
-         WHERE r.slide_id = ? ORDER BY r.repondu_at ASC');
-    $stmt->bind_param('i', $slide_id);
+    // Un défi ne se répond pas depuis le téléphone (repond = false) : la table
+    // `reponses` est donc vide tant que l'animateur n'a rien noté. On part ici
+    // de TOUS les participants, sinon il n'aurait personne à qui attribuer des
+    // points. Pour les autres types, on ne liste que ceux qui ont répondu.
+    if ($s['type'] === 'defi') {
+        $stmt = mysqli_prepare($conn,
+            'SELECT p.id AS participant_id, r.reponse, COALESCE(r.points, 0) AS points, r.correct,
+                    p.nom_affiche, p.equipe_id
+             FROM participants p
+             LEFT JOIN reponses r ON r.participant_id = p.id AND r.slide_id = ?
+             WHERE p.evenement_id = ?
+             ORDER BY p.nom_affiche ASC');
+        $stmt->bind_param('ii', $slide_id, $s['evenement_id']);
+    } else {
+        $stmt = mysqli_prepare($conn,
+            'SELECT r.participant_id, r.reponse, r.points, r.correct, p.nom_affiche, p.equipe_id
+             FROM reponses r JOIN participants p ON p.id = r.participant_id
+             WHERE r.slide_id = ? ORDER BY r.repondu_at ASC');
+        $stmt->bind_param('i', $slide_id);
+    }
     $stmt->execute();
     $res = $stmt->get_result();
 
@@ -207,6 +222,7 @@ if ($action === 'resultats') {
         $reponses[] = [
             'participant_id' => (int)$row['participant_id'],
             'nom'            => $row['nom_affiche'],
+            'equipe_id'      => $row['equipe_id'] !== null ? (int)$row['equipe_id'] : null,
             'reponse'        => $val,
             'points'         => (int)$row['points'],
             'correct'        => $row['correct'] === null ? null : (bool)$row['correct'],
