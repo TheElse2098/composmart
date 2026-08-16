@@ -525,6 +525,8 @@
               '<div class="hint">🎲 Anecdote tirée au sort : <b>chaque participant voit la sienne</b>. '
               + 'Celle affichée ici n'est qu'un exemple.</div>');
           }
+          // Le cadre média prend ses vraies proportions une fois dans le document.
+          if (window.ajusterMedias) window.ajusterMedias(ap);
         };
         const c0 = d.slide.contenu || {};
         const besoin = (d.slide.type === 'classement') || (d.slide.type === 'fin' && c0.afficher_classement);

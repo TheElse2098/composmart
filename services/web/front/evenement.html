@@ -476,6 +476,8 @@
         });
         cablerSlide(z, d);
         ajouterSuivantIndividuel(z, d);
+        // Le cadre média prend ses vraies proportions une fois dans le document.
+        if (window.ajusterMedias) window.ajusterMedias(z);
       };
 
       // Le classement doit être connu AVANT de dessiner : la carte l'intègre

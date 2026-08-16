@@ -171,12 +171,25 @@
         break;
 
       case 'media':
-        corps = '<div class="sl__media">' + (window.rendreMediaHtml ? window.rendreMediaHtml(c) : '')
-          + '<span class="sl__media-etiq">' + e(c.media_type === 'audio' ? 'Extrait sonore' : 'Média') + '</span></div>'
-          + '<div class="sl__corps" style="flex:none">'
-          + (s.titre ? '<h2 class="sl__titre">' + e(s.titre) + '</h2>' : '')
-          + (c.legende ? '<p class="sl__texte">' + e(c.legende) + '</p>' : '')
-          + pied('', o) + '</div>';
+        if (c.media_type === 'audio') {
+          // Un son n'a pas de surface : le cadre plein écran laisserait un
+          // grand vide. On reprend le gabarit « carte son » (bloc lecteur).
+          corps = '<div class="sl__bandeau"></div><div class="sl__corps">'
+            + '<div class="sl__ligne"><span class="sl__pastille">Extrait sonore</span><span class="sl__filet"></span></div>'
+            + (s.titre ? '<h2 class="sl__titre">' + e(s.titre) + '</h2>' : '')
+            + '<div class="sl__lecteur">' + (window.rendreMediaHtml ? window.rendreMediaHtml(c) : '') + '</div>'
+            + (c.legende ? '<p class="sl__texte">' + e(c.legende) + '</p>' : '')
+            + pied('', o) + '</div>';
+        } else {
+          // Le cadre est dimensionné après coup par ajusterMedias() d'après
+          // les proportions réelles du média, pour que le texte garde sa place.
+          corps = '<div class="sl__media">' + (window.rendreMediaHtml ? window.rendreMediaHtml(c) : '')
+            + '<span class="sl__media-etiq">Média</span></div>'
+            + '<div class="sl__corps" style="flex:none">'
+            + (s.titre ? '<h2 class="sl__titre">' + e(s.titre) + '</h2>' : '')
+            + (c.legende ? '<p class="sl__texte">' + e(c.legende) + '</p>' : '')
+            + pied('', o) + '</div>';
+        }
         break;
 
       case 'defi':

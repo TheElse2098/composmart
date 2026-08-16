@@ -45,6 +45,54 @@
     return '<video class="slide-media" controls src="' + echapper(url) + '"></video>';
   };
 
+  /**
+   * Donne au cadre média ses vraies proportions.
+   *
+   * Sans ça le cadre prend toute la hauteur restante (flex:1) et l'image est
+   * rognée pour la remplir : une photo verticale se retrouve amputée, et le
+   * titre placé dessous est repoussé hors de la carte. On lit donc les
+   * dimensions naturelles du média, on les applique en aspect-ratio, et le
+   * cadre cesse de s'étirer — le texte récupère la place qu'il lui faut.
+   *
+   * À appeler après insertion du HTML dans le document.
+   */
+  function appliquerRatio(box, ratio) {
+    if (!ratio || !isFinite(ratio) || ratio <= 0) return;
+    // Bornes : au-delà, un média très allongé ou très haut mangerait la carte.
+    // La hauteur reste par ailleurs plafonnée en CSS (max-height).
+    ratio = Math.max(0.62, Math.min(2.4, ratio));
+    box.style.aspectRatio = String(ratio);
+    box.style.flex = 'none';
+    box.dataset.mesure = 'ok';
+  }
+
+  window.ajusterMedias = function (racine) {
+    (racine || document).querySelectorAll('.sl__media').forEach(function (box) {
+      if (box.dataset.mesure === 'ok') return;
+
+      // Vidéo intégrée : les dimensions sont inaccessibles (autre origine),
+      // mais YouTube et Vimeo servent du 16/9 dans l'immense majorité des cas.
+      if (box.querySelector('iframe')) { appliquerRatio(box, 16 / 9); return; }
+
+      var img = box.querySelector('img');
+      if (img) {
+        if (img.naturalWidth) appliquerRatio(box, img.naturalWidth / img.naturalHeight);
+        else img.addEventListener('load', function () {
+          appliquerRatio(box, img.naturalWidth / img.naturalHeight);
+        }, { once: true });
+        return;
+      }
+
+      var vid = box.querySelector('video');
+      if (vid) {
+        if (vid.videoWidth) appliquerRatio(box, vid.videoWidth / vid.videoHeight);
+        else vid.addEventListener('loadedmetadata', function () {
+          appliquerRatio(box, vid.videoWidth / vid.videoHeight);
+        }, { once: true });
+      }
+    });
+  };
+
   /** Styles du conteneur d'iframe (ratio 16/9), injectés une seule fois. */
   var injecte = false;
   window.injecterStylesMedia = function () {

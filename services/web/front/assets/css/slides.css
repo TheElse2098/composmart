@@ -205,12 +205,20 @@ html.dark .sl__verdict--rate .sl__verdict-titre { color: #ef9a9a; }
 .sl__verdict-txt { margin: 0; font-size: clamp(13px, 3cqw, 16px); line-height: 1.55; color: var(--sl-doux); }
 
 /* ── Média plein cadre ──────────────────────────────────────────────────── */
+/* Le cadre reçoit ses proportions réelles par JS (ajusterMedias) ; en
+   attendant la mesure il occupe la place disponible. Le plafond de hauteur
+   est ce qui garantit qu'un média vertical n'engloutit pas le texte placé
+   dessous — la mesure fixe le ratio, le plafond arbitre les cas extrêmes. */
 .sl__media {
-  flex: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center;
-  background-color: #dfe7d9; overflow: hidden;
+  flex: 1; min-height: 0; max-height: 62%;
+  position: relative; display: flex; align-items: center; justify-content: center;
+  background-color: #10261a; overflow: hidden;
 }
-.sl__media img, .sl__media video, .sl__media iframe { width: 100%; height: 100%; object-fit: cover; border: 0; display: block; }
-.sl__media--libre { flex: none; }
+/* contain et non cover : une photo n'est jamais rognée, elle se loge en
+   entier dans le cadre qu'on vient de dimensionner pour elle. */
+.sl__media img, .sl__media video { width: 100%; height: 100%; object-fit: contain; border: 0; display: block; }
+.sl__media iframe { width: 100%; height: 100%; border: 0; display: block; }
+.sl__media .slide-embed { width: 100%; padding-bottom: 0; height: 100%; margin: 0; border-radius: 0; }
 .sl__media-etiq {
   position: absolute; top: 4cqw; left: 4cqw; padding: 1.3cqw 2.6cqw; border-radius: 999px;
   background: rgba(12, 47, 33, 0.78); color: #fff;
