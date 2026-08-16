@@ -64,7 +64,10 @@
     .console-pos { font-family: 'Baloo 2', cursive; font-weight: 900; color: #4a7a5a; font-size: 0.88rem; }
     .repondu { background: #e8f5e9; color: #1e6e3e; border-radius: 12px; padding: 4px 12px; font-weight: 800; font-size: 0.82rem; }
 
-    .apercu { border: 2px dashed #c8dfc8; border-radius: 14px; padding: 18px; text-align: center; }
+    /* Conteneur de l'aperçu : la carte de slide (.sl) s'y pose, centrée.
+       En projection il occupe l'écran pour que la carte soit lisible de loin. */
+    .apercu { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 6px 0; }
+    .apercu > .sl { flex: none; }
     .apercu-type { font-size: 0.72rem; font-weight: 900; color: #7aaa8a; text-transform: uppercase; letter-spacing: 1px; }
     .apercu-titre { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #1a3a25; margin-top: 6px; }
     .apercu-q { font-size: 1.02rem; font-weight: 800; color: #1a3a25; margin-top: 8px; line-height: 1.45; }
@@ -99,9 +102,13 @@
     body.projection nav, body.projection .tabs, body.projection .join-actions,
     body.projection #ongletParticipants, body.projection #ongletReglages,
     body.projection .console-actions, body.projection #zoneResultats { display: none !important; }
-    body.projection .apercu { border: none; padding: 30px 20px; }
-    body.projection .apercu-titre { font-size: clamp(1.6rem, 5vw, 2.6rem); }
-    body.projection .apercu-q { font-size: clamp(1.2rem, 3.5vw, 1.8rem); }
+    /* En projection, la carte occupe la hauteur de l'écran (ratio 4:5 conservé)
+       et repose sur la scène verte, comme sur le téléphone des participants. */
+    body.projection { min-height: 100vh; }
+    body.projection .page-content { max-width: none; padding: 0; }
+    body.projection .card { background: none; box-shadow: none; padding: 0; margin: 0; }
+    body.projection .apercu { padding: 2vh 0; }
+    body.projection .apercu > .sl { width: min(76vh, 94vw); }
     body.projection .join-code { font-size: clamp(3rem, 12vw, 6rem); }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
@@ -131,6 +138,8 @@
     html.dark .progress { background: #1e2d22; }
   </style>
   <link rel="stylesheet" href="/assets/css/desktop.css">
+  <!-- Charte des cartes de slide, partagée avec l'écran participant -->
+  <link rel="stylesheet" href="/assets/css/slides.css">
 </head>
 <body>
 
@@ -495,60 +504,32 @@
       document.getElementById('btnSuiv').disabled = d.total === 0 || d.index >= d.total - 1;
       document.getElementById('btnSuiv').textContent = d.index < 0 ? '▶ Démarrer' : 'Suivant →';
 
-      // Aperçu de la slide courante, correction comprise (écran animateur).
+      // Aperçu de la slide courante, au même format que l'écran participant
+      // (slide-render.js), avec la correction visible puisque c'est l'écran
+      // de l'animateur.
       const ap = document.getElementById('apercu');
       if (!d.slide) {
         ap.innerHTML = '<div class="apercu-type">En attente</div>'
-          + '<div class="apercu-titre">Le parcours n\'a pas encore démarré</div>'
-          + '<div class="hint">Les participants voient la salle d\'attente. Clique sur « Démarrer ».</div>';
-      } else {
-        const s = d.slide, c = s.contenu || {};
-        let h = '<div class="apercu-type">' + echap((TYPES[s.type] || {}).nom || s.type) + (s.points ? ' · ' + s.points + ' pts' : '') + '</div>';
-        if (s.titre) h += '<div class="apercu-titre">' + echap(s.titre) + '</div>';
-        if (c.question) h += '<div class="apercu-q">' + echap(c.question) + '</div>';
-        if (c.sous_titre) h += '<div class="apercu-q">' + echap(c.sous_titre) + '</div>';
-        if (c.corps) h += '<div class="apercu-corps">' + echap(c.corps) + '</div>';
-        if (c.consigne) h += '<div class="apercu-corps">' + echap(c.consigne) + '</div>';
-        if (c.message) h += '<div class="apercu-corps">' + echap(c.message) + '</div>';
-        if (s.type === 'quiz' || s.type === 'sondage') {
-          (c.options || []).forEach((o, i) => {
-            h += '<div class="apercu-opt' + (c.correct === i ? ' juste' : '') + '"><span>' + echap(o) + '</span></div>';
+          + '<div class="apercu-titre">Le parcours n'a pas encore démarré</div>'
+          + '<div class="hint">Les participants voient la salle d'attente. Clique sur « Démarrer ».</div>';
+      } else if (window.rendreSlideHtml) {
+        const dessiner = (cl) => {
+          ap.innerHTML = window.rendreSlideHtml(d.slide, {
+            fixe: true,
+            correction: true,
+            position: { index: d.index, total: d.total },
+            classement: cl,
           });
-        }
-        if (s.type === 'vrai_faux') {
-          h += '<div class="apercu-opt' + (c.correct ? ' juste' : '') + '">Vrai</div>'
-             + '<div class="apercu-opt' + (!c.correct ? ' juste' : '') + '">Faux</div>';
-        }
-        if (s.type === 'estimation') {
-          h += '<div class="apercu-opt juste">Réponse : ' + echap(c.valeur) + ' ' + echap(c.unite || '')
-             + ' (tolérance ± ' + echap(c.tolerance) + ')</div>';
-        }
-        // Média : c'est cet écran qui est projeté en salle, la vidéo doit donc
-        // s'y afficher (logique partagée avec l'écran participant).
-        if (s.type === 'media' && window.rendreMediaHtml) {
-          h += window.rendreMediaHtml(c);
-          if (c.legende) h += '<div class="hint">' + echap(c.legende) + '</div>';
-        }
-        if (s.type === 'sommaire') {
-          (c.sections || []).forEach(x => {
-            const puce = x.etat === 'passee' ? '✓' : (x.etat === 'courante' ? '▶' : '•');
-            h += '<div class="apercu-opt' + (x.etat === 'courante' ? ' juste' : '') + '"'
-               + (x.etat === 'passee' ? ' style="opacity:0.45"' : '') + '>'
-               + '<span>' + puce + ' ' + echap(x.nom) + '</span></div>';
-          });
-        }
-        if (s.type === 'jeu') {
-          (c.items || []).forEach(it => {
-            const cle = it.cat !== undefined ? it.cat : (it.jours !== undefined ? it.jours + ' j' : it.mot);
-            h += '<div class="apercu-opt"><span>' + echap(it.emoji || '') + ' ' + echap(it.nom) + '</span><span class="nb">' + echap(cle) + '</span></div>';
-          });
-        }
-        if (c.explication) h += '<div class="hint" style="text-align:left">💡 ' + echap(c.explication) + '</div>';
-        if (s.aleatoire) {
-          h += '<div class="hint">🎲 Anecdote tirée au sort : <b>chaque participant voit la sienne</b>. '
-             + 'Celle affichée ici n\'est qu\'un exemple.</div>';
-        }
-        ap.innerHTML = h;
+          if (d.slide.aleatoire) {
+            ap.insertAdjacentHTML('beforeend',
+              '<div class="hint">🎲 Anecdote tirée au sort : <b>chaque participant voit la sienne</b>. '
+              + 'Celle affichée ici n'est qu'un exemple.</div>');
+          }
+        };
+        const c0 = d.slide.contenu || {};
+        const besoin = (d.slide.type === 'classement') || (d.slide.type === 'fin' && c0.afficher_classement);
+        if (besoin) chargerClassementData().then(dessiner).catch(() => dessiner(null));
+        else dessiner(null);
       }
 
       // Sommaire cliquable
@@ -580,6 +561,8 @@
       .then(() => chargerAnimation());
     document.getElementById('btnProjection').onclick = () => {
       document.body.classList.toggle('projection');
+      // La scène verte (motif + dégradé) n'habille l'écran qu'en projection.
+      document.body.classList.toggle('sl-scene', document.body.classList.contains('projection'));
       if (document.body.classList.contains('projection') && document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
       } else if (document.exitFullscreen) { document.exitFullscreen().catch(() => {}); }
@@ -766,6 +749,13 @@
     }
 
     // ══════════ CLASSEMENT ══════════
+    /** Données brutes du classement, pour les slides qui l'intègrent. */
+    function chargerClassementData() {
+      return fetch(API + '/animation.php?action=classement&id=' + EVT)
+        .then(lireJson)
+        .then(d => ({ joueurs: d.joueurs || [], equipes: d.equipes || [] }));
+    }
+
     function chargerClassement() {
       fetch(API + '/animation.php?action=classement&id=' + EVT)
         .then(r => r.json())
@@ -814,6 +804,7 @@
     window.addEventListener('beforeunload', () => { if (pollTimer) clearInterval(pollTimer); });
   </script>
   <script src="/assets/js/media-embed.js"></script>
+  <script src="/assets/js/slide-render.js"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 </html>

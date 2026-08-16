@@ -1,0 +1,269 @@
+/* ============================================================================
+   slides.css — charte visuelle des slides d'événement.
+
+   Reprend la grammaire des gabarits « Modèles de slides pour l'événement »
+   (carte 4:5, kicker en petites capitales, barre d'accent, pastilles de
+   section, compteur, encart verdict, lecteur audio) en la câblant sur les
+   couleurs de Composmart plutôt que sur la palette d'origine.
+
+   Partagée par l'écran participant (web) et la console d'animation
+   (evenements-api) : les deux doivent se ressembler, et dupliquer 400 lignes
+   de CSS garantissait qu'elles finiraient par diverger.
+
+   Le dimensionnement repose sur des unités de conteneur (cqw) : la même carte
+   rend en grand sur un vidéoprojecteur et en petit sur un téléphone, sans
+   classe de variante ni media query. Bornes via clamp() pour éviter les
+   extrêmes.
+   ============================================================================ */
+
+:root {
+  --sl-fond1:   #145228;   /* dégradé de fond, reprise du hero d'accueil */
+  --sl-fond2:   #1e6e3e;
+  --sl-fond3:   #2d9959;
+  --sl-carte:   #ffffff;
+  --sl-encre:   #1a3a25;
+  --sl-doux:    #4a7a5a;   /* texte secondaire */
+  --sl-accent:  #b26a00;   /* accent chaud — déjà la couleur des points du site */
+  --sl-accent2: #fff9c4;   /* fond de l'accent */
+  --sl-tendre:  #e8f5e9;   /* pastilles, encarts */
+  --sl-trait:   rgba(26, 58, 37, 0.12);
+  --sl-rad:     26px;
+}
+
+html.dark {
+  --sl-fond1:   #0d2f18;
+  --sl-fond2:   #12401f;
+  --sl-fond3:   #1a5c33;
+  --sl-carte:   #16211a;
+  --sl-encre:   #e8f5ee;
+  --sl-doux:    #7ab88e;
+  --sl-accent:  #e8b931;
+  --sl-accent2: #2e2410;
+  --sl-tendre:  #16291c;
+  --sl-trait:   rgba(232, 245, 238, 0.14);
+}
+
+/* ── Décor de fond (la « scène » où repose la carte) ────────────────────── */
+.sl-scene {
+  background-color: var(--sl-fond2);
+  background-image: url('/assets/img/motif-branchage-light.svg'),
+                    linear-gradient(160deg, var(--sl-fond1) 0%, var(--sl-fond2) 55%, var(--sl-fond3) 100%);
+  background-repeat: repeat, no-repeat;
+  background-size: 220px 220px, cover;
+}
+html.dark .sl-scene { background-image: url('/assets/img/motif-branchage-dark.svg'),
+                    linear-gradient(160deg, var(--sl-fond1) 0%, var(--sl-fond2) 55%, var(--sl-fond3) 100%); }
+
+/* ── La carte ───────────────────────────────────────────────────────────── */
+.sl {
+  container-type: inline-size;          /* socle des unités cqw ci-dessous */
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--sl-rad);
+  background: var(--sl-carte);
+  box-shadow: 0 26px 60px -18px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Nunito', Arial, sans-serif;
+  color: var(--sl-encre);
+}
+
+/* Format imposé 4:5 — utilisé en projection, où la carte est posée dans une
+   scène plus grande. Sur téléphone la carte suit la hauteur disponible. */
+.sl--fixe { aspect-ratio: 4 / 5; width: min(560px, 92vw); }
+
+/* Variante « fond plein » : carte de titre, texte en blanc sur le vert. */
+.sl--plein {
+  background: linear-gradient(155deg, var(--sl-fond1), var(--sl-fond2));
+  color: #fff;
+  justify-content: space-between;
+  padding: 8cqw 7cqw;
+}
+.sl--plein .sl__titre { color: #fff; }
+.sl--plein .sl__texte,
+.sl--plein .sl__sous  { color: rgba(255, 255, 255, 0.74); }
+.sl--plein .sl__kicker { color: rgba(255, 255, 255, 0.6); }
+.sl--plein .sl__filet  { background: rgba(255, 255, 255, 0.22); }
+
+/* Formes organiques en filigrane, reprises du gabarit d'origine. */
+.sl__deco {
+  position: absolute; border-radius: 50% 6% 50% 6%;
+  background: rgba(255, 255, 255, 0.05); pointer-events: none;
+}
+.sl__deco--haut  { right: -16%; top: -16%; width: 50%; aspect-ratio: 1; }
+.sl__deco--bas   { right: -11%; bottom: -13%; width: 36%; aspect-ratio: 1; background: rgba(255, 255, 255, 0.06); }
+.sl__grain {
+  position: absolute; inset: 0; opacity: 0.5; pointer-events: none;
+  background-image: radial-gradient(ellipse 14px 5px at 20% 25%, rgba(255,255,255,.13) 0 70%, transparent 71%),
+                    radial-gradient(ellipse 5px 14px at 70% 65%, rgba(255,255,255,.10) 0 70%, transparent 71%);
+  background-size: 150px 150px, 190px 190px;
+}
+
+/* ── Ossature interne ───────────────────────────────────────────────────── */
+.sl__bandeau { height: 1.4cqw; min-height: 6px; background: linear-gradient(90deg, var(--sl-accent), var(--sl-fond2)); flex: none; }
+
+.sl__entete {
+  position: relative; overflow: hidden; flex: none;
+  padding: 6cqw 7cqw 5.5cqw;
+  background: linear-gradient(150deg, var(--sl-fond1), var(--sl-fond2));
+  color: #fff;
+}
+.sl__entete .sl__titre  { color: #fff; }
+.sl__entete .sl__kicker { color: rgba(255, 255, 255, 0.62); }
+
+.sl__corps { flex: 1; min-height: 0; overflow-y: auto; padding: 5cqw 7cqw 6cqw; display: flex; flex-direction: column; gap: 3.4cqw; }
+.sl--plein .sl__corps { padding: 0; overflow: visible; }
+
+/* ── Éléments de texte ──────────────────────────────────────────────────── */
+.sl__kicker {
+  font-size: clamp(10px, 2.1cqw, 13px); letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--sl-doux); font-weight: 700;
+}
+.sl__ligne  { display: flex; align-items: center; gap: 2.2cqw; }
+.sl__filet  { flex: 1; height: 1px; background: var(--sl-trait); }
+
+.sl__barre  { width: 10cqw; max-width: 56px; height: 4px; border-radius: 2px; background: var(--sl-accent); flex: none; }
+
+.sl__titre {
+  margin: 0; font-family: 'Baloo 2', cursive; font-weight: 900; line-height: 1.1;
+  font-size: clamp(21px, 6.4cqw, 46px); text-wrap: pretty; color: var(--sl-encre);
+}
+.sl__titre--geant { font-size: clamp(26px, 10.4cqw, 62px); line-height: 1.02; }
+.sl__sous  { margin: 0; font-size: clamp(15px, 3.6cqw, 21px); line-height: 1.5; color: var(--sl-doux); font-weight: 600; }
+.sl__texte { margin: 0; font-size: clamp(14px, 3.3cqw, 19px); line-height: 1.62; color: var(--sl-doux); text-wrap: pretty; white-space: pre-wrap; }
+
+.sl__pastille {
+  padding: 1.1cqw 2.6cqw; border-radius: 999px; background: var(--sl-tendre); color: var(--sl-encre);
+  font-family: 'Baloo 2', cursive; font-weight: 900;
+  font-size: clamp(10px, 2.1cqw, 12px); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap;
+}
+.sl__badge-pts {
+  padding: 0.9cqw 2.2cqw; border-radius: 999px; background: rgba(255, 255, 255, 0.16); color: #fff;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(10px, 2.1cqw, 13px); white-space: nowrap;
+}
+
+.sl__pied {
+  display: flex; align-items: center; justify-content: space-between; gap: 2cqw;
+  font-size: clamp(11px, 2.4cqw, 14px); color: var(--sl-doux);
+  padding-top: 2cqw; border-top: 1px solid var(--sl-trait);
+}
+.sl--plein .sl__pied { border-top: none; color: rgba(255, 255, 255, 0.55); }
+.sl__num { font-family: 'Baloo 2', cursive; font-weight: 900; }
+.sl--plein .sl__num { color: rgba(255, 255, 255, 0.82); }
+
+/* ── Liste numérotée ────────────────────────────────────────────────────── */
+.sl__liste { list-style: none; display: flex; flex-direction: column; gap: 2.4cqw; margin: 0; padding: 0; }
+.sl__liste li { display: flex; gap: 2.6cqw; align-items: flex-start; font-size: clamp(13px, 3cqw, 17px); line-height: 1.5; color: var(--sl-encre); }
+.sl__puce {
+  flex: none; width: 4.8cqw; min-width: 24px; aspect-ratio: 1; border-radius: 50%;
+  background: var(--sl-tendre); color: var(--sl-encre);
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(11px, 2.4cqw, 13px);
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Boutons de réponse ─────────────────────────────────────────────────── */
+.sl__reps { display: flex; flex-direction: column; gap: 2.2cqw; }
+.sl__rep {
+  appearance: none; text-align: left; cursor: pointer; width: 100%;
+  display: flex; align-items: center; gap: 2.8cqw;
+  padding: 3.2cqw 4cqw; border-radius: 18px;
+  font-family: 'Nunito', Arial, sans-serif; font-size: clamp(14px, 3.4cqw, 19px); font-weight: 600;
+  background: var(--sl-carte); border: 2px solid var(--sl-trait); color: var(--sl-encre);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.sl__rep:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 22px -12px rgba(26, 58, 37, 0.45); border-color: var(--sl-fond2); }
+.sl__rep:disabled { cursor: default; }
+.sl__rep-marque {
+  flex: none; width: 6cqw; min-width: 30px; aspect-ratio: 1; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(12px, 2.8cqw, 16px);
+  background: var(--sl-tendre); color: var(--sl-encre);
+}
+.sl__rep--choisie { border-color: var(--sl-fond2); background: var(--sl-tendre); }
+.sl__rep--juste   { border-color: #2e7d32; background: #e8f5e9; color: #1b5e20; }
+.sl__rep--juste .sl__rep-marque   { background: #2e7d32; color: #fff; }
+.sl__rep--fausse  { border-color: #c0392b; background: #fdecea; color: #922b21; }
+.sl__rep--fausse .sl__rep-marque  { background: #c0392b; color: #fff; }
+html.dark .sl__rep--juste  { background: #16291c; color: #7fc99a; border-color: #43a047; }
+html.dark .sl__rep--fausse { background: #3d1a1a; color: #ef9a9a; border-color: #e53935; }
+
+/* ── Encart de verdict ──────────────────────────────────────────────────── */
+@keyframes sl-monte { from { transform: translateY(6px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+.sl__verdict {
+  margin-top: auto; padding: 3.6cqw 4cqw; border-radius: 20px;
+  background: var(--sl-tendre); border: 1px dashed var(--sl-trait);
+  display: flex; flex-direction: column; gap: 1.4cqw; animation: sl-monte 0.3s ease both;
+}
+.sl__verdict-tete { display: flex; align-items: center; gap: 2.2cqw; flex-wrap: wrap; }
+.sl__verdict-titre { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(16px, 4cqw, 22px); }
+.sl__verdict--bon .sl__verdict-titre     { color: #1b5e20; }
+.sl__verdict--rate .sl__verdict-titre    { color: #922b21; }
+.sl__verdict--neutre .sl__verdict-titre  { color: var(--sl-encre); }
+html.dark .sl__verdict--bon .sl__verdict-titre  { color: #7fc99a; }
+html.dark .sl__verdict--rate .sl__verdict-titre { color: #ef9a9a; }
+.sl__verdict-pts { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(12px, 2.8cqw, 15px); color: var(--sl-accent); }
+.sl__verdict-txt { margin: 0; font-size: clamp(13px, 3cqw, 16px); line-height: 1.55; color: var(--sl-doux); }
+
+/* ── Média plein cadre ──────────────────────────────────────────────────── */
+.sl__media {
+  flex: 1; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center;
+  background-color: #dfe7d9; overflow: hidden;
+}
+.sl__media img, .sl__media video, .sl__media iframe { width: 100%; height: 100%; object-fit: cover; border: 0; display: block; }
+.sl__media--libre { flex: none; }
+.sl__media-etiq {
+  position: absolute; top: 4cqw; left: 4cqw; padding: 1.3cqw 2.6cqw; border-radius: 999px;
+  background: rgba(12, 47, 33, 0.78); color: #fff;
+  font-family: 'Baloo 2', cursive; font-weight: 900;
+  font-size: clamp(10px, 2.1cqw, 12px); letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+/* ── Lecteur audio ──────────────────────────────────────────────────────── */
+.sl__lecteur {
+  padding: 5cqw 5cqw; border-radius: 24px;
+  background: linear-gradient(150deg, var(--sl-fond1), var(--sl-fond2));
+  display: flex; align-items: center; gap: 4cqw;
+}
+.sl__play {
+  appearance: none; border: none; cursor: pointer; flex: none;
+  width: 12cqw; min-width: 52px; aspect-ratio: 1; border-radius: 50%;
+  background: var(--sl-accent); color: #fff;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(16px, 4cqw, 22px);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.6);
+}
+.sl__ondes { flex: 1; display: flex; align-items: center; gap: 3px; height: 9cqw; max-height: 52px; }
+.sl__onde  { flex: 1; border-radius: 2px; background: rgba(255, 255, 255, 0.55); }
+
+/* ── Chips de proposition ───────────────────────────────────────────────── */
+.sl__chips { display: flex; gap: 2.2cqw; flex-wrap: wrap; }
+.sl__chip {
+  padding: 2.2cqw 3.6cqw; border-radius: 14px; border: 2px solid var(--sl-trait);
+  font-family: 'Baloo 2', cursive; font-weight: 700; font-size: clamp(13px, 3cqw, 16px); color: var(--sl-encre);
+}
+
+/* ── Sommaire (parties passées / en cours / à venir) ────────────────────── */
+.sl__somm { list-style: none; display: flex; flex-direction: column; gap: 1.8cqw; margin: 0; padding: 0; }
+.sl__somm li {
+  display: flex; align-items: center; gap: 2.6cqw;
+  padding: 2.6cqw 3.4cqw; border-left: 4px solid var(--sl-trait); border-radius: 0 12px 12px 0;
+  background: var(--sl-tendre); font-weight: 700; font-size: clamp(13px, 3cqw, 17px); color: var(--sl-encre);
+  transition: all 0.2s;
+}
+.sl__somm li.passee   { opacity: 0.42; }
+.sl__somm li.courante { border-left-color: var(--sl-fond2); font-weight: 900; transform: scale(1.02); box-shadow: 0 2px 10px rgba(26, 58, 37, 0.14); }
+.sl__somm li.avenir   { opacity: 0.78; }
+.sl__somm-puce { flex: none; opacity: 0.7; font-size: 0.85em; }
+.sl__somm li.courante .sl__somm-puce { opacity: 1; }
+
+/* ── Classement ─────────────────────────────────────────────────────────── */
+.sl__clst { list-style: none; display: flex; flex-direction: column; gap: 1.6cqw; margin: 0; padding: 0; }
+.sl__clst li {
+  display: flex; align-items: center; gap: 2.6cqw;
+  padding: 2.4cqw 3.2cqw; border-radius: 12px; background: var(--sl-tendre);
+  font-size: clamp(13px, 3cqw, 17px); color: var(--sl-encre);
+}
+.sl__clst .rang { font-family: 'Baloo 2', cursive; font-weight: 900; color: var(--sl-doux); min-width: 5cqw; }
+.sl__clst .nom  { flex: 1; font-weight: 700; }
+.sl__clst .pts  { font-family: 'Baloo 2', cursive; font-weight: 900; color: var(--sl-accent); }
+.sl__clst li.moi { outline: 2px solid var(--sl-fond2); }

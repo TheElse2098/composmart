@@ -1,0 +1,210 @@
+    // ══════════ RENDU D'UNE SLIDE ══════════
+    function rendreSlide(z, d) {
+      const s = d.slide, c = s.contenu || {}, rep = d.ma_reponse;
+      let h = '';
+      if (s.titre) h += '<div class="slide-titre">' + echap(s.titre) + '</div>';
+
+      switch (s.type) {
+        case 'titre':
+          if (c.sous_titre) h += '<div class="slide-sous">' + echap(c.sous_titre) + '</div>';
+          break;
+        case 'texte':
+          h += '<div class="slide-corps">' + echap(c.corps) + '</div>';
+          break;
+        case 'anecdote':
+          h += '<div class="slide-emoji">' + echap(c.emoji || '💡') + '</div>'
+             + '<div class="slide-corps">' + echap(c.corps) + '</div>';
+          break;
+        case 'sommaire':
+          h += '<ul class="somm">' + (c.sections || []).map(x =>
+            '<li class="' + echap(x.etat || 'avenir') + '">'
+            + '<span class="somm-puce">' + (x.etat === 'passee' ? '✓' : (x.etat === 'courante' ? '▶' : '•')) + '</span>'
+            + echap(x.nom) + '</li>').join('') + '</ul>';
+          break;
+        case 'media':
+          h += rendreMedia(c);
+          if (c.legende) h += '<div class="slide-legende">' + echap(c.legende) + '</div>';
+          break;
+        case 'fin':
+          h += '<div class="slide-emoji">🌿</div><div class="slide-corps" style="text-align:center">' + echap(c.message) + '</div>';
+          if (c.afficher_classement) h += '<div id="clZone"></div>';
+          break;
+        case 'classement':
+          h += '<div id="clZone"></div>';
+          break;
+        case 'defi':
+          h += '<div class="slide-emoji">🎯</div><div class="slide-corps">' + echap(c.consigne) + '</div>'
+             + '<div class="attente-txt" style="font-size:0.88rem">L\'animateur attribuera les points.</div>';
+          break;
+        case 'quiz':
+        case 'sondage':
+          h += '<div class="slide-question">' + echap(c.question) + '</div>'
+             + (c.options || []).map((o, i) => '<button class="opt" data-i="' + i + '">' + echap(o) + '</button>').join('');
+          break;
+        case 'vrai_faux':
+          h += '<div class="slide-question">' + echap(c.question) + '</div>'
+             + '<button class="opt" data-i="1">✅ Vrai</button><button class="opt" data-i="0">❌ Faux</button>';
+          break;
+        case 'estimation':
+          h += '<div class="slide-question">' + echap(c.question) + '</div>'
+             + '<div class="field"><input type="number" step="any" id="estim" placeholder="Ta réponse'
+             + (c.unite ? ' (' + echap(c.unite) + ')' : '') + '"></div>'
+             + '<button class="btn" id="btnEstim">Valider</button>';
+          break;
+        case 'question_ouverte':
+          h += '<div class="slide-question">' + echap(c.question) + '</div>'
+             + '<div class="field"><textarea id="ouverte" maxlength="' + (c.max_car || 300) + '"></textarea></div>'
+             + '<button class="btn" id="btnOuverte">Envoyer</button>';
+          break;
+        case 'jeu':
+          h += '<div class="slide-question">' + echap(s.titre || 'À toi de jouer !') + '</div>'
+             + (c.items || []).map((it, i) => ligneJeu(it, i, c.jeu)).join('')
+             + '<button class="btn" id="btnJeu">Valider</button>';
+          break;
+      }
+
+      z.innerHTML = h;
+      cablerSlide(z, d);
+
+      // Classement (slide dédiée ou fin de parcours)
+      if (document.getElementById('clZone')) chargerClassement(c.portee || 'les_deux');
+
+      // Déjà répondu : on rejoue l'affichage du résultat.
+      if (rep) marquerReponse(z, d);
+
+      // Mode individuel : c'est le participant qui avance, pas l'animateur.
+      // Le bouton n'apparaît qu'une fois la question traitée, pour ne pas
+      // permettre de sauter une slide notée sans y répondre.
+      if (d.evenement.mode === 'individuel' && !(d.repond && !rep)) {
+        const dernier = (d.index >= d.total - 1);
+        const b = document.createElement('button');
+        b.className = 'btn';
+        b.style.marginTop = '14px';
+        b.textContent = dernier ? '🏁 Parcours terminé' : 'Suivant →';
+        b.disabled = dernier;
+        if (!dernier) b.onclick = () => {
+          b.disabled = true;
+          fetch(API + '/live.php?action=suivant', {
+            method: 'POST',
+            body: new URLSearchParams({ token: token }),
+          })
+            .then(r => r.json())
+            .then(res => { if (res.ok) { rendu = ''; chargerEtat(); } else { afficher(res.error || 'Impossible.', false); b.disabled = false; } })
+            .catch(() => { afficher('Erreur réseau.', false); b.disabled = false; });
+        };
+        z.appendChild(b);
+      }
+    }
+
+    // Rendu média : logique partagée avec la console d'animation
+    // (/assets/js/media-embed.js), pour que les deux écrans affichent
+    // exactement la même chose.
+    function rendreMedia(c) {
+      return window.rendreMediaHtml ? window.rendreMediaHtml(c) : '';
+    }
+
+    function ligneJeu(it, i, jeu) {
+      let champ = '';
+      if (jeu === 'compost-ou-pas') {
+        champ = '<select data-i="' + i + '"><option value="">?</option>'
+              + '<option value="oui">✅ Oui</option><option value="attention">⚠️ Avec précaution</option><option value="non">❌ Non</option></select>';
+      } else if (jeu === 'temps-decompo') {
+        champ = '<input type="number" min="0" data-i="' + i + '" placeholder="jours">';
+      } else {
+        champ = '<input type="text" data-i="' + i + '" placeholder="le mot">';
+      }
+      return '<div class="jeu-item"><span class="jeu-emoji">' + echap(it.emoji || '•') + '</span>'
+           + '<span class="jeu-nom">' + echap(it.nom) + '</span>' + champ + '</div>';
+    }
+
+    function cablerSlide(z, d) {
+      const s = d.slide;
+      if (d.ma_reponse) return;   // déjà répondu : plus rien à câbler
+
+      z.querySelectorAll('.opt').forEach(b => {
+        b.onclick = () => repondre(s.id, Number(b.dataset.i), b);
+      });
+      const be = document.getElementById('btnEstim');
+      if (be) be.onclick = () => {
+        const v = document.getElementById('estim').value;
+        if (v === '') return;
+        repondre(s.id, Number(v));
+      };
+      const bo = document.getElementById('btnOuverte');
+      if (bo) bo.onclick = () => {
+        const v = document.getElementById('ouverte').value.trim();
+        if (v === '') return;
+        repondre(s.id, v);
+      };
+      const bj = document.getElementById('btnJeu');
+      if (bj) bj.onclick = () => {
+        const jeu = (s.contenu || {}).jeu;
+        const nb = (s.contenu.items || []).length;
+        const out = [];
+        for (let i = 0; i < nb; i++) {
+          const el = z.querySelector('[data-i="' + i + '"]');
+          out.push(jeu === 'temps-decompo' ? Number(el.value || 0) : el.value);
+        }
+        repondre(s.id, out);
+      };
+    }
+
+    function repondre(slide_id, valeur, bouton) {
+      if (bouton) z_desactiver();
+      fetch(API + '/live.php?action=repondre', {
+        method: 'POST',
+        body: new URLSearchParams({ token: token, slide_id: slide_id, reponse: JSON.stringify(valeur) }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.error === 'session_perdue') { quitterLive('Ta session a expiré.'); return; }
+          if (!d.ok) { afficher(d.error || 'Impossible de répondre.', false); z_reactiver(); return; }
+          // On force le prochain rendu : la correction est désormais visible.
+          rendu = '';
+          if (dernierEtat) {
+            dernierEtat.slide = d.slide;
+            dernierEtat.ma_reponse = d.ma_reponse;
+            dernierEtat.participant.points = d.points_total;
+            majEnTete(dernierEtat);
+            rendreEcran(dernierEtat);
+          }
+        })
+        .catch(() => { afficher('Erreur réseau.', false); z_reactiver(); });
+    }
+
+    function z_desactiver() { document.querySelectorAll('#zoneLive .opt, #zoneLive .btn').forEach(b => b.disabled = true); }
+    function z_reactiver()  { document.querySelectorAll('#zoneLive .opt, #zoneLive .btn').forEach(b => b.disabled = false); }
+
+    /** Affiche le résultat une fois la réponse donnée. */
+    function marquerReponse(z, d) {
+      const s = d.slide, c = s.contenu || {}, rep = d.ma_reponse;
+
+      z.querySelectorAll('.opt').forEach(b => {
+        b.disabled = true;
+        const i = Number(b.dataset.i);
+        const choisi = (s.type === 'vrai_faux') ? (Boolean(rep.reponse) === Boolean(i)) : (rep.reponse === i);
+        if (s.type === 'sondage') { if (choisi) b.classList.add('choisie'); return; }
+        const bonne = (s.type === 'vrai_faux') ? (Boolean(c.correct) === Boolean(i)) : (c.correct === i);
+        if (bonne) b.classList.add('juste');
+        else if (choisi) b.classList.add('fausse');
+      });
+      ['estim', 'ouverte', 'btnEstim', 'btnOuverte', 'btnJeu'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = true;
+      });
+
+      let cls = 'neutre', titre = 'Réponse enregistrée';
+      if (rep.correct === true)  { cls = 'bon';     titre = '✅ Bonne réponse !'; }
+      if (rep.correct === false) { cls = 'mauvais'; titre = '❌ Raté'; }
+      if (s.type === 'sondage')  { cls = 'neutre';  titre = 'Merci pour ta réponse'; }
+
+      let h = '<div class="feedback ' + cls + '"><div class="feedback-titre">' + titre + '</div>';
+      if (rep.points > 0) h += '<div class="feedback-pts">+' + rep.points + ' points</div>';
+      if (s.type === 'estimation' && c.valeur !== undefined) {
+        h += '<div class="feedback-exp">La réponse exacte était <b>' + echap(c.valeur) + (c.unite ? ' ' + echap(c.unite) : '') + '</b>.</div>';
+      }
+      if (c.explication) h += '<div class="feedback-exp">' + echap(c.explication) + '</div>';
+      h += '</div>';
+      z.insertAdjacentHTML('beforeend', h);
+    }
+
