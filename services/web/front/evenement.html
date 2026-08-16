@@ -371,6 +371,8 @@
           if (d.error === 'session_perdue') { quitterLive('Ta session a expiré, entre à nouveau le code.'); return; }
           if (d.error) { return; }
           dernierEtat = d;
+          // Charte visuelle choisie pour cet événement (cf. slides.css).
+          document.body.setAttribute('data-theme-slide', (d.evenement && d.evenement.theme) || 'foret');
           majEnTete(d);
           rendreEcran(d);
         })

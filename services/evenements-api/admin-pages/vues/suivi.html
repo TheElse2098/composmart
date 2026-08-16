@@ -288,6 +288,13 @@
             <option value="libre">Les participants choisissent</option>
           </select>
         </div>
+        <div class="field">
+          <label>Thème visuel des slides</label>
+          <select id="regTheme">
+            <option value="foret">🌿 Forêt — cartes claires sur fond feuillage</option>
+            <option value="papier">📜 Papier — fond crème, cadres épais, accent terracotta</option>
+          </select>
+        </div>
         <button type="button" class="btn-principal" id="btnReglages">Enregistrer</button>
         <div class="hint" id="hintParcours"></div>
       </div>
@@ -366,6 +373,7 @@
           if (ongletActif !== 'reglages') {
             document.getElementById('regMode').value = d.evenement.mode_parcours;
             document.getElementById('regEquipes').value = d.evenement.mode_equipes;
+            document.getElementById('regTheme').value = d.evenement.theme_slides || 'foret';
           }
           document.getElementById('hintParcours').textContent = d.evenement.parcours_nom
             ? 'Parcours affecté : ' + d.evenement.parcours_nom + ' (' + d.evenement.nb_slides + ' slides).'
@@ -477,6 +485,7 @@
         id: EVT,
         mode_parcours: document.getElementById('regMode').value,
         mode_equipes: document.getElementById('regEquipes').value,
+        theme_slides: document.getElementById('regTheme').value,
       }).then(d => {
         if (d.ok) { afficher('Réglages enregistrés.', true); chargerSuivi(); }
         else afficher(d.error || 'Erreur.', false);
@@ -490,6 +499,8 @@
         .then(d => {
           if (d.error) return;
           etatAnim = d;
+          // Charte visuelle de cet événement (cf. slides.css).
+          document.body.setAttribute('data-theme-slide', (d.evenement && d.evenement.theme) || 'foret');
           rendreConsole(d);
         })
         .catch(() => {});

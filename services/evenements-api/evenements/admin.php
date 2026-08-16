@@ -198,9 +198,10 @@ if ($action === 'reglages') {
 
     $mp = in_array($_POST['mode_parcours'] ?? '', ['commun', 'individuel'], true) ? $_POST['mode_parcours'] : 'commun';
     $me = in_array($_POST['mode_equipes'] ?? '', ['aucun', 'manuel', 'auto', 'libre'], true) ? $_POST['mode_equipes'] : 'aucun';
+    $th = in_array($_POST['theme_slides'] ?? '', ['foret', 'papier'], true) ? $_POST['theme_slides'] : 'foret';
 
-    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET mode_parcours = ?, mode_equipes = ? WHERE id = ? AND supprime = 0');
-    $stmt->bind_param('ssi', $mp, $me, $id);
+    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET mode_parcours = ?, mode_equipes = ?, theme_slides = ? WHERE id = ? AND supprime = 0');
+    $stmt->bind_param('sssi', $mp, $me, $th, $id);
     $stmt->execute();
 
     echo json_encode(['ok' => true]);
@@ -392,7 +393,7 @@ if ($action === 'suivi') {
 
     $stmt = mysqli_prepare($conn,
         'SELECT e.id, e.titre, e.lieu, e.date_debut, e.code, e.statut, e.supprime,
-                e.parcours_id, e.mode_equipes, e.mode_parcours,
+                e.parcours_id, e.mode_equipes, e.mode_parcours, e.theme_slides,
                 (SELECT COUNT(*) FROM evenement_slides s WHERE s.evenement_id = e.id) AS nb_slides,
                 (SELECT p.nom FROM parcours p WHERE p.id = e.parcours_id) AS parcours_nom
          FROM evenements e WHERE e.id = ?');

@@ -18,7 +18,7 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 /** Charge un événement ou termine la requête. */
 function charger_evenement($conn, $id) {
     $stmt = mysqli_prepare($conn,
-        'SELECT id, titre, code, statut, mode_parcours, mode_equipes, slide_courante_id FROM evenements WHERE id = ?');
+        'SELECT id, titre, code, statut, mode_parcours, mode_equipes, theme_slides, slide_courante_id FROM evenements WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $e = $stmt->get_result()->fetch_assoc();
@@ -144,6 +144,7 @@ if ($action === 'etat') {
             'statut'        => $evt['statut'],
             'mode_parcours' => $evt['mode_parcours'],
             'mode_equipes'  => $evt['mode_equipes'],
+            'theme'         => $evt['theme_slides'] ?? 'foret',
         ],
         'slide'           => $slide,
         'index'           => $index,

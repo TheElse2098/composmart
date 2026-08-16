@@ -57,7 +57,7 @@ function participant_ou_403($conn) {
 
 function charger_evenement($conn, $id) {
     $stmt = mysqli_prepare($conn,
-        'SELECT id, titre, statut, supprime, mode_parcours, mode_equipes, slide_courante_id FROM evenements WHERE id = ?');
+        'SELECT id, titre, statut, supprime, mode_parcours, mode_equipes, theme_slides, slide_courante_id FROM evenements WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     return $stmt->get_result()->fetch_assoc();
@@ -109,7 +109,8 @@ if ($action === 'etat') {
 
     $base = [
         'participant'  => ['nom' => $p['nom_affiche'], 'points' => score_participant($conn, $p['id'])],
-        'evenement'    => ['titre' => $evt['titre'], 'statut' => $evt['statut'], 'mode' => $evt['mode_parcours']],
+        'evenement'    => ['titre' => $evt['titre'], 'statut' => $evt['statut'], 'mode' => $evt['mode_parcours'],
+                            'theme' => $evt['theme_slides'] ?? 'foret'],
         'mode_equipes' => $evt['mode_equipes'],
     ];
 

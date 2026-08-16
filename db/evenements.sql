@@ -30,6 +30,9 @@ CREATE TABLE `evenements` (
   -- 'commun' = tout le monde sur la même slide, l'animateur fait avancer.
   -- 'individuel' = chacun progresse à son rythme (participants.slide_index).
   `mode_parcours` enum('commun','individuel') NOT NULL DEFAULT 'commun',
+  -- Charte visuelle des slides : 'foret' (cartes claires sur fond feuillage)
+  -- ou 'papier' (fond crème, cadres épais, accent terracotta). Cf. slides.css.
+  `theme_slides`  enum('foret','papier') NOT NULL DEFAULT 'foret',
   `slide_courante_id` int      DEFAULT NULL,       -- mode commun : slide projetée
   `cree_par`      varchar(100) DEFAULT NULL,       -- username admin, dénormalisé (cf. cours_versions.auteur)
   `created_at`    datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,

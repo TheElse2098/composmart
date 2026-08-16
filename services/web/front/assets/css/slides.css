@@ -275,3 +275,108 @@ html.dark .sl__verdict--rate .sl__verdict-titre { color: #ef9a9a; }
 .sl__clst .nom  { flex: 1; font-weight: 700; }
 .sl__clst .pts  { font-family: 'Baloo 2', cursive; font-weight: 900; color: var(--sl-accent); }
 .sl__clst li.moi { outline: 2px solid var(--sl-fond2); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THÈME « PAPIER » (variante B)
+
+   Seconde piste graphique : fond papier crème piqué de pois, cartes cernées
+   d'un trait olive épais et posées sur une ombre dure (décalée, sans flou),
+   numéro de section en gros caractères terracotta, et un motif géométrique
+   par famille de carte.
+
+   Tout passe par les mêmes classes que le thème par défaut : seuls les jetons
+   et quelques traits de forme changent. Un parcours bascule d'un thème à
+   l'autre sans qu'une seule ligne de rendu ne bouge.
+
+   Les verts sont ceux de Composmart ; le terracotta est conservé tel quel,
+   c'est lui qui distingue les deux thèmes au premier regard.
+   ══════════════════════════════════════════════════════════════════════════ */
+[data-theme-slide="papier"] {
+  --sl-fond1:   #145228;
+  --sl-fond2:   #1e6e3e;
+  --sl-fond3:   #2d9959;
+  --sl-carte:   #fdfaf1;   /* papier */
+  --sl-encre:   #22331f;
+  --sl-doux:    #6b7a63;
+  --sl-accent:  #c04f2e;   /* terracotta */
+  --sl-accent2: #f7e3d8;
+  --sl-tendre:  #efe8d8;
+  --sl-trait:   rgba(30, 110, 62, 0.28);
+  --sl-rad:     20px;
+}
+html.dark [data-theme-slide="papier"] {
+  --sl-carte:   #1b2418;
+  --sl-encre:   #ecebdd;
+  --sl-doux:    #9fae96;
+  --sl-accent:  #e8825e;
+  --sl-accent2: #3a251c;
+  --sl-tendre:  #232d1f;
+  --sl-trait:   rgba(236, 235, 221, 0.22);
+}
+
+/* La scène abandonne le dégradé feuillage pour un papier à pois. */
+[data-theme-slide="papier"].sl-scene,
+[data-theme-slide="papier"] .sl-scene,
+body[data-theme-slide="papier"].en-parcours {
+  background-color: #efe8d8;
+  background-image: radial-gradient(circle, rgba(47, 74, 43, 0.10) 1.4px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+html.dark body[data-theme-slide="papier"].en-parcours,
+html.dark [data-theme-slide="papier"].sl-scene {
+  background-color: #12180f;
+  background-image: radial-gradient(circle, rgba(236, 235, 221, 0.09) 1.4px, transparent 1.5px);
+}
+
+/* Cadre épais + ombre dure : la signature du thème. */
+[data-theme-slide="papier"] .sl {
+  border: 3px solid var(--sl-fond1);
+  box-shadow: 14px 14px 0 rgba(20, 82, 40, 0.18);
+}
+html.dark [data-theme-slide="papier"] .sl { box-shadow: 14px 14px 0 rgba(0, 0, 0, 0.45); }
+
+/* Bandeau de tête : arcs concentriques plutôt qu'un dégradé. */
+[data-theme-slide="papier"] .sl__entete {
+  background: var(--sl-fond1);
+  border-bottom: 3px solid var(--sl-fond1);
+}
+[data-theme-slide="papier"] .sl__entete::before {
+  content: ''; position: absolute; inset: -40px -40px auto -40px; height: 400px; pointer-events: none;
+  background-image: repeating-radial-gradient(circle at 50% 100%, transparent 0 44px, rgba(253, 250, 241, 0.16) 44px 47px);
+}
+[data-theme-slide="papier"] .sl--plein {
+  background: var(--sl-carte); color: var(--sl-encre);
+}
+[data-theme-slide="papier"] .sl--plein .sl__titre { color: var(--sl-encre); }
+[data-theme-slide="papier"] .sl--plein .sl__sous,
+[data-theme-slide="papier"] .sl--plein .sl__texte { color: var(--sl-doux); }
+[data-theme-slide="papier"] .sl--plein .sl__kicker { color: var(--sl-accent); }
+[data-theme-slide="papier"] .sl--plein .sl__filet { background: var(--sl-fond1); height: 3px; }
+[data-theme-slide="papier"] .sl--plein .sl__pied { color: var(--sl-encre); border-top: 3px solid var(--sl-fond1); }
+[data-theme-slide="papier"] .sl--plein .sl__num { color: var(--sl-accent); }
+/* Les formes organiques du thème forêt n'ont pas cours ici. */
+[data-theme-slide="papier"] .sl__deco,
+[data-theme-slide="papier"] .sl__grain { display: none; }
+
+/* Barre d'accent : un carré franc plutôt qu'un trait arrondi. */
+[data-theme-slide="papier"] .sl__barre { height: 12px; width: 34px; border-radius: 0; }
+/* Bandeau supérieur : hachures obliques. */
+[data-theme-slide="papier"] .sl__bandeau {
+  height: 14px; background: var(--sl-fond1);
+  background-image: repeating-linear-gradient(135deg, rgba(253, 250, 241, 0.24) 0 2px, transparent 2px 11px);
+}
+/* Pastilles et boutons : angles nets, trait franc. */
+[data-theme-slide="papier"] .sl__pastille { border-radius: 6px; background: var(--sl-accent); color: #fff; }
+[data-theme-slide="papier"] .sl__badge-pts { border-radius: 6px; background: var(--sl-accent); color: #fff; }
+[data-theme-slide="papier"] .sl__rep { border-radius: 10px; border-width: 3px; border-color: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__rep:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 rgba(20, 82, 40, 0.22); }
+[data-theme-slide="papier"] .sl__rep-marque { border-radius: 6px; background: var(--sl-fond1); color: var(--sl-carte); }
+[data-theme-slide="papier"] .sl__verdict { border-radius: 10px; border: 3px dashed var(--sl-fond1); background: var(--sl-tendre); }
+[data-theme-slide="papier"] .sl__chip { border-radius: 6px; border-width: 3px; border-color: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__puce { border-radius: 6px; background: var(--sl-accent); color: #fff; }
+[data-theme-slide="papier"] .sl__somm li { border-radius: 0 6px 6px 0; background: var(--sl-tendre); }
+[data-theme-slide="papier"] .sl__somm li.courante { border-left-color: var(--sl-accent); }
+[data-theme-slide="papier"] .sl__clst li { border-radius: 6px; background: var(--sl-tendre); }
+[data-theme-slide="papier"] .sl__lecteur { border-radius: 10px; background: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__play { border-radius: 8px; }
+[data-theme-slide="papier"] .sl__media-etiq { border-radius: 6px; background: var(--sl-accent); }
