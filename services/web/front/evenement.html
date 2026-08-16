@@ -9,54 +9,112 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
-  <title>CompoSmart – Rejoindre un événement</title>
+  <title>CompoSmart – Événement</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
 
-    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
     .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
     .nav-logo span { color: #a8e6bf; }
+    .nav-score { color: #fff; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.95rem; display: none; }
+    .nav-score .eq { display: block; font-size: 0.68rem; font-weight: 700; opacity: 0.85; }
 
-    .hero { text-align: center; padding: 28px 20px 8px; }
-    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.82rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.4rem); font-weight: 900; color: #1a3a25; }
-    .hero-sub { font-size: 0.95rem; color: #4a7a5a; margin-top: 6px; font-weight: 600; }
+    .hero { text-align: center; padding: 26px 20px 6px; }
+    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.8rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.4rem, 5vw, 2.2rem); font-weight: 900; color: #1a3a25; }
+    .hero-sub { font-size: 0.92rem; color: #4a7a5a; margin-top: 6px; font-weight: 600; }
 
-    .evt-card { background: #fff; border-radius: 20px; box-shadow: 0 4px 24px rgba(30,110,62,0.10); width: 100%; max-width: 480px; margin: 16px; padding: 28px 24px 30px; }
+    .carte { background: #fff; border-radius: 20px; box-shadow: 0 4px 24px rgba(30,110,62,0.10); width: 100%; max-width: 560px; margin: 16px; padding: 26px 22px 28px; }
 
-    .field { margin-bottom: 16px; }
-    .field label { display: block; font-size: 0.78rem; font-weight: 800; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    .field input { display: block; width: 100%; padding: 11px 14px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.95rem; color: #1a3a25; background: #f7fbf8; outline: none; font-family: inherit; transition: border-color 0.15s; }
-    .field input:focus { border-color: #1e6e3e; background: #fff; }
+    .field { margin-bottom: 15px; }
+    .field label { display: block; font-size: 0.76rem; font-weight: 800; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .field input, .field textarea { display: block; width: 100%; padding: 11px 14px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.95rem; color: #1a3a25; background: #f7fbf8; outline: none; font-family: inherit; }
+    .field textarea { min-height: 100px; resize: vertical; }
+    .field input:focus, .field textarea:focus { border-color: #1e6e3e; background: #fff; }
     .code-input { text-align: center; font-family: 'Baloo 2', cursive; font-size: 1.6rem; font-weight: 900; letter-spacing: 6px; text-transform: uppercase; }
 
-    .msg { border-radius: 10px; padding: 11px 14px; font-size: 0.88rem; font-weight: 700; margin-bottom: 16px; display: none; }
+    .msg { border-radius: 10px; padding: 11px 14px; font-size: 0.87rem; font-weight: 700; margin-bottom: 14px; display: none; }
     .msg.error { background: #fdecea; color: #c0392b; }
     .msg.ok { background: #e8f5e9; color: #1e6e3e; }
 
-    .btn-submit { display: block; width: 100%; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 13px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: opacity 0.15s; margin-top: 4px; font-family: 'Baloo 2', cursive; }
-    .btn-submit:hover { opacity: 0.88; }
-    .btn-submit:disabled { opacity: 0.5; cursor: default; }
+    .btn { display: block; width: 100%; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 13px; font-size: 1rem; font-weight: 800; cursor: pointer; font-family: 'Baloo 2', cursive; margin-top: 4px; }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .btn-s { background: #eceff1; color: #607d8b; }
 
-    .evt-recap { text-align: center; padding: 4px 0 18px; }
-    .evt-recap-titre { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #1a3a25; }
-    .evt-recap-meta { font-size: 0.85rem; color: #4a7a5a; font-weight: 700; margin-top: 6px; }
+    /* ── Slides ── */
+    .slide-titre { font-family: 'Baloo 2', cursive; font-size: 1.35rem; font-weight: 900; color: #1a3a25; margin-bottom: 12px; text-align: center; }
+    .slide-question { font-size: 1.08rem; font-weight: 800; color: #1a3a25; margin-bottom: 16px; line-height: 1.45; text-align: center; }
+    .slide-corps { font-size: 1rem; color: #2c4a34; line-height: 1.6; white-space: pre-wrap; }
+    .slide-emoji { font-size: 3rem; text-align: center; margin-bottom: 10px; }
+    .slide-sous { font-size: 1rem; color: #4a7a5a; font-weight: 700; text-align: center; margin-top: -6px; }
+    .slide-media { width: 100%; border-radius: 14px; margin: 8px 0; }
+    .slide-legende { font-size: 0.84rem; color: #888; text-align: center; margin-top: 6px; }
 
-    .confirm { text-align: center; padding: 10px 4px; }
-    .confirm-emoji { font-size: 2.8rem; }
-    .confirm-text { font-size: 1rem; color: #1a3a25; font-weight: 800; margin: 14px 0 4px; }
-    .confirm-sub { font-size: 0.85rem; color: #4a7a5a; font-weight: 600; }
+    .opt { display: block; width: 100%; text-align: left; background: #f7fbf8; border: 2px solid #c8dfc8; border-radius: 14px; padding: 13px 16px; font-size: 0.97rem; font-weight: 700; color: #1a3a25; cursor: pointer; margin-bottom: 9px; font-family: inherit; transition: all 0.15s; }
+    .opt:hover:not(:disabled) { border-color: #1e6e3e; background: #fff; }
+    .opt:disabled { cursor: default; }
+    .opt.choisie { border-color: #1e6e3e; background: #e8f5e9; }
+    .opt.juste { border-color: #2e7d32; background: #e8f5e9; color: #1b5e20; }
+    .opt.fausse { border-color: #c0392b; background: #fdecea; color: #922b21; }
+
+    .feedback { border-radius: 14px; padding: 15px; margin-top: 14px; text-align: center; }
+    .feedback.bon { background: #e8f5e9; }
+    .feedback.mauvais { background: #fdecea; }
+    .feedback.neutre { background: #eef4ec; }
+    .feedback-titre { font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 900; }
+    .feedback.bon .feedback-titre { color: #1b5e20; }
+    .feedback.mauvais .feedback-titre { color: #922b21; }
+    .feedback.neutre .feedback-titre { color: #1a3a25; }
+    .feedback-pts { font-size: 0.9rem; font-weight: 800; color: #b26a00; margin-top: 4px; }
+    .feedback-exp { font-size: 0.9rem; color: #2c4a34; margin-top: 9px; line-height: 1.5; }
+
+    .attente { text-align: center; padding: 16px 4px; }
+    .attente-emoji { font-size: 3rem; }
+    .attente-txt { font-size: 1rem; color: #4a7a5a; font-weight: 700; margin-top: 12px; line-height: 1.5; }
+    .pastille { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #52b788; margin: 0 3px; animation: pulse 1.4s infinite; }
+    .pastille:nth-child(2) { animation-delay: 0.2s; }
+    .pastille:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    .jeu-item { display: flex; align-items: center; gap: 9px; background: #f7fbf8; border: 1.5px solid #c8dfc8; border-radius: 12px; padding: 9px 12px; margin-bottom: 8px; }
+    .jeu-emoji { font-size: 1.4rem; }
+    .jeu-nom { flex: 1; font-weight: 700; font-size: 0.92rem; color: #1a3a25; }
+    .jeu-item select, .jeu-item input { border: 1.5px solid #c8dfc8; border-radius: 9px; padding: 7px 9px; font-family: inherit; font-size: 0.86rem; background: #fff; color: #1a3a25; max-width: 130px; }
+
+    .clst { list-style: none; }
+    .clst li { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: #f7fbf8; margin-bottom: 6px; font-size: 0.92rem; }
+    .clst .rang { font-family: 'Baloo 2', cursive; font-weight: 900; color: #7aaa8a; min-width: 24px; }
+    .clst .nom { flex: 1; font-weight: 700; color: #1a3a25; }
+    .clst .pts { font-weight: 800; color: #b26a00; }
+    .clst li.moi { background: #e8f5e9; }
+    .sect-titre { font-family: 'Baloo 2', cursive; font-weight: 900; color: #1a3a25; font-size: 0.98rem; margin: 14px 0 8px; }
+
+    .somm { list-style: none; }
+    .somm li { padding: 9px 12px; border-left: 3px solid #c8dfc8; margin-bottom: 6px; font-weight: 700; color: #2c4a34; font-size: 0.94rem; }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
 
     html.dark body { background-color: #101a13; }
     html.dark nav { background: #14301f; }
-    html.dark .evt-card { background: #1a2b1e; box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
-    html.dark h1, html.dark .evt-recap-titre, html.dark .confirm-text { color: #e8f5ee; }
+    html.dark .carte { background: #1a2b1e; box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+    html.dark h1, html.dark .slide-titre, html.dark .slide-question, html.dark .jeu-nom, html.dark .clst .nom, html.dark .sect-titre { color: #e8f5ee; }
+    html.dark .slide-corps, html.dark .somm li { color: #c8e6d4; }
     html.dark .field label { color: #7ab88e; }
-    html.dark .field input { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
-    html.dark .field input:focus { border-color: #52b788; background: #243328; }
+    html.dark .field input, html.dark .field textarea { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .opt, html.dark .jeu-item, html.dark .clst li { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .opt.juste { background: #16291c; border-color: #43a047; color: #7fc99a; }
+    html.dark .opt.fausse { background: #3d1a1a; border-color: #e53935; color: #ef9a9a; }
+    html.dark .opt.choisie { background: #16291c; border-color: #52b788; }
+    html.dark .feedback.bon { background: #16291c; }
+    html.dark .feedback.mauvais { background: #3d1a1a; }
+    html.dark .feedback.neutre { background: #1e2d22; }
+    html.dark .feedback.bon .feedback-titre { color: #7fc99a; }
+    html.dark .feedback.mauvais .feedback-titre { color: #ef9a9a; }
+    html.dark .feedback.neutre .feedback-titre, html.dark .feedback-exp { color: #e8f5ee; }
+    html.dark .clst li.moi { background: #16291c; }
+    html.dark .jeu-item select, html.dark .jeu-item input { background: #16211a; border-color: #2d4030; color: #e8f5ee; }
   </style>
   <link rel="stylesheet" href="/assets/css/desktop.css">
 </head>
@@ -64,112 +122,463 @@
 
   <nav>
     <a href="/" class="nav-logo">Compo<span>Smart</span></a>
+    <div class="nav-score" id="navScore"></div>
   </nav>
 
-  <div class="hero">
+  <div class="hero" id="hero">
     <div class="hero-badge">🎟️ Événement</div>
-    <h1>Rejoindre un événement</h1>
-    <p class="hero-sub">Entre le code communiqué en salle, ou scanne le QR affiché.</p>
+    <h1 id="heroTitre">Rejoindre un événement</h1>
+    <p class="hero-sub" id="heroSub">Entre le code communiqué en salle, ou scanne le QR affiché.</p>
   </div>
 
-  <div class="evt-card" id="card">
+  <div class="carte" id="carte">
     <div class="msg" id="msg"></div>
 
-    <form id="codeForm">
+    <!-- Étape 1 : code -->
+    <form id="formCode">
       <div class="field">
         <label>Code de l'événement</label>
         <input type="text" id="code" class="code-input" maxlength="6" placeholder="482913" autocomplete="off" required>
       </div>
-      <button type="submit" class="btn-submit" id="btnVerifier">Continuer</button>
+      <button type="submit" class="btn" id="btnVerifier">Continuer</button>
     </form>
 
-    <div id="recapZone" style="display:none">
-      <div class="evt-recap">
-        <div class="evt-recap-titre" id="evtTitre"></div>
-        <div class="evt-recap-meta" id="evtMeta"></div>
+    <!-- Étape 2 : nom -->
+    <div id="zoneNom" style="display:none">
+      <div class="attente" style="padding-bottom:6px">
+        <div class="slide-titre" id="evtTitre"></div>
+        <div class="hero-sub" id="evtMeta"></div>
       </div>
-      <form id="joinForm">
+      <form id="formNom">
         <div class="field">
           <label>Ton nom</label>
           <input type="text" id="nomAffiche" maxlength="100" placeholder="Prénom Nom" autocomplete="off" required>
         </div>
-        <button type="submit" class="btn-submit" id="btnRejoindre">Je participe</button>
+        <button type="submit" class="btn" id="btnRejoindre">Je participe</button>
       </form>
     </div>
 
-    <div id="confirmZone" style="display:none">
-      <div class="confirm">
-        <div class="confirm-emoji">✅</div>
-        <div class="confirm-text" id="confirmTitre"></div>
-        <div class="confirm-sub">Tu es inscrit, bienvenue !</div>
-      </div>
-    </div>
+    <!-- Étape 3 : runtime -->
+    <div id="zoneLive" style="display:none"></div>
   </div>
 
   <div class="bottom-leaf"></div>
 
   <script>
-    var msg = document.getElementById('msg');
-    var codeForm = document.getElementById('codeForm');
-    var codeInput = document.getElementById('code');
-    var recapZone = document.getElementById('recapZone');
-    var confirmZone = document.getElementById('confirmZone');
-    var codeValide = '';
+    function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
 
-    function afficherMsg(texte, ok) {
+    const API = '/api/evenements';
+    const msg = document.getElementById('msg');
+    let codeValide = '';
+    let token = localStorage.getItem('evt_token') || '';
+    let pollTimer = null;
+    let rendu = '';          // signature de ce qui est affiché, évite de réécrire le DOM à chaque sondage
+    let dernierEtat = null;
+
+    function afficher(texte, ok) {
       msg.className = 'msg ' + (ok ? 'ok' : 'error');
       msg.textContent = texte;
       msg.style.display = 'block';
     }
+    function cacherMsg() { msg.style.display = 'none'; }
 
-    // Pré-remplissage depuis le lien du QR (?code=482913)
-    var params = new URLSearchParams(window.location.search);
-    if (params.get('code')) codeInput.value = params.get('code').toUpperCase();
+    function montrer(etape) {
+      document.getElementById('formCode').style.display = etape === 'code' ? '' : 'none';
+      document.getElementById('zoneNom').style.display  = etape === 'nom'  ? '' : 'none';
+      document.getElementById('zoneLive').style.display = etape === 'live' ? '' : 'none';
+      document.getElementById('hero').style.display     = etape === 'live' ? 'none' : '';
+    }
 
-    codeForm.addEventListener('submit', function (e) {
+    // ══════════ ÉTAPE 1 — CODE ══════════
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('code')) document.getElementById('code').value = params.get('code').toUpperCase();
+
+    document.getElementById('formCode').addEventListener('submit', function (e) {
       e.preventDefault();
-      msg.style.display = 'none';
-      var btn = document.getElementById('btnVerifier');
+      cacherMsg();
+      const btn = document.getElementById('btnVerifier');
       btn.disabled = true; btn.textContent = 'Vérification…';
 
-      fetch('/api/evenements/rejoindre.php?action=verifier_code&code=' + encodeURIComponent(codeInput.value))
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (!d.ok) { afficherMsg(d.error || 'Code invalide.', false); return; }
-          if (!d.ouvert) { afficherMsg("Cet événement n'accepte pas encore d'inscription.", false); return; }
-          codeValide = codeInput.value.trim().toUpperCase();
+      fetch(API + '/rejoindre.php?action=verifier_code&code=' + encodeURIComponent(document.getElementById('code').value))
+        .then(r => r.json())
+        .then(d => {
+          if (!d.ok) { afficher(d.error || 'Code invalide.', false); return; }
+          if (!d.ouvert) { afficher("Cet événement n'accepte pas encore d'inscription.", false); return; }
+          codeValide = document.getElementById('code').value.trim().toUpperCase();
           document.getElementById('evtTitre').textContent = d.titre;
-          var meta = d.lieu ? d.lieu : '';
+          let meta = d.lieu || '';
           if (d.date) meta += (meta ? ' · ' : '') + new Date(d.date.replace(' ', 'T')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
           document.getElementById('evtMeta').textContent = meta;
-          codeForm.style.display = 'none';
-          recapZone.style.display = 'block';
+          montrer('nom');
         })
-        .catch(function () { afficherMsg('Erreur réseau, réessaie.', false); })
-        .finally(function () { btn.disabled = false; btn.textContent = 'Continuer'; });
+        .catch(() => afficher('Erreur réseau, réessaie.', false))
+        .finally(() => { btn.disabled = false; btn.textContent = 'Continuer'; });
     });
 
-    document.getElementById('joinForm').addEventListener('submit', function (e) {
+    // ══════════ ÉTAPE 2 — NOM ══════════
+    document.getElementById('formNom').addEventListener('submit', function (e) {
       e.preventDefault();
-      msg.style.display = 'none';
-      var btn = document.getElementById('btnRejoindre');
+      cacherMsg();
+      const btn = document.getElementById('btnRejoindre');
       btn.disabled = true; btn.textContent = 'Inscription…';
 
-      var body = new URLSearchParams({
-        code: codeValide,
-        nom_affiche: document.getElementById('nomAffiche').value.trim(),
-      });
-      fetch('/api/evenements/rejoindre.php?action=rejoindre', { method: 'POST', body: body })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (!d.ok) { afficherMsg(d.error || 'Erreur inconnue.', false); return; }
-          document.getElementById('confirmTitre').textContent = d.titre;
-          recapZone.style.display = 'none';
-          confirmZone.style.display = 'block';
+      fetch(API + '/rejoindre.php?action=rejoindre', {
+        method: 'POST',
+        body: new URLSearchParams({ code: codeValide, nom_affiche: document.getElementById('nomAffiche').value.trim() }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (!d.ok) { afficher(d.error || 'Erreur inconnue.', false); return; }
+          // Le jeton vit dans le localStorage : rafraîchir la page ou verrouiller
+          // son téléphone en plein atelier ne fait pas perdre sa place.
+          token = d.token;
+          localStorage.setItem('evt_token', token);
+          demarrerLive();
         })
-        .catch(function () { afficherMsg('Erreur réseau, réessaie.', false); })
-        .finally(function () { btn.disabled = false; btn.textContent = 'Je participe'; });
+        .catch(() => afficher('Erreur réseau, réessaie.', false))
+        .finally(() => { btn.disabled = false; btn.textContent = 'Je participe'; });
     });
+
+    // ══════════ ÉTAPE 3 — RUNTIME ══════════
+    function demarrerLive() {
+      montrer('live');
+      cacherMsg();
+      chargerEtat();
+      if (pollTimer) clearInterval(pollTimer);
+      // L'écran suit l'animateur : sondage régulier, seul mécanisme de
+      // synchronisation disponible dans cette pile (pas de WebSocket).
+      pollTimer = setInterval(chargerEtat, 2500);
+    }
+
+    function quitterLive(message) {
+      if (pollTimer) clearInterval(pollTimer);
+      localStorage.removeItem('evt_token');
+      token = '';
+      montrer('code');
+      if (message) afficher(message, false);
+    }
+
+    function chargerEtat() {
+      fetch(API + '/live.php?action=etat&token=' + encodeURIComponent(token))
+        .then(r => r.json())
+        .then(d => {
+          if (d.error === 'session_perdue') { quitterLive('Ta session a expiré, entre à nouveau le code.'); return; }
+          if (d.error) { return; }
+          dernierEtat = d;
+          majEnTete(d);
+          rendreEcran(d);
+        })
+        .catch(() => {});
+    }
+
+    function majEnTete(d) {
+      const el = document.getElementById('navScore');
+      el.style.display = 'block';
+      el.innerHTML = (d.participant.points || 0) + ' pts'
+        + (d.equipe ? '<span class="eq">' + echap(d.equipe.nom) + '</span>' : '');
+    }
+
+    function rendreEcran(d) {
+      // En mode « libre », le choix d'équipe passe avant tout le reste : tant
+      // qu'il n'a pas choisi, le participant ne suit pas le parcours.
+      const doitChoisir = (d.mode_equipes === 'libre' && !d.equipe);
+
+      // Signature : on ne réécrit le DOM que si l'écran change réellement,
+      // sinon la saisie en cours serait effacée à chaque sondage.
+      const sig = [doitChoisir ? 'equipes' : d.ecran, d.slide ? d.slide.id : 0, d.ma_reponse ? 'R' : '-'].join('|');
+      if (sig === rendu) return;
+      rendu = sig;
+
+      const z = document.getElementById('zoneLive');
+
+      if (doitChoisir) { rendreChoixEquipe(z, d); return; }
+      if (d.ecran === 'annule') {
+        z.innerHTML = '<div class="attente"><div class="attente-emoji">✕</div><div class="attente-txt">Cet événement a été annulé.</div></div>';
+        return;
+      }
+      if (d.ecran === 'attente') {
+        z.innerHTML = '<div class="attente"><div class="attente-emoji">🌱</div>'
+          + '<div class="slide-titre">Bienvenue ' + echap(d.participant.nom) + ' !</div>'
+          + '<div class="attente-txt">L\'animateur va bientôt démarrer.<br>Garde cet écran ouvert.</div>'
+          + '<div style="margin-top:14px"><span class="pastille"></span><span class="pastille"></span><span class="pastille"></span></div></div>';
+        return;
+      }
+      rendreSlide(z, d);
+    }
+
+    // ══════════ CHOIX D'ÉQUIPE (mode libre) ══════════
+    function rendreChoixEquipe(z, d) {
+      z.innerHTML = '<div class="attente" style="padding-bottom:4px">'
+        + '<div class="attente-emoji">👥</div>'
+        + '<div class="slide-titre">Choisis ton équipe</div></div>'
+        + '<div id="listeEquipes"><div class="attente-txt">Chargement…</div></div>';
+
+      fetch(API + '/live.php?action=equipes&token=' + encodeURIComponent(token))
+        .then(r => r.json())
+        .then(res => {
+          const box = document.getElementById('listeEquipes');
+          if (!box) return;
+          const eqs = res.equipes || [];
+          if (!eqs.length) {
+            box.innerHTML = '<div class="attente-txt">Les équipes ne sont pas encore créées.<br>Patiente un instant.</div>';
+            // L'animateur ne les a pas encore définies : on repassera par ici
+            // au prochain sondage.
+            rendu = '';
+            return;
+          }
+          box.innerHTML = eqs.map(e =>
+            '<button class="opt" data-eq="' + e.id + '" style="border-left:6px solid ' + echap(e.couleur || '#1e6e3e') + '">'
+            + echap(e.nom) + ' <span style="float:right;opacity:0.6">' + e.membres + '</span></button>').join('');
+          box.querySelectorAll('[data-eq]').forEach(b => {
+            b.onclick = () => {
+              box.querySelectorAll('.opt').forEach(x => x.disabled = true);
+              fetch(API + '/live.php?action=choisir_equipe', {
+                method: 'POST',
+                body: new URLSearchParams({ token: token, equipe_id: b.dataset.eq }),
+              })
+                .then(r => r.json())
+                .then(rep => {
+                  if (!rep.ok) { afficher(rep.error || 'Choix impossible.', false); box.querySelectorAll('.opt').forEach(x => x.disabled = false); return; }
+                  rendu = '';
+                  chargerEtat();
+                })
+                .catch(() => { afficher('Erreur réseau.', false); box.querySelectorAll('.opt').forEach(x => x.disabled = false); });
+            };
+          });
+        })
+        .catch(() => {});
+    }
+
+    // ══════════ RENDU D'UNE SLIDE ══════════
+    function rendreSlide(z, d) {
+      const s = d.slide, c = s.contenu || {}, rep = d.ma_reponse;
+      let h = '';
+      if (s.titre) h += '<div class="slide-titre">' + echap(s.titre) + '</div>';
+
+      switch (s.type) {
+        case 'titre':
+          if (c.sous_titre) h += '<div class="slide-sous">' + echap(c.sous_titre) + '</div>';
+          break;
+        case 'texte':
+          h += '<div class="slide-corps">' + echap(c.corps) + '</div>';
+          break;
+        case 'anecdote':
+          h += '<div class="slide-emoji">' + echap(c.emoji || '💡') + '</div>'
+             + '<div class="slide-corps">' + echap(c.corps) + '</div>';
+          break;
+        case 'sommaire':
+          h += '<ul class="somm">' + (c.sections || []).map(x => '<li>' + echap(x.nom) + '</li>').join('') + '</ul>';
+          break;
+        case 'media':
+          if (c.media_type === 'image') h += '<img class="slide-media" src="' + echap(c.url) + '" alt="">';
+          else if (c.media_type === 'video') h += '<video class="slide-media" controls src="' + echap(c.url) + '"></video>';
+          else h += '<audio style="width:100%" controls src="' + echap(c.url) + '"></audio>';
+          if (c.legende) h += '<div class="slide-legende">' + echap(c.legende) + '</div>';
+          break;
+        case 'fin':
+          h += '<div class="slide-emoji">🌿</div><div class="slide-corps" style="text-align:center">' + echap(c.message) + '</div>';
+          if (c.afficher_classement) h += '<div id="clZone"></div>';
+          break;
+        case 'classement':
+          h += '<div id="clZone"></div>';
+          break;
+        case 'defi':
+          h += '<div class="slide-emoji">🎯</div><div class="slide-corps">' + echap(c.consigne) + '</div>'
+             + '<div class="attente-txt" style="font-size:0.88rem">L\'animateur attribuera les points.</div>';
+          break;
+        case 'quiz':
+        case 'sondage':
+          h += '<div class="slide-question">' + echap(c.question) + '</div>'
+             + (c.options || []).map((o, i) => '<button class="opt" data-i="' + i + '">' + echap(o) + '</button>').join('');
+          break;
+        case 'vrai_faux':
+          h += '<div class="slide-question">' + echap(c.question) + '</div>'
+             + '<button class="opt" data-i="1">✅ Vrai</button><button class="opt" data-i="0">❌ Faux</button>';
+          break;
+        case 'estimation':
+          h += '<div class="slide-question">' + echap(c.question) + '</div>'
+             + '<div class="field"><input type="number" step="any" id="estim" placeholder="Ta réponse'
+             + (c.unite ? ' (' + echap(c.unite) + ')' : '') + '"></div>'
+             + '<button class="btn" id="btnEstim">Valider</button>';
+          break;
+        case 'question_ouverte':
+          h += '<div class="slide-question">' + echap(c.question) + '</div>'
+             + '<div class="field"><textarea id="ouverte" maxlength="' + (c.max_car || 300) + '"></textarea></div>'
+             + '<button class="btn" id="btnOuverte">Envoyer</button>';
+          break;
+        case 'jeu':
+          h += '<div class="slide-question">' + echap(s.titre || 'À toi de jouer !') + '</div>'
+             + (c.items || []).map((it, i) => ligneJeu(it, i, c.jeu)).join('')
+             + '<button class="btn" id="btnJeu">Valider</button>';
+          break;
+      }
+
+      z.innerHTML = h;
+      cablerSlide(z, d);
+
+      // Classement (slide dédiée ou fin de parcours)
+      if (document.getElementById('clZone')) chargerClassement(c.portee || 'les_deux');
+
+      // Déjà répondu : on rejoue l'affichage du résultat.
+      if (rep) marquerReponse(z, d);
+
+      // Mode individuel : c'est le participant qui avance, pas l'animateur.
+      // Le bouton n'apparaît qu'une fois la question traitée, pour ne pas
+      // permettre de sauter une slide notée sans y répondre.
+      if (d.evenement.mode === 'individuel' && !(d.repond && !rep)) {
+        const dernier = (d.index >= d.total - 1);
+        const b = document.createElement('button');
+        b.className = 'btn';
+        b.style.marginTop = '14px';
+        b.textContent = dernier ? '🏁 Parcours terminé' : 'Suivant →';
+        b.disabled = dernier;
+        if (!dernier) b.onclick = () => {
+          b.disabled = true;
+          fetch(API + '/live.php?action=suivant', {
+            method: 'POST',
+            body: new URLSearchParams({ token: token }),
+          })
+            .then(r => r.json())
+            .then(res => { if (res.ok) { rendu = ''; chargerEtat(); } else { afficher(res.error || 'Impossible.', false); b.disabled = false; } })
+            .catch(() => { afficher('Erreur réseau.', false); b.disabled = false; });
+        };
+        z.appendChild(b);
+      }
+    }
+
+    function ligneJeu(it, i, jeu) {
+      let champ = '';
+      if (jeu === 'compost-ou-pas') {
+        champ = '<select data-i="' + i + '"><option value="">?</option>'
+              + '<option value="oui">✅ Oui</option><option value="attention">⚠️ Avec précaution</option><option value="non">❌ Non</option></select>';
+      } else if (jeu === 'temps-decompo') {
+        champ = '<input type="number" min="0" data-i="' + i + '" placeholder="jours">';
+      } else {
+        champ = '<input type="text" data-i="' + i + '" placeholder="le mot">';
+      }
+      return '<div class="jeu-item"><span class="jeu-emoji">' + echap(it.emoji || '•') + '</span>'
+           + '<span class="jeu-nom">' + echap(it.nom) + '</span>' + champ + '</div>';
+    }
+
+    function cablerSlide(z, d) {
+      const s = d.slide;
+      if (d.ma_reponse) return;   // déjà répondu : plus rien à câbler
+
+      z.querySelectorAll('.opt').forEach(b => {
+        b.onclick = () => repondre(s.id, Number(b.dataset.i), b);
+      });
+      const be = document.getElementById('btnEstim');
+      if (be) be.onclick = () => {
+        const v = document.getElementById('estim').value;
+        if (v === '') return;
+        repondre(s.id, Number(v));
+      };
+      const bo = document.getElementById('btnOuverte');
+      if (bo) bo.onclick = () => {
+        const v = document.getElementById('ouverte').value.trim();
+        if (v === '') return;
+        repondre(s.id, v);
+      };
+      const bj = document.getElementById('btnJeu');
+      if (bj) bj.onclick = () => {
+        const jeu = (s.contenu || {}).jeu;
+        const nb = (s.contenu.items || []).length;
+        const out = [];
+        for (let i = 0; i < nb; i++) {
+          const el = z.querySelector('[data-i="' + i + '"]');
+          out.push(jeu === 'temps-decompo' ? Number(el.value || 0) : el.value);
+        }
+        repondre(s.id, out);
+      };
+    }
+
+    function repondre(slide_id, valeur, bouton) {
+      if (bouton) z_desactiver();
+      fetch(API + '/live.php?action=repondre', {
+        method: 'POST',
+        body: new URLSearchParams({ token: token, slide_id: slide_id, reponse: JSON.stringify(valeur) }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.error === 'session_perdue') { quitterLive('Ta session a expiré.'); return; }
+          if (!d.ok) { afficher(d.error || 'Impossible de répondre.', false); z_reactiver(); return; }
+          // On force le prochain rendu : la correction est désormais visible.
+          rendu = '';
+          if (dernierEtat) {
+            dernierEtat.slide = d.slide;
+            dernierEtat.ma_reponse = d.ma_reponse;
+            dernierEtat.participant.points = d.points_total;
+            majEnTete(dernierEtat);
+            rendreEcran(dernierEtat);
+          }
+        })
+        .catch(() => { afficher('Erreur réseau.', false); z_reactiver(); });
+    }
+
+    function z_desactiver() { document.querySelectorAll('#zoneLive .opt, #zoneLive .btn').forEach(b => b.disabled = true); }
+    function z_reactiver()  { document.querySelectorAll('#zoneLive .opt, #zoneLive .btn').forEach(b => b.disabled = false); }
+
+    /** Affiche le résultat une fois la réponse donnée. */
+    function marquerReponse(z, d) {
+      const s = d.slide, c = s.contenu || {}, rep = d.ma_reponse;
+
+      z.querySelectorAll('.opt').forEach(b => {
+        b.disabled = true;
+        const i = Number(b.dataset.i);
+        const choisi = (s.type === 'vrai_faux') ? (Boolean(rep.reponse) === Boolean(i)) : (rep.reponse === i);
+        if (s.type === 'sondage') { if (choisi) b.classList.add('choisie'); return; }
+        const bonne = (s.type === 'vrai_faux') ? (Boolean(c.correct) === Boolean(i)) : (c.correct === i);
+        if (bonne) b.classList.add('juste');
+        else if (choisi) b.classList.add('fausse');
+      });
+      ['estim', 'ouverte', 'btnEstim', 'btnOuverte', 'btnJeu'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = true;
+      });
+
+      let cls = 'neutre', titre = 'Réponse enregistrée';
+      if (rep.correct === true)  { cls = 'bon';     titre = '✅ Bonne réponse !'; }
+      if (rep.correct === false) { cls = 'mauvais'; titre = '❌ Raté'; }
+      if (s.type === 'sondage')  { cls = 'neutre';  titre = 'Merci pour ta réponse'; }
+
+      let h = '<div class="feedback ' + cls + '"><div class="feedback-titre">' + titre + '</div>';
+      if (rep.points > 0) h += '<div class="feedback-pts">+' + rep.points + ' points</div>';
+      if (s.type === 'estimation' && c.valeur !== undefined) {
+        h += '<div class="feedback-exp">La réponse exacte était <b>' + echap(c.valeur) + (c.unite ? ' ' + echap(c.unite) : '') + '</b>.</div>';
+      }
+      if (c.explication) h += '<div class="feedback-exp">' + echap(c.explication) + '</div>';
+      h += '</div>';
+      z.insertAdjacentHTML('beforeend', h);
+    }
+
+    function chargerClassement(portee) {
+      fetch(API + '/live.php?action=classement&token=' + encodeURIComponent(token))
+        .then(r => r.json())
+        .then(d => {
+          const zone = document.getElementById('clZone');
+          if (!zone) return;
+          let h = '';
+          if (portee !== 'equipe' && (d.joueurs || []).length) {
+            h += '<div class="sect-titre">🏆 Classement</div><ul class="clst">'
+              + d.joueurs.map((j, i) => '<li' + (dernierEtat && j.nom === dernierEtat.participant.nom ? ' class="moi"' : '') + '>'
+                + '<span class="rang">' + (i + 1) + '</span><span class="nom">' + echap(j.nom) + '</span>'
+                + '<span class="pts">' + j.points + '</span></li>').join('') + '</ul>';
+          }
+          if (portee !== 'individuel' && (d.equipes || []).length) {
+            h += '<div class="sect-titre">👥 Équipes</div><ul class="clst">'
+              + d.equipes.map((e, i) => '<li><span class="rang">' + (i + 1) + '</span>'
+                + '<span class="nom">' + echap(e.nom) + '</span><span class="pts">' + e.points + '</span></li>').join('') + '</ul>';
+          }
+          zone.innerHTML = h;
+        })
+        .catch(() => {});
+    }
+
+    // ══════════ REPRISE DE SESSION ══════════
+    // Un jeton déjà en mémoire = l'atelier est en cours : on saute la saisie du
+    // code (rafraîchissement de page, écran verrouillé, retour sur l'onglet).
+    if (token) demarrerLive(); else montrer('code');
+    window.addEventListener('beforeunload', () => { if (pollTimer) clearInterval(pollTimer); });
   </script>
   <script src="/assets/js/theme.js"></script>
 </body>

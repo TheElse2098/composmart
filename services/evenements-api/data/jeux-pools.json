@@ -1,0 +1,73 @@
+{
+  "_source": "Copie des pools de données des jeux du site (services/web/front/jeu-*.html). Duplication assumée : les slides de type 'jeu' figent leurs éléments à la création, pour qu'une modification d'un jeu ne change pas un parcours déjà écrit. À resynchroniser à la main si un jeu gagne des éléments.",
+  "compost-ou-pas": {
+    "nom": "Compost ou pas ?",
+    "consigne": "Classe chaque déchet : au compost, avec prudence, ou poubelle.",
+    "items": [
+      { "nom": "Épluchures de légumes", "emoji": "🥕", "cat": "oui", "info": "Parfaites pour le compost, c'est la base !" },
+      { "nom": "Marc de café", "emoji": "☕", "cat": "oui", "info": "Excellent ! Les vers en raffolent, filtre papier compris." },
+      { "nom": "Coquilles d'œuf", "emoji": "🥚", "cat": "oui", "info": "Oui ! Écrasées, elles apportent du calcium." },
+      { "nom": "Tonte de pelouse", "emoji": "🌱", "cat": "oui", "info": "Oui, en couches fines pour éviter que ça fermente." },
+      { "nom": "Feuilles mortes", "emoji": "🍂", "cat": "oui", "info": "Oui ! Une super source de carbone." },
+      { "nom": "Viande", "emoji": "🥩", "cat": "attention", "info": "Possible dans un compost mûr et actif : en petits morceaux, enfouis au centre. Dans un bac jeune ou peu brassé, odeurs et rongeurs garantis." },
+      { "nom": "Poisson", "emoji": "🐟", "cat": "attention", "info": "Même règle que la viande : seulement dans un compost bien établi, enfoui et recouvert. À proscrire sur un balcon." },
+      { "nom": "Pain rassis", "emoji": "🍞", "cat": "attention", "info": "En petits morceaux humidifiés et enfouis. Laissé sec en surface, il moisit et attire les rongeurs." },
+      { "nom": "Cendres de bois", "emoji": "🔥", "cat": "attention", "info": "Une fine poignée de temps en temps, bien répartie : elles apportent du potassium. En quantité, elles rendent le compost trop basique et le bloquent." },
+      { "nom": "Essuie-tout", "emoji": "🧻", "cat": "attention", "info": "Oui s'il n'a servi qu'à essuyer de l'eau ou des aliments. Imbibé de produit ménager, il contamine tout le bac." },
+      { "nom": "Sachets de thé", "emoji": "🍵", "cat": "attention", "info": "Le thé, toujours. Le sachet, seulement s'il est en papier non plastifié, et sans l'agrafe : beaucoup contiennent du polypropylène." },
+      { "nom": "Produits laitiers", "emoji": "🧀", "cat": "attention", "info": "Un reste de fromage ou de yaourt enfoui dans un compost mûr se dégrade sans problème. En quantité, ça rancit, ça sent fort et ça attire les nuisibles." },
+      { "nom": "Os", "emoji": "🦴", "cat": "non", "info": "Beaucoup trop longs à se décomposer." },
+      { "nom": "Huile de friture", "emoji": "🛢️", "cat": "non", "info": "Non : elle étouffe les micro-organismes." },
+      { "nom": "Sac plastique « biodégradable »", "emoji": "🛍️", "cat": "non", "info": "Méfiance : la plupart ne se dégradent pas en compost domestique." },
+      { "nom": "Plantes malades", "emoji": "🥀", "cat": "non", "info": "Non : les maladies peuvent survivre et contaminer le jardin." }
+    ]
+  },
+  "temps-decompo": {
+    "nom": "Combien de temps ?",
+    "consigne": "Estime la durée de décomposition, en jours.",
+    "items": [
+      { "nom": "un trognon de pomme", "emoji": "🍎", "jours": 60, "info": "Environ 2 mois. Bien plus long qu'on ne l'imagine — ne le jette pas dans la nature !" },
+      { "nom": "une peau de banane", "emoji": "🍌", "jours": 45, "info": "Environ 6 semaines au compost… et jusqu'à 2 ans en montagne, où il fait froid et sec !" },
+      { "nom": "des épluchures de légumes", "emoji": "🥕", "jours": 30, "info": "Environ 1 mois : les stars du compost, elles nourrissent vite le sol." },
+      { "nom": "du marc de café", "emoji": "☕", "jours": 21, "info": "À peine 3 semaines. Les vers de terre en raffolent !" },
+      { "nom": "du pain", "emoji": "🍞", "jours": 14, "info": "Environ 2 semaines, l'un des plus rapides à se décomposer." },
+      { "nom": "de l'essuie-tout", "emoji": "🧻", "jours": 30, "info": "Environ 1 mois, s'il n'a pas touché de produits chimiques." },
+      { "nom": "des feuilles mortes", "emoji": "🍂", "jours": 180, "info": "De 3 à 6 mois : une super source de carbone pour le compost." },
+      { "nom": "une peau d'orange", "emoji": "🍊", "jours": 180, "info": "Environ 6 mois : la peau des agrumes est épaisse et résistante." },
+      { "nom": "un sachet de thé en papier", "emoji": "🍵", "jours": 90, "info": "Environ 3 mois. Attention aux sachets en nylon, qui ne se décomposent pas !" },
+      { "nom": "un journal", "emoji": "📰", "jours": 90, "info": "Environ 3 mois : le papier se composte très bien en petits morceaux." },
+      { "nom": "du carton", "emoji": "📦", "jours": 150, "info": "Environ 5 mois : déchiré et humide, il se composte très bien." },
+      { "nom": "une coquille d'œuf", "emoji": "🥚", "jours": 365, "info": "Environ 1 an pour une coquille entière — écrase-la pour accélérer et apporter du calcium !" },
+      { "nom": "un t-shirt en coton non traité", "emoji": "👕", "jours": 270, "info": "De 6 mois à 1 an : le coton pur est une fibre naturelle, contrairement au polyester." },
+      { "nom": "un bouchon de liège", "emoji": "🍾", "jours": 1095, "info": "Environ 3 ans. Naturel, mais très lent — il se recycle mieux qu'il ne se composte." },
+      { "nom": "un chewing-gum", "emoji": "🍬", "jours": 1825, "info": "Environ 5 ans ! Le chewing-gum est fait de gomme… synthétique, un dérivé du plastique." },
+      { "nom": "un mégot de cigarette", "emoji": "🚬", "jours": 3650, "info": "Environ 10 ans, et un seul mégot pollue jusqu'à 500 litres d'eau." },
+      { "nom": "une boîte de conserve", "emoji": "🥫", "jours": 18250, "info": "Environ 50 ans. L'acier rouille lentement… mais se recycle à l'infini !" },
+      { "nom": "une canette en aluminium", "emoji": "🥤", "jours": 73000, "info": "Environ 200 ans dans la nature. Recyclée, elle redevient canette en 60 jours !" },
+      { "nom": "un sac plastique", "emoji": "🛍️", "jours": 146000, "info": "Environ 400 ans. Et il ne disparaît pas : il se fragmente en microplastiques." },
+      { "nom": "une bouteille en plastique", "emoji": "🧴", "jours": 164250, "info": "450 ans ! La bouteille jetée aujourd'hui sera encore là pour tes arrière-arrière-…-petits-enfants." },
+      { "nom": "une couche jetable", "emoji": "👶", "jours": 164250, "info": "Environ 450 ans. Un bébé en utilise près de 4000 avant la propreté…" },
+      { "nom": "une brosse à dents", "emoji": "🪥", "jours": 182500, "info": "Environ 500 ans. Toutes les brosses à dents en plastique jamais fabriquées existent encore." },
+      { "nom": "un fil de pêche", "emoji": "🎣", "jours": 219000, "info": "Environ 600 ans, et un vrai piège mortel pour les animaux marins." },
+      { "nom": "une barquette en polystyrène", "emoji": "🥡", "jours": 365000, "info": "Jusqu'à 1000 ans ! Le polystyrène est quasi indestructible dans la nature." }
+    ]
+  },
+  "mot-mystere": {
+    "nom": "Mot mystère",
+    "consigne": "Retrouve le mot à partir de l'indice.",
+    "items": [
+      { "nom": "Le résultat de la décomposition des biodéchets", "emoji": "🌱", "mot": "COMPOST", "info": "" },
+      { "nom": "Le ver de terre, grand allié du composteur", "emoji": "🪱", "mot": "LOMBRIC", "info": "" },
+      { "nom": "Le nom scientifique du ver de compost", "emoji": "🔬", "mot": "EISENIA", "info": "" },
+      { "nom": "Matière sombre et fertile issue de la décomposition", "emoji": "🟤", "mot": "HUMUS", "info": "" },
+      { "nom": "Élément apporté par les matières vertes et humides", "emoji": "💚", "mot": "AZOTE", "info": "" },
+      { "nom": "Élément apporté par les matières brunes et sèches", "emoji": "🍂", "mot": "CARBONE", "info": "" },
+      { "nom": "Support de culture riche, parfait pour les semis", "emoji": "🌾", "mot": "TERREAU", "info": "" },
+      { "nom": "Couverture protectrice du sol au jardin", "emoji": "🍁", "mot": "PAILLAGE", "info": "" },
+      { "nom": "Micro-organisme décomposeur invisible à l'œil nu", "emoji": "🦠", "mot": "BACTERIE", "info": "" },
+      { "nom": "Petit crustacé terrestre qui vit dans le compost", "emoji": "🐛", "mot": "CLOPORTE", "info": "" },
+      { "nom": "Ce que le compostage transforme en ressource", "emoji": "🗑️", "mot": "DECHET", "info": "" },
+      { "nom": "Le compost en est un, 100% naturel et gratuit", "emoji": "🌻", "mot": "ENGRAIS", "info": "" }
+    ]
+  }
+}

@@ -20,6 +20,9 @@
     .hero { text-align: center; padding: 26px 20px 12px; }
     .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
     h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; color: #1a3a25; }
+    .hero-lien { display: inline-block; margin-top: 12px; background: #1e6e3e; color: #fff; font-family: 'Baloo 2', cursive; font-size: 0.88rem; font-weight: 800; padding: 9px 20px; border-radius: 50px; text-decoration: none; }
+    .hero-lien:hover { background: #17572f; }
+    html.dark .hero-lien { background: #2d9959; }
 
     .page-content { width: 100%; max-width: 760px; padding: 16px; }
     .section-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin: 12px 4px 12px; }
@@ -97,6 +100,9 @@
   <div class="hero">
     <div class="hero-badge">🎟️ Administration</div>
     <h1>Événements</h1>
+    <!-- Les parcours sont une bibliothèque à part et non un onglet : ils ont
+         leurs propres URL et vivent indépendamment des événements. -->
+    <a href="/evenements-admin/parcours" class="hero-lien">🎬 Bibliothèque de parcours →</a>
   </div>
 
   <div class="loader" id="loader">Chargement…</div>

@@ -16,8 +16,10 @@
  * accès accordé par défaut.
  *
  * Routes :
- *   /evenements-admin              → liste des événements + création
- *   /evenements-admin/<id>         → suivi live d'un événement
+ *   /evenements-admin                → liste des événements + création
+ *   /evenements-admin/parcours       → bibliothèque de parcours
+ *   /evenements-admin/parcours/<id>  → éditeur d'un parcours
+ *   /evenements-admin/<id>           → suivi live d'un événement
  */
 ob_start();
 error_reporting(0);
@@ -80,6 +82,15 @@ function rendre($vue, $vars = []) {
 
 // /evenements-admin
 if (count($seg) === 0) rendre('liste.html');
+
+// /evenements-admin/parcours — bibliothèque, et /parcours/<id> — éditeur.
+// Une seule vue pour les deux : window.ROUTE.parcours_id distingue le mode,
+// comme cours.html côté courses-api (mode 'nouveau' / 'edition').
+if ($seg[0] === 'parcours') {
+    if (count($seg) === 1) rendre('parcours.html', ['parcours_id' => null]);
+    if (count($seg) === 2 && ctype_digit($seg[1])) rendre('parcours.html', ['parcours_id' => (int)$seg[1]]);
+    introuvable();
+}
 
 // /evenements-admin/<id>
 if (count($seg) === 1 && ctype_digit($seg[0])) {

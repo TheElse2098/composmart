@@ -18,47 +18,103 @@
     .nav-logo span { color: #a8e6bf; }
     .nav-back { color: rgba(255,255,255,0.85); text-decoration: none; font-weight: 700; font-size: 0.85rem; }
 
-    .page-content { width: 100%; max-width: 820px; padding: 20px 16px; }
+    .page-content { width: 100%; max-width: 900px; padding: 18px 16px; }
     .loader { text-align: center; padding: 60px; color: #4a7a5a; font-weight: 700; }
 
-    .join-card { background: #fff; border-radius: 20px; box-shadow: 0 4px 24px rgba(30,110,62,0.10); padding: 28px; text-align: center; margin-bottom: 24px; }
+    .join-card { background: #fff; border-radius: 20px; box-shadow: 0 4px 24px rgba(30,110,62,0.10); padding: 24px; text-align: center; margin-bottom: 18px; }
     .join-titre { font-family: 'Baloo 2', cursive; font-size: 1.5rem; font-weight: 900; color: #1a3a25; }
     .join-meta { font-size: 0.9rem; color: #4a7a5a; font-weight: 700; margin-top: 6px; }
-    .join-code { font-family: 'Baloo 2', cursive; font-size: 3rem; font-weight: 900; letter-spacing: 10px; color: #1e6e3e; margin: 18px 0 6px; }
-    .join-qr { margin: 12px auto; border-radius: 12px; }
-    .join-link { font-size: 0.82rem; color: #4a7a5a; word-break: break-all; background: #f7fbf8; border-radius: 10px; padding: 8px 12px; display: inline-block; }
-    .join-statut { display: inline-block; font-size: 0.7rem; font-weight: 900; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; margin-top: 14px; }
+    .join-code { font-family: 'Baloo 2', cursive; font-size: 2.6rem; font-weight: 900; letter-spacing: 10px; color: #1e6e3e; margin: 14px 0 4px; }
+    .join-qr { margin: 8px auto; border-radius: 12px; }
+    .join-link { font-size: 0.8rem; color: #4a7a5a; word-break: break-all; background: #f7fbf8; border-radius: 10px; padding: 7px 11px; display: inline-block; }
+    .join-statut { display: inline-block; font-size: 0.7rem; font-weight: 900; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; margin-top: 12px; }
     .join-statut.prevu { background: #fff3e0; color: #b26a00; }
     .join-statut.ouvert { background: #e8f5e9; color: #1e6e3e; }
     .join-statut.en_cours { background: #e3f2fd; color: #1565c0; }
     .join-statut.termine { background: #ede7f6; color: #5e35b1; }
     .join-statut.annule { background: #fff3e0; color: #e65100; }
-    .join-badge-supprime { display: inline-block; font-size: 0.7rem; font-weight: 900; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; margin-top: 14px; margin-left: 6px; background: #fdecea; color: #c0392b; }
-    .join-actions { margin-top: 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-    .join-actions button { border: none; border-radius: 50px; padding: 10px 20px; font-size: 0.85rem; font-weight: 800; cursor: pointer; font-family: 'Baloo 2', cursive; }
+    .join-badge-supprime { display: inline-block; font-size: 0.7rem; font-weight: 900; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; margin-top: 12px; margin-left: 6px; background: #fdecea; color: #c0392b; }
+    .join-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    button { border: none; border-radius: 50px; padding: 10px 20px; font-size: 0.85rem; font-weight: 800; cursor: pointer; font-family: 'Baloo 2', cursive; }
+    button:disabled { opacity: 0.45; cursor: default; }
     .btn-principal { background: #1e6e3e; color: #fff; }
     .btn-secondaire { background: #eceff1; color: #607d8b; }
     .btn-annuler { background: #fff3e0; color: #e65100; }
     .btn-supprimer { background: #fdecea; color: #c0392b; }
     .btn-restaurer { background: #e8f5e9; color: #1e6e3e; }
-    .lecture-seule-msg { font-size: 0.82rem; color: #888; font-weight: 700; margin-top: 14px; }
+    .lecture-seule-msg { font-size: 0.82rem; color: #888; font-weight: 700; margin-top: 12px; }
 
-    .section-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin: 8px 4px 12px; display: flex; align-items: center; justify-content: space-between; }
-    .part-count { font-size: 0.8rem; color: #4a7a5a; font-weight: 700; }
-    .part-list { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 10px rgba(30,110,62,0.08); }
-    .part-item { padding: 10px 16px; border-top: 1px solid #f0f4f0; font-size: 0.88rem; color: #1a3a25; display: flex; justify-content: space-between; }
-    .part-item:first-child { border-top: none; }
-    .part-heure { color: #999; font-size: 0.76rem; }
-    .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 18px; background: #fff; border-radius: 12px; }
+    /* Onglets */
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { flex-shrink: 0; white-space: nowrap; padding: 10px 16px; border-radius: 20px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.85rem; cursor: pointer; border: 2px solid transparent; background: #fff; color: #4a7a5a; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .tab.active { background: #1e6e3e; color: #fff; border-color: #1e6e3e; }
+    .tab:hover:not(.active) { border-color: #1e6e3e; color: #1e6e3e; }
+    .onglet { display: none; }
+    .onglet.actif { display: block; }
+
+    .card { background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); margin-bottom: 14px; }
+    .section-titre { font-family: 'Baloo 2', cursive; font-size: 1.02rem; font-weight: 900; color: #1a3a25; margin: 0 0 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .compteur { font-size: 0.82rem; color: #4a7a5a; font-weight: 700; }
+
+    /* Console d'animation */
+    .console-barre { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .progress { flex: 1; min-width: 120px; height: 8px; background: #e3efe6; border-radius: 5px; overflow: hidden; }
+    .progress > div { height: 100%; background: #1e6e3e; transition: width 0.3s; }
+    .console-pos { font-family: 'Baloo 2', cursive; font-weight: 900; color: #4a7a5a; font-size: 0.88rem; }
+    .repondu { background: #e8f5e9; color: #1e6e3e; border-radius: 12px; padding: 4px 12px; font-weight: 800; font-size: 0.82rem; }
+
+    .apercu { border: 2px dashed #c8dfc8; border-radius: 14px; padding: 18px; text-align: center; }
+    .apercu-type { font-size: 0.72rem; font-weight: 900; color: #7aaa8a; text-transform: uppercase; letter-spacing: 1px; }
+    .apercu-titre { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #1a3a25; margin-top: 6px; }
+    .apercu-q { font-size: 1.02rem; font-weight: 800; color: #1a3a25; margin-top: 8px; line-height: 1.45; }
+    .apercu-corps { font-size: 0.94rem; color: #2c4a34; margin-top: 8px; line-height: 1.55; white-space: pre-wrap; text-align: left; }
+    .apercu-opt { text-align: left; background: #f7fbf8; border-radius: 10px; padding: 8px 12px; margin-top: 6px; font-size: 0.9rem; font-weight: 700; color: #2c4a34; display: flex; justify-content: space-between; gap: 10px; }
+    .apercu-opt.juste { background: #e8f5e9; color: #1b5e20; }
+    .apercu-opt .nb { color: #b26a00; font-weight: 800; }
+
+    .liste { list-style: none; }
+    .liste li { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: #f7fbf8; margin-bottom: 6px; font-size: 0.9rem; }
+    .liste .rang { font-family: 'Baloo 2', cursive; font-weight: 900; color: #7aaa8a; min-width: 24px; }
+    .liste .nom { flex: 1; font-weight: 700; color: #1a3a25; }
+    .liste .pts { font-weight: 800; color: #b26a00; }
+    .liste .eq { font-size: 0.74rem; color: #7aaa8a; font-weight: 700; }
+    .note-input { width: 70px; border: 1.5px solid #c8dfc8; border-radius: 8px; padding: 5px 8px; font-family: inherit; font-size: 0.84rem; background: #fff; color: #1a3a25; }
+    .btn-mini { border-radius: 10px; padding: 5px 12px; font-size: 0.75rem; font-family: inherit; background: #eef4ec; color: #1e6e3e; }
+
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 0.74rem; font-weight: 800; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .field select { display: block; width: 100%; padding: 9px 12px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.9rem; color: #1a3a25; background: #f7fbf8; font-family: inherit; }
+    .rep-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+    .rep-row input { flex: 1; border: 1.5px solid #c8dfc8; border-radius: 9px; padding: 8px 11px; font-family: inherit; font-size: 0.88rem; background: #f7fbf8; color: #1a3a25; }
+    .rep-row input:focus { outline: none; border-color: #1e6e3e; background: #fff; }
+    .rep-row .sup { background: #fdecea; color: #c0392b; }
+    .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 16px; background: #fff; border-radius: 12px; }
+    .msg { border-radius: 10px; padding: 10px 13px; font-size: 0.85rem; font-weight: 700; margin-bottom: 12px; display: none; }
+    .msg.error { background: #fdecea; color: #c0392b; }
+    .msg.ok { background: #e8f5e9; color: #1e6e3e; }
+    .hint { font-size: 0.78rem; color: #888; margin-top: 6px; }
+
+    /* Mode projection : on masque tout sauf l'aperçu, pour l'écran de la salle */
+    body.projection nav, body.projection .tabs, body.projection .join-actions,
+    body.projection #ongletParticipants, body.projection #ongletReglages,
+    body.projection .console-actions, body.projection #zoneResultats { display: none !important; }
+    body.projection .apercu { border: none; padding: 30px 20px; }
+    body.projection .apercu-titre { font-size: clamp(1.6rem, 5vw, 2.6rem); }
+    body.projection .apercu-q { font-size: clamp(1.2rem, 3.5vw, 1.8rem); }
+    body.projection .join-code { font-size: clamp(3rem, 12vw, 6rem); }
 
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
 
     html.dark body { background: #101a13; }
     html.dark nav { background: #14301f; }
-    html.dark .join-card, html.dark .part-list, html.dark .empty-msg { background: #16211a; }
-    html.dark .join-titre, html.dark .section-title, html.dark .part-item { color: #e8f5ee; }
-    html.dark .join-link { background: #1e2d22; color: #7ab88e; }
-    html.dark .part-item { border-top-color: #243a2c; }
+    html.dark .join-card, html.dark .card, html.dark .empty-msg, html.dark .tab { background: #16211a; }
+    html.dark .join-titre, html.dark .section-titre, html.dark .apercu-titre, html.dark .apercu-q, html.dark .liste .nom { color: #e8f5ee; }
+    html.dark .apercu-corps, html.dark .apercu-opt { color: #c8e6d4; }
+    html.dark .join-link, html.dark .liste li, html.dark .apercu-opt { background: #1e2d22; color: #c8e6d4; }
+    html.dark .apercu-opt.juste { background: #16291c; color: #7fc99a; }
+    html.dark .tab { color: #7ab88e; }
+    html.dark .tab.active { background: #2d9959; color: #fff; border-color: #2d9959; }
     html.dark .join-statut.prevu { background: #2e2410; color: #e8b931; }
     html.dark .join-statut.en_cours { background: #16283d; color: #7ab3e6; }
     html.dark .join-statut.termine { background: #241b3d; color: #b39ddb; }
@@ -67,8 +123,12 @@
     html.dark .btn-secondaire { background: #1e2d22; color: #9fb0a5; }
     html.dark .btn-annuler { background: #2e2410; color: #e0b95f; }
     html.dark .btn-supprimer { background: #3d1a1a; color: #ef9a9a; }
-    html.dark .btn-restaurer { background: #16291c; color: #7fc99a; }
-    html.dark .lecture-seule-msg { color: #7ab88e; }
+    html.dark .btn-restaurer, html.dark .btn-mini { background: #16291c; color: #7fc99a; }
+    html.dark .field label { color: #7ab88e; }
+    html.dark .field select, html.dark .note-input, html.dark .rep-row input { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .rep-row .sup { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .apercu { border-color: #2d4030; }
+    html.dark .progress { background: #1e2d22; }
   </style>
   <link rel="stylesheet" href="/assets/css/desktop.css">
 </head>
@@ -82,16 +142,18 @@
   <div class="loader" id="loader">Chargement…</div>
 
   <div class="page-content" id="content" style="display:none">
+    <div class="msg" id="msg"></div>
+
+    <!-- Carte d'accueil : code + QR, projetable en salle d'attente -->
     <div class="join-card">
       <div class="join-titre" id="evtTitre"></div>
       <div class="join-meta" id="evtMeta"></div>
       <div class="join-code" id="evtCode"></div>
       <!-- QR généré via un service tiers (api.qrserver.com) : l'URL de
            l'événement (donc son code d'accès) lui est transmise à chaque
-           affichage. Acceptable pour un premier jet, à remplacer par une
-           génération 100% locale si la confidentialité du code doit être
-           renforcée (cf. discussion conception). -->
-      <img class="join-qr" id="evtQr" width="200" height="200" alt="QR code de l'événement">
+           affichage. À remplacer par une génération locale si la
+           confidentialité du code doit être renforcée. -->
+      <img class="join-qr" id="evtQr" width="180" height="180" alt="QR code de l'événement">
       <br>
       <span class="join-link" id="evtLink"></span>
       <div>
@@ -101,8 +163,126 @@
       <div class="join-actions" id="evtActions"></div>
     </div>
 
-    <div class="section-title">👥 Participants <span class="part-count" id="partCount"></span></div>
-    <div id="partList"></div>
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-o="animation">🎬 Animation</div>
+      <div class="tab" data-o="participants">👥 Participants <span id="tabNbPart"></span></div>
+      <div class="tab" data-o="classement">🏆 Classement</div>
+      <div class="tab" data-o="reglages">⚙️ Réglages</div>
+    </div>
+
+    <!-- ══ ANIMATION ══ -->
+    <div class="onglet actif" id="ongletAnimation">
+      <div id="zoneSansParcours" style="display:none">
+        <div class="card">
+          <div class="section-titre">🎬 Aucun parcours affecté</div>
+          <div class="field">
+            <label>Choisir un parcours</label>
+            <select id="selParcours"></select>
+          </div>
+          <button type="button" class="btn-principal" id="btnAffecter">Affecter à cet événement</button>
+          <div class="hint">Les slides du parcours sont copiées dans l'événement : tu peux ensuite les adapter pour ce client sans toucher au modèle.</div>
+        </div>
+      </div>
+
+      <div id="zoneConsole" style="display:none">
+        <div class="card">
+          <div class="console-barre">
+            <span class="console-pos" id="consolePos">—</span>
+            <div class="progress"><div id="progressBar" style="width:0%"></div></div>
+            <span class="repondu" id="consoleRepondu">0 / 0</span>
+          </div>
+
+          <div class="apercu" id="apercu"></div>
+
+          <div class="join-actions console-actions" style="margin-top:16px">
+            <button type="button" class="btn-secondaire" id="btnPrec">← Précédent</button>
+            <button type="button" class="btn-principal" id="btnSuiv">Suivant →</button>
+            <button type="button" class="btn-secondaire" id="btnProjection">🖥️ Projection</button>
+          </div>
+        </div>
+
+        <div class="card" id="zoneResultats" style="display:none">
+          <div class="section-titre">📊 Réponses reçues</div>
+          <div id="resultats"></div>
+        </div>
+
+        <div class="card">
+          <div class="section-titre">🧭 Aller à une slide</div>
+          <div id="sommaire"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PARTICIPANTS ══ -->
+    <div class="onglet" id="ongletParticipants">
+      <div class="card">
+        <div class="section-titre">
+          <span>🏳️ Équipes</span>
+          <button type="button" class="btn-mini" id="btnRedefinir" style="display:none">Redéfinir</button>
+        </div>
+
+        <!-- Définition : nombre et noms fixés par l'animateur -->
+        <div id="zoneDefEquipes">
+          <div id="lignesEquipes"></div>
+          <button type="button" class="btn-mini" id="btnPlusEquipe">+ Ajouter une équipe</button>
+          <div style="margin-top:12px">
+            <button type="button" class="btn-principal" id="btnDefEquipes">Créer les équipes</button>
+          </div>
+          <div class="hint">Le mode de répartition (manuel, automatique, libre) se règle dans l'onglet Réglages.</div>
+        </div>
+
+        <!-- Équipes existantes -->
+        <div id="zoneEquipes" style="display:none">
+          <div id="listeEquipes"></div>
+          <div style="margin-top:12px">
+            <button type="button" class="btn-principal" id="btnRepartir">🎲 Répartir automatiquement</button>
+          </div>
+          <div class="hint">La répartition automatique rebrasse <b>tout le monde</b>, y compris les participants déjà placés.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-titre">👥 Participants <span class="compteur" id="partCount"></span></div>
+        <div id="partList"></div>
+      </div>
+    </div>
+
+    <!-- ══ CLASSEMENT ══ -->
+    <div class="onglet" id="ongletClassement">
+      <div class="card">
+        <div class="section-titre">🏆 Classement individuel</div>
+        <div id="clJoueurs"></div>
+      </div>
+      <div class="card" id="cardEquipes" style="display:none">
+        <div class="section-titre">👥 Classement par équipe</div>
+        <div id="clEquipes"></div>
+      </div>
+    </div>
+
+    <!-- ══ RÉGLAGES ══ -->
+    <div class="onglet" id="ongletReglages">
+      <div class="card">
+        <div class="section-titre">⚙️ Déroulé</div>
+        <div class="field">
+          <label>Progression</label>
+          <select id="regMode">
+            <option value="commun">En commun — l'animateur fait avancer</option>
+            <option value="individuel">Individuel — chacun à son rythme</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Équipes</label>
+          <select id="regEquipes">
+            <option value="aucun">Pas d'équipes</option>
+            <option value="manuel">Réparties par l'animateur</option>
+            <option value="auto">Réparties automatiquement</option>
+            <option value="libre">Les participants choisissent</option>
+          </select>
+        </div>
+        <button type="button" class="btn-principal" id="btnReglages">Enregistrer</button>
+        <div class="hint" id="hintParcours"></div>
+      </div>
+    </div>
   </div>
 
   <div class="bottom-leaf"></div>
@@ -111,106 +291,466 @@
     /*__ROUTE__*/
     function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
 
-    const evenementId = window.ROUTE && window.ROUTE.evenement_id;
-    let pollTimer = null;
+    const API = '/api/evenements';
+    const EVT = window.ROUTE && window.ROUTE.evenement_id;
+    let pollTimer = null, ongletActif = 'animation', etatAnim = null, evenement = null, TYPES = {};
+    let parcoursCharges = false, equipesCache = [], participantsCache = null, signatureParticipants = '';
 
+    function afficher(texte, ok) {
+      const el = document.getElementById('msg');
+      el.className = 'msg ' + (ok ? 'ok' : 'error');
+      el.textContent = texte;
+      el.style.display = 'block';
+      if (ok) setTimeout(() => { el.style.display = 'none'; }, 2500);
+    }
+
+    function post(fichier, action, body) {
+      return fetch(API + '/' + fichier + '?action=' + action, { method: 'POST', body: new URLSearchParams(body) })
+        .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); });
+    }
+
+    // ══════════ ONGLETS ══════════
+    document.querySelectorAll('#tabs .tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('#tabs .tab').forEach(x => x.classList.toggle('active', x === t));
+        ongletActif = t.dataset.o;
+        document.querySelectorAll('.onglet').forEach(o => o.classList.remove('actif'));
+        document.getElementById('onglet' + ongletActif.charAt(0).toUpperCase() + ongletActif.slice(1)).classList.add('actif');
+        rafraichir();
+      });
+    });
+
+    // ══════════ EN-TÊTE (statut, actions, code/QR) ══════════
     function chargerSuivi() {
-      fetch('/api/evenements/admin.php?action=suivi&id=' + evenementId)
+      fetch(API + '/admin.php?action=suivi&id=' + EVT)
         .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); })
         .then(d => {
           if (d.error) { document.getElementById('loader').textContent = d.error; return; }
-          render(d.evenement, d.participants || []);
+          evenement = d.evenement;
+          rendreEntete(d.evenement);
+          rendreParticipants(d.participants || []);
+          document.getElementById('tabNbPart').textContent = '(' + (d.participants || []).length + ')';
+          // Les listes de réglages ne sont pas réécrites pendant que
+          // l'animateur les manipule : le sondage périodique annulerait sa
+          // sélection en cours.
+          if (ongletActif !== 'reglages') {
+            document.getElementById('regMode').value = d.evenement.mode_parcours;
+            document.getElementById('regEquipes').value = d.evenement.mode_equipes;
+          }
+          document.getElementById('hintParcours').textContent = d.evenement.parcours_nom
+            ? 'Parcours affecté : ' + d.evenement.parcours_nom + ' (' + d.evenement.nb_slides + ' slides).'
+            : 'Aucun parcours affecté pour le moment.';
+
+          document.getElementById('zoneSansParcours').style.display = d.evenement.nb_slides > 0 ? 'none' : 'block';
+          document.getElementById('zoneConsole').style.display      = d.evenement.nb_slides > 0 ? 'block' : 'none';
+          // Une seule fois : sans ce garde, la liste serait rechargée à chaque
+          // tour de sondage.
+          if (!d.evenement.nb_slides && !parcoursCharges) { parcoursCharges = true; chargerParcoursDispo(); }
+
           document.getElementById('loader').style.display = 'none';
           document.getElementById('content').style.display = 'block';
         })
         .catch(() => {});
     }
 
-    function render(evt, participants) {
+    const STATUT_LABEL = { prevu: 'Prévu', ouvert: 'Ouvert aux inscriptions', en_cours: 'En cours', termine: 'Terminé', annule: 'Annulé' };
+    const ACTIONS_PAR_STATUT = {
+      prevu:    [['ouvrir', 'btn-principal', '▶ Ouvrir les inscriptions']],
+      ouvert:   [['reprevoir', 'btn-secondaire', '↩ Repasser en Prévu'], ['demarrer', 'btn-principal', '🟢 Démarrer']],
+      en_cours: [['terminer', 'btn-secondaire', '🏁 Terminer']],
+      termine:  [],
+    };
+
+    function rendreEntete(evt) {
       document.getElementById('evtTitre').textContent = evt.titre;
       let meta = evt.lieu || '';
       const date = new Date(evt.date_debut.replace(' ', 'T')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-      meta += (meta ? ' · ' : '') + date;
-      document.getElementById('evtMeta').textContent = meta;
+      document.getElementById('evtMeta').textContent = meta + (meta ? ' · ' : '') + date;
       document.getElementById('evtCode').textContent = evt.code;
 
       const lien = window.location.origin + '/evenement?code=' + evt.code;
       document.getElementById('evtLink').textContent = lien;
-      document.getElementById('evtQr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(lien);
+      // Le QR n'est (re)chargé que si le lien change : cette page se rafraîchit
+      // toutes les 3 s, et réaffecter `src` à chaque tour relancerait un appel
+      // au service tiers de génération d'image.
+      const qr = document.getElementById('evtQr');
+      const srcQr = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(lien);
+      if (qr.getAttribute('src') !== srcQr) qr.src = srcQr;
 
-      const STATUT_LABEL = {
-        prevu: 'Prévu', ouvert: 'Ouvert aux inscriptions',
-        en_cours: 'En cours', termine: 'Terminé', annule: 'Annulé',
-      };
       const badge = document.getElementById('evtStatutBadge');
       badge.className = 'join-statut ' + evt.statut;
       badge.textContent = STATUT_LABEL[evt.statut] || evt.statut;
-
-      // Le badge de suppression est distinct du statut de cycle de vie : un
-      // événement supprimé garde son statut affiché (ex. "Terminé" + "Supprimé").
       document.getElementById('evtSupprimeBadge').style.display = evt.supprime ? '' : 'none';
 
-      // Boutons proposés selon le statut courant. Un événement supprimé reste
-      // consultable (participants toujours listés) mais en lecture seule : pas
-      // de bascule ouvrir/démarrer/terminer/annuler tant qu'il n'est pas restauré.
-      const ACTIONS_PAR_STATUT = {
-        prevu:    [['ouvrir', 'btn-principal', '▶ Ouvrir les inscriptions']],
-        ouvert:   [['reprevoir', 'btn-secondaire', '↩ Repasser en Prévu'], ['demarrer', 'btn-principal', '🟢 Démarrer']],
-        en_cours: [['terminer', 'btn-secondaire', '🏁 Terminer']],
-        termine:  [],
-      };
       const zone = document.getElementById('evtActions');
       zone.innerHTML = '';
       if (evt.supprime) {
         zone.innerHTML = '<div class="lecture-seule-msg">🗑️ Événement supprimé — lecture seule.</div>'
           + '<button class="btn-restaurer" id="btnRestaurer">↩ Restaurer</button>';
         document.getElementById('btnRestaurer').onclick = () => basculer('restaurer');
-      } else if (evt.statut === 'annule') {
-        zone.innerHTML = '<div class="lecture-seule-msg">✕ Événement annulé.</div>'
-          + '<button class="btn-supprimer" id="btnSupprimer">🗑 Supprimer</button>';
-        document.getElementById('btnSupprimer').onclick = () => { if (confirm('Supprimer cet événement ? Il restera consultable dans les supprimés.')) basculer('supprimer'); };
-      } else {
-        (ACTIONS_PAR_STATUT[evt.statut] || []).forEach(([act, cls, label]) => {
-          const b = document.createElement('button');
-          b.className = cls; b.textContent = label;
-          b.onclick = () => basculer(act);
-          zone.appendChild(b);
-        });
-        const annulerBtn = document.createElement('button');
-        annulerBtn.className = 'btn-annuler'; annulerBtn.textContent = '✕ Annuler';
-        annulerBtn.onclick = () => { if (confirm("Annuler cet événement ? Les participants qui tentent de rejoindre verront un message d'annulation.")) basculer('annuler'); };
-        zone.appendChild(annulerBtn);
-
-        const supprimerBtn = document.createElement('button');
-        supprimerBtn.className = 'btn-supprimer'; supprimerBtn.textContent = '🗑 Supprimer';
-        supprimerBtn.onclick = () => { if (confirm('Supprimer cet événement ? Il restera consultable dans les supprimés.')) basculer('supprimer'); };
-        zone.appendChild(supprimerBtn);
-      }
-
-      document.getElementById('partCount').textContent = '(' + participants.length + ')';
-      const box = document.getElementById('partList');
-      if (!participants.length) {
-        box.innerHTML = '<div class="empty-msg">Personne n\'a encore rejoint.</div>';
         return;
       }
-      box.innerHTML = '<div class="part-list">' + participants.map(p => {
-        const heure = new Date(p.rejoint_at.replace(' ', 'T')).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-        return '<div class="part-item"><span>' + echap(p.nom_affiche) + '</span><span class="part-heure">' + heure + '</span></div>';
-      }).join('') + '</div>';
+      if (evt.statut === 'annule') {
+        zone.innerHTML = '<div class="lecture-seule-msg">✕ Événement annulé.</div>';
+        return;
+      }
+      (ACTIONS_PAR_STATUT[evt.statut] || []).forEach(([act, cls, label]) => {
+        const b = document.createElement('button');
+        b.className = cls; b.textContent = label;
+        b.onclick = () => basculer(act);
+        zone.appendChild(b);
+      });
+      const a = document.createElement('button');
+      a.className = 'btn-annuler'; a.textContent = '✕ Annuler';
+      a.onclick = () => { if (confirm("Annuler cet événement ?")) basculer('annuler'); };
+      zone.appendChild(a);
+      const s = document.createElement('button');
+      s.className = 'btn-supprimer'; s.textContent = '🗑 Supprimer';
+      s.onclick = () => { if (confirm('Supprimer cet événement ? Il restera consultable dans les supprimés.')) basculer('supprimer'); };
+      zone.appendChild(s);
     }
 
     function basculer(action) {
-      fetch('/api/evenements/admin.php?action=' + action, { method: 'POST', body: new URLSearchParams({ id: evenementId }) })
-        .then(r => r.json())
-        .then(d => { if (d.ok) chargerSuivi(); else alert(d.error || 'Action impossible.'); })
-        .catch(() => alert('Erreur réseau.'));
+      post('admin.php', action, { id: EVT })
+        .then(d => { if (d.ok) chargerSuivi(); else afficher(d.error || 'Action impossible.', false); })
+        .catch(() => afficher('Erreur réseau.', false));
     }
 
-    chargerSuivi();
-    // Suivi live : la liste des participants s'actualise pendant la
-    // projection en salle, sans action de l'admin.
-    pollTimer = setInterval(chargerSuivi, 4000);
-    window.addEventListener('beforeunload', () => clearInterval(pollTimer));
+    // ══════════ PARCOURS ══════════
+    function chargerParcoursDispo() {
+      fetch(API + '/parcours.php?action=liste')
+        .then(r => r.json())
+        .then(d => {
+          const sel = document.getElementById('selParcours');
+          sel.innerHTML = (d.parcours || []).map(p =>
+            '<option value="' + p.id + '">' + echap(p.nom) + ' — ' + p.nb_slides + ' slides</option>').join('');
+          if (!(d.parcours || []).length) {
+            sel.innerHTML = '<option value="">Aucun parcours — crée-en un d\'abord</option>';
+          }
+        })
+        .catch(() => {});
+    }
+
+    document.getElementById('btnAffecter').onclick = () => {
+      const pid = document.getElementById('selParcours').value;
+      if (!pid) { afficher('Crée d\'abord un parcours dans la bibliothèque.', false); return; }
+      post('admin.php', 'affecter_parcours', { id: EVT, parcours_id: pid })
+        .then(d => {
+          if (d.ok) { afficher(d.slides + ' slides copiées.', true); chargerSuivi(); }
+          else afficher(d.error || 'Affectation impossible.', false);
+        })
+        .catch(() => afficher('Erreur réseau.', false));
+    };
+
+    document.getElementById('btnReglages').onclick = () => {
+      post('admin.php', 'reglages', {
+        id: EVT,
+        mode_parcours: document.getElementById('regMode').value,
+        mode_equipes: document.getElementById('regEquipes').value,
+      }).then(d => {
+        if (d.ok) { afficher('Réglages enregistrés.', true); chargerSuivi(); }
+        else afficher(d.error || 'Erreur.', false);
+      }).catch(() => afficher('Erreur réseau.', false));
+    };
+
+    // ══════════ CONSOLE D'ANIMATION ══════════
+    function chargerAnimation() {
+      fetch(API + '/animation.php?action=etat&id=' + EVT)
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) return;
+          etatAnim = d;
+          rendreConsole(d);
+        })
+        .catch(() => {});
+    }
+
+    function rendreConsole(d) {
+      const pos = d.index >= 0 ? (d.index + 1) : 0;
+      document.getElementById('consolePos').textContent = pos + ' / ' + d.total;
+      document.getElementById('progressBar').style.width = d.total ? (pos / d.total * 100) + '%' : '0%';
+      document.getElementById('consoleRepondu').textContent = d.nb_reponses + ' / ' + d.nb_participants + ' ont répondu';
+      document.getElementById('btnPrec').disabled = d.index <= 0;
+      document.getElementById('btnSuiv').disabled = d.total === 0 || d.index >= d.total - 1;
+      document.getElementById('btnSuiv').textContent = d.index < 0 ? '▶ Démarrer' : 'Suivant →';
+
+      // Aperçu de la slide courante, correction comprise (écran animateur).
+      const ap = document.getElementById('apercu');
+      if (!d.slide) {
+        ap.innerHTML = '<div class="apercu-type">En attente</div>'
+          + '<div class="apercu-titre">Le parcours n\'a pas encore démarré</div>'
+          + '<div class="hint">Les participants voient la salle d\'attente. Clique sur « Démarrer ».</div>';
+      } else {
+        const s = d.slide, c = s.contenu || {};
+        let h = '<div class="apercu-type">' + echap((TYPES[s.type] || {}).nom || s.type) + (s.points ? ' · ' + s.points + ' pts' : '') + '</div>';
+        if (s.titre) h += '<div class="apercu-titre">' + echap(s.titre) + '</div>';
+        if (c.question) h += '<div class="apercu-q">' + echap(c.question) + '</div>';
+        if (c.sous_titre) h += '<div class="apercu-q">' + echap(c.sous_titre) + '</div>';
+        if (c.corps) h += '<div class="apercu-corps">' + echap(c.corps) + '</div>';
+        if (c.consigne) h += '<div class="apercu-corps">' + echap(c.consigne) + '</div>';
+        if (c.message) h += '<div class="apercu-corps">' + echap(c.message) + '</div>';
+        if (s.type === 'quiz' || s.type === 'sondage') {
+          (c.options || []).forEach((o, i) => {
+            h += '<div class="apercu-opt' + (c.correct === i ? ' juste' : '') + '"><span>' + echap(o) + '</span></div>';
+          });
+        }
+        if (s.type === 'vrai_faux') {
+          h += '<div class="apercu-opt' + (c.correct ? ' juste' : '') + '">Vrai</div>'
+             + '<div class="apercu-opt' + (!c.correct ? ' juste' : '') + '">Faux</div>';
+        }
+        if (s.type === 'estimation') {
+          h += '<div class="apercu-opt juste">Réponse : ' + echap(c.valeur) + ' ' + echap(c.unite || '')
+             + ' (tolérance ± ' + echap(c.tolerance) + ')</div>';
+        }
+        if (s.type === 'jeu') {
+          (c.items || []).forEach(it => {
+            const cle = it.cat !== undefined ? it.cat : (it.jours !== undefined ? it.jours + ' j' : it.mot);
+            h += '<div class="apercu-opt"><span>' + echap(it.emoji || '') + ' ' + echap(it.nom) + '</span><span class="nb">' + echap(cle) + '</span></div>';
+          });
+        }
+        if (c.explication) h += '<div class="hint" style="text-align:left">💡 ' + echap(c.explication) + '</div>';
+        ap.innerHTML = h;
+      }
+
+      // Sommaire cliquable
+      document.getElementById('sommaire').innerHTML = '<ul class="liste">' + (d.sommaire || []).map((s, i) =>
+        '<li' + (d.slide && s.id === d.slide.id ? ' style="outline:2px solid #1e6e3e"' : '') + '>'
+        + '<span class="rang">' + (i + 1) + '</span>'
+        + '<span class="nom">' + echap(s.titre || (TYPES[s.type] || {}).nom || s.type) + '</span>'
+        + '<button class="btn-mini" data-slide="' + s.id + '">Aller</button></li>').join('') + '</ul>';
+      document.querySelectorAll('#sommaire [data-slide]').forEach(b => {
+        b.onclick = () => post('animation.php', 'aller_a', { id: EVT, slide_id: b.dataset.slide })
+          .then(() => chargerAnimation());
+      });
+
+      // Résultats de la slide en cours
+      if (d.slide && d.nb_reponses > 0) {
+        document.getElementById('zoneResultats').style.display = 'block';
+        chargerResultats(d.slide.id);
+      } else {
+        document.getElementById('zoneResultats').style.display = 'none';
+      }
+    }
+
+    document.getElementById('btnSuiv').onclick = () => post('animation.php', 'suivant', { id: EVT })
+      .then(d => { if (!d.ok) afficher(d.error || 'Impossible.', false); chargerAnimation(); });
+    document.getElementById('btnPrec').onclick = () => post('animation.php', 'precedent', { id: EVT })
+      .then(() => chargerAnimation());
+    document.getElementById('btnProjection').onclick = () => {
+      document.body.classList.toggle('projection');
+      if (document.body.classList.contains('projection') && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else if (document.exitFullscreen) { document.exitFullscreen().catch(() => {}); }
+    };
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && document.body.classList.contains('projection')) document.body.classList.remove('projection');
+    });
+
+    function chargerResultats(slide_id) {
+      fetch(API + '/animation.php?action=resultats&slide_id=' + slide_id)
+        .then(r => r.json())
+        .then(d => {
+          if (d.error) return;
+          const z = document.getElementById('resultats');
+          let h = '';
+
+          if (['quiz', 'sondage', 'vrai_faux'].includes(d.type)) {
+            const opts = d.type === 'vrai_faux' ? ['Faux', 'Vrai'] : (d.contenu.options || []);
+            opts.forEach((o, i) => {
+              // Les clés de répartition sont normalisées en '0'/'1' côté serveur.
+              const nb = d.repartition[String(i)] || 0;
+              const juste = d.type === 'vrai_faux' ? (Boolean(d.contenu.correct) === (i === 1)) : (d.contenu.correct === i);
+              h += '<div class="apercu-opt' + (juste && d.type !== 'sondage' ? ' juste' : '') + '">'
+                 + '<span>' + echap(o) + '</span><span class="nb">' + nb + '</span></div>';
+            });
+          }
+
+          // Notation manuelle : question ouverte et défi
+          if (d.type === 'question_ouverte' || d.type === 'defi') {
+            h += '<ul class="liste">' + (d.reponses || []).map(r =>
+              '<li><span class="nom">' + echap(r.nom) + (r.reponse ? ' — <i>' + echap(r.reponse) + '</i>' : '') + '</span>'
+              + '<input class="note-input" type="number" min="0" max="' + d.points + '" value="' + r.points + '" data-p="' + r.participant_id + '">'
+              + '<button class="btn-mini" data-noter="' + r.participant_id + '">Noter</button></li>').join('') + '</ul>';
+            if (d.type === 'defi') {
+              h += '<div class="hint">Le défi ne se répond pas depuis le téléphone : note directement les participants ou les équipes.</div>';
+            }
+          } else if (d.reponses && d.reponses.length && !['quiz', 'sondage', 'vrai_faux'].includes(d.type)) {
+            h += '<ul class="liste">' + d.reponses.map(r =>
+              '<li><span class="nom">' + echap(r.nom) + '</span><span class="pts">' + r.points + '</span></li>').join('') + '</ul>';
+          }
+
+          z.innerHTML = h || '<div class="hint">Aucune réponse pour l\'instant.</div>';
+          z.querySelectorAll('[data-noter]').forEach(b => {
+            b.onclick = () => {
+              const pid = b.dataset.noter;
+              const val = z.querySelector('[data-p="' + pid + '"]').value;
+              post('animation.php', 'noter', { slide_id: slide_id, participant_id: pid, points: val })
+                .then(d2 => { if (d2.ok) { afficher('Noté.', true); chargerAnimation(); } });
+            };
+          });
+        })
+        .catch(() => {});
+    }
+
+    // ══════════ ÉQUIPES ══════════
+    function ligneEquipe(nom) {
+      const div = document.createElement('div');
+      div.className = 'rep-row';
+      div.innerHTML = '<input type="text" maxlength="80" value="' + echap(nom || '') + '" placeholder="Nom de l\'équipe">'
+        + '<button type="button" class="btn-mini sup">✕</button>';
+      div.querySelector('.sup').onclick = () => div.remove();
+      return div;
+    }
+
+    function chargerEquipes() {
+      fetch(API + '/admin.php?action=equipes&id=' + EVT)
+        .then(r => r.json())
+        .then(d => {
+          equipesCache = d.equipes || [];
+          const aDesEquipes = equipesCache.length > 0;
+          document.getElementById('zoneDefEquipes').style.display = aDesEquipes ? 'none' : 'block';
+          document.getElementById('zoneEquipes').style.display    = aDesEquipes ? 'block' : 'none';
+          document.getElementById('btnRedefinir').style.display   = aDesEquipes ? 'inline-block' : 'none';
+
+          if (aDesEquipes) {
+            document.getElementById('listeEquipes').innerHTML = '<ul class="liste">' + equipesCache.map(e =>
+              '<li><span class="rang" style="color:' + echap(e.couleur) + '">■</span>'
+              + '<span class="nom">' + echap(e.nom) + '</span>'
+              + '<span class="eq">' + e.membres + ' membre(s)</span></li>').join('') + '</ul>';
+          } else if (!document.querySelector('#lignesEquipes .rep-row')) {
+            const c = document.getElementById('lignesEquipes');
+            c.appendChild(ligneEquipe('Équipe A'));
+            c.appendChild(ligneEquipe('Équipe B'));
+          }
+          // La liste des participants porte le sélecteur d'équipe : elle doit
+          // être redessinée quand les équipes changent.
+          if (participantsCache) rendreParticipants(participantsCache);
+        })
+        .catch(() => {});
+    }
+
+    document.getElementById('btnPlusEquipe').onclick = () =>
+      document.getElementById('lignesEquipes').appendChild(ligneEquipe(''));
+
+    document.getElementById('btnRedefinir').onclick = () => {
+      if (!confirm('Redéfinir les équipes ? Les participants seront détachés de leur équipe actuelle (leurs points sont conservés).')) return;
+      document.getElementById('zoneDefEquipes').style.display = 'block';
+      document.getElementById('zoneEquipes').style.display = 'none';
+      const c = document.getElementById('lignesEquipes');
+      c.innerHTML = '';
+      equipesCache.forEach(e => c.appendChild(ligneEquipe(e.nom)));
+      if (!equipesCache.length) { c.appendChild(ligneEquipe('Équipe A')); c.appendChild(ligneEquipe('Équipe B')); }
+    };
+
+    document.getElementById('btnDefEquipes').onclick = () => {
+      const noms = [...document.querySelectorAll('#lignesEquipes .rep-row input')]
+        .map(i => i.value.trim()).filter(v => v !== '');
+      fetch(API + '/admin.php?action=equipes_definir', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: EVT, noms: noms }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d.ok) { afficher(d.equipes + ' équipes créées.', true); chargerEquipes(); }
+          else afficher(d.error || 'Création impossible.', false);
+        })
+        .catch(() => afficher('Erreur réseau.', false));
+    };
+
+    document.getElementById('btnRepartir').onclick = () => {
+      if (!confirm('Répartir aléatoirement tous les participants ?')) return;
+      post('admin.php', 'repartir_auto', { id: EVT })
+        .then(d => {
+          if (d.ok) { afficher(d.repartis + ' participants répartis.', true); chargerEquipes(); chargerSuivi(); }
+          else afficher(d.error || 'Répartition impossible.', false);
+        })
+        .catch(() => afficher('Erreur réseau.', false));
+    };
+
+    // ══════════ PARTICIPANTS ══════════
+    function rendreParticipants(liste) {
+      participantsCache = liste;
+      document.getElementById('partCount').textContent = '(' + liste.length + ')';
+      const box = document.getElementById('partList');
+
+      // Le sondage périodique ne doit pas redessiner cette liste pour rien :
+      // recréer les <select> refermerait celui que l'animateur vient d'ouvrir
+      // pour affecter quelqu'un à une équipe.
+      const sig = liste.map(p => p.id + ':' + p.equipe_id + ':' + p.points).join(',')
+        + '|' + equipesCache.map(e => e.id + e.nom).join(',');
+      if (sig === signatureParticipants) return;
+      signatureParticipants = sig;
+
+      if (!liste.length) { box.innerHTML = '<div class="empty-msg">Personne n\'a encore rejoint.</div>'; return; }
+
+      const options = eq => '<option value="0">— sans équipe —</option>' + equipesCache.map(e =>
+        '<option value="' + e.id + '"' + (eq === e.id ? ' selected' : '') + '>' + echap(e.nom) + '</option>').join('');
+
+      box.innerHTML = '<ul class="liste">' + liste.map(p => {
+        const heure = new Date(p.rejoint_at.replace(' ', 'T')).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        return '<li><span class="nom">' + echap(p.nom_affiche) + '</span>'
+          + (equipesCache.length ? '<select class="note-input" style="width:auto" data-part="' + p.id + '">' + options(p.equipe_id) + '</select>' : '')
+          + '<span class="pts">' + p.points + ' pts</span>'
+          + '<span class="eq">' + heure + '</span></li>';
+      }).join('') + '</ul>';
+
+      // Répartition manuelle : un changement de sélection réaffecte aussitôt.
+      box.querySelectorAll('[data-part]').forEach(sel => {
+        sel.onchange = () => {
+          post('admin.php', 'assigner_equipe', { participant_id: sel.dataset.part, equipe_id: sel.value })
+            .then(d => { if (d.ok) chargerEquipes(); else afficher(d.error || 'Affectation impossible.', false); })
+            .catch(() => afficher('Erreur réseau.', false));
+        };
+      });
+    }
+
+    // ══════════ CLASSEMENT ══════════
+    function chargerClassement() {
+      fetch(API + '/animation.php?action=classement&id=' + EVT)
+        .then(r => r.json())
+        .then(d => {
+          document.getElementById('clJoueurs').innerHTML = (d.joueurs || []).length
+            ? '<ul class="liste">' + d.joueurs.map((j, i) =>
+                '<li><span class="rang">' + (i + 1) + '</span><span class="nom">' + echap(j.nom) + '</span>'
+                + '<span class="pts">' + j.points + '</span></li>').join('') + '</ul>'
+            : '<div class="empty-msg">Aucun participant.</div>';
+
+          const carte = document.getElementById('cardEquipes');
+          if ((d.equipes || []).length) {
+            carte.style.display = 'block';
+            document.getElementById('clEquipes').innerHTML = '<ul class="liste">' + d.equipes.map((e, i) =>
+              '<li><span class="rang">' + (i + 1) + '</span><span class="nom">' + echap(e.nom) + '</span>'
+              + '<span class="eq">' + e.membres + ' membres</span><span class="pts">' + e.points + '</span></li>').join('') + '</ul>';
+          } else {
+            carte.style.display = 'none';
+          }
+        })
+        .catch(() => {});
+    }
+
+    // ══════════ BOUCLE ══════════
+    function rafraichir() {
+      if (ongletActif === 'animation') chargerAnimation();
+      else if (ongletActif === 'classement') chargerClassement();
+      else if (ongletActif === 'participants') { chargerSuivi(); chargerEquipes(); }
+      else chargerSuivi();
+    }
+
+    // Le registre des types sert aux libellés de l'aperçu.
+    fetch(API + '/parcours.php?action=types')
+      .then(r => r.json())
+      .then(d => { TYPES = d.types || {}; })
+      .catch(() => {})
+      .finally(() => {
+        chargerSuivi();
+        chargerAnimation();
+        chargerEquipes();
+        // Suivi live : compteurs, réponses et classement s'actualisent pendant
+        // l'atelier sans action de l'animateur.
+        pollTimer = setInterval(() => { rafraichir(); if (ongletActif !== 'participants') chargerSuivi(); }, 3000);
+      });
+
+    window.addEventListener('beforeunload', () => { if (pollTimer) clearInterval(pollTimer); });
   </script>
   <script src="/assets/js/theme.js"></script>
 </body>

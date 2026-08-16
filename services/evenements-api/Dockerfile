@@ -18,9 +18,13 @@ RUN apt-get update \
 COPY shared/_guard.php                   /var/www/html/api/_guard.php
 COPY services/evenements-api/evenements/ /var/www/html/api/evenements/
 
+# Pools de données des jeux, servis à l'éditeur de parcours (action=pools).
+# Déposés hors de la racine web : ils ne sont lus que par parcours.php.
+COPY services/evenements-api/data/       /var/www/evenements-data/
+
 # ── Pages d'administration ─────────────────────────────────────────────────
 COPY services/evenements-api/admin-pages/controleur.php /var/www/html/evenements-admin-controleur.php
 COPY services/evenements-api/admin-pages/vues/          /var/www/evenements-admin-vues/
 COPY services/evenements-api/htaccess-racine            /var/www/html/.htaccess
 
-RUN chown -R www-data:www-data /var/www/html /var/www/evenements-admin-vues
+RUN chown -R www-data:www-data /var/www/html /var/www/evenements-admin-vues /var/www/evenements-data

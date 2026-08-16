@@ -1,32 +1,14 @@
 <?php
-// Back-office événements : créer, ouvrir/fermer, lister, suivre les inscrits.
-// Ce service n'a pas accès à `users` (db-core, base séparée) : contrairement à
-// courses-api/admin/_admin_guard.php qui relit isAdmin en base à chaque appel,
-// on s'appuie ici sur is_admin_session() (flag posé au login), comme le font
-// déjà map-api et games-api pour la même raison. Limite documentée dans
-// shared/_guard.php : un admin rétrogradé garde l'accès jusqu'à reconnexion.
+// Back-office événements : créer, piloter le cycle de vie, lister, suivre les
+// inscrits, affecter un parcours. Garde admin dans _admin.php (partagée avec
+// parcours.php et animation.php).
 ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
-require_once __DIR__ . '/../_guard.php';
-secure_session_start();
-header('Content-Type: application/json; charset=utf-8');
-ob_clean();
-csrf_check();
+require_once __DIR__ . '/_admin.php';
+require_once __DIR__ . '/_slides.php';
 
-if (empty($_SESSION['user_id']) || !is_admin_session()) {
-    http_response_code(403);
-    echo json_encode(['error' => 'Accès réservé']);
-    exit;
-}
-
-$conn = mysqli_connect(
-    getenv('DB_HOST') ?: 'db-evenements',
-    getenv('DB_USER') ?: 'composmart',
-    getenv('DB_PASSWORD') ?: '',
-    getenv('DB_NAME') ?: 'Composmart'
-);
-if (!$conn) { echo json_encode(['error' => 'Connexion DB échouée']); exit; }
+$conn = evt_admin_connexion_ou_403();
 
 // Alphabet sans caractères ambigus (pas de 0/O/1/I) : le code est projeté en
 // salle et lu à voix haute, il doit rester sans ambiguïté visuelle ou orale.
@@ -171,25 +153,271 @@ if ($action === 'liste') {
     exit;
 }
 
+// ── AFFECTER UN PARCOURS (copie ses slides dans l'événement) ───────────────
+// La copie est le mécanisme qui rend un parcours réutilisable sans figer les
+// ateliers déjà joués (cf. db/evenements.sql, table evenement_slides).
+if ($action === 'affecter_parcours') {
+    $id          = (int)($_POST['id'] ?? 0);
+    $parcours_id = (int)($_POST['parcours_id'] ?? 0);
+    if ($id <= 0 || $parcours_id <= 0) { echo json_encode(['error' => 'Données invalides.']); exit; }
+
+    // Réaffecter écraserait les slides existantes, et la cascade emporterait
+    // les réponses déjà données : on refuse dès qu'un participant a joué.
+    $stmt = mysqli_prepare($conn, 'SELECT COUNT(*) AS n FROM reponses WHERE evenement_id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    if ((int)$stmt->get_result()->fetch_assoc()['n'] > 0) {
+        echo json_encode(['error' => "Des participants ont déjà répondu : le parcours ne peut plus être remplacé."]);
+        exit;
+    }
+
+    $stmt = mysqli_prepare($conn, 'DELETE FROM evenement_slides WHERE evenement_id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+
+    $stmt = mysqli_prepare($conn,
+        'INSERT INTO evenement_slides (evenement_id, ordre, type, titre, contenu, points)
+         SELECT ?, ordre, type, titre, contenu, points FROM parcours_slides WHERE parcours_id = ? ORDER BY ordre, id');
+    $stmt->bind_param('ii', $id, $parcours_id);
+    $stmt->execute();
+    $copiees = mysqli_affected_rows($conn);
+
+    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET parcours_id = ?, slide_courante_id = NULL WHERE id = ?');
+    $stmt->bind_param('ii', $parcours_id, $id);
+    $stmt->execute();
+
+    audit_log($conn, 'evenement_parcours_affecte', $copiees . ' slides', ['target_type' => 'evenement', 'target_id' => $id]);
+    echo json_encode(['ok' => true, 'slides' => $copiees]);
+    exit;
+}
+
+// ── RÉGLAGES D'ANIMATION ────────────────────────────────────────────────────
+if ($action === 'reglages') {
+    $id = (int)($_POST['id'] ?? 0);
+    if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
+
+    $mp = in_array($_POST['mode_parcours'] ?? '', ['commun', 'individuel'], true) ? $_POST['mode_parcours'] : 'commun';
+    $me = in_array($_POST['mode_equipes'] ?? '', ['aucun', 'manuel', 'auto', 'libre'], true) ? $_POST['mode_equipes'] : 'aucun';
+
+    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET mode_parcours = ?, mode_equipes = ? WHERE id = ? AND supprime = 0');
+    $stmt->bind_param('ssi', $mp, $me, $id);
+    $stmt->execute();
+
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ── SLIDES DE L'ÉVÉNEMENT (la copie, éditable indépendamment du parcours) ──
+if ($action === 'slides') {
+    $id = (int)($_GET['id'] ?? 0);
+    if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
+
+    $stmt = mysqli_prepare($conn,
+        'SELECT id, ordre, type, titre, contenu, points FROM evenement_slides WHERE evenement_id = ? ORDER BY ordre, id');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $slides = [];
+    while ($row = $res->fetch_assoc()) {
+        $c = json_decode($row['contenu'] ?? '', true);
+        $slides[] = [
+            'id'      => (int)$row['id'],
+            'ordre'   => (int)$row['ordre'],
+            'type'    => $row['type'],
+            'titre'   => $row['titre'],
+            'points'  => (int)$row['points'],
+            'contenu' => is_array($c) ? $c : [],
+        ];
+    }
+    echo json_encode(['slides' => $slides, 'types' => slides_registre()], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ── MODIFIER UNE SLIDE DE L'ÉVÉNEMENT (adaptation pour ce client) ─────────
+if ($action === 'slide_modifier') {
+    $d  = evt_corps_json();
+    $sid = (int)($d['id'] ?? 0);
+    if ($sid <= 0) { echo json_encode(['error' => 'Slide invalide.']); exit; }
+
+    $stmt = mysqli_prepare($conn, 'SELECT type FROM evenement_slides WHERE id = ?');
+    $stmt->bind_param('i', $sid);
+    $stmt->execute();
+    $s = $stmt->get_result()->fetch_assoc();
+    if (!$s) { echo json_encode(['error' => 'Slide introuvable.']); exit; }
+
+    $v = valider_contenu($s['type'], $d['contenu'] ?? []);
+    if (!$v['ok']) { echo json_encode(['error' => $v['erreur']]); exit; }
+
+    $titre  = mb_substr(trim((string)($d['titre'] ?? '')), 0, 200);
+    $points = max(0, min(1000, (int)($d['points'] ?? 0)));
+    $reg = slides_registre();
+    if ($reg[$s['type']]['note'] === false) $points = 0;
+    $json = json_encode($v['contenu'], JSON_UNESCAPED_UNICODE);
+
+    $stmt = mysqli_prepare($conn, 'UPDATE evenement_slides SET titre = ?, contenu = ?, points = ? WHERE id = ?');
+    $stmt->bind_param('ssii', $titre, $json, $points, $sid);
+    $stmt->execute();
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ── SUPPRIMER UNE SLIDE DE L'ÉVÉNEMENT ─────────────────────────────────────
+if ($action === 'slide_supprimer') {
+    $sid = (int)($_POST['id'] ?? 0);
+    if ($sid <= 0) { echo json_encode(['error' => 'Slide invalide.']); exit; }
+
+    $stmt = mysqli_prepare($conn, 'DELETE FROM evenement_slides WHERE id = ?');
+    $stmt->bind_param('i', $sid);
+    $stmt->execute();
+    if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Slide introuvable.']); exit; }
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ── ÉQUIPES : définition (nombre et noms fixés par l'animateur) ────────────
+// Redéfinir remplace les équipes existantes ; les participants qui y étaient
+// rattachés repassent sans équipe (FK ON DELETE SET NULL). Les points, eux,
+// vivent dans `reponses` et ne sont donc jamais perdus par cette opération.
+if ($action === 'equipes_definir') {
+    $d   = evt_corps_json();
+    $id  = (int)($d['id'] ?? 0);
+    $noms = array_values(array_filter(array_map(function ($n) {
+        return mb_substr(trim((string)$n), 0, 80);
+    }, (array)($d['noms'] ?? [])), function ($n) { return $n !== ''; }));
+
+    if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
+    if (count($noms) < 2) { echo json_encode(['error' => 'Il faut au moins deux équipes.']); exit; }
+    if (count($noms) > 12) { echo json_encode(['error' => '12 équipes au maximum.']); exit; }
+
+    $stmt = mysqli_prepare($conn, 'DELETE FROM equipes WHERE evenement_id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+
+    // Palette fixe : chaque équipe garde une couleur lisible en projection.
+    $palette = ['#e53935', '#1e88e5', '#43a047', '#fb8c00', '#8e24aa', '#00acc1',
+                '#fdd835', '#6d4c41', '#ec407a', '#7cb342', '#5e35b1', '#00897b'];
+    $stmt = mysqli_prepare($conn, 'INSERT INTO equipes (evenement_id, nom, couleur, ordre) VALUES (?, ?, ?, ?)');
+    foreach ($noms as $i => $nom) {
+        $couleur = $palette[$i % count($palette)];
+        $stmt->bind_param('issi', $id, $nom, $couleur, $i);
+        $stmt->execute();
+    }
+
+    audit_log($conn, 'evenement_equipes', count($noms) . ' équipes', ['target_type' => 'evenement', 'target_id' => $id]);
+    echo json_encode(['ok' => true, 'equipes' => count($noms)]);
+    exit;
+}
+
+// ── ÉQUIPES : liste avec effectifs ─────────────────────────────────────────
+if ($action === 'equipes') {
+    $id = (int)($_GET['id'] ?? 0);
+    if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
+
+    $stmt = mysqli_prepare($conn,
+        'SELECT e.id, e.nom, e.couleur, e.ordre,
+                (SELECT COUNT(*) FROM participants p WHERE p.equipe_id = e.id) AS membres
+         FROM equipes e WHERE e.evenement_id = ? ORDER BY e.ordre, e.id');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $equipes = [];
+    while ($row = $res->fetch_assoc()) {
+        $equipes[] = ['id' => (int)$row['id'], 'nom' => $row['nom'], 'couleur' => $row['couleur'], 'membres' => (int)$row['membres']];
+    }
+    echo json_encode(['equipes' => $equipes], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ── ÉQUIPES : rattacher un participant (répartition manuelle) ──────────────
+if ($action === 'assigner_equipe') {
+    $participant_id = (int)($_POST['participant_id'] ?? 0);
+    $equipe_id      = (int)($_POST['equipe_id'] ?? 0);   // 0 = retirer de son équipe
+    if ($participant_id <= 0) { echo json_encode(['error' => 'Participant invalide.']); exit; }
+
+    if ($equipe_id > 0) {
+        $stmt = mysqli_prepare($conn,
+            'UPDATE participants p JOIN equipes e ON e.id = ?
+             SET p.equipe_id = e.id WHERE p.id = ? AND e.evenement_id = p.evenement_id');
+        $stmt->bind_param('ii', $equipe_id, $participant_id);
+    } else {
+        $stmt = mysqli_prepare($conn, 'UPDATE participants SET equipe_id = NULL WHERE id = ?');
+        $stmt->bind_param('i', $participant_id);
+    }
+    $stmt->execute();
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ── ÉQUIPES : répartition aléatoire équilibrée ─────────────────────────────
+// Tout le monde est rebrassé, y compris ceux déjà placés (comportement
+// demandé). La distribution en tourniquet après mélange garantit des effectifs
+// équilibrés, là où un tirage indépendant par personne créerait des écarts.
+if ($action === 'repartir_auto') {
+    $id = (int)($_POST['id'] ?? 0);
+    if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
+
+    $stmt = mysqli_prepare($conn, 'SELECT id FROM equipes WHERE evenement_id = ? ORDER BY ordre, id');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $equipes = [];
+    while ($row = $res->fetch_assoc()) $equipes[] = (int)$row['id'];
+    if (!$equipes) { echo json_encode(['error' => "Définis d'abord les équipes."]); exit; }
+
+    $stmt = mysqli_prepare($conn, 'SELECT id FROM participants WHERE evenement_id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $ids = [];
+    while ($row = $res->fetch_assoc()) $ids[] = (int)$row['id'];
+    if (!$ids) { echo json_encode(['ok' => true, 'repartis' => 0]); exit; }
+
+    shuffle($ids);
+    $stmt = mysqli_prepare($conn, 'UPDATE participants SET equipe_id = ? WHERE id = ?');
+    foreach ($ids as $i => $pid) {
+        $eid = $equipes[$i % count($equipes)];
+        $stmt->bind_param('ii', $eid, $pid);
+        $stmt->execute();
+    }
+
+    audit_log($conn, 'evenement_repartition', count($ids) . ' participants', ['target_type' => 'evenement', 'target_id' => $id]);
+    echo json_encode(['ok' => true, 'repartis' => count($ids)]);
+    exit;
+}
+
 // ── SUIVI LIVE : détail + liste des participants ────────────────────────────
 if ($action === 'suivi') {
     $id = (int)($_GET['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
 
-    $stmt = mysqli_prepare($conn, 'SELECT id, titre, lieu, date_debut, code, statut, supprime FROM evenements WHERE id = ?');
+    $stmt = mysqli_prepare($conn,
+        'SELECT e.id, e.titre, e.lieu, e.date_debut, e.code, e.statut, e.supprime,
+                e.parcours_id, e.mode_equipes, e.mode_parcours,
+                (SELECT COUNT(*) FROM evenement_slides s WHERE s.evenement_id = e.id) AS nb_slides,
+                (SELECT p.nom FROM parcours p WHERE p.id = e.parcours_id) AS parcours_nom
+         FROM evenements e WHERE e.id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $evt = $stmt->get_result()->fetch_assoc();
     if (!$evt) { echo json_encode(['error' => 'Événement introuvable.']); exit; }
     $evt['id'] = (int)$evt['id'];
     $evt['supprime'] = (int)$evt['supprime'] === 1;
+    $evt['nb_slides'] = (int)$evt['nb_slides'];
 
-    $stmt = mysqli_prepare($conn, 'SELECT nom_affiche, rejoint_at FROM participants WHERE evenement_id = ? ORDER BY rejoint_at DESC');
+    $stmt = mysqli_prepare($conn,
+        'SELECT p.id, p.nom_affiche, p.equipe_id, p.rejoint_at,
+                COALESCE((SELECT SUM(r.points) FROM reponses r WHERE r.participant_id = p.id), 0) AS points
+         FROM participants p WHERE p.evenement_id = ? ORDER BY p.rejoint_at DESC');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $res = $stmt->get_result();
     $participants = [];
-    while ($row = $res->fetch_assoc()) $participants[] = $row;
+    while ($row = $res->fetch_assoc()) {
+        $row['id'] = (int)$row['id'];
+        $row['equipe_id'] = $row['equipe_id'] !== null ? (int)$row['equipe_id'] : null;
+        $row['points'] = (int)$row['points'];
+        $participants[] = $row;
+    }
 
     echo json_encode(['evenement' => $evt, 'participants' => $participants], JSON_UNESCAPED_UNICODE);
     exit;

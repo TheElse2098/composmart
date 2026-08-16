@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <title>CompoSmart – Parcours</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .nav-back { color: rgba(255,255,255,0.85); text-decoration: none; font-weight: 700; font-size: 0.85rem; }
+
+    .hero { text-align: center; padding: 24px 20px 10px; }
+    .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.4rem, 5vw, 2.1rem); font-weight: 900; color: #1a3a25; }
+    .hero-sub { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; margin-top: 5px; }
+
+    .page-content { width: 100%; max-width: 820px; padding: 16px; }
+    .section-title { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #1a3a25; margin: 14px 4px 10px; }
+    .card { background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); margin-bottom: 18px; }
+
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 0.74rem; font-weight: 800; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .field input, .field textarea, .field select { display: block; width: 100%; padding: 9px 12px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.9rem; color: #1a3a25; background: #f7fbf8; outline: none; font-family: inherit; }
+    .field textarea { min-height: 90px; resize: vertical; }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: #1e6e3e; background: #fff; }
+    .field-inline { display: flex; gap: 10px; }
+    .field-inline > * { flex: 1; }
+    .check { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; font-weight: 700; color: #2c4a34; }
+    .check input { width: auto; }
+
+    button { border: none; border-radius: 50px; padding: 10px 20px; font-size: 0.86rem; font-weight: 800; cursor: pointer; font-family: 'Baloo 2', cursive; }
+    .btn-p { background: #1e6e3e; color: #fff; }
+    .btn-s { background: #eceff1; color: #607d8b; }
+    .btn-d { background: #fdecea; color: #c0392b; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .btn-mini { border-radius: 10px; padding: 5px 11px; font-size: 0.74rem; font-family: inherit; }
+
+    .p-item { background: #fff; border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .p-main { flex: 1; min-width: 180px; }
+    .p-nom { font-weight: 800; color: #1a3a25; font-size: 0.95rem; }
+    .p-meta { font-size: 0.76rem; color: #888; margin-top: 3px; }
+    .p-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Liste des slides */
+    .slide-row { background: #fff; border-radius: 12px; padding: 11px 14px; margin-bottom: 8px; box-shadow: 0 1px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; }
+    .slide-rang { font-family: 'Baloo 2', cursive; font-weight: 900; color: #7aaa8a; min-width: 22px; }
+    .slide-info { flex: 1; min-width: 0; }
+    .slide-titre { font-weight: 800; color: #1a3a25; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .slide-type { font-size: 0.72rem; color: #888; }
+    .slide-pts { background: #fff9c4; color: #b26a00; font-weight: 800; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+    .slide-btns { display: flex; gap: 4px; }
+    .slide-btns button { background: #eef4ec; color: #1e6e3e; border-radius: 8px; padding: 4px 9px; font-size: 0.75rem; font-family: inherit; }
+    .slide-btns button.sup { background: #fdecea; color: #c0392b; }
+
+    .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 16px; background: #fff; border-radius: 12px; }
+    .loader { text-align: center; padding: 40px; color: #4a7a5a; font-weight: 700; }
+    .msg { border-radius: 10px; padding: 10px 13px; font-size: 0.85rem; font-weight: 700; margin-bottom: 12px; display: none; }
+    .msg.error { background: #fdecea; color: #c0392b; }
+    .msg.ok { background: #e8f5e9; color: #1e6e3e; }
+
+    /* Modale d'édition de slide */
+    .modal-back { position: fixed; inset: 0; background: rgba(15,24,17,0.55); z-index: 300; display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal-back.open { display: flex; }
+    .modal-box { background: #fff; border-radius: 18px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; padding: 22px; }
+    .modal-titre { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin-bottom: 14px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-actions button { flex: 1; }
+
+    /* Widgets répétables (options, sections, items de jeu) */
+    .rep-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+    .rep-row input, .rep-row select { flex: 1; }
+    .rep-row .rep-del { background: #fdecea; color: #c0392b; border-radius: 8px; padding: 6px 10px; font-size: 0.75rem; font-family: inherit; flex: 0 0 auto; }
+    .rep-add { background: #eef4ec; color: #1e6e3e; border-radius: 10px; padding: 6px 13px; font-size: 0.76rem; font-family: inherit; margin-top: 2px; }
+    .rep-correct { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 800; color: #4a7a5a; flex: 0 0 auto; }
+    .rep-correct input { width: auto; }
+    .hint { font-size: 0.74rem; color: #888; margin-top: 4px; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+
+    html.dark body { background: #101a13; }
+    html.dark nav { background: #14301f; }
+    html.dark h1, html.dark .section-title, html.dark .p-nom, html.dark .slide-titre, html.dark .modal-titre { color: #e8f5ee; }
+    html.dark .card, html.dark .p-item, html.dark .slide-row, html.dark .empty-msg, html.dark .modal-box { background: #16211a; }
+    html.dark .field label, html.dark .check { color: #7ab88e; }
+    html.dark .field input, html.dark .field textarea, html.dark .field select { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .btn-s { background: #1e2d22; color: #9fb0a5; }
+    html.dark .btn-d, html.dark .slide-btns button.sup, html.dark .rep-row .rep-del { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .slide-btns button, html.dark .rep-add { background: #16291c; color: #7fc99a; }
+    html.dark .slide-pts { background: #2e2410; color: #e8b931; }
+  </style>
+  <link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-logo">Compo<span>Smart</span></a>
+    <a href="/evenements-admin" class="nav-back">← Événements</a>
+  </nav>
+
+  <div class="loader" id="loader">Chargement…</div>
+
+  <!-- ══ MODE BIBLIOTHÈQUE ══ -->
+  <div class="page-content" id="vueListe" style="display:none">
+    <div class="hero">
+      <div class="hero-badge">🎬 Parcours</div>
+      <h1>Bibliothèque de parcours</h1>
+      <p class="hero-sub">Un parcours est un déroulé d'atelier réutilisable d'une entreprise à l'autre.</p>
+    </div>
+
+    <div class="msg" id="msgListe"></div>
+
+    <div class="section-title">➕ Nouveau parcours</div>
+    <div class="card">
+      <form id="formCreer">
+        <div class="field"><label>Nom</label>
+          <input type="text" id="nom" maxlength="150" placeholder="Atelier compostage — 45 min" required></div>
+        <div class="field"><label>Description</label>
+          <input type="text" id="description" maxlength="300" placeholder="Découverte, quiz et défis"></div>
+        <button type="submit" class="btn-p" id="btnCreer">Créer</button>
+      </form>
+    </div>
+
+    <div class="section-title">📚 Parcours existants</div>
+    <div id="listeParcours"></div>
+  </div>
+
+  <!-- ══ MODE ÉDITEUR ══ -->
+  <div class="page-content" id="vueEdit" style="display:none">
+    <div class="hero">
+      <div class="hero-badge">🎬 Parcours</div>
+      <h1 id="editNom">—</h1>
+      <p class="hero-sub" id="editMeta"></p>
+    </div>
+
+    <div class="msg" id="msgEdit"></div>
+
+    <div class="card">
+      <form id="formInfos">
+        <div class="field-inline">
+          <div class="field"><label>Nom</label><input type="text" id="editNomInput" maxlength="150" required></div>
+          <div class="field"><label>Description</label><input type="text" id="editDescInput" maxlength="300"></div>
+        </div>
+        <button type="submit" class="btn-s" id="btnInfos">Enregistrer</button>
+      </form>
+    </div>
+
+    <div class="section-title">🧩 Slides</div>
+    <div id="listeSlides"></div>
+
+    <div class="card" style="margin-top:12px">
+      <div class="field"><label>Ajouter une slide</label>
+        <select id="nouveauType"></select>
+      </div>
+      <button type="button" class="btn-p" id="btnAjouter">+ Ajouter</button>
+    </div>
+  </div>
+
+  <div class="bottom-leaf"></div>
+
+  <!-- Modale d'édition d'une slide -->
+  <div class="modal-back" id="modal">
+    <div class="modal-box">
+      <div class="modal-titre" id="modalTitre">Slide</div>
+      <div class="msg" id="msgModal"></div>
+      <div class="field"><label>Titre affiché (facultatif)</label>
+        <input type="text" id="slideTitre" maxlength="200" placeholder="Laisse vide pour ne rien afficher"></div>
+      <div id="champsType"></div>
+      <div class="field" id="champPoints" style="display:none"><label>Points</label>
+        <input type="number" id="slidePoints" min="0" max="1000" value="10"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-s" id="modalAnnuler">Annuler</button>
+        <button type="button" class="btn-p" id="modalOk">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*__ROUTE__*/
+    function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+    const API = '/api/evenements/parcours.php';
+    const PARCOURS_ID = (window.ROUTE && window.ROUTE.parcours_id) || null;
+
+    let REGISTRE = {};   // type => {nom, note, repond}
+    let slides = [];
+    let editionId = null;   // id de la slide en cours d'édition, null = création
+    let editionType = null;
+
+    function afficher(zone, texte, ok) {
+      const el = document.getElementById(zone);
+      el.className = 'msg ' + (ok ? 'ok' : 'error');
+      el.textContent = texte;
+      el.style.display = 'block';
+      if (ok) setTimeout(() => { el.style.display = 'none'; }, 2500);
+    }
+
+    function post(action, body, json) {
+      const opts = { method: 'POST' };
+      if (json) {
+        opts.headers = { 'Content-Type': 'application/json' };
+        opts.body = JSON.stringify(body);
+      } else {
+        opts.body = new URLSearchParams(body);
+      }
+      return fetch(API + '?action=' + action, opts)
+        .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); });
+    }
+
+    // ══════════ DÉCLARATION DES CHAMPS PAR TYPE ══════════
+    // Un type = une liste de champs. Ajouter un type de slide ne demande donc
+    // qu'une entrée ici (et l'entrée correspondante côté _slides.php).
+    const CHAMPS = {
+      titre:            [['sous_titre', 'Sous-titre', 'text']],
+      texte:            [['corps', 'Texte', 'textarea']],
+      anecdote:         [['emoji', 'Emoji', 'text'], ['corps', 'Anecdote', 'textarea']],
+      sommaire:         [['sections', 'Sections', 'sections']],
+      media:            [['media_type', 'Type', 'select', ['image', 'video', 'audio']],
+                         ['url', 'Adresse du média', 'text'],
+                         ['legende', 'Légende', 'text']],
+      classement:       [['portee', 'Afficher', 'select', ['les_deux', 'individuel', 'equipe']]],
+      fin:              [['message', 'Message de fin', 'textarea'],
+                         ['afficher_classement', 'Afficher le classement final', 'check']],
+      quiz:             [['question', 'Question', 'textarea'],
+                         ['options', 'Réponses possibles', 'options'],
+                         ['explication', 'Explication (après réponse)', 'textarea']],
+      vrai_faux:        [['question', 'Affirmation', 'textarea'],
+                         ['correct', 'La bonne réponse est', 'select_vf'],
+                         ['explication', 'Explication (après réponse)', 'textarea']],
+      estimation:       [['question', 'Question', 'textarea'],
+                         ['valeur', 'Valeur exacte', 'number'],
+                         ['unite', 'Unité', 'text'],
+                         ['tolerance', 'Tolérance (points pleins en deçà)', 'number'],
+                         ['explication', 'Explication (après réponse)', 'textarea']],
+      sondage:          [['question', 'Question', 'textarea'],
+                         ['options', 'Choix proposés', 'options_simple']],
+      jeu:              [['jeu', 'Jeu', 'select', ['compost-ou-pas', 'temps-decompo', 'mot-mystere']],
+                         ['items', 'Éléments', 'items_jeu']],
+      question_ouverte: [['question', 'Question', 'textarea'],
+                         ['max_car', 'Longueur max de la réponse', 'number']],
+      defi:             [['consigne', 'Consigne du défi', 'textarea']],
+    };
+
+    // ══════════ RENDU GÉNÉRIQUE DES CHAMPS ══════════
+    function champHtml(cle, label, type, extra) {
+      const id = 'ch_' + cle;
+      if (type === 'textarea') return '<div class="field"><label>' + label + '</label><textarea id="' + id + '"></textarea></div>';
+      if (type === 'number')   return '<div class="field"><label>' + label + '</label><input type="number" step="any" id="' + id + '"></div>';
+      if (type === 'check')    return '<div class="field"><label class="check"><input type="checkbox" id="' + id + '"> ' + label + '</label></div>';
+      if (type === 'select')   return '<div class="field"><label>' + label + '</label><select id="' + id + '">'
+                                      + extra.map(o => '<option value="' + o + '">' + o + '</option>').join('') + '</select></div>';
+      if (type === 'select_vf') return '<div class="field"><label>' + label + '</label><select id="' + id + '"><option value="1">Vrai</option><option value="0">Faux</option></select></div>';
+      if (type === 'options' || type === 'options_simple')
+        return '<div class="field"><label>' + label + '</label><div id="' + id + '"></div>'
+             + '<button type="button" class="rep-add" data-add="' + cle + '">+ Ajouter</button>'
+             + (type === 'options' ? '<div class="hint">Coche la bonne réponse.</div>' : '') + '</div>';
+      if (type === 'items_jeu')
+        return '<div class="field"><label>' + label + '</label><div id="' + id + '"></div>'
+             + '<button type="button" class="rep-add" data-add="' + cle + '">+ Ajouter</button> '
+             + '<button type="button" class="rep-add" id="btnImportPool">📥 Importer depuis le jeu</button>'
+             + '<div class="hint">L\'import recopie les éléments du jeu dans la slide : retire ensuite ceux dont tu ne veux pas. Modifier le jeu du site ne changera plus ce parcours.</div></div>';
+      if (type === 'sections')
+        return '<div class="field"><label>' + label + '</label><div id="' + id + '"></div>'
+             + '<button type="button" class="rep-add" data-add="' + cle + '">+ Ajouter</button></div>';
+      return '<div class="field"><label>' + label + '</label><input type="text" id="' + id + '"></div>';
+    }
+
+    // Lignes répétables ------------------------------------------------------
+    function ligneOption(valeur, coche, avecCorrect) {
+      const div = document.createElement('div');
+      div.className = 'rep-row';
+      div.innerHTML = '<input type="text" maxlength="300" value="' + echap(valeur || '') + '" placeholder="Réponse">'
+        + (avecCorrect ? '<label class="rep-correct"><input type="radio" name="opt_correct"' + (coche ? ' checked' : '') + '> juste</label>' : '')
+        + '<button type="button" class="rep-del">✕</button>';
+      div.querySelector('.rep-del').onclick = () => div.remove();
+      return div;
+    }
+
+    function ligneSection(nom, ordre) {
+      const div = document.createElement('div');
+      div.className = 'rep-row';
+      div.innerHTML = '<input type="text" maxlength="120" value="' + echap(nom || '') + '" placeholder="Nom de la partie">'
+        + '<input type="number" min="0" style="max-width:90px" value="' + (ordre || 0) + '" title="Slide de départ">'
+        + '<button type="button" class="rep-del">✕</button>';
+      div.querySelector('.rep-del').onclick = () => div.remove();
+      return div;
+    }
+
+    function ligneItemJeu(item, jeu) {
+      item = item || {};
+      const div = document.createElement('div');
+      div.className = 'rep-row';
+      let cle = '';
+      // Le libellé principal change de rôle selon le jeu : pour mot-mystère
+      // c'est l'INDICE qui s'affiche, et le mot à deviner est un champ à part
+      // (sans quoi la réponse serait visible par le participant).
+      let placeholderNom = 'Élément';
+      if (jeu === 'compost-ou-pas') {
+        cle = '<select style="max-width:120px">'
+            + ['oui', 'attention', 'non'].map(c => '<option value="' + c + '"' + (item.cat === c ? ' selected' : '') + '>' + c + '</option>').join('')
+            + '</select>';
+      } else if (jeu === 'temps-decompo') {
+        cle = '<input type="number" min="0" style="max-width:100px" value="' + (item.jours != null ? item.jours : '') + '" placeholder="jours">';
+      } else {
+        placeholderNom = 'Indice affiché';
+        cle = '<input type="text" maxlength="60" style="max-width:130px" value="' + echap(item.mot || '') + '" placeholder="mot à deviner">';
+      }
+      div.innerHTML = '<input type="text" maxlength="60" style="max-width:70px" value="' + echap(item.emoji || '') + '" placeholder="emoji">'
+        + '<input type="text" maxlength="200" value="' + echap(item.nom || '') + '" placeholder="' + placeholderNom + '">'
+        + cle + '<button type="button" class="rep-del">✕</button>';
+      // L'anecdote du jeu d'origine n'a pas de champ visible : elle voyage
+      // avec la ligne pour être réaffichée au participant après sa réponse.
+      div.dataset.info = item.info || '';
+      div.querySelector('.rep-del').onclick = () => div.remove();
+      return div;
+    }
+
+    function jeuChoisi() {
+      const s = document.getElementById('ch_jeu');
+      return s ? s.value : 'compost-ou-pas';
+    }
+
+    // Pools des jeux, chargés une seule fois et gardés en mémoire.
+    let POOLS = null;
+    function chargerPools() {
+      if (POOLS) return Promise.resolve(POOLS);
+      return fetch(API + '?action=pools')
+        .then(r => r.json())
+        .then(d => { POOLS = d.pools || {}; return POOLS; })
+        .catch(() => ({}));
+    }
+
+    // Construit le formulaire d'un type et le pré-remplit --------------------
+    function rendreChamps(type, contenu) {
+      contenu = contenu || {};
+      const zone = document.getElementById('champsType');
+      zone.innerHTML = (CHAMPS[type] || []).map(c => champHtml(c[0], c[1], c[2], c[3])).join('');
+
+      (CHAMPS[type] || []).forEach(([cle, , t]) => {
+        const el = document.getElementById('ch_' + cle);
+        if (!el) return;
+        if (t === 'check') { el.checked = !!contenu[cle]; return; }
+        if (t === 'select_vf') { el.value = contenu[cle] ? '1' : '0'; return; }
+        if (t === 'options' || t === 'options_simple') {
+          const avecCorrect = (t === 'options');
+          (contenu.options || ['', '']).forEach((o, i) => el.appendChild(ligneOption(o, avecCorrect && contenu.correct === i, avecCorrect)));
+          return;
+        }
+        if (t === 'sections') {
+          (contenu.sections || [{}]).forEach(s => el.appendChild(ligneSection(s.nom, s.slide_ordre)));
+          return;
+        }
+        if (t === 'items_jeu') {
+          (contenu.items || [{}]).forEach(it => el.appendChild(ligneItemJeu(it, contenu.jeu || jeuChoisi())));
+          return;
+        }
+        if (contenu[cle] !== undefined && contenu[cle] !== null) el.value = contenu[cle];
+      });
+
+      // Boutons « + Ajouter » des widgets répétables
+      zone.querySelectorAll('[data-add]').forEach(btn => {
+        btn.onclick = () => {
+          const cle = btn.dataset.add;
+          const cont = document.getElementById('ch_' + cle);
+          const def = (CHAMPS[type] || []).find(c => c[0] === cle);
+          if (!def) return;
+          if (def[2] === 'sections') cont.appendChild(ligneSection('', 0));
+          else if (def[2] === 'items_jeu') cont.appendChild(ligneItemJeu({}, jeuChoisi()));
+          else cont.appendChild(ligneOption('', false, def[2] === 'options'));
+        };
+      });
+
+      // Changer de jeu réinitialise la clé de correction de chaque ligne
+      const selJeu = document.getElementById('ch_jeu');
+      if (selJeu) selJeu.onchange = () => {
+        const cont = document.getElementById('ch_items');
+        cont.innerHTML = '';
+        cont.appendChild(ligneItemJeu({}, selJeu.value));
+      };
+
+      // Import des éléments depuis le jeu du site
+      const btnImport = document.getElementById('btnImportPool');
+      if (btnImport) btnImport.onclick = () => {
+        const jeu = jeuChoisi();
+        chargerPools().then(pools => {
+          const pool = pools[jeu];
+          if (!pool || !pool.items) { afficher('msgModal', 'Aucun élément disponible pour ce jeu.', false); return; }
+          const cont = document.getElementById('ch_items');
+          cont.innerHTML = '';
+          pool.items.forEach(it => cont.appendChild(ligneItemJeu(it, jeu)));
+          afficher('msgModal', pool.items.length + ' éléments importés — retire ceux que tu ne veux pas.', true);
+        });
+      };
+
+      // Points : seulement pour les types qui en attribuent
+      const noteType = (REGISTRE[type] || {}).note;
+      document.getElementById('champPoints').style.display = noteType ? '' : 'none';
+    }
+
+    // Relit le formulaire et reconstruit l'objet `contenu` -------------------
+    function lireChamps(type) {
+      const out = {};
+      (CHAMPS[type] || []).forEach(([cle, , t]) => {
+        const el = document.getElementById('ch_' + cle);
+        if (!el) return;
+        if (t === 'check') { out[cle] = el.checked; return; }
+        if (t === 'select_vf') { out[cle] = el.value === '1'; return; }
+        if (t === 'number') { out[cle] = el.value === '' ? null : Number(el.value); return; }
+        if (t === 'options' || t === 'options_simple') {
+          const lignes = [...el.querySelectorAll('.rep-row')];
+          out.options = lignes.map(l => l.querySelector('input[type=text]').value.trim()).filter(v => v !== '');
+          if (t === 'options') {
+            out.correct = Math.max(0, lignes.findIndex(l => { const r = l.querySelector('input[type=radio]'); return r && r.checked; }));
+          }
+          return;
+        }
+        if (t === 'sections') {
+          out.sections = [...el.querySelectorAll('.rep-row')].map(l => {
+            const champs = l.querySelectorAll('input');
+            return { nom: champs[0].value.trim(), slide_ordre: Number(champs[1].value || 0) };
+          }).filter(s => s.nom !== '');
+          return;
+        }
+        if (t === 'items_jeu') {
+          const jeu = jeuChoisi();
+          out.items = [...el.querySelectorAll('.rep-row')].map(l => {
+            const txt = l.querySelectorAll('input[type=text]');
+            const it = { emoji: txt[0].value.trim(), nom: txt[1].value.trim(), info: l.dataset.info || '' };
+            if (jeu === 'compost-ou-pas') it.cat = l.querySelector('select').value;
+            else if (jeu === 'temps-decompo') it.jours = Number(l.querySelector('input[type=number]').value || 0);
+            else it.mot = (txt[2] ? txt[2].value.trim() : '');   // 3e champ texte = mot à deviner
+            return it;
+          }).filter(i => i.nom !== '');
+          return;
+        }
+        out[cle] = el.value;
+      });
+      return out;
+    }
+
+    // ══════════ MODALE ══════════
+    function ouvrirModale(type, slide) {
+      editionType = type;
+      editionId = slide ? slide.id : null;
+      document.getElementById('modalTitre').textContent = (slide ? 'Modifier' : 'Nouvelle slide') + ' — ' + (REGISTRE[type] || {}).nom;
+      document.getElementById('slideTitre').value = slide ? (slide.titre || '') : '';
+      document.getElementById('slidePoints').value = slide ? slide.points : 10;
+      document.getElementById('msgModal').style.display = 'none';
+      rendreChamps(type, slide ? slide.contenu : null);
+      document.getElementById('modal').classList.add('open');
+    }
+
+    document.getElementById('modalAnnuler').onclick = () => document.getElementById('modal').classList.remove('open');
+
+    document.getElementById('modalOk').onclick = () => {
+      const corps = {
+        titre: document.getElementById('slideTitre').value,
+        points: Number(document.getElementById('slidePoints').value || 0),
+        contenu: lireChamps(editionType),
+      };
+      let action;
+      if (editionId) { corps.id = editionId; action = 'slide_modifier'; }
+      else { corps.parcours_id = PARCOURS_ID; corps.type = editionType; action = 'slide_ajouter'; }
+
+      post(action, corps, true).then(d => {
+        if (!d.ok) { afficher('msgModal', d.error || 'Erreur.', false); return; }
+        document.getElementById('modal').classList.remove('open');
+        chargerParcours();
+      }).catch(() => afficher('msgModal', 'Erreur réseau.', false));
+    };
+
+    // ══════════ MODE ÉDITEUR ══════════
+    function chargerParcours() {
+      fetch(API + '?action=detail&id=' + PARCOURS_ID)
+        .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); })
+        .then(d => {
+          if (d.error) { afficher('msgEdit', d.error, false); return; }
+          document.getElementById('editNom').textContent = d.parcours.nom;
+          document.getElementById('editNomInput').value = d.parcours.nom;
+          document.getElementById('editDescInput').value = d.parcours.description || '';
+          slides = d.slides || [];
+          const total = slides.reduce((s, x) => s + x.points, 0);
+          document.getElementById('editMeta').textContent = slides.length + ' slide(s) · ' + total + ' points au total';
+          rendreSlides();
+          document.getElementById('loader').style.display = 'none';
+          document.getElementById('vueEdit').style.display = 'block';
+        })
+        .catch(() => {});
+    }
+
+    function rendreSlides() {
+      const box = document.getElementById('listeSlides');
+      if (!slides.length) { box.innerHTML = '<div class="empty-msg">Aucune slide. Ajoute la première ci-dessous.</div>'; return; }
+      box.innerHTML = '';
+      slides.forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = 'slide-row';
+        const meta = (REGISTRE[s.type] || {}).nom || s.type;
+        div.innerHTML = '<div class="slide-rang">' + (i + 1) + '</div>'
+          + '<div class="slide-info"><div class="slide-titre">' + echap(s.titre || meta) + '</div>'
+          + '<div class="slide-type">' + echap(meta) + '</div></div>'
+          + (s.points ? '<span class="slide-pts">' + s.points + ' pts</span>' : '')
+          + '<div class="slide-btns">'
+          + '<button data-a="up">↑</button><button data-a="down">↓</button>'
+          + '<button data-a="edit">✏️</button><button data-a="del" class="sup">🗑</button></div>';
+        div.querySelector('[data-a=up]').onclick = () => deplacer(i, -1);
+        div.querySelector('[data-a=down]').onclick = () => deplacer(i, 1);
+        div.querySelector('[data-a=edit]').onclick = () => ouvrirModale(s.type, s);
+        div.querySelector('[data-a=del]').onclick = () => supprimerSlide(s.id);
+        box.appendChild(div);
+      });
+    }
+
+    function deplacer(i, delta) {
+      const j = i + delta;
+      if (j < 0 || j >= slides.length) return;
+      const tmp = slides[i]; slides[i] = slides[j]; slides[j] = tmp;
+      rendreSlides();
+      post('slide_reordonner', { parcours_id: PARCOURS_ID, ordre: slides.map(s => s.id) }, true)
+        .then(d => { if (!d.ok) afficher('msgEdit', d.error || 'Réordonnancement impossible.', false); })
+        .catch(() => afficher('msgEdit', 'Erreur réseau.', false));
+    }
+
+    function supprimerSlide(id) {
+      if (!confirm('Supprimer cette slide ?')) return;
+      post('slide_supprimer', { id })
+        .then(d => { if (d.ok) chargerParcours(); else afficher('msgEdit', d.error || 'Suppression impossible.', false); })
+        .catch(() => afficher('msgEdit', 'Erreur réseau.', false));
+    }
+
+    if (PARCOURS_ID) {
+      document.getElementById('formInfos').addEventListener('submit', e => {
+        e.preventDefault();
+        post('modifier', {
+          id: PARCOURS_ID,
+          nom: document.getElementById('editNomInput').value.trim(),
+          description: document.getElementById('editDescInput').value.trim(),
+        }).then(d => {
+          if (d.ok) { afficher('msgEdit', 'Enregistré.', true); chargerParcours(); }
+          else afficher('msgEdit', d.error || 'Erreur.', false);
+        }).catch(() => afficher('msgEdit', 'Erreur réseau.', false));
+      });
+
+      document.getElementById('btnAjouter').onclick = () => ouvrirModale(document.getElementById('nouveauType').value, null);
+    }
+
+    // ══════════ MODE BIBLIOTHÈQUE ══════════
+    function chargerListe() {
+      fetch(API + '?action=liste')
+        .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); })
+        .then(d => {
+          const box = document.getElementById('listeParcours');
+          const liste = d.parcours || [];
+          if (!liste.length) {
+            box.innerHTML = '<div class="empty-msg">Aucun parcours pour le moment.</div>';
+          } else {
+            box.innerHTML = '';
+            liste.forEach(p => {
+              const div = document.createElement('div');
+              div.className = 'p-item';
+              div.innerHTML = '<div class="p-main"><div class="p-nom">' + echap(p.nom) + '</div>'
+                + '<div class="p-meta">' + p.nb_slides + ' slide(s) · ' + p.total_points + ' pts'
+                + (p.description ? ' · ' + echap(p.description) : '') + '</div></div>'
+                + '<div class="p-actions">'
+                + '<a href="/evenements-admin/parcours/' + p.id + '"><button type="button" class="btn-p btn-mini">✏️ Ouvrir</button></a> '
+                + '<button type="button" class="btn-s btn-mini" data-a="dup">⧉ Dupliquer</button> '
+                + '<button type="button" class="btn-d btn-mini" data-a="del">🗑</button></div>';
+              div.querySelector('[data-a=dup]').onclick = () => {
+                post('dupliquer', { id: p.id }).then(d2 => {
+                  if (d2.ok) window.location.href = '/evenements-admin/parcours/' + d2.id;
+                  else afficher('msgListe', d2.error || 'Duplication impossible.', false);
+                });
+              };
+              div.querySelector('[data-a=del]').onclick = () => {
+                if (!confirm('Supprimer le parcours « ' + p.nom + ' » ? Les ateliers déjà joués ne sont pas touchés.')) return;
+                post('supprimer', { id: p.id }).then(d2 => {
+                  if (d2.ok) chargerListe(); else afficher('msgListe', d2.error || 'Suppression impossible.', false);
+                });
+              };
+              box.appendChild(div);
+            });
+          }
+          document.getElementById('loader').style.display = 'none';
+          document.getElementById('vueListe').style.display = 'block';
+        })
+        .catch(() => {});
+    }
+
+    if (!PARCOURS_ID) {
+      document.getElementById('formCreer').addEventListener('submit', e => {
+        e.preventDefault();
+        const btn = document.getElementById('btnCreer');
+        btn.disabled = true;
+        post('creer', {
+          nom: document.getElementById('nom').value.trim(),
+          description: document.getElementById('description').value.trim(),
+        }).then(d => {
+          if (d.ok) window.location.href = '/evenements-admin/parcours/' + d.id;
+          else { afficher('msgListe', d.error || 'Erreur.', false); btn.disabled = false; }
+        }).catch(() => { afficher('msgListe', 'Erreur réseau.', false); btn.disabled = false; });
+      });
+    }
+
+    // ══════════ DÉMARRAGE ══════════
+    // Le registre des types vient du serveur : l'éditeur ne code en dur ni les
+    // libellés ni la notion de « slide notée ».
+    fetch(API + '?action=types')
+      .then(r => { if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); } return r.json(); })
+      .then(d => {
+        REGISTRE = d.types || {};
+        const sel = document.getElementById('nouveauType');
+        Object.keys(REGISTRE).forEach(t => {
+          const o = document.createElement('option');
+          o.value = t; o.textContent = REGISTRE[t].nom;
+          sel.appendChild(o);
+        });
+        if (PARCOURS_ID) chargerParcours(); else chargerListe();
+      })
+      .catch(() => {});
+  </script>
+  <script src="/assets/js/theme.js"></script>
+</body>
+</html>
