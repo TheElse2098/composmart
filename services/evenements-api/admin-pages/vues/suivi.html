@@ -523,6 +523,14 @@
           h += '<div class="apercu-opt juste">Réponse : ' + echap(c.valeur) + ' ' + echap(c.unite || '')
              + ' (tolérance ± ' + echap(c.tolerance) + ')</div>';
         }
+        if (s.type === 'sommaire') {
+          (c.sections || []).forEach(x => {
+            const puce = x.etat === 'passee' ? '✓' : (x.etat === 'courante' ? '▶' : '•');
+            h += '<div class="apercu-opt' + (x.etat === 'courante' ? ' juste' : '') + '"'
+               + (x.etat === 'passee' ? ' style="opacity:0.45"' : '') + '>'
+               + '<span>' + puce + ' ' + echap(x.nom) + '</span></div>';
+          });
+        }
         if (s.type === 'jeu') {
           (c.items || []).forEach(it => {
             const cle = it.cat !== undefined ? it.cat : (it.jours !== undefined ? it.jours + ' j' : it.mot);

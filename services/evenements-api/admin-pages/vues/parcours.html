@@ -242,7 +242,9 @@
                          ['corps', 'Anecdote', 'textarea'],
                          ['anecdote_id', 'Anecdote de la banque', 'select_anecdote'],
                          ['theme', 'Limiter au thème (facultatif)', 'select_theme']],
-      sommaire:         [['sections', 'Sections', 'sections']],
+      // Le sommaire n'a rien à saisir : il liste les slides « Titre de partie »
+      // du parcours et surligne celle en cours.
+      sommaire:         [],
       media:            [['media_type', 'Type', 'select', ['image', 'video', 'audio']],
                          ['url', 'Adresse du média', 'text'],
                          ['legende', 'Légende', 'text']],
@@ -374,6 +376,11 @@
       contenu = contenu || {};
       const zone = document.getElementById('champsType');
       zone.innerHTML = (CHAMPS[type] || []).map(c => champHtml(c[0], c[1], c[2], c[3])).join('');
+      if (type === 'sommaire') {
+        zone.innerHTML = '<div class="hint">Rien à saisir : le sommaire reprend automatiquement toutes les slides '
+          + '« Titre de partie » du parcours, et met en valeur celle qui commence. '
+          + 'Place-le juste avant chaque partie.</div>';
+      }
 
       (CHAMPS[type] || []).forEach(([cle, , t]) => {
         const el = document.getElementById('ch_' + cle);

@@ -147,8 +147,10 @@ if ($action === 'etat') {
 
     // Anecdote de la banque ou tirée au sort : résolue en texte réel, avec le
     // participant comme graine pour que chacun ait la sienne (et toujours la
-    // même pendant toute la slide).
+    // même pendant toute la slide). Le sommaire, lui, est reconstruit depuis
+    // les parties du parcours.
     $courante = resoudre_anecdote($conn, $courante, (int)$p['id']);
+    $courante = resoudre_sommaire($conn, $courante, (int)$p['evenement_id']);
 
     echo json_encode($base + [
         'ecran'       => 'slide',

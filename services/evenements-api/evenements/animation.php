@@ -111,6 +111,7 @@ if ($action === 'etat') {
             $aleatoire = is_array($brut) && ($brut['source'] ?? '') === 'aleatoire';
             $courante = resoudre_anecdote($conn, $courante);
         }
+        $courante = resoudre_sommaire($conn, $courante, $id);
         $c = json_decode($courante['contenu'] ?? '', true);
         $slide = [
             'id'      => (int)$courante['id'],

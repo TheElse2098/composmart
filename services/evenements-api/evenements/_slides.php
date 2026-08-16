@@ -101,14 +101,10 @@ function valider_contenu($type, $d) {
             return $ok(['source' => 'libre', 'corps' => $corps, 'emoji' => $emoji]);
 
         case 'sommaire':
-            $sections = [];
-            foreach ((array)($d['sections'] ?? []) as $s) {
-                $nom = _txt($s['nom'] ?? null, 120);
-                if ($nom === null) continue;
-                $sections[] = ['nom' => $nom, 'slide_ordre' => (int)($s['slide_ordre'] ?? 0)];
-            }
-            if (!$sections) return $err('Le sommaire doit contenir au moins une section.');
-            return $ok(['sections' => $sections]);
+            // Aucun champ à saisir : le sommaire se construit tout seul à
+            // partir des slides « Titre de partie » du parcours, et met en
+            // valeur la partie en cours (cf. resoudre_sommaire).
+            return $ok([]);
 
         case 'media':
             $mt = in_array($d['media_type'] ?? '', ['image', 'video', 'audio'], true) ? $d['media_type'] : null;
@@ -288,6 +284,47 @@ function resoudre_anecdote($conn, $slide, $graine = null) {
         $c = ['source' => 'libre', 'corps' => '(aucune anecdote disponible)', 'emoji' => '💡'];
     }
     $slide['contenu'] = json_encode($c, JSON_UNESCAPED_UNICODE);
+    return $slide;
+}
+
+/**
+ * Construit le sommaire à la volée : chaque slide « titre » du parcours est une
+ * partie, et l'on marque celle où l'on se trouve — comme le sommaire de Beamer.
+ *
+ * Règle de position, calquée sur l'usage (un sommaire inséré juste avant
+ * chaque partie) : les parties situées AVANT ce sommaire sont passées, la
+ * première située après est celle qui commence, les autres sont à venir.
+ * Rien n'est saisi à la main : ajouter une partie au parcours met tous les
+ * sommaires à jour sans y toucher.
+ */
+function resoudre_sommaire($conn, $slide, $evenement_id) {
+    if (($slide['type'] ?? '') !== 'sommaire') return $slide;
+
+    $stmt = mysqli_prepare($conn,
+        "SELECT ordre, titre FROM evenement_slides
+         WHERE evenement_id = ? AND type = 'titre' ORDER BY ordre, id");
+    if (!$stmt) return $slide;
+    $stmt->bind_param('i', $evenement_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    $mien = (int)($slide['ordre'] ?? 0);
+    $sections = [];
+    $couranteTrouvee = false;
+    while ($row = $res->fetch_assoc()) {
+        $ordre = (int)$row['ordre'];
+        if ($ordre < $mien) {
+            $etat = 'passee';
+        } elseif (!$couranteTrouvee) {
+            $etat = 'courante';
+            $couranteTrouvee = true;
+        } else {
+            $etat = 'avenir';
+        }
+        $sections[] = ['nom' => $row['titre'] ?: 'Partie ' . (count($sections) + 1), 'etat' => $etat];
+    }
+
+    $slide['contenu'] = json_encode(['sections' => $sections], JSON_UNESCAPED_UNICODE);
     return $slide;
 }
 
