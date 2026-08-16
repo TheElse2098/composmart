@@ -66,6 +66,22 @@ CREATE TABLE `parcours_slides` (
   CONSTRAINT `pslides_ibfk_1` FOREIGN KEY (`parcours_id`) REFERENCES `parcours` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ── BANQUE D'ANECDOTES ──────────────────────────────────────────────────────
+-- Réservoir partagé par tous les parcours. Une slide de type « anecdote »
+-- peut soit porter son propre texte, soit pointer une anecdote d'ici, soit
+-- en tirer une au hasard (le tirage est dérivé du couple participant/slide
+-- côté PHP : il est donc stable, et différent d'un participant à l'autre).
+CREATE TABLE `anecdotes` (
+  `id`         int          NOT NULL AUTO_INCREMENT,
+  `texte`      varchar(1000) NOT NULL,
+  `emoji`      varchar(10)  DEFAULT NULL,
+  `theme`      varchar(60)  DEFAULT NULL,   -- regroupement libre (compost, tri, biodiversité…)
+  `cree_par`   varchar(100) DEFAULT NULL,
+  `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `theme` (`theme`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ── SLIDES D'UN ÉVÉNEMENT (copie figée du parcours) ─────────────────────────
 -- Copie et non pointeur vers parcours_slides, à dessein : l'animateur peut
 -- adapter le déroulé pour UN client sans toucher au modèle, et retoucher le

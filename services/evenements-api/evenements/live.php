@@ -145,6 +145,11 @@ if ($action === 'etat') {
     $deja = reponse_existante($conn, $courante['id'], $p['id']);
     $reg  = slides_registre();
 
+    // Anecdote de la banque ou tirée au sort : résolue en texte réel, avec le
+    // participant comme graine pour que chacun ait la sienne (et toujours la
+    // même pendant toute la slide).
+    $courante = resoudre_anecdote($conn, $courante, (int)$p['id']);
+
     echo json_encode($base + [
         'ecran'       => 'slide',
         'slide'       => slide_publique($courante, $deja !== null),

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <title>CompoSmart – Banque d'anecdotes</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
+    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+    .nav-logo span { color: #a8e6bf; }
+    .nav-back { color: rgba(255,255,255,0.85); text-decoration: none; font-weight: 700; font-size: 0.85rem; }
+
+    .hero { text-align: center; padding: 24px 20px 8px; }
+    .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.4rem, 5vw, 2.1rem); font-weight: 900; color: #1a3a25; }
+    .hero-sub { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; margin-top: 5px; }
+
+    .page-content { width: 100%; max-width: 820px; padding: 16px; }
+    .section-titre { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #1a3a25; margin: 14px 4px 10px; display: flex; justify-content: space-between; align-items: center; }
+    .compteur { font-size: 0.82rem; color: #4a7a5a; font-weight: 700; }
+    .card { background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); margin-bottom: 16px; }
+
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 0.74rem; font-weight: 800; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .field input, .field textarea, .field select { display: block; width: 100%; padding: 9px 12px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.9rem; color: #1a3a25; background: #f7fbf8; outline: none; font-family: inherit; }
+    .field textarea { min-height: 80px; resize: vertical; }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: #1e6e3e; background: #fff; }
+    .duo { display: flex; gap: 10px; }
+    .duo > * { flex: 1; }
+
+    button { border: none; border-radius: 50px; padding: 10px 20px; font-size: 0.86rem; font-weight: 800; cursor: pointer; font-family: 'Baloo 2', cursive; }
+    .btn-p { background: #1e6e3e; color: #fff; }
+    .btn-s { background: #eceff1; color: #607d8b; }
+    .btn-mini { border-radius: 10px; padding: 5px 11px; font-size: 0.74rem; font-family: inherit; background: #eef4ec; color: #1e6e3e; }
+    .btn-mini.sup { background: #fdecea; color: #c0392b; }
+
+    .anec { background: #fff; border-radius: 14px; padding: 13px 15px; margin-bottom: 9px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); display: flex; gap: 12px; align-items: flex-start; }
+    .anec-emoji { font-size: 1.5rem; line-height: 1.2; }
+    .anec-main { flex: 1; min-width: 0; }
+    .anec-texte { font-size: 0.92rem; color: #2c4a34; line-height: 1.5; }
+    .anec-theme { display: inline-block; font-size: 0.68rem; font-weight: 800; background: #eef4ec; color: #4a7a5a; padding: 2px 9px; border-radius: 10px; margin-top: 6px; }
+    .anec-btns { display: flex; gap: 5px; flex-shrink: 0; }
+
+    .filtres { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+    .filtre { background: #fff; border: 1.5px solid #d4e6d8; color: #4a7a5a; border-radius: 20px; padding: 6px 14px; font-size: 0.79rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .filtre.actif { background: #1e6e3e; border-color: #1e6e3e; color: #fff; }
+
+    .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 16px; background: #fff; border-radius: 12px; }
+    .loader { text-align: center; padding: 40px; color: #4a7a5a; font-weight: 700; }
+    .msg { border-radius: 10px; padding: 10px 13px; font-size: 0.85rem; font-weight: 700; margin-bottom: 12px; display: none; }
+    .msg.error { background: #fdecea; color: #c0392b; }
+    .msg.ok { background: #e8f5e9; color: #1e6e3e; }
+    .hint { font-size: 0.78rem; color: #888; margin-top: 6px; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+
+    html.dark body { background: #101a13; }
+    html.dark nav { background: #14301f; }
+    html.dark h1, html.dark .section-titre { color: #e8f5ee; }
+    html.dark .card, html.dark .anec, html.dark .empty-msg, html.dark .filtre { background: #16211a; }
+    html.dark .anec-texte { color: #c8e6d4; }
+    html.dark .field label { color: #7ab88e; }
+    html.dark .field input, html.dark .field textarea, html.dark .field select { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .btn-s { background: #1e2d22; color: #9fb0a5; }
+    html.dark .btn-mini { background: #16291c; color: #7fc99a; }
+    html.dark .btn-mini.sup { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .anec-theme { background: #1e2d22; color: #7ab88e; }
+    html.dark .filtre { border-color: #2d4030; color: #7ab88e; }
+    html.dark .filtre.actif { background: #2d9959; border-color: #2d9959; color: #fff; }
+  </style>
+  <link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-logo">Compo<span>Smart</span></a>
+    <a href="/evenements-admin" class="nav-back">← Événements</a>
+  </nav>
+
+  <div class="loader" id="loader">Chargement…</div>
+
+  <div class="page-content" id="content" style="display:none">
+    <div class="hero">
+      <div class="hero-badge">💡 Anecdotes</div>
+      <h1>Banque d'anecdotes</h1>
+      <p class="hero-sub">Réutilisables dans tous les parcours. Une slide peut en piocher une au hasard — chaque participant voit alors la sienne.</p>
+    </div>
+
+    <div class="msg" id="msg"></div>
+
+    <div class="section-titre" id="titreForm">➕ Nouvelle anecdote</div>
+    <div class="card">
+      <form id="formAnec">
+        <input type="hidden" id="anecId" value="">
+        <div class="field"><label>Anecdote</label>
+          <textarea id="texte" maxlength="1000" placeholder="Un seul mégot de cigarette pollue jusqu'à 500 litres d'eau." required></textarea></div>
+        <div class="duo">
+          <div class="field"><label>Emoji</label>
+            <input type="text" id="emoji" maxlength="8" data-emoji placeholder="💡"></div>
+          <div class="field"><label>Thème (facultatif)</label>
+            <input type="text" id="theme" maxlength="60" list="listeThemes" placeholder="compost, tri, biodiversité…">
+            <datalist id="listeThemes"></datalist></div>
+        </div>
+        <button type="submit" class="btn-p" id="btnEnr">Ajouter</button>
+        <button type="button" class="btn-s" id="btnAnnuler" style="display:none">Annuler</button>
+        <div class="hint">Le thème sert à restreindre un tirage aléatoire à une famille d'anecdotes.</div>
+      </form>
+    </div>
+
+    <div class="section-titre">📚 Anecdotes <span class="compteur" id="nb"></span></div>
+    <div class="filtres" id="filtres"></div>
+    <div id="liste"></div>
+  </div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    /*__ROUTE__*/
+    function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+    const API = '/api/evenements/anecdotes.php';
+    let themeActif = '';
+
+    function lireJson(r) {
+      if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); }
+      return r.text().then(t => {
+        try { return JSON.parse(t); }
+        catch (e) { throw new Error('Réponse inattendue du serveur (HTTP ' + r.status + ').'); }
+      });
+    }
+    function panne(e) {
+      const l = document.getElementById('loader');
+      if (l && l.style.display !== 'none') l.textContent = '⚠️ ' + (e && e.message ? e.message : 'Erreur de chargement');
+      else afficher(e && e.message ? e.message : 'Erreur', false);
+    }
+    function afficher(texte, ok) {
+      const el = document.getElementById('msg');
+      el.className = 'msg ' + (ok ? 'ok' : 'error');
+      el.textContent = texte;
+      el.style.display = 'block';
+      if (ok) setTimeout(() => { el.style.display = 'none'; }, 2200);
+    }
+    function post(action, body) {
+      return fetch(API + '?action=' + action, { method: 'POST', body: new URLSearchParams(body) }).then(lireJson);
+    }
+
+    function charger() {
+      fetch(API + '?action=liste' + (themeActif ? '&theme=' + encodeURIComponent(themeActif) : ''))
+        .then(lireJson)
+        .then(d => {
+          rendreFiltres(d.themes || []);
+          rendreListe(d.anecdotes || []);
+          const dl = document.getElementById('listeThemes');
+          dl.innerHTML = (d.themes || []).map(t => '<option value="' + echap(t) + '">').join('');
+          document.getElementById('loader').style.display = 'none';
+          document.getElementById('content').style.display = 'block';
+        })
+        .catch(panne);
+    }
+
+    function rendreFiltres(themes) {
+      const box = document.getElementById('filtres');
+      box.innerHTML = '<button type="button" class="filtre' + (themeActif === '' ? ' actif' : '') + '" data-t="">Toutes</button>'
+        + themes.map(t => '<button type="button" class="filtre' + (themeActif === t ? ' actif' : '') + '" data-t="' + echap(t) + '">' + echap(t) + '</button>').join('');
+      box.querySelectorAll('[data-t]').forEach(b => {
+        b.onclick = () => { themeActif = b.dataset.t; charger(); };
+      });
+    }
+
+    function rendreListe(liste) {
+      document.getElementById('nb').textContent = '(' + liste.length + ')';
+      const box = document.getElementById('liste');
+      if (!liste.length) { box.innerHTML = '<div class="empty-msg">Aucune anecdote. Ajoute la première ci-dessus.</div>'; return; }
+      box.innerHTML = '';
+      liste.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'anec';
+        div.innerHTML = '<div class="anec-emoji">' + echap(a.emoji || '💡') + '</div>'
+          + '<div class="anec-main"><div class="anec-texte">' + echap(a.texte) + '</div>'
+          + (a.theme ? '<span class="anec-theme">' + echap(a.theme) + '</span>' : '') + '</div>'
+          + '<div class="anec-btns"><button class="btn-mini" data-a="edit">✏️</button>'
+          + '<button class="btn-mini sup" data-a="del">🗑</button></div>';
+        div.querySelector('[data-a=edit]').onclick = () => editer(a);
+        div.querySelector('[data-a=del]').onclick = () => {
+          if (!confirm('Supprimer cette anecdote ?\nLes slides qui la visaient afficheront un texte de repli.')) return;
+          post('supprimer', { id: a.id }).then(d => { if (d.ok) charger(); else afficher(d.error || 'Suppression impossible.', false); });
+        };
+        box.appendChild(div);
+      });
+    }
+
+    function editer(a) {
+      document.getElementById('anecId').value = a.id;
+      document.getElementById('texte').value = a.texte;
+      const em = document.getElementById('emoji');
+      em.value = a.emoji || '';
+      em.dispatchEvent(new Event('input', { bubbles: true }));
+      document.getElementById('theme').value = a.theme || '';
+      document.getElementById('titreForm').textContent = '✏️ Modifier l\'anecdote';
+      document.getElementById('btnEnr').textContent = 'Enregistrer';
+      document.getElementById('btnAnnuler').style.display = 'inline-block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function reinitialiser() {
+      document.getElementById('formAnec').reset();
+      document.getElementById('anecId').value = '';
+      document.getElementById('emoji').dispatchEvent(new Event('input', { bubbles: true }));
+      document.getElementById('titreForm').textContent = '➕ Nouvelle anecdote';
+      document.getElementById('btnEnr').textContent = 'Ajouter';
+      document.getElementById('btnAnnuler').style.display = 'none';
+    }
+    document.getElementById('btnAnnuler').onclick = reinitialiser;
+
+    document.getElementById('formAnec').addEventListener('submit', e => {
+      e.preventDefault();
+      const id = document.getElementById('anecId').value;
+      const corps = {
+        texte: document.getElementById('texte').value.trim(),
+        emoji: document.getElementById('emoji').value.trim(),
+        theme: document.getElementById('theme').value.trim(),
+      };
+      if (id) corps.id = id;
+      post(id ? 'modifier' : 'creer', corps)
+        .then(d => {
+          if (!d.ok) { afficher(d.error || 'Erreur.', false); return; }
+          afficher(id ? 'Anecdote modifiée.' : 'Anecdote ajoutée.', true);
+          reinitialiser();
+          charger();
+        })
+        .catch(() => afficher('Erreur réseau.', false));
+    });
+
+    charger();
+  </script>
+  <script src="/assets/js/emoji-picker.js"></script>
+  <script>attacherSelecteursEmoji();</script>
+  <script src="/assets/js/theme.js"></script>
+</body>
+</html>

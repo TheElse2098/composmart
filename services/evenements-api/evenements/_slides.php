@@ -79,10 +79,26 @@ function valider_contenu($type, $d) {
             return $ok(['corps' => $corps]);
 
         case 'anecdote':
+            // Trois provenances possibles. 'libre' reste le défaut, ce qui
+            // laisse valides les slides écrites avant la banque d'anecdotes.
+            $source = in_array($d['source'] ?? 'libre', ['libre', 'banque', 'aleatoire'], true) ? $d['source'] : 'libre';
+            $emoji  = is_string($d['emoji'] ?? null) ? mb_substr(trim($d['emoji']), 0, 8) : '';
+
+            if ($source === 'banque') {
+                $aid = (int)($d['anecdote_id'] ?? 0);
+                if ($aid <= 0) return $err('Choisis une anecdote dans la banque.');
+                return $ok(['source' => 'banque', 'anecdote_id' => $aid]);
+            }
+            if ($source === 'aleatoire') {
+                return $ok([
+                    'source' => 'aleatoire',
+                    // Filtre facultatif : ne tirer que dans un thème donné.
+                    'theme'  => is_string($d['theme'] ?? null) ? mb_substr(trim($d['theme']), 0, 60) : '',
+                ]);
+            }
             $corps = _txt($d['corps'] ?? null, 2000);
             if ($corps === null) return $err("L'anecdote est vide ou trop longue.");
-            $emoji = is_string($d['emoji'] ?? null) ? mb_substr(trim($d['emoji']), 0, 8) : '';
-            return $ok(['corps' => $corps, 'emoji' => $emoji]);
+            return $ok(['source' => 'libre', 'corps' => $corps, 'emoji' => $emoji]);
 
         case 'sommaire':
             $sections = [];
@@ -209,6 +225,70 @@ function valider_contenu($type, $d) {
             return $ok(['consigne' => $c]);
     }
     return $err('Type de slide inconnu.');
+}
+
+/**
+ * Remplace une anecdote « banque » ou « aléatoire » par son texte réel.
+ * À appeler AVANT slide_publique() : la slide repart ensuite avec un contenu
+ * de forme 'libre' ({corps, emoji}), que le front sait déjà afficher — aucun
+ * cas particulier à gérer côté navigateur.
+ *
+ * Le tirage aléatoire est dérivé de (participant, slide) plutôt que tiré à
+ * chaque appel : l'écran du participant se rafraîchit toutes les 2,5 s, un
+ * hasard recalculé ferait défiler les anecdotes sous ses yeux. Deux
+ * participants obtiennent en revanche des anecdotes différentes, ce qui est
+ * l'effet recherché.
+ *
+ * @param int|null $graine identifiant du participant, ou null côté animateur
+ */
+function resoudre_anecdote($conn, $slide, $graine = null) {
+    if (($slide['type'] ?? '') !== 'anecdote') return $slide;
+    $c = json_decode($slide['contenu'] ?? '', true);
+    if (!is_array($c)) return $slide;
+    $source = $c['source'] ?? 'libre';
+    if ($source === 'libre') return $slide;
+
+    $trouvee = null;
+
+    if ($source === 'banque') {
+        $aid = (int)($c['anecdote_id'] ?? 0);
+        $stmt = mysqli_prepare($conn, 'SELECT texte, emoji FROM anecdotes WHERE id = ?');
+        if ($stmt) {
+            $stmt->bind_param('i', $aid);
+            $stmt->execute();
+            $trouvee = $stmt->get_result()->fetch_assoc() ?: null;
+        }
+    } else { // aleatoire
+        $theme = trim((string)($c['theme'] ?? ''));
+        if ($theme !== '') {
+            $stmt = mysqli_prepare($conn, 'SELECT texte, emoji FROM anecdotes WHERE theme = ? ORDER BY id');
+            if ($stmt) { $stmt->bind_param('s', $theme); }
+        } else {
+            $stmt = mysqli_prepare($conn, 'SELECT texte, emoji FROM anecdotes ORDER BY id');
+        }
+        if ($stmt) {
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $toutes = [];
+            while ($row = $res->fetch_assoc()) $toutes[] = $row;
+            if ($toutes) {
+                // crc32 mélange bien mieux qu'un modulo sur la somme des ids :
+                // sans lui, des participants d'ids voisins tomberaient sur des
+                // anecdotes voisines, et l'effet « chacun la sienne » serait raté.
+                $cle = ($graine === null ? 'animateur' : (string)$graine) . '-' . (int)($slide['id'] ?? 0);
+                $trouvee = $toutes[crc32($cle) % count($toutes)];
+            }
+        }
+    }
+
+    if ($trouvee) {
+        $c = ['source' => 'libre', 'corps' => $trouvee['texte'], 'emoji' => $trouvee['emoji'] ?? ''];
+    } else {
+        // Banque vide ou anecdote supprimée : on ne casse pas l'atelier.
+        $c = ['source' => 'libre', 'corps' => '(aucune anecdote disponible)', 'emoji' => '💡'];
+    }
+    $slide['contenu'] = json_encode($c, JSON_UNESCAPED_UNICODE);
+    return $slide;
 }
 
 /**

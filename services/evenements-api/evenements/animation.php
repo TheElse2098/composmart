@@ -103,6 +103,14 @@ if ($action === 'etat') {
     // Contenu complet : l'animateur doit voir la bonne réponse.
     $slide = null;
     if ($courante) {
+        // Une anecdote « aléatoire » est propre à chaque participant : l'écran
+        // de l'animateur en montre un exemplaire, et le signale.
+        $aleatoire = false;
+        if ($courante['type'] === 'anecdote') {
+            $brut = json_decode($courante['contenu'] ?? '', true);
+            $aleatoire = is_array($brut) && ($brut['source'] ?? '') === 'aleatoire';
+            $courante = resoudre_anecdote($conn, $courante);
+        }
         $c = json_decode($courante['contenu'] ?? '', true);
         $slide = [
             'id'      => (int)$courante['id'],
@@ -110,6 +118,7 @@ if ($action === 'etat') {
             'titre'   => $courante['titre'],
             'points'  => (int)$courante['points'],
             'contenu' => is_array($c) ? $c : [],
+            'aleatoire' => $aleatoire,
         ];
     }
 

@@ -530,6 +530,10 @@
           });
         }
         if (c.explication) h += '<div class="hint" style="text-align:left">💡 ' + echap(c.explication) + '</div>';
+        if (s.aleatoire) {
+          h += '<div class="hint">🎲 Anecdote tirée au sort : <b>chaque participant voit la sienne</b>. '
+             + 'Celle affichée ici n\'est qu\'un exemple.</div>';
+        }
         ap.innerHTML = h;
       }
 

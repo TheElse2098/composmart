@@ -237,7 +237,11 @@
     const CHAMPS = {
       titre:            [['sous_titre', 'Sous-titre', 'text']],
       texte:            [['corps', 'Texte', 'textarea']],
-      anecdote:         [['emoji', 'Emoji', 'text'], ['corps', 'Anecdote', 'textarea']],
+      anecdote:         [['source', 'Provenance', 'select', ['libre', 'banque', 'aleatoire']],
+                         ['emoji', 'Emoji', 'emoji'],
+                         ['corps', 'Anecdote', 'textarea'],
+                         ['anecdote_id', 'Anecdote de la banque', 'select_anecdote'],
+                         ['theme', 'Limiter au thème (facultatif)', 'select_theme']],
       sommaire:         [['sections', 'Sections', 'sections']],
       media:            [['media_type', 'Type', 'select', ['image', 'video', 'audio']],
                          ['url', 'Adresse du média', 'text'],
@@ -268,7 +272,10 @@
     // ══════════ RENDU GÉNÉRIQUE DES CHAMPS ══════════
     function champHtml(cle, label, type, extra) {
       const id = 'ch_' + cle;
-      if (type === 'textarea') return '<div class="field"><label>' + label + '</label><textarea id="' + id + '"></textarea></div>';
+      if (type === 'emoji') return '<div class="field" data-champ="' + cle + '"><label>' + label + '</label><input type="text" maxlength="8" data-emoji id="' + id + '"></div>';
+      if (type === 'select_anecdote') return '<div class="field" data-champ="' + cle + '"><label>' + label + '</label><select id="' + id + '"></select></div>';
+      if (type === 'select_theme') return '<div class="field" data-champ="' + cle + '"><label>' + label + '</label><select id="' + id + '"></select></div>';
+      if (type === 'textarea') return '<div class="field" data-champ="' + cle + '"><label>' + label + '</label><textarea id="' + id + '"></textarea></div>';
       if (type === 'number')   return '<div class="field"><label>' + label + '</label><input type="number" step="any" id="' + id + '"></div>';
       if (type === 'check')    return '<div class="field"><label class="check"><input type="checkbox" id="' + id + '"> ' + label + '</label></div>';
       if (type === 'select')   return '<div class="field"><label>' + label + '</label><select id="' + id + '">'
@@ -354,6 +361,14 @@
         .catch(() => ({}));
     }
 
+    // Banque d'anecdotes. Rechargée à chaque ouverture de modale plutôt que
+    // mise en cache : l'animateur peut en ajouter dans l'autre onglet.
+    function chargerBanque() {
+      return fetch('/api/evenements/anecdotes.php?action=liste')
+        .then(r => r.json())
+        .catch(() => ({ anecdotes: [], themes: [] }));
+    }
+
     // Construit le formulaire d'un type et le pré-remplit --------------------
     function rendreChamps(type, contenu) {
       contenu = contenu || {};
@@ -415,6 +430,48 @@
           afficher('msgModal', pool.items.length + ' éléments importés — retire ceux que tu ne veux pas.', true);
         });
       };
+
+      // ── Anecdote : champs conditionnels selon la provenance ──
+      if (type === 'anecdote') {
+        const selS = document.getElementById('ch_source');
+        selS.value = contenu.source || 'libre';
+
+        chargerBanque().then(b => {
+          const selA = document.getElementById('ch_anecdote_id');
+          if (selA) {
+            const liste = b.anecdotes || [];
+            selA.innerHTML = liste.length
+              ? liste.map(a => '<option value="' + a.id + '">' + echap((a.emoji || '') + ' ' + a.texte.slice(0, 70)) + '</option>').join('')
+              : '<option value="">Banque vide — ajoute des anecdotes d\'abord</option>';
+            if (contenu.anecdote_id) selA.value = contenu.anecdote_id;
+          }
+          const selT = document.getElementById('ch_theme');
+          if (selT) {
+            selT.innerHTML = '<option value="">Tous les thèmes</option>'
+              + (b.themes || []).map(t => '<option value="' + echap(t) + '">' + echap(t) + '</option>').join('');
+            if (contenu.theme) selT.value = contenu.theme;
+          }
+        });
+
+        // N'afficher que les champs utiles à la provenance choisie : les trois
+        // formulaires cohabitent dans le même bloc, seul l'un d'eux sert.
+        const majSource = () => {
+          const s = selS.value;
+          const aff = (cle, on) => {
+            const e = zone.querySelector('[data-champ="' + cle + '"]');
+            if (e) e.style.display = on ? '' : 'none';
+          };
+          aff('corps', s === 'libre');
+          aff('emoji', s === 'libre');
+          aff('anecdote_id', s === 'banque');
+          aff('theme', s === 'aleatoire');
+        };
+        selS.onchange = majSource;
+        majSource();
+      }
+
+      // Sélecteur d'emoji sur les champs qui le déclarent
+      if (window.attacherSelecteursEmoji) window.attacherSelecteursEmoji(zone);
 
       // Points : seulement pour les types qui en attribuent
       const noteType = (REGISTRE[type] || {}).note;
@@ -642,6 +699,7 @@
       })
       .catch(panne);
   </script>
+  <script src="/assets/js/emoji-picker.js"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 </html>

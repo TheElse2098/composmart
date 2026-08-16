@@ -19,6 +19,7 @@
  *   /evenements-admin                → liste des événements + création
  *   /evenements-admin/parcours       → bibliothèque de parcours
  *   /evenements-admin/parcours/<id>  → éditeur d'un parcours
+ *   /evenements-admin/anecdotes      → banque d'anecdotes
  *   /evenements-admin/<id>           → suivi live d'un événement
  */
 ob_start();
@@ -91,6 +92,9 @@ if ($seg[0] === 'parcours') {
     if (count($seg) === 2 && ctype_digit($seg[1])) rendre('parcours.html', ['parcours_id' => (int)$seg[1]]);
     introuvable();
 }
+
+// /evenements-admin/anecdotes — banque partagée par tous les parcours
+if ($seg[0] === 'anecdotes' && count($seg) === 1) rendre('anecdotes.html');
 
 // /evenements-admin/<id>
 if (count($seg) === 1 && ctype_digit($seg[0])) {
