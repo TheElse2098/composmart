@@ -523,6 +523,12 @@
           h += '<div class="apercu-opt juste">Réponse : ' + echap(c.valeur) + ' ' + echap(c.unite || '')
              + ' (tolérance ± ' + echap(c.tolerance) + ')</div>';
         }
+        // Média : c'est cet écran qui est projeté en salle, la vidéo doit donc
+        // s'y afficher (logique partagée avec l'écran participant).
+        if (s.type === 'media' && window.rendreMediaHtml) {
+          h += window.rendreMediaHtml(c);
+          if (c.legende) h += '<div class="hint">' + echap(c.legende) + '</div>';
+        }
         if (s.type === 'sommaire') {
           (c.sections || []).forEach(x => {
             const puce = x.etat === 'passee' ? '✓' : (x.etat === 'courante' ? '▶' : '•');
@@ -807,6 +813,7 @@
 
     window.addEventListener('beforeunload', () => { if (pollTimer) clearInterval(pollTimer); });
   </script>
+  <script src="/assets/js/media-embed.js"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 </html>
