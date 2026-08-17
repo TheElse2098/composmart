@@ -95,13 +95,17 @@
     .rendu li { margin-bottom: 5px; }
     .rendu a { color: #1e6e3e; font-weight: 700; }
     .rendu img { max-width: 100%; height: auto; border-radius: 10px; margin: 8px 0; }
-    .rendu table { border-collapse: collapse; width: 100%; margin-bottom: 12px; font-size: 0.85rem; }
-    .rendu th, .rendu td { border: 1px solid #dbeade; padding: 7px 9px; text-align: left; }
+    /* Wrapper posé par MarkdownSur.envelopperTableaux() (appelé par rendreDans,
+       cf. markdown-sur.js) : seul le TABLEAU défile, pas toute la colonne
+       d'aperçu — sinon le texte normal autour partait aussi en défilement
+       horizontal dès qu'un tableau un peu large apparaissait. Même motif que
+       cours-detail.html, condition de fidélité de cet aperçu. */
+    .rendu .table-scroll { overflow-x: auto; margin-bottom: 12px; -webkit-overflow-scrolling: touch; }
+    .rendu .table-scroll table { margin-bottom: 0; }
+    .rendu table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+    .rendu th, .rendu td { border: 1px solid #dbeade; padding: 7px 9px; text-align: left; white-space: nowrap; }
     .rendu th { background: #eef4ec; font-weight: 800; }
     .rendu blockquote { border-left: 4px solid #a8e6bf; padding-left: 12px; color: #4a7a5a; margin-bottom: 11px; }
-    /* Le rendu peut contenir des tableaux larges ou des schémas : ils défilent
-       dans leur boîte plutôt que d'élargir toute la page. */
-    .rendu { overflow-x: auto; }
 
     /* Barre d'enregistrement fixe : on ne perd jamais le bouton de vue. */
     .pied { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1.5px solid #dbeade; padding: 11px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; z-index: 50; }

@@ -121,9 +121,16 @@
     .lesson-body h3 { font-size: 0.95rem; }
     .lesson-body ul,.lesson-body ol { padding-left: 20px; margin-bottom: 11px; }
     .lesson-body li { margin-bottom: 4px; }
+    /* Le wrapper est posé par MarkdownSur.envelopperTableaux() après insertion
+       dans le DOM (cf. markdown-sur.js) : un tableau large (comparatif à 4-5
+       colonnes) défile dans sa propre boîte plutôt que de pousser toute la page
+       au-delà de l'écran sur mobile. -webkit-overflow-scrolling : défilement
+       tactile fluide (inertie) sur Safari iOS, qui sans ça saccade au doigt. */
+    .lesson-body .table-scroll { overflow-x: auto; margin: 11px 0; -webkit-overflow-scrolling: touch; }
+    .lesson-body .table-scroll table { margin: 0; }
     .lesson-body table { width: 100%; border-collapse: collapse; margin: 11px 0; font-size: 0.82rem; }
-    .lesson-body th { background: #1e6e3e; color: #fff; padding: 7px 10px; text-align: left; }
-    .lesson-body td { border-bottom: 1px solid #e5ede8; padding: 7px 10px; }
+    .lesson-body th { background: #1e6e3e; color: #fff; padding: 7px 10px; text-align: left; white-space: nowrap; }
+    .lesson-body td { border-bottom: 1px solid #e5ede8; padding: 7px 10px; white-space: nowrap; }
     .lesson-body blockquote { border-left: 4px solid #1e6e3e; background: #eef4ec; padding: 10px 13px; border-radius: 0 10px 10px 0; margin: 11px 0; color: #2d6a4f; font-style: italic; }
     /* Citation centrée : annule le filet et le fond du blockquote standard, qui
        supposent un texte aligné à gauche. Spécificité (0,2,0) contre (0,1,1)
@@ -409,13 +416,15 @@
 
   <script>
     /**
-     * Rend les formules d'un fragment déjà inséré dans le DOM.
-     * La configuration (choix d'auto-render, délimiteurs) vit dans
-     * markdown-sur.js, partagée avec l'aperçu de l'éditeur d'admin : deux
-     * copies finiraient par diverger et l'aperçu ne vaudrait plus rien.
+     * Finalise un fragment de markdown déjà inséré dans le DOM : formules KaTeX
+     * et mise en défilement des tableaux larges. Les deux vivent dans
+     * markdown-sur.js, partagé avec l'aperçu de l'éditeur d'admin : deux copies
+     * finiraient par diverger et l'aperçu ne vaudrait plus rien.
      */
     function rendreMath(el) {
-      if (window.MarkdownSur) MarkdownSur.rendreMaths(el);
+      if (!window.MarkdownSur) return;
+      MarkdownSur.rendreMaths(el);
+      MarkdownSur.envelopperTableaux(el);
     }
 
     var slug = location.pathname.replace(/^\/cours\//, '').replace(/\/$/, '');

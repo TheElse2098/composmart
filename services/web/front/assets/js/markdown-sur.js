@@ -75,12 +75,44 @@
     });
   }
 
+  /**
+   * Enveloppe chaque <table> d'un fragment DÉJÀ inséré dans le DOM avec un
+   * conteneur qui défile horizontalement (overflow-x). Un tableau à 4-5
+   * colonnes (comparatifs de méthodes de compostage, par ex.) tient sans
+   * effort sur un écran d'ordinateur, mais sur un mobile de 360 px, `width:
+   * 100%` ne suffit pas à le faire rentrer — il pousse .lesson-card et donc
+   * TOUTE LA PAGE au-delà de l'écran, forçant un défilement horizontal
+   * général. Le contenir dans sa propre boîte défilante règle le problème
+   * sans jamais compresser les colonnes au point de les rendre illisibles.
+   *
+   * Fait en JS après coup plutôt que dans le CSS (`display:block` sur table +
+   * overflow) : cette dernière approche casse `width:100%` et les bordures de
+   * colonnes sur certains navigateurs mobiles, alors qu'un wrapper dédié est
+   * fiable partout.
+   */
+  function envelopperTableaux(el) {
+    if (!el) return;
+    el.querySelectorAll('table').forEach(function (table) {
+      if (table.parentElement && table.parentElement.classList.contains('table-scroll')) return;
+      var wrap = document.createElement('div');
+      wrap.className = 'table-scroll';
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+  }
+
   /** Raccourci : rend le markdown dans un élément, formules comprises. */
   function rendreDans(el, markdown) {
     if (!el) return;
     el.innerHTML = rendre(markdown);
     rendreMaths(el);
+    envelopperTableaux(el);
   }
 
-  window.MarkdownSur = { rendre: rendre, rendreMaths: rendreMaths, rendreDans: rendreDans };
+  window.MarkdownSur = {
+    rendre: rendre,
+    rendreMaths: rendreMaths,
+    envelopperTableaux: envelopperTableaux,
+    rendreDans: rendreDans,
+  };
 })();
