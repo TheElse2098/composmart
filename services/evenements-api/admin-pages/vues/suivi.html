@@ -521,8 +521,8 @@
       const ap = document.getElementById('apercu');
       if (!d.slide) {
         ap.innerHTML = '<div class="apercu-type">En attente</div>'
-          + '<div class="apercu-titre">Le parcours n'a pas encore démarré</div>'
-          + '<div class="hint">Les participants voient la salle d'attente. Clique sur « Démarrer ».</div>';
+          + "<div class=\"apercu-titre\">Le parcours n'a pas encore démarré</div>"
+          + "<div class=\"hint\">Les participants voient la salle d'attente. Clique sur « Démarrer ».</div>";
       } else if (window.rendreSlideHtml) {
         const dessiner = (cl) => {
           ap.innerHTML = window.rendreSlideHtml(d.slide, {
@@ -533,8 +533,8 @@
           });
           if (d.slide.aleatoire) {
             ap.insertAdjacentHTML('beforeend',
-              '<div class="hint">🎲 Anecdote tirée au sort : <b>chaque participant voit la sienne</b>. '
-              + 'Celle affichée ici n'est qu'un exemple.</div>');
+              "<div class=\"hint\">🎲 Anecdote tirée au sort : <b>chaque participant voit la sienne</b>. "
+              + "Celle affichée ici n'est qu'un exemple.</div>");
           }
           // Le cadre média prend ses vraies proportions une fois dans le document.
           if (window.ajusterMedias) window.ajusterMedias(ap);
