@@ -171,62 +171,102 @@
         break;
 
       case 'encouragement': {
-        // La pousse mesure l'avancement réel du parcours : c'est ce qui
-        // distingue cette slide d'une image décorative.
         var av = o.position && o.position.total > 1
           ? (o.position.index + 1) / o.position.total
           : 0.5;
         var pct = Math.round(av * 100);
+        var papier = document.body.getAttribute('data-theme-slide') === 'papier';
         var anim;
 
         if (c.animation === 'confettis') {
-          // Gerbe : chaque pièce part du centre vers une direction propre.
-          // Les valeurs sont dérivées de l'indice (pas de Math.random), donc
-          // la gerbe est identique sur tous les écrans de la salle.
-          var pieces = '';
-          for (var k = 0; k < 26; k++) {
-            var ang = (k * 137.5) % 360;                 // angle d'or : bonne répartition
-            var dist = 34 + ((k * 53) % 46);             // portée variable
-            var tx = Math.round(Math.cos(ang * Math.PI / 180) * dist);
-            var ty = Math.round(Math.sin(ang * Math.PI / 180) * dist) - 18;
-            var teintes = ['var(--sl-fond2)', 'var(--sl-fond3)', 'var(--sl-accent)', 'var(--sl-encre)'];
-            pieces += '<span style="--tx:' + tx + 'px;--ty:' + ty + 'px;--r:'
-              + (((k * 97) % 720) - 360) + 'deg;--d:' + ((k % 7) * 40) + 'ms;--c:'
-              + teintes[k % 4] + '"></span>';
+          // Carte inversée : la gerbe claire a besoin d'un fond sombre, sinon
+          // les pièces blanches disparaissent. En forêt, .sl--plein donne déjà
+          // le dégradé vert ; en papier il rend une carte CRÈME, d'où la classe
+          // sl--fete qui repasse le fond en olive plein.
+          plein = true;
+          cls += ' sl--fete';
+
+          // Tirage pseudo-aléatoire mais DÉTERMINISTE (mulberry32 amorcé par
+          // l'identifiant de la slide) : la même gerbe sur le téléphone de
+          // chacun et sur le vidéoprojecteur. Un Math.random() donnerait une
+          // gerbe différente par écran, ce qui casse l'effet de salle.
+          var graine = ((s.id || 0) * 2654435761 + 11) >>> 0;
+          var alea = function () {
+            graine |= 0; graine = (graine + 0x6D2B79F5) | 0;
+            var t = Math.imul(graine ^ (graine >>> 15), 1 | graine);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+
+          var burst = 3.4;
+          var ox = +(26 + alea() * 48).toFixed(1);        // origine de la gerbe, en %
+          var oy = +(30 + alea() * 34).toFixed(1);
+          var teintes = papier
+            ? ['var(--sl-accent)', '#fdfaf1', 'var(--sl-tendre)', '#e0c05f', '#fdfaf1', 'var(--sl-accent)']
+            : ['var(--sl-accent)', '#ffffff', 'var(--sl-tendre)', '#e0c05f', '#ffffff', 'var(--sl-accent)'];
+
+          var NB = 38, pieces = '';
+          for (var k = 0; k < NB; k++) {
+            var gros = alea() > 0.72;
+            var band = alea() > 0.6;
+            var rond = !band && alea() > 0.5;
+            var px = +(ox + alea() * 5 - 2.5).toFixed(1);
+            var py = +(oy + alea() * 5 - 2.5).toFixed(1);
+            var ang = +((k / NB) * 360 + alea() * 26 - 13).toFixed(1);
+            var dist = Math.round(120 + alea() * 160);
+            var dur = +(burst * (0.62 + alea() * 0.3)).toFixed(2);
+            var del = +(alea() * 0.22).toFixed(2);
+            pieces += '<i class="sl__rayon" style="--x:' + px + '%;--y:' + py + '%;--a:' + ang + 'deg">'
+              + '<i class="sl__vol" style="--dist:' + dist + 'px;--dur:' + dur + 's;--del:' + del + 's">'
+              + '<i class="sl__piece" style="--dist:' + dist + 'px;--dur:' + dur + 's;--del:' + del
+              + 's;--w:' + (band ? 6 : gros ? 16 : 11) + 'px;--h:' + (band ? 20 : gros ? 16 : 11)
+              + 'px;--r:' + (rond ? '50%' : '3px') + ';--c:' + teintes[Math.floor(alea() * teintes.length)]
+              + '"></i></i></i>';
           }
-          anim = '<div class="sl__confettis">' + pieces + '</div>';
+
+          anim = '<div class="sl__fete" style="--sl-burst:' + burst + 's" role="img" aria-label="Confettis">'
+            + '<i class="sl__anneau" style="--x:' + ox + '%;--y:' + oy + '%"></i>'
+            + '<i class="sl__anneau sl__anneau--accent" style="--x:' + ox + '%;--y:' + oy + '%"></i>'
+            + pieces
+            + '<div class="sl__bravo">Bravo !</div></div>';
 
         } else {
-          // Tige quasi verticale autour de x=60 : les feuilles peuvent donc
-          // s'ancrer à x=60 sans jamais décoller du tracé.
-          var FEUILLE = 'M0,0 C6,-7 17,-8 22,-1 C16,6 5,6 0,0';
-          var ancres = [
-            { y: 76, cote: -1, t: 0.30, d: 0.42 },
-            { y: 60, cote:  1, t: 0.48, d: 0.62 },
-            { y: 45, cote: -1, t: 0.66, d: 0.82 },
-            { y: 31, cote:  1, t: 0.82, d: 1.00 }
-          ];
-          var feuilles = '';
-          ancres.forEach(function (a) {
-            // Une feuille n'apparaît que si la tige l'a dépassée.
-            if (av < a.t) return;
-            var ech = a.cote < 0 ? ' scale(-1,1)' : '';
-            feuilles += '<path class="sl__feuille" d="' + FEUILLE + '" transform="translate(60,'
-              + a.y + ')' + ech + '" style="animation-delay:' + a.d + 's"></path>';
-          });
-          var fleur = av >= 0.92
-            ? '<circle class="sl__fleur" cx="60" cy="16" r="9" style="animation-delay:1.15s"></circle>'
-              + '<circle class="sl__coeur" cx="60" cy="16" r="3.4" style="animation-delay:1.35s"></circle>'
-            : '';
+          // Plante en boucle : tige qui se dessine (pathLength=100), puis trois
+          // feuilles ancrées sur le tracé, puis la fleur. Les transform-origin
+          // sont posés en CSS, sur le bord de la feuille collé à la tige.
+          var FEUILLES = [
+            ['a', 'M100 214 C72 202 50 210 42 230 C62 248 90 240 100 214 Z'],
+            ['b', 'M100 166 C128 154 150 162 158 182 C138 200 110 192 100 166 Z'],
+            ['c', 'M100 112 C78 104 62 112 56 128 C74 142 94 134 100 112 Z']
+          ].map(function (f) {
+            return '<path class="sl__feuille sl__feuille--' + f[0] + '" d="' + f[1] + '"></path>';
+          }).join('');
 
-          anim = '<div class="sl__anim"><svg viewBox="0 0 120 104" role="img" aria-label="Pousse de plante">'
-            + '<path class="sl__sol" d="M28,98 H92" />'
-            + '<path class="sl__tige" pathLength="100" d="M60,97 C57,80 63,71 60,55 C57,40 62,31 60,14" />'
-            + feuilles + fleur + '</svg></div>';
+          // 6 pétales en papier (la variante géométrique), 5 en forêt.
+          var nbPet = papier ? 6 : 5, pas = 360 / nbPet, opac = [1, .9, .82, .82, .9, .9], petales = '';
+          for (var p = 0; p < nbPet; p++) {
+            petales += '<ellipse class="sl__petale" cx="0" cy="' + (papier ? -19 : -20)
+              + '" rx="' + (papier ? 10 : 11) + '" ry="' + (papier ? 17 : 18)
+              + '" transform="rotate(' + Math.round(p * pas) + ')" opacity="' + opac[p] + '"></ellipse>';
+          }
+
+          anim = '<div class="sl__pousse" style="--sl-dur:6.4s">'
+            + '<i class="sl__halo"></i>'
+            + '<svg class="sl__plante" viewBox="0 0 200 320" role="img" aria-label="Une plante qui pousse">'
+            + '<path class="sl__tige" pathLength="100" stroke-dasharray="100"'
+            + ' d="M100 312 C100 258 88 226 100 188 C112 148 92 122 100 78"></path>'
+            + FEUILLES
+            + '<g transform="translate(100 70)"><g class="sl__fleur"><g class="sl__petales">'
+            + petales + '</g>'
+            + '<circle class="sl__coeur" cx="0" cy="0" r="' + (papier ? 10 : 11) + '"></circle>'
+            + '<circle class="sl__pistil" cx="0" cy="0" r="5"></circle>'
+            + '</g></g></svg>'
+            + '<div class="sl__mot"><span>Ça pousse !</span></div>'
+            + '</div>';
         }
 
-        corps = '<div class="sl__bandeau"></div>'
-          + '<div class="sl__corps" style="--pousse:' + av.toFixed(3) + '; justify-content:center; text-align:center">'
+        corps = (plein ? '' : '<div class="sl__bandeau"></div>')
+          + '<div class="sl__corps" style="--pousse:' + av.toFixed(3) + '; text-align:center">'
           + anim
           + '<h2 class="sl__titre">' + e(c.message) + '</h2>'
           + (c.sous_titre ? '<p class="sl__texte" style="text-align:center">' + e(c.sous_titre) + '</p>' : '')

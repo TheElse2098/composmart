@@ -384,68 +384,176 @@ html.dark [data-theme-slide="papier"] .sl { box-shadow: 14px 14px 0 rgba(0, 0, 0
 /* ══════════════════════════════════════════════════════════════════════════
    SLIDE D'ENCOURAGEMENT — deux animations au choix
 
-   1. LA POUSSE. Un SVG dont la tige se DESSINE d'elle-même : le tracé porte
-      pathLength="100", et stroke-dashoffset part de 100 pour s'arrêter à la
-      hauteur atteinte dans le parcours. À 60 % d'avancement la tige est
-      dessinée à 60 %. Les feuilles sont ancrées à des coordonnées réelles du
-      tracé (x≈60, la courbe reste quasi verticale) et éclosent au moment où
-      la tige les atteint.
+   1. LA POUSSE. Une plante qui se construit en boucle : la tige se DESSINE
+      d'elle-même (tracé avec pathLength="100" et stroke-dashoffset qui remonte
+      de 100 à 0), puis trois feuilles éclosent chacune à son tour depuis son
+      point d'attache réel sur le tracé, puis la fleur s'ouvre. Le tout ondule
+      lentement (sway) et repart au bout d'un cycle.
 
-      Une première version positionnait les feuilles en CSS absolu sans
-      coordonnée verticale : elles flottaient détachées de la tige. Le SVG
-      supprime le problème à la racine — l'ancrage EST une coordonnée.
+      Les feuilles sont ancrées par transform-box:fill-box + transform-origin
+      posé sur le bord collé à la tige : c'est ce qui les empêche de flotter
+      détachées, faute qu'avait la première version.
 
-   2. LES CONFETTIS. Une gerbe partant du centre : chaque pièce reçoit sa
-      direction, sa rotation et son délai en variables CSS, calculés au rendu.
+   2. LES CONFETTIS. Une gerbe radiale. Chaque pièce est un empilement de trois
+      éléments : le rayon fixe la direction (rotate), le vol translate la pièce
+      vers l'extérieur (translateX 100 % d'une largeur = sa portée), la pièce
+      culbute et retombe. Deux anneaux d'impact marquent le point de départ.
+
+   Durées pilotées par --sl-dur (pousse) et --sl-burst (gerbe), posées au rendu.
    ══════════════════════════════════════════════════════════════════════════ */
-.sl__anim { align-self: center; width: 52cqw; max-width: 230px; margin: 1cqw 0; }
-.sl__anim svg { width: 100%; height: auto; display: block; overflow: visible; }
 
-/* Sol */
-.sl__sol { stroke: var(--sl-trait); stroke-width: 2.4; stroke-linecap: round;
-           animation: sl-sol 0.45s ease both; transform-origin: center; }
-@keyframes sl-sol { from { transform: scaleX(0); opacity: 0 } }
+/* ── La pousse ─────────────────────────────────────────────────────────── */
+.sl__pousse {
+  position: relative; flex: 1; min-height: 42cqw;
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: sl-cycle var(--sl-dur, 6.4s) linear infinite;
+}
+@keyframes sl-cycle { 0% { opacity: 0 } 6%, 88% { opacity: 1 } 100% { opacity: 0 } }
 
-/* Tige : se dessine de bas en haut jusqu'à --pousse */
+/* Halo chaud derrière la plante (thème forêt) — devient une onde au sol en papier. */
+.sl__halo {
+  position: absolute; bottom: 14%; width: 44cqw; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle, rgba(178, 106, 0, 0.22), transparent 68%);
+  animation: sl-halo var(--sl-dur, 6.4s) ease-out infinite backwards;
+}
+@keyframes sl-halo {
+  0%, 10%   { transform: scale(.3);  opacity: 0 }
+  30%       { transform: scale(1);   opacity: .5 }
+  64%, 100% { transform: scale(1.45); opacity: 0 }
+}
+@keyframes sl-ripple {
+  0%, 10%   { transform: scale(.2);  opacity: 0 }
+  28%       { transform: scale(1);   opacity: .55 }
+  60%, 100% { transform: scale(1.5); opacity: 0 }
+}
+
+.sl__plante {
+  position: relative; display: block; width: 62cqw; max-width: 330px; height: auto; overflow: visible;
+  transform-origin: 50% 100%;
+  animation: sl-sway 4.4s ease-in-out infinite alternate;
+}
+@keyframes sl-sway { 0%, 100% { transform: rotate(-1.6deg) } 50% { transform: rotate(1.6deg) } }
+
 .sl__tige {
-  fill: none; stroke: var(--sl-fond2); stroke-width: 3.4; stroke-linecap: round;
+  fill: none; stroke: var(--sl-fond2); stroke-width: 9; stroke-linecap: round;
   stroke-dasharray: 100;
-  animation: sl-tige 1.25s cubic-bezier(.25,.9,.3,1) both;
+  animation: sl-tige var(--sl-dur, 6.4s) cubic-bezier(.22,.72,.3,1) infinite;
 }
-@keyframes sl-tige {
-  from { stroke-dashoffset: 100; }
-  to   { stroke-dashoffset: calc(100 - 100 * var(--pousse, 0.5)); }
+@keyframes sl-tige { 0% { stroke-dashoffset: 100 } 46%, 100% { stroke-dashoffset: 0 } }
+
+.sl__feuille {
+  fill: var(--sl-fond2); transform-box: fill-box;
+  animation-duration: var(--sl-dur, 6.4s);
+  animation-timing-function: cubic-bezier(.2,.8,.3,1);
+  animation-iteration-count: infinite;
+  animation-fill-mode: backwards;
+}
+.sl__feuille--a { opacity: .9;  transform-origin: 100% 30%; animation-name: sl-feuille-a; }
+.sl__feuille--b { opacity: .76; transform-origin: 0% 30%;   animation-name: sl-feuille-b; }
+.sl__feuille--c { opacity: .6;  transform-origin: 100% 30%; animation-name: sl-feuille-c; }
+@keyframes sl-feuille-a {
+  0%, 15%   { transform: scale(.04) rotate(-16deg); opacity: 0 }
+  23%       { transform: scale(1.1) rotate(3deg);   opacity: 1 }
+  28%, 100% { transform: scale(1)   rotate(0deg);   opacity: 1 }
+}
+@keyframes sl-feuille-b {
+  0%, 26%   { transform: scale(.04) rotate(16deg);  opacity: 0 }
+  34%       { transform: scale(1.1) rotate(-3deg);  opacity: 1 }
+  39%, 100% { transform: scale(1)   rotate(0deg);   opacity: 1 }
+}
+@keyframes sl-feuille-c {
+  0%, 36%   { transform: scale(.04) rotate(-16deg); opacity: 0 }
+  44%       { transform: scale(1.1) rotate(3deg);   opacity: 1 }
+  49%, 100% { transform: scale(1)   rotate(0deg);   opacity: 1 }
 }
 
-/* Feuilles : éclosent depuis leur point d'attache sur la tige */
-.sl__feuille { fill: var(--sl-fond3); transform-box: fill-box; transform-origin: 0% 50%;
-               animation: sl-feuille 0.55s cubic-bezier(.3,1.5,.5,1) both; }
-@keyframes sl-feuille { from { transform: scale(0); opacity: 0 } to { transform: scale(1); opacity: 1 } }
-
-/* Fleur du dernier tiers */
-.sl__fleur { fill: var(--sl-accent); transform-box: fill-box; transform-origin: center;
-             animation: sl-fleur 0.7s cubic-bezier(.3,1.6,.5,1) both; }
-@keyframes sl-fleur { from { transform: scale(0) rotate(-90deg); opacity: 0 }
-                      to   { transform: scale(1) rotate(0);      opacity: 1 } }
-.sl__coeur { fill: var(--sl-carte); opacity: 0; animation: sl-fleur 0.5s ease both; }
-
-/* ── Confettis ── */
-.sl__confettis { position: relative; height: 26cqw; max-height: 130px; align-self: stretch; pointer-events: none; }
-.sl__confettis span {
-  position: absolute; left: 50%; top: 55%; width: 9px; height: 13px; border-radius: 2px;
-  background: var(--c); opacity: 0;
-  animation: sl-conf 1.5s cubic-bezier(.15,.7,.4,1) both; animation-delay: var(--d);
+.sl__fleur {
+  transform-origin: 0 0;
+  animation: sl-fleur var(--sl-dur, 6.4s) cubic-bezier(.2,.8,.3,1) infinite backwards;
 }
-.sl__confettis span:nth-child(3n)   { border-radius: 50%; width: 9px; height: 9px; }
-.sl__confettis span:nth-child(4n+1) { width: 5px; height: 15px; }
-@keyframes sl-conf {
-  0%   { transform: translate(-50%, -50%) rotate(0deg) scale(.3); opacity: 0 }
-  15%  { opacity: 1 }
+@keyframes sl-fleur {
+  0%, 47%   { transform: scale(0)    rotate(-40deg); opacity: 0 }
+  58%       { transform: scale(1.16) rotate(6deg);   opacity: 1 }
+  65%       { transform: scale(.94)  rotate(-2deg) }
+  72%, 100% { transform: scale(1)    rotate(0deg);   opacity: 1 }
+}
+.sl__petales {
+  transform-origin: 0 0;
+  animation: sl-petale var(--sl-dur, 6.4s) ease-in-out infinite backwards;
+}
+@keyframes sl-petale { 0%, 72% { transform: scale(1) } 86% { transform: scale(1.05) } 100% { transform: scale(1) } }
+.sl__petale { fill: var(--sl-accent); }
+.sl__coeur  { fill: var(--sl-carte); }
+.sl__pistil { fill: var(--sl-fond2); opacity: .5; }
+
+/* Mot d'ambiance, posé dans le coin de la scène. */
+.sl__mot {
+  position: absolute; bottom: 3cqw; left: 4cqw;
+  animation: sl-mot var(--sl-dur, 6.4s) ease-out infinite backwards;
+}
+.sl__mot span {
+  display: inline-block; padding: 2cqw 3.4cqw; border-radius: 18px;
+  background: var(--sl-tendre); color: var(--sl-encre);
+  font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 800;
+  font-size: clamp(15px, 5.2cqw, 30px); line-height: 1.1;
+}
+@keyframes sl-mot {
+  0%, 46% { transform: translateY(12px); opacity: 0 }
+  62%     { transform: translateY(0);    opacity: 1 }
+  88%     { opacity: 1 }
+  100%    { opacity: 0 }
+}
+
+/* ── La gerbe de confettis ─────────────────────────────────────────────── */
+.sl__fete { position: relative; flex: 1; min-height: 44cqw; pointer-events: none; }
+.sl__anneau {
+  position: absolute; left: var(--x); top: var(--y);
+  width: 28cqw; aspect-ratio: 1; margin: -14cqw 0 0 -14cqw;
+  border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.4);
+  animation: sl-anneau var(--sl-burst, 3.4s) ease-out infinite;
+}
+.sl__anneau--accent { border-color: var(--sl-accent); animation-delay: .16s; }
+@keyframes sl-anneau {
+  0%   { transform: scale(.1);  opacity: .85 }
+  70%  { opacity: 0 }
+  100% { transform: scale(2.6); opacity: 0 }
+}
+
+.sl__rayon { position: absolute; left: var(--x); top: var(--y); height: 0; transform: rotate(var(--a)); }
+.sl__vol {
+  display: block; width: var(--dist);
+  animation: sl-vol var(--dur) cubic-bezier(.16,.7,.3,1) infinite backwards;
+  animation-delay: var(--del);
+}
+@keyframes sl-vol { 0% { transform: translateX(0) } 100% { transform: translateX(100%) } }
+.sl__piece {
+  display: block; margin-left: var(--dist);
+  width: var(--w); height: var(--h); border-radius: var(--r); background: var(--c);
+  animation: sl-piece var(--dur) cubic-bezier(.16,.7,.3,1) infinite backwards;
+  animation-delay: var(--del);
+}
+@keyframes sl-piece {
+  0%   { transform: rotate(0deg)   translateY(0)     scale(.2); opacity: 0 }
+  12%  { transform: rotate(90deg)  translateY(-10px) scale(1);  opacity: 1 }
   70%  { opacity: 1 }
-  100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--r)) scale(1); opacity: 0 }
+  100% { transform: rotate(760deg) translateY(130px) scale(.7); opacity: 0 }
 }
 
-/* Barre d'avancement */
+.sl__bravo {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 900; letter-spacing: -.01em;
+  font-size: clamp(38px, 13.6cqw, 76px); color: #fff;
+  animation: sl-bravo var(--sl-burst, 3.4s) cubic-bezier(.2,.8,.3,1) infinite;
+}
+@keyframes sl-bravo {
+  0%        { transform: scale(.4)  rotate(-6deg); opacity: 0 }
+  18%       { transform: scale(1.12) rotate(2deg); opacity: 1 }
+  30%       { transform: scale(.97) rotate(-1deg) }
+  40%, 84%  { transform: scale(1)   rotate(0deg);  opacity: 1 }
+  100%      { transform: scale(1.04); opacity: 0 }
+}
+
+/* ── Barre d'avancement (indépendante de l'animation) ──────────────────── */
 .sl__jauge { height: 10px; border-radius: 6px; background: var(--sl-tendre); overflow: hidden; }
 .sl__jauge > span {
   display: block; height: 100%; border-radius: 6px; background: var(--sl-fond2);
@@ -455,15 +563,49 @@ html.dark [data-theme-slide="papier"] .sl { box-shadow: 14px 14px 0 rgba(0, 0, 0
 @keyframes sl-jauge { from { width: 0 } }
 .sl__jauge-txt { font-size: clamp(11px, 2.4cqw, 14px); color: var(--sl-doux); font-weight: 700; text-align: center; }
 
-/* Thème papier : angles nets, tige plus épaisse */
+/* Sur carte inversée (gerbe), la jauge doit rester lisible sur fond sombre. */
+.sl--plein .sl__jauge { background: rgba(255, 255, 255, 0.16); }
+.sl--plein .sl__jauge > span { background: var(--sl-accent); }
+.sl--plein .sl__jauge-txt { color: rgba(255, 255, 255, 0.72); }
+
+/* ── Thème papier : trait franc, angles nets, onde au sol au lieu du halo ── */
 [data-theme-slide="papier"] .sl__jauge { border-radius: 0; border: 2px solid var(--sl-fond1); height: 14px; }
 [data-theme-slide="papier"] .sl__jauge > span { border-radius: 0; background: var(--sl-accent); }
-[data-theme-slide="papier"] .sl__tige { stroke-width: 4.2; stroke: var(--sl-fond1); }
-[data-theme-slide="papier"] .sl__confettis span { border-radius: 0 !important; }
+[data-theme-slide="papier"] .sl__tige { stroke: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__feuille { fill: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__pistil { fill: var(--sl-fond1); opacity: .55; }
+[data-theme-slide="papier"] .sl__halo {
+  background: none; border: 3px solid var(--sl-accent); bottom: 12%;
+  animation-name: sl-ripple;
+}
+[data-theme-slide="papier"] .sl__mot span { border-radius: 6px; border: 3px solid var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__piece { border-radius: 0 !important; }
 
-/* Accessibilité : pas de mouvement imposé, mais le résultat final reste juste. */
+/* Carte de la gerbe. En forêt, .sl--plein donne le dégradé vert attendu ; en
+   papier il rend une carte crème sur laquelle des confettis clairs seraient
+   invisibles — d'où ce fond olive plein, damier en filigrane, encre claire. */
+[data-theme-slide="papier"] .sl--fete {
+  background: var(--sl-fond1); color: #fdfaf1;
+  background-image: conic-gradient(from 45deg, rgba(253, 250, 241, 0.18) 0 25%,
+                                   transparent 0 50%, rgba(253, 250, 241, 0.18) 0 75%, transparent 0);
+  background-size: 46px 46px;
+}
+[data-theme-slide="papier"] .sl--fete .sl__titre { color: #fdfaf1; }
+[data-theme-slide="papier"] .sl--fete .sl__texte,
+[data-theme-slide="papier"] .sl--fete .sl__verdict-pts { color: rgba(253, 250, 241, 0.78); }
+[data-theme-slide="papier"] .sl--fete .sl__anneau { border-color: rgba(253, 250, 241, 0.42); }
+[data-theme-slide="papier"] .sl--fete .sl__anneau--accent { border-color: var(--sl-accent); }
+[data-theme-slide="papier"] .sl--fete .sl__jauge {
+  border-color: rgba(253, 250, 241, 0.4); background: rgba(253, 250, 241, 0.14);
+}
+[data-theme-slide="papier"] .sl--fete .sl__jauge-txt { color: rgba(253, 250, 241, 0.72); }
+
+/* Accessibilité : pas de mouvement imposé, mais l'image finale reste juste. */
 @media (prefers-reduced-motion: reduce) {
-  .sl__sol, .sl__tige, .sl__feuille, .sl__fleur, .sl__coeur,
-  .sl__jauge > span, .sl__confettis span { animation-duration: 0.01ms !important; }
-  .sl__feuille, .sl__fleur, .sl__coeur { opacity: 1; }
+  .sl__pousse, .sl__plante, .sl__tige, .sl__feuille, .sl__fleur, .sl__petales,
+  .sl__mot, .sl__halo, .sl__anneau, .sl__vol, .sl__piece, .sl__bravo,
+  .sl__jauge > span { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+  .sl__tige { stroke-dashoffset: 0; }
+  .sl__feuille, .sl__fleur, .sl__mot, .sl__bravo { opacity: 1; }
+  .sl__halo, .sl__anneau, .sl__piece { opacity: 0; }
 }
