@@ -171,23 +171,63 @@
         break;
 
       case 'encouragement': {
-        // La pousse reflète l'avancement réel : c'est ce qui distingue cette
-        // slide d'une simple image décorative. Sans position connue (aperçu
-        // hors contexte), on retombe sur une plante à mi-croissance.
+        // La pousse mesure l'avancement réel du parcours : c'est ce qui
+        // distingue cette slide d'une image décorative.
         var av = o.position && o.position.total > 1
           ? (o.position.index + 1) / o.position.total
           : 0.5;
-        var feuilles = '<span class="sl__pousse-feuille sl__pousse-feuille--g"></span>'
-          + '<span class="sl__pousse-feuille sl__pousse-feuille--d"></span>';
-        if (av >= 0.5) feuilles += '<span class="sl__pousse-feuille sl__pousse-feuille--g2"></span>';
-        if (av >= 0.7) feuilles += '<span class="sl__pousse-feuille sl__pousse-feuille--d2"></span>';
-        if (av >= 0.9) feuilles += '<span class="sl__pousse-fleur"></span>';
-
         var pct = Math.round(av * 100);
+        var anim;
+
+        if (c.animation === 'confettis') {
+          // Gerbe : chaque pièce part du centre vers une direction propre.
+          // Les valeurs sont dérivées de l'indice (pas de Math.random), donc
+          // la gerbe est identique sur tous les écrans de la salle.
+          var pieces = '';
+          for (var k = 0; k < 26; k++) {
+            var ang = (k * 137.5) % 360;                 // angle d'or : bonne répartition
+            var dist = 34 + ((k * 53) % 46);             // portée variable
+            var tx = Math.round(Math.cos(ang * Math.PI / 180) * dist);
+            var ty = Math.round(Math.sin(ang * Math.PI / 180) * dist) - 18;
+            var teintes = ['var(--sl-fond2)', 'var(--sl-fond3)', 'var(--sl-accent)', 'var(--sl-encre)'];
+            pieces += '<span style="--tx:' + tx + 'px;--ty:' + ty + 'px;--r:'
+              + (((k * 97) % 720) - 360) + 'deg;--d:' + ((k % 7) * 40) + 'ms;--c:'
+              + teintes[k % 4] + '"></span>';
+          }
+          anim = '<div class="sl__confettis">' + pieces + '</div>';
+
+        } else {
+          // Tige quasi verticale autour de x=60 : les feuilles peuvent donc
+          // s'ancrer à x=60 sans jamais décoller du tracé.
+          var FEUILLE = 'M0,0 C6,-7 17,-8 22,-1 C16,6 5,6 0,0';
+          var ancres = [
+            { y: 76, cote: -1, t: 0.30, d: 0.42 },
+            { y: 60, cote:  1, t: 0.48, d: 0.62 },
+            { y: 45, cote: -1, t: 0.66, d: 0.82 },
+            { y: 31, cote:  1, t: 0.82, d: 1.00 }
+          ];
+          var feuilles = '';
+          ancres.forEach(function (a) {
+            // Une feuille n'apparaît que si la tige l'a dépassée.
+            if (av < a.t) return;
+            var ech = a.cote < 0 ? ' scale(-1,1)' : '';
+            feuilles += '<path class="sl__feuille" d="' + FEUILLE + '" transform="translate(60,'
+              + a.y + ')' + ech + '" style="animation-delay:' + a.d + 's"></path>';
+          });
+          var fleur = av >= 0.92
+            ? '<circle class="sl__fleur" cx="60" cy="16" r="9" style="animation-delay:1.15s"></circle>'
+              + '<circle class="sl__coeur" cx="60" cy="16" r="3.4" style="animation-delay:1.35s"></circle>'
+            : '';
+
+          anim = '<div class="sl__anim"><svg viewBox="0 0 120 104" role="img" aria-label="Pousse de plante">'
+            + '<path class="sl__sol" d="M28,98 H92" />'
+            + '<path class="sl__tige" pathLength="100" d="M60,97 C57,80 63,71 60,55 C57,40 62,31 60,14" />'
+            + feuilles + fleur + '</svg></div>';
+        }
+
         corps = '<div class="sl__bandeau"></div>'
           + '<div class="sl__corps" style="--pousse:' + av.toFixed(3) + '; justify-content:center; text-align:center">'
-          + '<div class="sl__pousse">' + feuilles
-          + '<span class="sl__pousse-tige"></span><span class="sl__pousse-sol"></span></div>'
+          + anim
           + '<h2 class="sl__titre">' + e(c.message) + '</h2>'
           + (c.sous_titre ? '<p class="sl__texte" style="text-align:center">' + e(c.sous_titre) + '</p>' : '')
           + (c.montrer_score && o.moiPoints !== undefined

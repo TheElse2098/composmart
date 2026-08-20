@@ -382,78 +382,88 @@ html.dark [data-theme-slide="papier"] .sl { box-shadow: 14px 14px 0 rgba(0, 0, 0
 [data-theme-slide="papier"] .sl__media-etiq { border-radius: 6px; background: var(--sl-accent); }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   SLIDE D'ENCOURAGEMENT — la pousse qui grandit
+   SLIDE D'ENCOURAGEMENT — deux animations au choix
 
-   L'animation n'est pas décorative : la plante reflète l'avancement réel dans
-   le parcours (--pousse, de 0 à 1). À mi-chemin elle a deux feuilles, à la fin
-   elle est épanouie. Le participant voit le trajet parcouru, ce qui donne au
-   mot d'encouragement quelque chose à quoi s'accrocher.
+   1. LA POUSSE. Un SVG dont la tige se DESSINE d'elle-même : le tracé porte
+      pathLength="100", et stroke-dashoffset part de 100 pour s'arrêter à la
+      hauteur atteinte dans le parcours. À 60 % d'avancement la tige est
+      dessinée à 60 %. Les feuilles sont ancrées à des coordonnées réelles du
+      tracé (x≈60, la courbe reste quasi verticale) et éclosent au moment où
+      la tige les atteint.
 
-   Tout est en CSS : aucune bibliothèque, et l'animation repart proprement à
-   chaque affichage de la slide.
+      Une première version positionnait les feuilles en CSS absolu sans
+      coordonnée verticale : elles flottaient détachées de la tige. Le SVG
+      supprime le problème à la racine — l'ancrage EST une coordonnée.
+
+   2. LES CONFETTIS. Une gerbe partant du centre : chaque pièce reçoit sa
+      direction, sa rotation et son délai en variables CSS, calculés au rendu.
    ══════════════════════════════════════════════════════════════════════════ */
-.sl__pousse {
-  position: relative; align-self: center;
-  width: 40cqw; max-width: 200px; height: 30cqw; max-height: 150px;
-  margin: 2cqw 0;
+.sl__anim { align-self: center; width: 52cqw; max-width: 230px; margin: 1cqw 0; }
+.sl__anim svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+/* Sol */
+.sl__sol { stroke: var(--sl-trait); stroke-width: 2.4; stroke-linecap: round;
+           animation: sl-sol 0.45s ease both; transform-origin: center; }
+@keyframes sl-sol { from { transform: scaleX(0); opacity: 0 } }
+
+/* Tige : se dessine de bas en haut jusqu'à --pousse */
+.sl__tige {
+  fill: none; stroke: var(--sl-fond2); stroke-width: 3.4; stroke-linecap: round;
+  stroke-dasharray: 100;
+  animation: sl-tige 1.25s cubic-bezier(.25,.9,.3,1) both;
 }
-/* Ligne de sol */
-.sl__pousse-sol {
-  position: absolute; left: 12%; right: 12%; bottom: 0; height: 3px; border-radius: 2px;
-  background: var(--sl-trait);
-  animation: sl-sol 0.5s ease both;
-}
-/* Tige : grandit depuis le sol jusqu'à la hauteur atteinte */
-.sl__pousse-tige {
-  position: absolute; left: 50%; bottom: 3px; width: 4px; margin-left: -2px;
-  border-radius: 3px 3px 0 0; background: var(--sl-fond2);
-  height: calc(22% + 62% * var(--pousse, 0.5));
-  transform-origin: bottom center;
-  animation: sl-tige 1.1s cubic-bezier(.22,.9,.3,1) both;
-}
-/* Feuilles : la forme organique du thème, posées le long de la tige.
-   Elles n'apparaissent qu'au-delà d'un certain avancement (cf. JS). */
-.sl__pousse-feuille {
-  position: absolute; width: 30%; aspect-ratio: 1.6;
-  background: var(--sl-fond3); border-radius: 50% 6% 50% 6%;
-  transform-origin: bottom right; opacity: 0;
-  animation: sl-feuille 0.6s cubic-bezier(.3,1.4,.5,1) both;
-}
-.sl__pousse-feuille--g { right: 50%; transform: rotate(-18deg); animation-delay: 0.65s; }
-.sl__pousse-feuille--d { left: 50%; border-radius: 6% 50% 6% 50%; transform: rotate(18deg); animation-delay: 0.85s; }
-.sl__pousse-feuille--g2 { right: 50%; width: 22%; transform: rotate(-32deg); animation-delay: 1.05s; }
-.sl__pousse-feuille--d2 { left: 50%; width: 22%; border-radius: 6% 50% 6% 50%; transform: rotate(32deg); animation-delay: 1.2s; }
-/* Fleur des tout derniers instants du parcours */
-.sl__pousse-fleur {
-  position: absolute; left: 50%; width: 16%; aspect-ratio: 1; margin-left: -8%;
-  background: var(--sl-accent); border-radius: 50%;
-  opacity: 0; animation: sl-fleur 0.7s cubic-bezier(.3,1.5,.5,1) both; animation-delay: 1.35s;
-  box-shadow: 0 0 0 0.6cqw color-mix(in srgb, var(--sl-accent) 30%, transparent);
+@keyframes sl-tige {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: calc(100 - 100 * var(--pousse, 0.5)); }
 }
 
-@keyframes sl-sol     { from { transform: scaleX(0); opacity: 0 } to { transform: scaleX(1); opacity: 1 } }
-@keyframes sl-tige    { from { transform: scaleY(0) } to { transform: scaleY(1) } }
-@keyframes sl-feuille { from { transform: scale(0) rotate(0deg); opacity: 0 } }
-@keyframes sl-fleur   { from { transform: scale(0); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+/* Feuilles : éclosent depuis leur point d'attache sur la tige */
+.sl__feuille { fill: var(--sl-fond3); transform-box: fill-box; transform-origin: 0% 50%;
+               animation: sl-feuille 0.55s cubic-bezier(.3,1.5,.5,1) both; }
+@keyframes sl-feuille { from { transform: scale(0); opacity: 0 } to { transform: scale(1); opacity: 1 } }
 
-/* Barre d'avancement sous la pousse */
+/* Fleur du dernier tiers */
+.sl__fleur { fill: var(--sl-accent); transform-box: fill-box; transform-origin: center;
+             animation: sl-fleur 0.7s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes sl-fleur { from { transform: scale(0) rotate(-90deg); opacity: 0 }
+                      to   { transform: scale(1) rotate(0);      opacity: 1 } }
+.sl__coeur { fill: var(--sl-carte); opacity: 0; animation: sl-fleur 0.5s ease both; }
+
+/* ── Confettis ── */
+.sl__confettis { position: relative; height: 26cqw; max-height: 130px; align-self: stretch; pointer-events: none; }
+.sl__confettis span {
+  position: absolute; left: 50%; top: 55%; width: 9px; height: 13px; border-radius: 2px;
+  background: var(--c); opacity: 0;
+  animation: sl-conf 1.5s cubic-bezier(.15,.7,.4,1) both; animation-delay: var(--d);
+}
+.sl__confettis span:nth-child(3n)   { border-radius: 50%; width: 9px; height: 9px; }
+.sl__confettis span:nth-child(4n+1) { width: 5px; height: 15px; }
+@keyframes sl-conf {
+  0%   { transform: translate(-50%, -50%) rotate(0deg) scale(.3); opacity: 0 }
+  15%  { opacity: 1 }
+  70%  { opacity: 1 }
+  100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--r)) scale(1); opacity: 0 }
+}
+
+/* Barre d'avancement */
 .sl__jauge { height: 10px; border-radius: 6px; background: var(--sl-tendre); overflow: hidden; }
 .sl__jauge > span {
   display: block; height: 100%; border-radius: 6px; background: var(--sl-fond2);
   width: calc(var(--pousse, 0.5) * 100%);
-  animation: sl-jauge 1.1s cubic-bezier(.22,.9,.3,1) both;
+  animation: sl-jauge 1.25s cubic-bezier(.25,.9,.3,1) both;
 }
 @keyframes sl-jauge { from { width: 0 } }
 .sl__jauge-txt { font-size: clamp(11px, 2.4cqw, 14px); color: var(--sl-doux); font-weight: 700; text-align: center; }
 
-/* Le thème papier n'a pas d'arrondis : la pousse suit. */
+/* Thème papier : angles nets, tige plus épaisse */
 [data-theme-slide="papier"] .sl__jauge { border-radius: 0; border: 2px solid var(--sl-fond1); height: 14px; }
 [data-theme-slide="papier"] .sl__jauge > span { border-radius: 0; background: var(--sl-accent); }
-[data-theme-slide="papier"] .sl__pousse-fleur { border-radius: 0; }
+[data-theme-slide="papier"] .sl__tige { stroke-width: 4.2; stroke: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__confettis span { border-radius: 0 !important; }
 
-/* Respect des préférences d'accessibilité : pas de mouvement imposé. */
+/* Accessibilité : pas de mouvement imposé, mais le résultat final reste juste. */
 @media (prefers-reduced-motion: reduce) {
-  .sl__pousse-sol, .sl__pousse-tige, .sl__pousse-feuille,
-  .sl__pousse-fleur, .sl__jauge > span { animation-duration: 0.01ms !important; }
-  .sl__pousse-feuille, .sl__pousse-fleur { opacity: 1; }
+  .sl__sol, .sl__tige, .sl__feuille, .sl__fleur, .sl__coeur,
+  .sl__jauge > span, .sl__confettis span { animation-duration: 0.01ms !important; }
+  .sl__feuille, .sl__fleur, .sl__coeur { opacity: 1; }
 }

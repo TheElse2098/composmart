@@ -131,6 +131,8 @@ function valider_contenu($type, $d) {
                 'message'      => $msg,
                 'sous_titre'   => is_string($d['sous_titre'] ?? null) ? mb_substr(trim($d['sous_titre']), 0, 200) : '',
                 'montrer_score' => !empty($d['montrer_score']),
+                // 'pousse' suit l'avancement du parcours, 'confettis' célèbre.
+                'animation'    => in_array($d['animation'] ?? 'pousse', ['pousse', 'confettis'], true) ? $d['animation'] : 'pousse',
             ]);
 
         case 'fin':
