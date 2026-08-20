@@ -475,6 +475,7 @@
           position:   (d.index !== undefined && d.total !== undefined) ? { index: d.index, total: d.total } : null,
           classement: cl,
           moi:        d.participant ? d.participant.nom : '',
+          moiPoints:  d.participant ? d.participant.points : undefined,
         });
         cablerSlide(z, d);
         ajouterSuivantIndividuel(z, d);

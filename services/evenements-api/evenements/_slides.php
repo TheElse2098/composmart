@@ -30,6 +30,7 @@ function slides_registre() {
         'media'            => ['nom' => 'Média plein écran',    'note' => false,    'repond' => false],
         'classement'       => ['nom' => 'Classement',           'note' => false,    'repond' => false],
         'fin'              => ['nom' => 'Remerciement',         'note' => false,    'repond' => false],
+        'encouragement'    => ['nom' => 'Encouragement',        'note' => false,    'repond' => false],
         'quiz'             => ['nom' => 'Quiz (QCM)',           'note' => 'auto',   'repond' => true],
         'vrai_faux'        => ['nom' => 'Vrai / Faux',          'note' => 'auto',   'repond' => true],
         'estimation'       => ['nom' => 'Estimation',           'note' => 'auto',   'repond' => true],
@@ -120,6 +121,17 @@ function valider_contenu($type, $d) {
         case 'classement':
             $p = in_array($d['portee'] ?? '', ['individuel', 'equipe', 'les_deux'], true) ? $d['portee'] : 'les_deux';
             return $ok(['portee' => $p]);
+
+        case 'encouragement':
+            // La progression et le score viennent du contexte au moment du
+            // rendu : rien à saisir hormis le mot d'encouragement.
+            $msg = _txt($d['message'] ?? null, 300);
+            if ($msg === null) return $err("Le message d'encouragement est vide.");
+            return $ok([
+                'message'      => $msg,
+                'sous_titre'   => is_string($d['sous_titre'] ?? null) ? mb_substr(trim($d['sous_titre']), 0, 200) : '',
+                'montrer_score' => !empty($d['montrer_score']),
+            ]);
 
         case 'fin':
             return $ok([

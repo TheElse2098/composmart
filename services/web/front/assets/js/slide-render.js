@@ -170,6 +170,35 @@
           + classement(o, c.portee || 'les_deux') + '</div>';
         break;
 
+      case 'encouragement': {
+        // La pousse reflète l'avancement réel : c'est ce qui distingue cette
+        // slide d'une simple image décorative. Sans position connue (aperçu
+        // hors contexte), on retombe sur une plante à mi-croissance.
+        var av = o.position && o.position.total > 1
+          ? (o.position.index + 1) / o.position.total
+          : 0.5;
+        var feuilles = '<span class="sl__pousse-feuille sl__pousse-feuille--g"></span>'
+          + '<span class="sl__pousse-feuille sl__pousse-feuille--d"></span>';
+        if (av >= 0.5) feuilles += '<span class="sl__pousse-feuille sl__pousse-feuille--g2"></span>';
+        if (av >= 0.7) feuilles += '<span class="sl__pousse-feuille sl__pousse-feuille--d2"></span>';
+        if (av >= 0.9) feuilles += '<span class="sl__pousse-fleur"></span>';
+
+        var pct = Math.round(av * 100);
+        corps = '<div class="sl__bandeau"></div>'
+          + '<div class="sl__corps" style="--pousse:' + av.toFixed(3) + '; justify-content:center; text-align:center">'
+          + '<div class="sl__pousse">' + feuilles
+          + '<span class="sl__pousse-tige"></span><span class="sl__pousse-sol"></span></div>'
+          + '<h2 class="sl__titre">' + e(c.message) + '</h2>'
+          + (c.sous_titre ? '<p class="sl__texte" style="text-align:center">' + e(c.sous_titre) + '</p>' : '')
+          + (c.montrer_score && o.moiPoints !== undefined
+             ? '<p class="sl__verdict-pts" style="text-align:center">' + e(o.moiPoints) + " points pour l'instant</p>" : '')
+          + '<div class="sl__jauge"><span></span></div>'
+          + '<div class="sl__jauge-txt">' + pct + ' % du parcours'
+          + (o.position ? ' · étape ' + (o.position.index + 1) + ' sur ' + o.position.total : '') + '</div>'
+          + '</div>';
+        break;
+      }
+
       case 'media':
         if (c.media_type === 'audio') {
           // Un son n'a pas de surface : le cadre plein écran laisserait un
