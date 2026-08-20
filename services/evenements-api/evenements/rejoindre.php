@@ -46,8 +46,22 @@ if ($action === 'verifier_code') {
 
     // Un événement supprimé est indiscernable d'un code inexistant : jamais de
     // signal qui distinguerait "ça n'existe pas" de "on l'a retiré".
-    if (!$evt || (int)$evt['supprime'] === 1 || $evt['statut'] === 'prevu') {
+    if (!$evt || (int)$evt['supprime'] === 1) {
         echo json_encode(['error' => 'Code invalide.']);
+        exit;
+    }
+
+    // Seul « ouvert » laisse entrer. Les autres statuts renvoient un motif
+    // explicite : le participant doit comprendre pourquoi ça ne marche pas,
+    // plutôt que de croire à une faute de frappe dans le code.
+    $motifs = [
+        'prevu'    => "Cet événement n'est pas encore ouvert aux inscriptions.",
+        'en_cours' => "L'atelier a déjà commencé : les inscriptions sont closes.",
+        'termine'  => "Cet atelier est terminé.",
+        'annule'   => "Cet événement a été annulé.",
+    ];
+    if ($evt['statut'] !== 'ouvert') {
+        echo json_encode(['error' => $motifs[$evt['statut']] ?? "Cet événement n'accepte pas d'inscription."]);
         exit;
     }
 
@@ -56,7 +70,7 @@ if ($action === 'verifier_code') {
         'titre'   => $evt['titre'],
         'lieu'    => $evt['lieu'],
         'date'    => $evt['date_debut'],
-        'ouvert'  => $evt['statut'] === 'ouvert',
+        'ouvert'  => true,
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -83,12 +97,17 @@ if ($action === 'rejoindre') {
         echo json_encode(['error' => 'Code invalide.']);
         exit;
     }
-    if ($evt['statut'] === 'annule') {
-        echo json_encode(['error' => 'Cet événement a été annulé.']);
-        exit;
-    }
+    // Même règle qu'à la vérification du code : seul « ouvert » laisse entrer.
+    // Le contrôle est refait ici, et pas seulement à l'étape précédente : le
+    // statut a pu changer entre la saisie du code et la validation du nom.
     if ($evt['statut'] !== 'ouvert') {
-        echo json_encode(['error' => "Cet événement n'accepte pas d'inscription pour le moment."]);
+        $motifs = [
+            'prevu'    => "Cet événement n'est pas encore ouvert aux inscriptions.",
+            'en_cours' => "L'atelier a déjà commencé : les inscriptions sont closes.",
+            'termine'  => "Cet atelier est terminé.",
+            'annule'   => "Cet événement a été annulé.",
+        ];
+        echo json_encode(['error' => $motifs[$evt['statut']] ?? "Cet événement n'accepte pas d'inscription."]);
         exit;
     }
 

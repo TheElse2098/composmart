@@ -123,7 +123,17 @@ if ($action === 'etat') {
         if ($eq) $base['equipe'] = ['id' => (int)$p['equipe_id'], 'nom' => $eq['nom'], 'couleur' => $eq['couleur']];
     }
 
-    if ($evt['statut'] === 'annule') { echo json_encode($base + ['ecran' => 'annule'], JSON_UNESCAPED_UNICODE); exit; }
+    // Annulé ou terminé : la salle se vide. Le drapeau `sortir` demande au
+    // navigateur d'oublier le jeton et de revenir à la saisie du code — sinon
+    // les téléphones resteraient bloqués sur la dernière slide affichée.
+    // Les données du participant, elles, sont conservées en base.
+    if ($evt['statut'] === 'annule' || $evt['statut'] === 'termine') {
+        $fin = $evt['statut'] === 'annule'
+            ? "Cet événement a été annulé."
+            : "L'atelier est terminé. Merci de votre participation !";
+        echo json_encode($base + ['ecran' => $evt['statut'], 'sortir' => true, 'motif' => $fin], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 
     $slides = slides_evenement($conn, $p['evenement_id']);
 

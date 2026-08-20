@@ -612,8 +612,8 @@
         .catch(() => afficher('msgEdit', 'Erreur réseau.', false));
     }
 
-    function supprimerSlide(id) {
-      if (!confirm('Supprimer cette slide ?')) return;
+    async function supprimerSlide(id) {
+      if (!(await confirmer({ titre: 'Supprimer cette slide ?', valider: 'Supprimer', danger: true }))) return;
       post('slide_supprimer', { id })
         .then(d => { if (d.ok) chargerParcours(); else afficher('msgEdit', d.error || 'Suppression impossible.', false); })
         .catch(() => afficher('msgEdit', 'Erreur réseau.', false));
@@ -662,8 +662,8 @@
                   else afficher('msgListe', d2.error || 'Duplication impossible.', false);
                 });
               };
-              div.querySelector('[data-a=del]').onclick = () => {
-                if (!confirm('Supprimer le parcours « ' + p.nom + ' » ? Les ateliers déjà joués ne sont pas touchés.')) return;
+              div.querySelector('[data-a=del]').onclick = async () => {
+                if (!(await confirmer({ titre: 'Supprimer ce parcours ?', texte: '« ' + p.nom + ' » sera retiré de la bibliothèque. Les ateliers déjà joués ne sont pas touchés : leurs slides en sont des copies.', valider: 'Supprimer', danger: true }))) return;
                 post('supprimer', { id: p.id }).then(d2 => {
                   if (d2.ok) chargerListe(); else afficher('msgListe', d2.error || 'Suppression impossible.', false);
                 });
@@ -709,6 +709,7 @@
       })
       .catch(panne);
   </script>
+  <script src="/assets/js/confirmer.js"></script>
   <script src="/assets/js/emoji-picker.js"></script>
   <script src="/assets/js/theme.js"></script>
 </body>

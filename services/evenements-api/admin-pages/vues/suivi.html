@@ -440,15 +440,30 @@
       });
       const a = document.createElement('button');
       a.className = 'btn-annuler'; a.textContent = '✕ Annuler';
-      a.onclick = () => { if (confirm("Annuler cet événement ?")) basculer('annuler'); };
+      a.onclick = () => basculer('annuler');
       zone.appendChild(a);
       const s = document.createElement('button');
       s.className = 'btn-supprimer'; s.textContent = '🗑 Supprimer';
-      s.onclick = () => { if (confirm('Supprimer cet événement ? Il restera consultable dans les supprimés.')) basculer('supprimer'); };
+      s.onclick = () => basculer('supprimer');
       zone.appendChild(s);
     }
 
-    function basculer(action) {
+    // Chaque changement d'état passe par une confirmation : ouvrir trop tôt ou
+    // terminer par mégarde a des conséquences immédiates sur les téléphones
+    // de la salle (inscriptions coupées, participants déconnectés).
+    const CONFIRMATIONS = {
+      ouvrir:    { titre: 'Ouvrir les inscriptions ?', texte: 'Les participants pourront rejoindre avec le code.', valider: 'Ouvrir' },
+      reprevoir: { titre: 'Repasser en « Prévu » ?', texte: 'Les inscriptions seront coupées. Les personnes déjà inscrites restent en place.', valider: 'Repasser en Prévu' },
+      demarrer:  { titre: "Démarrer l'atelier ?", texte: 'Les inscriptions se ferment : personne ne pourra plus rejoindre.', valider: 'Démarrer' },
+      terminer:  { titre: "Terminer l'atelier ?", texte: 'Tous les participants seront déconnectés et renvoyés à l’écran de code.', valider: 'Terminer', danger: true },
+      annuler:   { titre: 'Annuler cet événement ?', texte: 'Tous les participants seront déconnectés. Personne ne pourra plus rejoindre.', valider: "Annuler l’événement", danger: true },
+      supprimer: { titre: 'Supprimer cet événement ?', texte: 'Il disparaît de la liste mais reste consultable dans les supprimés. Aucune donnée n’est effacée.', valider: 'Supprimer', danger: true },
+      restaurer: { titre: 'Restaurer cet événement ?', texte: 'Il réapparaîtra dans la liste, avec son statut d’origine.', valider: 'Restaurer' },
+    };
+
+    async function basculer(action) {
+      const c = CONFIRMATIONS[action];
+      if (c && !(await confirmer(c))) return;
       post('admin.php', action, { id: EVT })
         .then(d => { if (d.ok) chargerSuivi(); else afficher(d.error || 'Action impossible.', false); })
         .catch(() => afficher('Erreur réseau.', false));
@@ -689,8 +704,8 @@
     document.getElementById('btnPlusEquipe').onclick = () =>
       document.getElementById('lignesEquipes').appendChild(ligneEquipe(''));
 
-    document.getElementById('btnRedefinir').onclick = () => {
-      if (!confirm('Redéfinir les équipes ? Les participants seront détachés de leur équipe actuelle (leurs points sont conservés).')) return;
+    document.getElementById('btnRedefinir').onclick = async () => {
+      if (!(await confirmer({ titre: 'Redéfinir les équipes ?', texte: 'Les participants seront détachés de leur équipe actuelle. Leurs points sont conservés.', valider: 'Redéfinir', danger: true }))) return;
       document.getElementById('zoneDefEquipes').style.display = 'block';
       document.getElementById('zoneEquipes').style.display = 'none';
       const c = document.getElementById('lignesEquipes');
@@ -714,8 +729,8 @@
         .catch(() => afficher('Erreur réseau.', false));
     };
 
-    document.getElementById('btnRepartir').onclick = () => {
-      if (!confirm('Répartir aléatoirement tous les participants ?')) return;
+    document.getElementById('btnRepartir').onclick = async () => {
+      if (!(await confirmer({ titre: 'Répartir aléatoirement ?', texte: 'Tout le monde est rebrassé, y compris les participants déjà placés.', valider: 'Répartir' }))) return;
       post('admin.php', 'repartir_auto', { id: EVT })
         .then(d => {
           if (d.ok) { afficher(d.repartis + ' participants répartis.', true); chargerEquipes(); chargerSuivi(); }
@@ -816,6 +831,7 @@
 
     window.addEventListener('beforeunload', () => { if (pollTimer) clearInterval(pollTimer); });
   </script>
+  <script src="/assets/js/confirmer.js"></script>
   <script src="/assets/js/media-embed.js"></script>
   <script src="/assets/js/slide-render.js"></script>
   <script src="/assets/js/theme.js"></script>

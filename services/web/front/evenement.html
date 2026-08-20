@@ -370,6 +370,8 @@
         .then(d => {
           if (d.error === 'session_perdue') { quitterLive('Ta session a expiré, entre à nouveau le code.'); return; }
           if (d.error) { return; }
+          // L'animateur a annulé ou terminé : la salle se vide.
+          if (d.sortir) { quitterLive(d.motif || "L'atelier est terminé."); return; }
           dernierEtat = d;
           // Charte visuelle choisie pour cet événement (cf. slides.css).
           document.body.setAttribute('data-theme-slide', (d.evenement && d.evenement.theme) || 'foret');
@@ -575,6 +577,7 @@
     if (token) demarrerLive(); else montrer('code');
     window.addEventListener('beforeunload', () => { if (pollTimer) clearInterval(pollTimer); });
   </script>
+  <script src="/assets/js/confirmer.js"></script>
   <script src="/assets/js/media-embed.js"></script>
   <script src="/assets/js/slide-render.js"></script>
   <script src="/assets/js/site-footer.js"></script>

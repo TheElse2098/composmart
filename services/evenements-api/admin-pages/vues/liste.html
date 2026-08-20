@@ -211,17 +211,25 @@
       });
     }
 
-    const CONFIRM_MSG = {
-      supprimer: 'Supprimer cet événement ? Il disparaîtra de la liste mais restera consultable dans les supprimés.',
-      annuler: "Annuler cet événement ? Les participants qui tentent de rejoindre verront un message d'annulation.",
+    // Confirmation intégrée à la page pour tout changement d'état : ces
+    // actions ont un effet immédiat sur les téléphones de la salle.
+    const CONFIRMATIONS = {
+      ouvrir:    { titre: 'Ouvrir les inscriptions ?', texte: 'Les participants pourront rejoindre avec le code.', valider: 'Ouvrir' },
+      reprevoir: { titre: 'Repasser en « Prévu » ?', texte: 'Les inscriptions seront coupées.', valider: 'Repasser en Prévu' },
+      demarrer:  { titre: "Démarrer l'atelier ?", texte: 'Les inscriptions se ferment : personne ne pourra plus rejoindre.', valider: 'Démarrer' },
+      terminer:  { titre: "Terminer l'atelier ?", texte: 'Tous les participants seront déconnectés.', valider: 'Terminer', danger: true },
+      annuler:   { titre: 'Annuler cet événement ?', texte: 'Tous les participants seront déconnectés. Personne ne pourra plus rejoindre.', valider: "Annuler l’événement", danger: true },
+      supprimer: { titre: 'Supprimer cet événement ?', texte: 'Il disparaît de la liste mais reste consultable dans les supprimés. Aucune donnée n’est effacée.', valider: 'Supprimer', danger: true },
+      restaurer: { titre: 'Restaurer cet événement ?', texte: 'Il réapparaîtra dans la liste, avec son statut d’origine.', valider: 'Restaurer' },
     };
 
-    function basculerStatut(action, id) {
-      if (CONFIRM_MSG[action] && !confirm(CONFIRM_MSG[action])) return;
+    async function basculerStatut(action, id) {
+      const c = CONFIRMATIONS[action];
+      if (c && !(await confirmer(c))) return;
       fetch('/api/evenements/admin.php?action=' + action, { method: 'POST', body: new URLSearchParams({ id }) })
         .then(r => r.json())
-        .then(d => { if (d.ok) chargerListe(); else alert(d.error || 'Action impossible.'); })
-        .catch(() => alert('Erreur réseau.'));
+        .then(d => { if (d.ok) chargerListe(); else afficher(d.error || 'Action impossible.', false); })
+        .catch(() => afficher('Erreur réseau.', false));
     }
 
     document.querySelectorAll('#statutTabs .tab').forEach(tab => {
@@ -262,6 +270,7 @@
     document.getElementById('content').style.display = 'block';
     chargerListe();
   </script>
+  <script src="/assets/js/confirmer.js"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 </html>

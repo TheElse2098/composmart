@@ -188,8 +188,8 @@
           + '<div class="anec-btns"><button class="btn-mini" data-a="edit">✏️</button>'
           + '<button class="btn-mini sup" data-a="del">🗑</button></div>';
         div.querySelector('[data-a=edit]').onclick = () => editer(a);
-        div.querySelector('[data-a=del]').onclick = () => {
-          if (!confirm('Supprimer cette anecdote ?\nLes slides qui la visaient afficheront un texte de repli.')) return;
+        div.querySelector('[data-a=del]').onclick = async () => {
+          if (!(await confirmer({ titre: 'Supprimer cette anecdote ?', texte: 'Les slides qui la visaient afficheront un texte de repli.', valider: 'Supprimer', danger: true }))) return;
           post('supprimer', { id: a.id }).then(d => { if (d.ok) charger(); else afficher(d.error || 'Suppression impossible.', false); });
         };
         box.appendChild(div);
@@ -240,6 +240,7 @@
 
     charger();
   </script>
+  <script src="/assets/js/confirmer.js"></script>
   <script src="/assets/js/emoji-picker.js"></script>
   <script>attacherSelecteursEmoji();</script>
   <script src="/assets/js/theme.js"></script>
