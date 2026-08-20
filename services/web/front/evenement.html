@@ -41,8 +41,14 @@
     .overlay.open { opacity: 1; pointer-events: all; }
 
     /* Bandeau de score : visible seulement pendant le parcours */
-    .score-bar { display: none; width: 100%; background: #a8e6bf; color: #1a3a25; padding: 9px 20px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.95rem; text-align: center; }
+    .score-bar { display: none; width: 100%; background: #a8e6bf; color: #1a3a25; padding: 9px 14px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.95rem; align-items: center; gap: 10px; }
+    .score-bar.visible { display: flex; }
+    .score-bar .qui { flex: 1; text-align: center; }
     .score-bar .eq { font-weight: 700; font-size: 0.8rem; opacity: 0.8; }
+    /* Sortie toujours offerte : sans elle, un participant dont l'atelier tourne
+       mal n'a aucun moyen de revenir à la page d'accueil des événements. */
+    .score-bar .quitter { flex: none; border: none; background: rgba(26,58,37,0.12); color: #1a3a25; font-family: inherit; font-weight: 800; font-size: 0.78rem; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+    .score-bar .quitter:hover { background: rgba(26,58,37,0.22); }
 
     .hero { text-align: center; padding: 26px 20px 6px; }
     .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.8rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
@@ -275,6 +281,16 @@
     let pollTimer = null;
     let rendu = '';          // signature de ce qui est affiché, évite de réécrire le DOM à chaque sondage
     let dernierEtat = null;
+    // L'écran de parcours n'est montré qu'une fois un état reçu du serveur.
+    // Basculer avant, sur la seule foi d'un jeton en localStorage, donnait une
+    // page entièrement vide dès que le serveur refusait ce jeton : le hero et
+    // le formulaire étaient déjà masqués, et l'erreur était avalée en silence.
+    let liveConfirme = false;
+    // Un atelier ne doit pas s'interrompre sur un hoquet réseau, mais il ne doit
+    // pas non plus laisser quelqu'un enfermé devant un écran mort : on tolère
+    // quelques échecs consécutifs, puis on rend la main.
+    let echecs = 0;
+    const ECHECS_MAX = 4;
 
     function afficher(texte, ok) {
       msg.className = 'msg ' + (ok ? 'ok' : 'error');
@@ -290,6 +306,7 @@
       document.getElementById('hero').style.display     = etape === 'live' ? 'none' : '';
       // En parcours, la carte prend la hauteur de l'écran et centre son contenu.
       document.body.classList.toggle('en-parcours', etape === 'live');
+      if (etape !== 'live') document.getElementById('scoreBar').classList.remove('visible');
       if (etape !== 'live') document.getElementById('carte').removeAttribute('data-type');
     }
 
@@ -337,16 +354,25 @@
           // son téléphone en plein atelier ne fait pas perdre sa place.
           token = d.token;
           localStorage.setItem('evt_token', token);
-          demarrerLive();
+          // Le code a servi : il n'a plus rien à faire dans la barre d'adresse.
+          // /evenement reste ainsi l'URL de la page, quel que soit le chemin
+          // emprunté pour y arriver (QR, lien, saisie manuelle).
+          if (window.location.search) history.replaceState(null, '', window.location.pathname);
+          demarrerLive(false);
         })
         .catch(() => afficher('Erreur réseau, réessaie.', false))
         .finally(() => { btn.disabled = false; btn.textContent = 'Je participe'; });
     });
 
     // ══════════ ÉTAPE 3 — RUNTIME ══════════
-    function demarrerLive() {
-      montrer('live');
-      cacherMsg();
+    function demarrerLive(reprise) {
+      // En reprise de session on RESTE sur la page d'accueil tant que le serveur
+      // n'a pas confirmé le jeton ; c'est chargerEtat() qui bascule vers le
+      // parcours au premier état reçu.
+      liveConfirme = false;
+      echecs = 0;
+      if (reprise) { montrer('code'); afficher('Reprise de ta session…', true); }
+      else { cacherMsg(); }
       chargerEtat();
       if (pollTimer) clearInterval(pollTimer);
       // L'écran suit l'animateur : sondage régulier, seul mécanisme de
@@ -354,14 +380,41 @@
       pollTimer = setInterval(chargerEtat, 2500);
     }
 
-    function quitterLive(message) {
+    function quitterLive(message, ok) {
       if (pollTimer) clearInterval(pollTimer);
+      pollTimer = null;
       localStorage.removeItem('evt_token');
       token = '';
-      document.getElementById('scoreBar').style.display = 'none';
+      codeValide = '';
+      liveConfirme = false;
+      echecs = 0;
+      document.getElementById('scoreBar').classList.remove('visible');
+      document.getElementById('zoneLive').innerHTML = '';
+      document.body.removeAttribute('data-theme-slide');
       rendu = '';
+      dernierEtat = null;
+      // Le code de l'atelier quitté ne doit pas rester dans la barre d'adresse :
+      // sinon un rafraîchissement ou un partage du lien renvoie vers un atelier
+      // mort, et l'URL canonique /evenement n'est jamais celle qu'on a sous les
+      // yeux. La page d'accueil des événements redevient l'état par défaut.
+      if (window.location.search) {
+        history.replaceState(null, '', window.location.pathname);
+      }
+      document.getElementById('code').value = '';
       montrer('code');
-      if (message) afficher(message, false);
+      if (message) afficher(message, !!ok);
+    }
+
+    /**
+     * Échec d'un sondage. Avant confirmation du jeton, on rend la main tout de
+     * suite : rien n'est encore affiché, rester bloqué n'apporterait rien. En
+     * plein atelier au contraire, on encaisse quelques échecs — un tunnel, un
+     * ascenseur, un wifi qui bascule — avant de sortir le participant.
+     */
+    function echouer(motif) {
+      if (!liveConfirme) { quitterLive(motif || 'Atelier indisponible.'); return; }
+      echecs++;
+      if (echecs >= ECHECS_MAX) { quitterLive(motif || "Connexion perdue avec l'atelier."); }
     }
 
     function chargerEtat() {
@@ -369,23 +422,50 @@
         .then(r => r.json())
         .then(d => {
           if (d.error === 'session_perdue') { quitterLive('Ta session a expiré, entre à nouveau le code.'); return; }
-          if (d.error) { return; }
+          // Une erreur qui n'est pas un simple hoquet (événement supprimé, base
+          // indisponible…) doit rendre la main. La laisser passer en silence est
+          // ce qui laissait la page figée, sans message et sans issue.
+          if (d.error) { echouer(d.error); return; }
           // L'animateur a annulé ou terminé : la salle se vide.
           if (d.sortir) { quitterLive(d.motif || "L'atelier est terminé."); return; }
+          echecs = 0;
+          // Premier état reçu : le jeton est bon, on peut montrer le parcours.
+          if (!liveConfirme) { liveConfirme = true; cacherMsg(); montrer('live'); }
           dernierEtat = d;
           // Charte visuelle choisie pour cet événement (cf. slides.css).
           document.body.setAttribute('data-theme-slide', (d.evenement && d.evenement.theme) || 'foret');
           majEnTete(d);
           rendreEcran(d);
         })
-        .catch(() => {});
+        .catch(() => echouer("Connexion perdue avec l'atelier."));
     }
 
     function majEnTete(d) {
       const el = document.getElementById('scoreBar');
-      el.style.display = 'block';
-      el.innerHTML = '👤 ' + echap(d.participant.nom) + ' · ' + (d.participant.points || 0) + ' pts'
+      el.classList.add('visible');
+      // Ossature posee une seule fois : majEnTete tourne a chaque sondage, et
+      // reecrire le bouton toutes les 2,5 s lui ferait perdre le focus clavier
+      // au milieu d'une navigation.
+      if (!el.firstChild) {
+        el.innerHTML = '<span class="qui"></span>'
+          + '<button type="button" class="quitter" id="btnQuitter">Quitter</button>';
+        cablerQuitter();
+      }
+      el.querySelector('.qui').innerHTML = '👤 ' + echap(d.participant.nom)
+        + ' · ' + (d.participant.points || 0) + ' pts'
         + (d.equipe ? ' <span class="eq">— ' + echap(d.equipe.nom) + '</span>' : '');
+    }
+
+    function cablerQuitter() {
+      document.getElementById('btnQuitter').onclick = async () => {
+        const ok = await window.confirmer({
+          titre: "Quitter l'atelier ?",
+          texte: 'Tu reviendras à la page des événements. Pour revenir dans cet atelier, il faudra saisir le code à nouveau.',
+          valider: 'Quitter',
+          danger: true,
+        });
+        if (ok) quitterLive("Tu as quitté l'atelier.", true);
+      };
     }
 
     function rendreEcran(d) {
@@ -574,7 +654,7 @@
     // ══════════ REPRISE DE SESSION ══════════
     // Un jeton déjà en mémoire = l'atelier est en cours : on saute la saisie du
     // code (rafraîchissement de page, écran verrouillé, retour sur l'onglet).
-    if (token) demarrerLive(); else montrer('code');
+    if (token) demarrerLive(true); else montrer('code');
     window.addEventListener('beforeunload', () => { if (pollTimer) clearInterval(pollTimer); });
   </script>
   <script src="/assets/js/confirmer.js"></script>

@@ -18,14 +18,14 @@ if (!$conn) { echo json_encode(['error' => 'Connexion DB échouée']); exit; }
 
 // Registre des jeux : slug => score maximum atteignable.
 // Ajouter une entrée ici quand on crée un nouveau jeu.
-$JEUX_MAX = ['mot-mystere' => 80, 'compost-ou-pas' => 12, 'temps-decompo' => 30];
+$JEUX_MAX = ['mot-mystere' => 80, 'compost-ou-pas' => 12, 'temps-decompo' => 30, 'tri-eclair' => 15];
 $JEUX_VALIDES = array_keys($JEUX_MAX);
 
 // Réserve d'XP de chaque jeu. L'XP acquise = réserve × (record ÷ score max),
 // créditée par paliers : seule l'amélioration du record rapporte la différence
 // (80 % du max = 80 % de la réserve ; passer à 90 % ne rapporte que les 10 %
 // manquants). Bornée par la réserve : impossible de farmer à l'infini.
-$JEUX_XP = ['mot-mystere' => 50, 'compost-ou-pas' => 50, 'temps-decompo' => 50];
+$JEUX_XP = ['mot-mystere' => 50, 'compost-ou-pas' => 50, 'temps-decompo' => 50, 'tri-eclair' => 50];
 
 // XP cumulée pour un record donné (arrondi au plus proche).
 function xp_pour_best($jeu_id, $best) {
@@ -169,6 +169,7 @@ if ($action === 'profile') {
         'mot-mystere'    => ['nom' => 'Mot mystère',       'emoji' => '🔤', 'max' => 80],
         'compost-ou-pas' => ['nom' => 'Compost ou pas ?',  'emoji' => '♻️', 'max' => 12],
         'temps-decompo'  => ['nom' => 'Combien de temps ?', 'emoji' => '⏳', 'max' => 30],
+        'tri-eclair'     => ['nom' => 'Tri éclair',        'emoji' => '⚡', 'max' => 15],
     ];
     $joues = [];
     $parties_total = 0;
