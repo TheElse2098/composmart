@@ -310,6 +310,11 @@
     const API = '/api/evenements';
     const EVT = window.ROUTE && window.ROUTE.evenement_id;
     let pollTimer = null, ongletActif = 'animation', etatAnim = null, evenement = null, TYPES = {};
+    // Signature de la carte affichée dans l'aperçu. Sans elle, le sondage de
+    // la console réécrivait l'aperçu toutes les 3 s : toute animation CSS de la
+    // slide repartait alors de zéro sans jamais aboutir, et une vidéo en cours
+    // de lecture se rembobinait. Vide = à redessiner.
+    let sigApercu = '';
     let parcoursCharges = false, equipesCache = [], participantsCache = null, signatureParticipants = '';
 
     function afficher(texte, ok) {
@@ -535,6 +540,7 @@
       // de l'animateur.
       const ap = document.getElementById('apercu');
       if (!d.slide) {
+        sigApercu = '';
         ap.innerHTML = '<div class="apercu-type">En attente</div>'
           + "<div class=\"apercu-titre\">Le parcours n'a pas encore démarré</div>"
           + "<div class=\"hint\">Les participants voient la salle d'attente. Clique sur « Démarrer ».</div>";
@@ -555,9 +561,13 @@
           if (window.ajusterMedias) window.ajusterMedias(ap);
         };
         const c0 = d.slide.contenu || {};
+        // Les cartes qui portent un classement affichent des données vivantes :
+        // elles doivent suivre chaque sondage. Les autres sont figées une fois
+        // dessinées — les redessiner casserait leur animation et leurs médias.
         const besoin = (d.slide.type === 'classement') || (d.slide.type === 'fin' && c0.afficher_classement);
-        if (besoin) chargerClassementData().then(dessiner).catch(() => dessiner(null));
-        else dessiner(null);
+        const sig = [d.slide.id, d.index, d.total].join('|');
+        if (besoin) { sigApercu = ''; chargerClassementData().then(dessiner).catch(() => dessiner(null)); }
+        else if (sig !== sigApercu) { sigApercu = sig; dessiner(null); }
       }
 
       // Sommaire cliquable

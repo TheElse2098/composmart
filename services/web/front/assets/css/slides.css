@@ -402,6 +402,22 @@ html.dark [data-theme-slide="papier"] .sl { box-shadow: 14px 14px 0 rgba(0, 0, 0
    Durées pilotées par --sl-dur (pousse) et --sl-burst (gerbe), posées au rendu.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* Bouton de relance, dans la ligne d'en-tête de la carte. */
+.sl__rejouer {
+  flex: none; appearance: none; cursor: pointer;
+  padding: 1.1cqw 2.6cqw; border-radius: 999px;
+  background: transparent; border: 1.5px solid var(--sl-trait);
+  font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 800;
+  font-size: clamp(10px, 2.1cqw, 12px); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--sl-encre); transition: border-color 0.15s, background 0.15s;
+}
+.sl__rejouer:hover { border-color: var(--sl-encre); }
+.sl__rejouer:focus-visible { outline: 3px solid var(--sl-accent); outline-offset: 2px; }
+.sl--plein .sl__rejouer { border-color: rgba(255, 255, 255, 0.32); color: #fff; }
+.sl--plein .sl__rejouer:hover { border-color: #fff; }
+[data-theme-slide="papier"] .sl__rejouer { border-radius: 6px; border-width: 3px; border-color: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl--fete .sl__rejouer { border-color: rgba(253, 250, 241, 0.5); color: #fdfaf1; }
+
 /* ── La pousse ─────────────────────────────────────────────────────────── */
 .sl__pousse {
   position: relative; flex: 1; min-height: 42cqw;
@@ -600,12 +616,30 @@ html.dark [data-theme-slide="papier"] .sl { box-shadow: 14px 14px 0 rgba(0, 0, 0
 }
 [data-theme-slide="papier"] .sl--fete .sl__jauge-txt { color: rgba(253, 250, 241, 0.72); }
 
-/* Accessibilité : pas de mouvement imposé, mais l'image finale reste juste. */
+/* Accessibilité : pas de mouvement imposé, mais l'image finale reste juste.
+
+   La dérogation [data-anime] est posée par le bouton « Rejouer » : quelqu'un
+   qui clique explicitement sur « Rejouer » demande le mouvement, le lui refuser
+   rendrait le bouton inerte. Le réglage système reste respecté par défaut —
+   et il est plus courant qu'on ne croit (Windows 11, Paramètres › Accessibilité
+   › Effets visuels › Effets d'animation), au point d'expliquer à lui seul une
+   carte qui s'affiche figée. */
 @media (prefers-reduced-motion: reduce) {
-  .sl__pousse, .sl__plante, .sl__tige, .sl__feuille, .sl__fleur, .sl__petales,
-  .sl__mot, .sl__halo, .sl__anneau, .sl__vol, .sl__piece, .sl__bravo,
-  .sl__jauge > span { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
-  .sl__tige { stroke-dashoffset: 0; }
-  .sl__feuille, .sl__fleur, .sl__mot, .sl__bravo { opacity: 1; }
-  .sl__halo, .sl__anneau, .sl__piece { opacity: 0; }
+  .sl:not([data-anime]) .sl__pousse,  .sl:not([data-anime]) .sl__plante,
+  .sl:not([data-anime]) .sl__tige,    .sl:not([data-anime]) .sl__feuille,
+  .sl:not([data-anime]) .sl__fleur,   .sl:not([data-anime]) .sl__petales,
+  .sl:not([data-anime]) .sl__mot,     .sl:not([data-anime]) .sl__halo,
+  .sl:not([data-anime]) .sl__anneau,  .sl:not([data-anime]) .sl__vol,
+  .sl:not([data-anime]) .sl__piece,   .sl:not([data-anime]) .sl__bravo,
+  .sl:not([data-anime]) .sl__jauge > span {
+    animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+  }
+  .sl:not([data-anime]) .sl__tige { stroke-dashoffset: 0; }
+  .sl:not([data-anime]) .sl__feuille,
+  .sl:not([data-anime]) .sl__fleur,
+  .sl:not([data-anime]) .sl__mot,
+  .sl:not([data-anime]) .sl__bravo { opacity: 1; }
+  .sl:not([data-anime]) .sl__halo,
+  .sl:not([data-anime]) .sl__anneau,
+  .sl:not([data-anime]) .sl__piece { opacity: 0; }
 }

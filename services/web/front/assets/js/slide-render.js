@@ -113,6 +113,25 @@
       + (txt ? '<p class="sl__verdict-txt">' + e(txt) + '</p>' : '') + '</div>';
   }
 
+  // Relance d'animation. Écouteur unique et délégué : le câblage des clics est
+  // propre à chaque page, mais celui-ci ne dépend d'aucun état de page — le
+  // poser ici évite de le dupliquer dans evenement.html et suivi.html.
+  // Remplacer la scène par un clone est ce qui redémarre VRAIMENT les
+  // animations CSS : retirer puis remettre une classe ne suffit pas sans forcer
+  // un reflow, et le clone repart d'un nœud neuf, donc d'un temps zéro.
+  document.addEventListener('click', function (ev) {
+    var b = ev.target && ev.target.closest ? ev.target.closest('[data-rejouer]') : null;
+    if (!b) return;
+    var carte = b.closest('.sl');
+    var scene = carte ? carte.querySelector('[data-scene]') : null;
+    if (!scene || !scene.parentNode) return;
+    // Demande explicite de mouvement : lève la neutralisation posée par
+    // prefers-reduced-motion (cf. slides.css), sinon le bouton ne ferait rien
+    // sur un poste où les effets d'animation système sont désactivés.
+    carte.setAttribute('data-anime', '');
+    scene.parentNode.replaceChild(scene.cloneNode(true), scene);
+  });
+
   window.rendreSlideHtml = function (s, o) {
     o = o || {};
     var c = s.contenu || {};
@@ -224,7 +243,7 @@
               + '"></i></i></i>';
           }
 
-          anim = '<div class="sl__fete" style="--sl-burst:' + burst + 's" role="img" aria-label="Confettis">'
+          anim = '<div class="sl__fete" data-scene style="--sl-burst:' + burst + 's" role="img" aria-label="Confettis">'
             + '<i class="sl__anneau" style="--x:' + ox + '%;--y:' + oy + '%"></i>'
             + '<i class="sl__anneau sl__anneau--accent" style="--x:' + ox + '%;--y:' + oy + '%"></i>'
             + pieces
@@ -250,7 +269,7 @@
               + '" transform="rotate(' + Math.round(p * pas) + ')" opacity="' + opac[p] + '"></ellipse>';
           }
 
-          anim = '<div class="sl__pousse" style="--sl-dur:6.4s">'
+          anim = '<div class="sl__pousse" data-scene style="--sl-dur:6.4s">'
             + '<i class="sl__halo"></i>'
             + '<svg class="sl__plante" viewBox="0 0 200 320" role="img" aria-label="Une plante qui pousse">'
             + '<path class="sl__tige" pathLength="100" stroke-dasharray="100"'
@@ -265,8 +284,18 @@
             + '</div>';
         }
 
+        // En-tête repris des gabarits : pastille de section à gauche, bouton de
+        // relance à droite. L'animation tourne en boucle, mais l'animateur veut
+        // pouvoir la relancer au moment où il en parle plutôt que d'attendre le
+        // prochain tour de boucle.
+        var teteEnc = '<div class="sl__ligne">'
+          + '<span class="sl__pastille">' + (c.animation === 'confettis' ? 'Bravo' : 'Encouragement') + '</span>'
+          + '<span class="sl__filet"></span>'
+          + '<button type="button" class="sl__rejouer" data-rejouer>&#8635; Rejouer</button></div>';
+
         corps = (plein ? '' : '<div class="sl__bandeau"></div>')
           + '<div class="sl__corps" style="--pousse:' + av.toFixed(3) + '; text-align:center">'
+          + teteEnc
           + anim
           + '<h2 class="sl__titre">' + e(c.message) + '</h2>'
           + (c.sous_titre ? '<p class="sl__texte" style="text-align:center">' + e(c.sous_titre) + '</p>' : '')
