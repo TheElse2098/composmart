@@ -193,6 +193,25 @@
         </div>
       </div>
 
+      <!-- Déroulé propre à cet événement : édition et enchaînement de parcours.
+           N'apparaît qu'une fois des slides présentes, et seulement tant que
+           l'atelier n'a pas démarré. -->
+      <div id="zoneDeroule" style="display:none">
+        <div class="card">
+          <div class="section-titre">🧩 Déroulé de cet événement</div>
+          <div class="hint" id="deroulSource" style="margin-bottom:10px"></div>
+          <div class="console-actions" style="margin-bottom:12px">
+            <a class="btn-principal" id="lienDeroule" href="#" style="text-decoration:none;display:inline-block">✏️ Éditer le déroulé</a>
+          </div>
+          <div class="field">
+            <label>Enchaîner un parcours de plus</label>
+            <select id="selParcoursSuite"></select>
+          </div>
+          <button type="button" class="btn-mini" id="btnChainer">+ Ajouter à la suite</button>
+          <div class="hint">Ses slides sont recopiées à la fin du déroulé. Elles deviennent indépendantes du modèle : les modifier ici ne touche pas au parcours de la bibliothèque.</div>
+        </div>
+      </div>
+
       <div id="zoneConsole" style="display:none">
         <div class="card">
           <div class="console-barre">
@@ -394,9 +413,21 @@
 
           document.getElementById('zoneSansParcours').style.display = d.evenement.nb_slides > 0 ? 'none' : 'block';
           document.getElementById('zoneConsole').style.display      = d.evenement.nb_slides > 0 ? 'block' : 'none';
+          // Le déroulé ne se retouche que tant que l'atelier n'a pas démarré.
+          // Le serveur applique la règle complète (il regarde aussi si des
+          // réponses existent) ; ici on décide seulement quoi afficher.
+          const deroulOuvert = ['prevu', 'ouvert'].includes(d.evenement.statut) && !d.evenement.supprime;
+          document.getElementById('zoneDeroule').style.display =
+            (d.evenement.nb_slides > 0 && deroulOuvert) ? 'block' : 'none';
+          document.getElementById('lienDeroule').href = '/evenements-admin/' + EVT + '/deroule';
+          document.getElementById('deroulSource').textContent =
+            d.evenement.nb_slides + ' slide(s) dans cet événement.';
+
           // Une seule fois : sans ce garde, la liste serait rechargée à chaque
           // tour de sondage.
-          if (!d.evenement.nb_slides && !parcoursCharges) { parcoursCharges = true; chargerParcoursDispo(); }
+          if (!parcoursCharges && (!d.evenement.nb_slides || deroulOuvert)) {
+            parcoursCharges = true; chargerParcoursDispo();
+          }
 
           document.getElementById('loader').style.display = 'none';
           document.getElementById('content').style.display = 'block';
@@ -487,15 +518,35 @@
       fetch(API + '/parcours.php?action=liste')
         .then(r => r.json())
         .then(d => {
-          const sel = document.getElementById('selParcours');
-          sel.innerHTML = (d.parcours || []).map(p =>
-            '<option value="' + p.id + '">' + echap(p.nom) + ' — ' + p.nb_slides + ' slides</option>').join('');
-          if (!(d.parcours || []).length) {
-            sel.innerHTML = '<option value="">Aucun parcours — crée-en un d\'abord</option>';
-          }
+          const liste = d.parcours || [];
+          const options = liste.length
+            ? liste.map(p => '<option value="' + p.id + '">' + echap(p.nom) + ' — ' + p.nb_slides + ' slides</option>').join('')
+            : '<option value="">Aucun parcours — crée-en un d\'abord</option>';
+          // Les deux sélecteurs partagent la même liste : celui de l'affectation
+          // initiale et celui de l'enchaînement.
+          document.getElementById('selParcours').innerHTML = options;
+          document.getElementById('selParcoursSuite').innerHTML = options;
         })
         .catch(() => {});
     }
+
+    document.getElementById('btnChainer').onclick = async () => {
+      const pid = document.getElementById('selParcoursSuite').value;
+      if (!pid) { afficher('Crée d\'abord un parcours dans la bibliothèque.', false); return; }
+      const nom = document.getElementById('selParcoursSuite').selectedOptions[0].textContent;
+      const ok = await confirmer({
+        titre: 'Ajouter ce parcours à la suite ?',
+        texte: 'Les slides de « ' + nom + ' » seront recopiées à la fin du déroulé de cet événement.',
+        valider: 'Ajouter',
+      });
+      if (!ok) return;
+      post('admin.php', 'ajouter_parcours', { id: EVT, parcours_id: pid })
+        .then(d => {
+          if (d.ok) { afficher(d.slides + ' slides ajoutées à la suite.', true); chargerSuivi(); chargerAnimation(); }
+          else afficher(d.error || 'Ajout impossible.', false);
+        })
+        .catch(() => afficher('Erreur réseau.', false));
+    };
 
     document.getElementById('btnAffecter').onclick = () => {
       const pid = document.getElementById('selParcours').value;

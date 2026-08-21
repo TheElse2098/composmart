@@ -28,6 +28,55 @@ function generer_code_evenement($conn) {
     return null; // improbable : 33^6 combinaisons
 }
 
+/**
+ * Le déroulé d'un événement n'est modifiable que tant que l'atelier n'a pas
+ * démarré. Deux raisons, l'une évidente et l'autre moins :
+ *
+ *  1. changer les slides sous les pieds d'une salle en train de jouer produit
+ *     des écrans désynchronisés, l'animateur pointant une question que plus
+ *     personne n'a ;
+ *  2. supprimer une slide fait tomber les `reponses` qui la référencent
+ *     (ON DELETE CASCADE) : les points déjà gagnés disparaîtraient du
+ *     classement sans laisser de trace.
+ *
+ * Renvoie null si l'événement est modifiable, sinon le motif du refus.
+ */
+function evt_deroule_verrou($conn, $evenement_id) {
+    $stmt = mysqli_prepare($conn, 'SELECT statut, supprime FROM evenements WHERE id = ?');
+    $stmt->bind_param('i', $evenement_id);
+    $stmt->execute();
+    $e = $stmt->get_result()->fetch_assoc();
+    if (!$e) return 'Événement introuvable.';
+    if ((int)$e['supprime'] === 1) return 'Cet événement est supprimé : son déroulé est en lecture seule.';
+
+    $motifs = [
+        'en_cours' => "L'atelier est en cours : son déroulé ne peut plus être modifié.",
+        'termine'  => "Cet atelier est terminé : son déroulé est en lecture seule.",
+        'annule'   => "Cet événement est annulé : son déroulé est en lecture seule.",
+    ];
+    if (isset($motifs[$e['statut']])) return $motifs[$e['statut']];
+
+    // Ceinture et bretelles : un statut « prévu » ne devrait jamais coexister
+    // avec des réponses, mais si cela arrivait, les points priment.
+    $stmt = mysqli_prepare($conn, 'SELECT COUNT(*) AS n FROM reponses WHERE evenement_id = ?');
+    $stmt->bind_param('i', $evenement_id);
+    $stmt->execute();
+    if ((int)$stmt->get_result()->fetch_assoc()['n'] > 0) {
+        return 'Des participants ont déjà répondu : le déroulé ne peut plus être modifié.';
+    }
+    return null;
+}
+
+/** Événement propriétaire d'une slide, ou 0. Sert à refuser toute opération
+ *  sur une slide qui n'appartient pas à l'événement annoncé. */
+function evt_slide_proprietaire($conn, $slide_id) {
+    $stmt = mysqli_prepare($conn, 'SELECT evenement_id FROM evenement_slides WHERE id = ?');
+    $stmt->bind_param('i', $slide_id);
+    $stmt->execute();
+    $r = $stmt->get_result()->fetch_assoc();
+    return $r ? (int)$r['evenement_id'] : 0;
+}
+
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // ── CRÉER UN ÉVÉNEMENT ──────────────────────────────────────────────────────
@@ -156,31 +205,67 @@ if ($action === 'liste') {
 // ── AFFECTER UN PARCOURS (copie ses slides dans l'événement) ───────────────
 // La copie est le mécanisme qui rend un parcours réutilisable sans figer les
 // ateliers déjà joués (cf. db/evenements.sql, table evenement_slides).
+/**
+ * Recopie les slides d'un parcours À LA SUITE du déroulé d'un événement et
+ * enregistre la provenance. Les slides copiées sont ensuite indépendantes du
+ * modèle : c'est ce qui permet d'adapter un déroulé pour un client sans
+ * toucher au parcours de la bibliothèque, et de ne pas réécrire l'historique
+ * d'un atelier déjà joué.
+ *
+ * Renvoie [nb_copiees, nom_du_parcours] ou [0, null] si le parcours n'existe pas.
+ */
+function evt_chainer_parcours($conn, $evenement_id, $parcours_id) {
+    $stmt = mysqli_prepare($conn, 'SELECT nom FROM parcours WHERE id = ?');
+    $stmt->bind_param('i', $parcours_id);
+    $stmt->execute();
+    $p = $stmt->get_result()->fetch_assoc();
+    if (!$p) return [0, null];
+
+    // On repart du dernier rang occupé : sans ce décalage, les slides ajoutées
+    // se mélangeraient aux précédentes puisque l'ordre du modèle recommence à 0.
+    $stmt = mysqli_prepare($conn, 'SELECT COALESCE(MAX(ordre), -1) AS m FROM evenement_slides WHERE evenement_id = ?');
+    $stmt->bind_param('i', $evenement_id);
+    $stmt->execute();
+    $decalage = (int)$stmt->get_result()->fetch_assoc()['m'] + 1;
+
+    $stmt = mysqli_prepare($conn,
+        'INSERT INTO evenement_slides (evenement_id, ordre, type, titre, contenu, points)
+         SELECT ?, ordre + ?, type, titre, contenu, points FROM parcours_slides WHERE parcours_id = ? ORDER BY ordre, id');
+    $stmt->bind_param('iii', $evenement_id, $decalage, $parcours_id);
+    $stmt->execute();
+    $copiees = mysqli_affected_rows($conn);
+
+    $stmt = mysqli_prepare($conn, 'SELECT COALESCE(MAX(ordre), -1) AS m FROM evenement_parcours WHERE evenement_id = ?');
+    $stmt->bind_param('i', $evenement_id);
+    $stmt->execute();
+    $rang = (int)$stmt->get_result()->fetch_assoc()['m'] + 1;
+
+    $stmt = mysqli_prepare($conn,
+        'INSERT INTO evenement_parcours (evenement_id, parcours_id, nom, ordre, nb_slides) VALUES (?, ?, ?, ?, ?)');
+    $stmt->bind_param('iisii', $evenement_id, $parcours_id, $p['nom'], $rang, $copiees);
+    $stmt->execute();
+
+    return [$copiees, $p['nom']];
+}
+
+// ── AFFECTER UN PARCOURS (remplace tout le déroulé) ────────────────────────
 if ($action === 'affecter_parcours') {
     $id          = (int)($_POST['id'] ?? 0);
     $parcours_id = (int)($_POST['parcours_id'] ?? 0);
     if ($id <= 0 || $parcours_id <= 0) { echo json_encode(['error' => 'Données invalides.']); exit; }
 
-    // Réaffecter écraserait les slides existantes, et la cascade emporterait
-    // les réponses déjà données : on refuse dès qu'un participant a joué.
-    $stmt = mysqli_prepare($conn, 'SELECT COUNT(*) AS n FROM reponses WHERE evenement_id = ?');
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
-    if ((int)$stmt->get_result()->fetch_assoc()['n'] > 0) {
-        echo json_encode(['error' => "Des participants ont déjà répondu : le parcours ne peut plus être remplacé."]);
-        exit;
-    }
+    $verrou = evt_deroule_verrou($conn, $id);
+    if ($verrou) { echo json_encode(['error' => $verrou], JSON_UNESCAPED_UNICODE); exit; }
 
     $stmt = mysqli_prepare($conn, 'DELETE FROM evenement_slides WHERE evenement_id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
-
-    $stmt = mysqli_prepare($conn,
-        'INSERT INTO evenement_slides (evenement_id, ordre, type, titre, contenu, points)
-         SELECT ?, ordre, type, titre, contenu, points FROM parcours_slides WHERE parcours_id = ? ORDER BY ordre, id');
-    $stmt->bind_param('ii', $id, $parcours_id);
+    $stmt = mysqli_prepare($conn, 'DELETE FROM evenement_parcours WHERE evenement_id = ?');
+    $stmt->bind_param('i', $id);
     $stmt->execute();
-    $copiees = mysqli_affected_rows($conn);
+
+    [$copiees, $nom] = evt_chainer_parcours($conn, $id, $parcours_id);
+    if ($nom === null) { echo json_encode(['error' => 'Parcours introuvable.']); exit; }
 
     $stmt = mysqli_prepare($conn, 'UPDATE evenements SET parcours_id = ?, slide_courante_id = NULL WHERE id = ?');
     $stmt->bind_param('ii', $parcours_id, $id);
@@ -188,6 +273,25 @@ if ($action === 'affecter_parcours') {
 
     audit_log($conn, 'evenement_parcours_affecte', $copiees . ' slides', ['target_type' => 'evenement', 'target_id' => $id]);
     echo json_encode(['ok' => true, 'slides' => $copiees]);
+    exit;
+}
+
+// ── ENCHAÎNER UN PARCOURS DE PLUS (ajoute à la suite) ──────────────────────
+if ($action === 'ajouter_parcours') {
+    $id          = (int)($_POST['id'] ?? 0);
+    $parcours_id = (int)($_POST['parcours_id'] ?? 0);
+    if ($id <= 0 || $parcours_id <= 0) { echo json_encode(['error' => 'Données invalides.']); exit; }
+
+    $verrou = evt_deroule_verrou($conn, $id);
+    if ($verrou) { echo json_encode(['error' => $verrou], JSON_UNESCAPED_UNICODE); exit; }
+
+    [$copiees, $nom] = evt_chainer_parcours($conn, $id, $parcours_id);
+    if ($nom === null) { echo json_encode(['error' => 'Parcours introuvable.']); exit; }
+    if ($copiees === 0) { echo json_encode(['error' => 'Ce parcours ne contient aucune slide.']); exit; }
+
+    audit_log($conn, 'evenement_parcours_ajoute', $nom . ' (' . $copiees . ' slides)',
+              ['target_type' => 'evenement', 'target_id' => $id]);
+    echo json_encode(['ok' => true, 'slides' => $copiees, 'nom' => $nom], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -254,20 +358,114 @@ if ($action === 'slides') {
     exit;
 }
 
+// ── DÉROULÉ COMPLET (slides + provenance + droit de modifier) ──────────────
+// Sert la vue d'édition : mêmes champs que parcours.php?action=detail, plus
+// `modifiable` et `verrou`, pour que l'éditeur sache s'il doit passer en
+// lecture seule et pourquoi.
+if ($action === 'deroule') {
+    $id = (int)($_GET['id'] ?? 0);
+    if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
+
+    $stmt = mysqli_prepare($conn, 'SELECT id, titre, code, statut, supprime FROM evenements WHERE id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $evt = $stmt->get_result()->fetch_assoc();
+    if (!$evt) { echo json_encode(['error' => 'Événement introuvable.']); exit; }
+
+    $stmt = mysqli_prepare($conn,
+        'SELECT id, ordre, type, titre, contenu, points FROM evenement_slides WHERE evenement_id = ? ORDER BY ordre, id');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $slides = [];
+    while ($row = $res->fetch_assoc()) {
+        $c = json_decode($row['contenu'] ?? '', true);
+        $slides[] = [
+            'id' => (int)$row['id'], 'ordre' => (int)$row['ordre'], 'type' => $row['type'],
+            'titre' => $row['titre'], 'points' => (int)$row['points'],
+            'contenu' => is_array($c) ? $c : [],
+        ];
+    }
+
+    $stmt = mysqli_prepare($conn,
+        'SELECT parcours_id, nom, nb_slides FROM evenement_parcours WHERE evenement_id = ? ORDER BY ordre, id');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $sources = [];
+    while ($row = $res->fetch_assoc()) {
+        $sources[] = ['parcours_id' => $row['parcours_id'] === null ? null : (int)$row['parcours_id'],
+                      'nom' => $row['nom'], 'nb_slides' => (int)$row['nb_slides']];
+    }
+
+    $verrou = evt_deroule_verrou($conn, $id);
+    echo json_encode([
+        'evenement'  => ['id' => (int)$evt['id'], 'titre' => $evt['titre'],
+                         'code' => $evt['code'], 'statut' => $evt['statut']],
+        'slides'     => $slides,
+        'sources'    => $sources,
+        'modifiable' => $verrou === null,
+        'verrou'     => $verrou,
+        'types'      => slides_registre(),
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// ── AJOUTER UNE SLIDE AU DÉROULÉ ───────────────────────────────────────────
+if ($action === 'slide_ajouter') {
+    $d   = evt_corps_json();
+    $id  = (int)($d['evenement_id'] ?? 0);
+    $type = (string)($d['type'] ?? '');
+    if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
+
+    $verrou = evt_deroule_verrou($conn, $id);
+    if ($verrou) { echo json_encode(['error' => $verrou], JSON_UNESCAPED_UNICODE); exit; }
+
+    $reg = slides_registre();
+    if (!isset($reg[$type])) { echo json_encode(['error' => 'Type de slide inconnu.']); exit; }
+
+    $v = valider_contenu($type, $d['contenu'] ?? []);
+    if (!$v['ok']) { echo json_encode(['error' => $v['erreur']], JSON_UNESCAPED_UNICODE); exit; }
+
+    $titre  = mb_substr(trim((string)($d['titre'] ?? '')), 0, 200);
+    $points = max(0, min(1000, (int)($d['points'] ?? 0)));
+    if ($reg[$type]['note'] === false) $points = 0;
+    $json = json_encode($v['contenu'], JSON_UNESCAPED_UNICODE);
+
+    $stmt = mysqli_prepare($conn, 'SELECT COALESCE(MAX(ordre), -1) AS m FROM evenement_slides WHERE evenement_id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $ordre = (int)$stmt->get_result()->fetch_assoc()['m'] + 1;
+
+    $stmt = mysqli_prepare($conn,
+        'INSERT INTO evenement_slides (evenement_id, ordre, type, titre, contenu, points) VALUES (?, ?, ?, ?, ?, ?)');
+    $stmt->bind_param('iisssi', $id, $ordre, $type, $titre, $json, $points);
+    $stmt->execute();
+    echo json_encode(['ok' => true, 'id' => $stmt->insert_id]);
+    exit;
+}
+
 // ── MODIFIER UNE SLIDE DE L'ÉVÉNEMENT (adaptation pour ce client) ─────────
 if ($action === 'slide_modifier') {
     $d  = evt_corps_json();
     $sid = (int)($d['id'] ?? 0);
     if ($sid <= 0) { echo json_encode(['error' => 'Slide invalide.']); exit; }
 
+    // La slide porte son propriétaire : c'est lui qui décide du verrou. La
+    // version précédente acceptait n'importe quel identifiant sans regarder à
+    // quel événement il appartenait, ni si celui-ci était en cours.
+    $proprio = evt_slide_proprietaire($conn, $sid);
+    if ($proprio === 0) { echo json_encode(['error' => 'Slide introuvable.']); exit; }
+    $verrou = evt_deroule_verrou($conn, $proprio);
+    if ($verrou) { echo json_encode(['error' => $verrou], JSON_UNESCAPED_UNICODE); exit; }
+
     $stmt = mysqli_prepare($conn, 'SELECT type FROM evenement_slides WHERE id = ?');
     $stmt->bind_param('i', $sid);
     $stmt->execute();
     $s = $stmt->get_result()->fetch_assoc();
-    if (!$s) { echo json_encode(['error' => 'Slide introuvable.']); exit; }
 
     $v = valider_contenu($s['type'], $d['contenu'] ?? []);
-    if (!$v['ok']) { echo json_encode(['error' => $v['erreur']]); exit; }
+    if (!$v['ok']) { echo json_encode(['error' => $v['erreur']], JSON_UNESCAPED_UNICODE); exit; }
 
     $titre  = mb_substr(trim((string)($d['titre'] ?? '')), 0, 200);
     $points = max(0, min(1000, (int)($d['points'] ?? 0)));
@@ -282,10 +480,40 @@ if ($action === 'slide_modifier') {
     exit;
 }
 
+// ── RÉORDONNER LE DÉROULÉ ──────────────────────────────────────────────────
+if ($action === 'slide_reordonner') {
+    $d     = evt_corps_json();
+    $id    = (int)($d['evenement_id'] ?? 0);
+    $ordre = $d['ordre'] ?? null;
+    if ($id <= 0 || !is_array($ordre)) { echo json_encode(['error' => 'Données invalides.']); exit; }
+
+    $verrou = evt_deroule_verrou($conn, $id);
+    if ($verrou) { echo json_encode(['error' => $verrou], JSON_UNESCAPED_UNICODE); exit; }
+
+    // Le WHERE porte aussi sur evenement_id : un identifiant glissé dans la
+    // liste ne peut pas déplacer la slide d'un autre événement.
+    $stmt = mysqli_prepare($conn, 'UPDATE evenement_slides SET ordre = ? WHERE id = ? AND evenement_id = ?');
+    $rang = 0;
+    foreach ($ordre as $sid) {
+        $sid = (int)$sid;
+        if ($sid <= 0) continue;
+        $stmt->bind_param('iii', $rang, $sid, $id);
+        $stmt->execute();
+        $rang++;
+    }
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
 // ── SUPPRIMER UNE SLIDE DE L'ÉVÉNEMENT ─────────────────────────────────────
 if ($action === 'slide_supprimer') {
     $sid = (int)($_POST['id'] ?? 0);
     if ($sid <= 0) { echo json_encode(['error' => 'Slide invalide.']); exit; }
+
+    $proprio = evt_slide_proprietaire($conn, $sid);
+    if ($proprio === 0) { echo json_encode(['error' => 'Slide introuvable.']); exit; }
+    $verrou = evt_deroule_verrou($conn, $proprio);
+    if ($verrou) { echo json_encode(['error' => $verrou], JSON_UNESCAPED_UNICODE); exit; }
 
     $stmt = mysqli_prepare($conn, 'DELETE FROM evenement_slides WHERE id = ?');
     $stmt->bind_param('i', $sid);

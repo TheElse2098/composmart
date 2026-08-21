@@ -136,12 +136,17 @@
   <!-- ══ MODE ÉDITEUR ══ -->
   <div class="page-content" id="vueEdit" style="display:none">
     <div class="hero">
-      <div class="hero-badge">🎬 Parcours</div>
+      <div class="hero-badge" id="badgeEdit">🎬 Parcours</div>
       <h1 id="editNom">—</h1>
       <p class="hero-sub" id="editMeta"></p>
+      <p class="hero-sub" style="margin-top:8px">
+        <a id="retourEvt" href="#" style="display:none;color:#1e6e3e;font-weight:800">← Revenir à l’événement</a>
+      </p>
     </div>
 
     <div class="msg" id="msgEdit"></div>
+    <!-- Atelier démarré : l'éditeur reste consultable mais n'écrit plus. -->
+    <div class="msg error" id="verrouEdit" style="display:none"></div>
 
     <div class="card">
       <form id="formInfos">
@@ -156,7 +161,7 @@
     <div class="section-title">🧩 Slides</div>
     <div id="listeSlides"></div>
 
-    <div class="card" style="margin-top:12px">
+    <div class="card" style="margin-top:12px" id="blocAjout">
       <div class="field"><label>Ajouter une slide</label>
         <select id="nouveauType"></select>
       </div>
@@ -186,8 +191,26 @@
   <script>
     /*__ROUTE__*/
     function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+    // Endpoint de la bibliothèque : registre des types, pools de jeux, CRUD des
+    // parcours. Toujours celui-là, quel que soit le mode.
     const API = '/api/evenements/parcours.php';
-    const PARCOURS_ID = (window.ROUTE && window.ROUTE.parcours_id) || null;
+
+    /* Trois modes pour une seule vue :
+         bibliothèque        → ni parcours_id ni evenement_id
+         éditeur de parcours → parcours_id   (table parcours_slides)
+         déroulé d'événement → evenement_id  (table evenement_slides)
+
+       Les deux derniers manipulent exactement les mêmes objets : 15 types de
+       slides, mêmes formulaires, même validation serveur. Seuls l'endpoint et
+       le nom de la clé changent, d'où cet adaptateur plutôt qu'une seconde
+       copie de l'éditeur. */
+    const PARCOURS_ID  = (window.ROUTE && window.ROUTE.parcours_id) || null;
+    const EVENEMENT_ID = (window.ROUTE && window.ROUTE.evenement_id) || null;
+    const CIBLE = EVENEMENT_ID
+      ? { api: '/api/evenements/admin.php', id: EVENEMENT_ID, cle: 'evenement_id', detail: 'deroule', evt: true }
+      : { api: API,                         id: PARCOURS_ID,  cle: 'parcours_id',  detail: 'detail',  evt: false };
+
+    let modifiable = true;   // faux si l'atelier a démarré : éditeur en lecture seule
 
     let REGISTRE = {};   // type => {nom, note, repond}
     let slides = [];
@@ -220,7 +243,7 @@
       }
     }
 
-    function post(action, body, json) {
+    function post(action, body, json, api) {
       const opts = { method: 'POST' };
       if (json) {
         opts.headers = { 'Content-Type': 'application/json' };
@@ -228,8 +251,12 @@
       } else {
         opts.body = new URLSearchParams(body);
       }
-      return fetch(API + '?action=' + action, opts).then(lireJson);
+      return fetch((api || API) + '?action=' + action, opts).then(lireJson);
     }
+
+    /** Opération portant sur les slides : elle va sur l'endpoint de la cible
+     *  (parcours.php ou admin.php selon le mode), pas sur la bibliothèque. */
+    function postSlide(action, body, json) { return post(action, body, json, CIBLE.api); }
 
     // ══════════ DÉCLARATION DES CHAMPS PAR TYPE ══════════
     // Un type = une liste de champs. Ajouter un type de slide ne demande donc
@@ -534,10 +561,14 @@
     function ouvrirModale(type, slide) {
       editionType = type;
       editionId = slide ? slide.id : null;
-      document.getElementById('modalTitre').textContent = (slide ? 'Modifier' : 'Nouvelle slide') + ' — ' + (REGISTRE[type] || {}).nom;
+      const verbe = modifiable ? (slide ? 'Modifier' : 'Nouvelle slide') : 'Consulter';
+      document.getElementById('modalTitre').textContent = verbe + ' — ' + (REGISTRE[type] || {}).nom;
       document.getElementById('slideTitre').value = slide ? (slide.titre || '') : '';
       document.getElementById('slidePoints').value = slide ? slide.points : 10;
       document.getElementById('msgModal').style.display = 'none';
+      // En lecture seule la modale sert d'aperçu : le bouton d'enregistrement
+      // disparaît plutôt que d'échouer côté serveur une fois cliqué.
+      document.getElementById('modalOk').style.display = modifiable ? '' : 'none';
       rendreChamps(type, slide ? slide.contenu : null);
       document.getElementById('modal').classList.add('open');
     }
@@ -552,9 +583,9 @@
       };
       let action;
       if (editionId) { corps.id = editionId; action = 'slide_modifier'; }
-      else { corps.parcours_id = PARCOURS_ID; corps.type = editionType; action = 'slide_ajouter'; }
+      else { corps[CIBLE.cle] = CIBLE.id; corps.type = editionType; action = 'slide_ajouter'; }
 
-      post(action, corps, true).then(d => {
+      postSlide(action, corps, true).then(d => {
         if (!d.ok) { afficher('msgModal', d.error || 'Erreur.', false); return; }
         document.getElementById('modal').classList.remove('open');
         chargerParcours();
@@ -563,16 +594,45 @@
 
     // ══════════ MODE ÉDITEUR ══════════
     function chargerParcours() {
-      fetch(API + '?action=detail&id=' + PARCOURS_ID)
+      fetch(CIBLE.api + '?action=' + CIBLE.detail + '&id=' + CIBLE.id)
         .then(lireJson)
         .then(d => {
-          if (d.error) { afficher('msgEdit', d.error, false); return; }
-          document.getElementById('editNom').textContent = d.parcours.nom;
-          document.getElementById('editNomInput').value = d.parcours.nom;
-          document.getElementById('editDescInput').value = d.parcours.description || '';
+          if (d.error) { afficher('msgEdit', d.error, false); document.getElementById('loader').style.display = 'none'; return; }
+
           slides = d.slides || [];
           const total = slides.reduce((s, x) => s + x.points, 0);
-          document.getElementById('editMeta').textContent = slides.length + ' slide(s) · ' + total + ' points au total';
+          let meta = slides.length + ' slide(s) · ' + total + ' points au total';
+
+          if (CIBLE.evt) {
+            // Déroulé d'un événement : le nom vient de l'événement, et le
+            // formulaire nom/description de la bibliothèque n'a pas cours.
+            document.getElementById('editNom').textContent = 'Déroulé — ' + d.evenement.titre;
+            document.getElementById('badgeEdit').textContent = '🎬 Déroulé de l’événement';
+            document.getElementById('formInfos').closest('.card').style.display = 'none';
+            document.getElementById('retourEvt').href = '/evenements-admin/' + d.evenement.id;
+            document.getElementById('retourEvt').style.display = '';
+
+            const src = d.sources || [];
+            if (src.length) {
+              meta += ' · monté depuis ' + src.map(s => s.nom + ' (' + s.nb_slides + ')').join(' + ');
+            }
+
+            modifiable = d.modifiable !== false;
+            const bandeau = document.getElementById('verrouEdit');
+            if (!modifiable) {
+              bandeau.textContent = '🔒 ' + (d.verrou || 'Déroulé en lecture seule.');
+              bandeau.style.display = 'block';
+            } else {
+              bandeau.style.display = 'none';
+            }
+            document.getElementById('blocAjout').style.display = modifiable ? '' : 'none';
+          } else {
+            document.getElementById('editNom').textContent = d.parcours.nom;
+            document.getElementById('editNomInput').value = d.parcours.nom;
+            document.getElementById('editDescInput').value = d.parcours.description || '';
+          }
+
+          document.getElementById('editMeta').textContent = meta;
           rendreSlides();
           document.getElementById('loader').style.display = 'none';
           document.getElementById('vueEdit').style.display = 'block';
@@ -594,11 +654,18 @@
           + (s.points ? '<span class="slide-pts">' + s.points + ' pts</span>' : '')
           + '<div class="slide-btns">'
           + '<button data-a="up">↑</button><button data-a="down">↓</button>'
-          + '<button data-a="edit">✏️</button><button data-a="del" class="sup">🗑</button></div>';
+          + '<button data-a="edit">' + (modifiable ? '✏️' : '👁') + '</button>'
+          + '<button data-a="del" class="sup">🗑</button></div>';
         div.querySelector('[data-a=up]').onclick = () => deplacer(i, -1);
         div.querySelector('[data-a=down]').onclick = () => deplacer(i, 1);
         div.querySelector('[data-a=edit]').onclick = () => ouvrirModale(s.type, s);
         div.querySelector('[data-a=del]').onclick = () => supprimerSlide(s.id);
+        // Atelier démarré : on laisse consulter une slide, jamais la déplacer
+        // ni la supprimer — le serveur refuse de toute façon, mais un bouton
+        // qui ne fait rien est pire qu'un bouton grisé.
+        if (!modifiable) {
+          ['up', 'down', 'del'].forEach(a => { div.querySelector('[data-a=' + a + ']').disabled = true; });
+        }
         box.appendChild(div);
       });
     }
@@ -608,23 +675,27 @@
       if (j < 0 || j >= slides.length) return;
       const tmp = slides[i]; slides[i] = slides[j]; slides[j] = tmp;
       rendreSlides();
-      post('slide_reordonner', { parcours_id: PARCOURS_ID, ordre: slides.map(s => s.id) }, true)
+      const corpsOrdre = { ordre: slides.map(s => s.id) };
+      corpsOrdre[CIBLE.cle] = CIBLE.id;
+      postSlide('slide_reordonner', corpsOrdre, true)
         .then(d => { if (!d.ok) afficher('msgEdit', d.error || 'Réordonnancement impossible.', false); })
         .catch(() => afficher('msgEdit', 'Erreur réseau.', false));
     }
 
     async function supprimerSlide(id) {
       if (!(await confirmer({ titre: 'Supprimer cette slide ?', valider: 'Supprimer', danger: true }))) return;
-      post('slide_supprimer', { id })
+      postSlide('slide_supprimer', { id })
         .then(d => { if (d.ok) chargerParcours(); else afficher('msgEdit', d.error || 'Suppression impossible.', false); })
         .catch(() => afficher('msgEdit', 'Erreur réseau.', false));
     }
 
-    if (PARCOURS_ID) {
-      document.getElementById('formInfos').addEventListener('submit', e => {
+    if (CIBLE.id) {
+      // Le formulaire nom/description n'a de sens que pour un parcours de la
+      // bibliotheque : un deroule d'evenement tire son nom de l'evenement.
+      if (!CIBLE.evt) document.getElementById('formInfos').addEventListener('submit', e => {
         e.preventDefault();
         post('modifier', {
-          id: PARCOURS_ID,
+          id: CIBLE.id,
           nom: document.getElementById('editNomInput').value.trim(),
           description: document.getElementById('editDescInput').value.trim(),
         }).then(d => {
@@ -678,7 +749,7 @@
         .catch(panne);
     }
 
-    if (!PARCOURS_ID) {
+    if (!CIBLE.id) {
       document.getElementById('formCreer').addEventListener('submit', e => {
         e.preventDefault();
         const btn = document.getElementById('btnCreer');
@@ -706,7 +777,7 @@
           o.value = t; o.textContent = REGISTRE[t].nom;
           sel.appendChild(o);
         });
-        if (PARCOURS_ID) chargerParcours(); else chargerListe();
+        if (CIBLE.id) chargerParcours(); else chargerListe();
       })
       .catch(panne);
   </script>

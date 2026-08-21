@@ -101,4 +101,14 @@ if (count($seg) === 1 && ctype_digit($seg[0])) {
     rendre('suivi.html', ['evenement_id' => (int)$seg[0]]);
 }
 
+// /evenements-admin/<id>/deroule — édition du déroulé propre à un événement.
+// C'est la MÊME vue que l'éditeur de parcours : les 15 types de slides, leurs
+// formulaires et leur validation sont identiques, seule la table visée change
+// (evenement_slides au lieu de parcours_slides). En faire une copie garantirait
+// qu'elles divergent au premier type de slide ajouté — la leçon de
+// slide-render.js, qu'on ne repayera pas ici.
+if (count($seg) === 2 && ctype_digit($seg[0]) && $seg[1] === 'deroule') {
+    rendre('parcours.html', ['parcours_id' => null, 'evenement_id' => (int)$seg[0]]);
+}
+
 introuvable();

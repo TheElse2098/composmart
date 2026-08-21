@@ -92,6 +92,24 @@ CREATE TABLE `anecdotes` (
 -- modèle plus tard ne réécrit pas un atelier déjà joué. Les réponses des
 -- participants pointent ici, donc ces lignes doivent rester stables
 -- (même raisonnement que cours_versions dans db-core).
+-- Provenance des parcours enchaines sur un evenement. Purement informatif :
+-- les slides de `evenement_slides` sont des copies independantes, cette table
+-- sert seulement a afficher d'ou vient chaque bloc du deroule.
+CREATE TABLE `evenement_parcours` (
+  `id`           int          NOT NULL AUTO_INCREMENT,
+  `evenement_id` int          NOT NULL,
+  `parcours_id`  int          DEFAULT NULL,
+  `nom`          varchar(150) NOT NULL,
+  `ordre`        int          NOT NULL DEFAULT 0,
+  `nb_slides`    int          NOT NULL DEFAULT 0,
+  `ajoute_at`    datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `evt_ordre` (`evenement_id`, `ordre`),
+  KEY `parcours` (`parcours_id`),
+  CONSTRAINT `evtparc_ibfk_1` FOREIGN KEY (`evenement_id`) REFERENCES `evenements` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `evtparc_ibfk_2` FOREIGN KEY (`parcours_id`)  REFERENCES `parcours` (`id`)   ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `evenement_slides` (
   `id`           int          NOT NULL AUTO_INCREMENT,
   `evenement_id` int          NOT NULL,
