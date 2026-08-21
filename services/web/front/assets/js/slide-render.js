@@ -125,9 +125,8 @@
     var carte = b.closest('.sl');
     var scene = carte ? carte.querySelector('[data-scene]') : null;
     if (!scene || !scene.parentNode) return;
-    // Demande explicite de mouvement : lève la neutralisation posée par
-    // prefers-reduced-motion (cf. slides.css), sinon le bouton ne ferait rien
-    // sur un poste où les effets d'animation système sont désactivés.
+    // Demande explicite de mouvement : restaure l'oscillation de la plante, seul
+    // effet que prefers-reduced-motion retire encore (cf. slides.css).
     carte.setAttribute('data-anime', '');
     scene.parentNode.replaceChild(scene.cloneNode(true), scene);
   });

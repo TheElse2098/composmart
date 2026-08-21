@@ -616,30 +616,22 @@ html.dark [data-theme-slide="papier"] .sl { box-shadow: 14px 14px 0 rgba(0, 0, 0
 }
 [data-theme-slide="papier"] .sl--fete .sl__jauge-txt { color: rgba(253, 250, 241, 0.72); }
 
-/* Accessibilité : pas de mouvement imposé, mais l'image finale reste juste.
+/* Accessibilité — la slide d'encouragement est un cas à part.
 
-   La dérogation [data-anime] est posée par le bouton « Rejouer » : quelqu'un
-   qui clique explicitement sur « Rejouer » demande le mouvement, le lui refuser
-   rendrait le bouton inerte. Le réglage système reste respecté par défaut —
-   et il est plus courant qu'on ne croit (Windows 11, Paramètres › Accessibilité
-   › Effets visuels › Effets d'animation), au point d'expliquer à lui seul une
-   carte qui s'affiche figée. */
+   Ailleurs, neutraliser le mouvement laisse le contenu intact. Ici l'animation
+   EST le contenu : une pousse figée et des confettis à opacité zéro donnent une
+   carte vide, ce qui n'est pas une dégradation gracieuse mais une panne. La
+   séquence tourne donc dans tous les cas.
+
+   Ce qui est réellement retiré sous prefers-reduced-motion, c'est le seul
+   mouvement PERPÉTUEL et sans fin utile : l'oscillation de la plante (sway),
+   qui continue indéfiniment une fois la fleur ouverte. C'est celui qui gêne
+   les personnes sensibles au mouvement ; la pousse et la gerbe, elles, racontent
+   quelque chose et s'achèvent.
+
+   Le bouton « Rejouer » pose [data-anime] : une demande explicite de mouvement
+   restaure l'oscillation. */
 @media (prefers-reduced-motion: reduce) {
-  .sl:not([data-anime]) .sl__pousse,  .sl:not([data-anime]) .sl__plante,
-  .sl:not([data-anime]) .sl__tige,    .sl:not([data-anime]) .sl__feuille,
-  .sl:not([data-anime]) .sl__fleur,   .sl:not([data-anime]) .sl__petales,
-  .sl:not([data-anime]) .sl__mot,     .sl:not([data-anime]) .sl__halo,
-  .sl:not([data-anime]) .sl__anneau,  .sl:not([data-anime]) .sl__vol,
-  .sl:not([data-anime]) .sl__piece,   .sl:not([data-anime]) .sl__bravo,
-  .sl:not([data-anime]) .sl__jauge > span {
-    animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
-  }
-  .sl:not([data-anime]) .sl__tige { stroke-dashoffset: 0; }
-  .sl:not([data-anime]) .sl__feuille,
-  .sl:not([data-anime]) .sl__fleur,
-  .sl:not([data-anime]) .sl__mot,
-  .sl:not([data-anime]) .sl__bravo { opacity: 1; }
-  .sl:not([data-anime]) .sl__halo,
-  .sl:not([data-anime]) .sl__anneau,
-  .sl:not([data-anime]) .sl__piece { opacity: 0; }
+  .sl:not([data-anime]) .sl__plante { animation: none; }
+  .sl:not([data-anime]) .sl__jauge > span { animation-duration: 0.01ms !important; }
 }
