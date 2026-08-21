@@ -94,8 +94,23 @@
     }
     body.en-parcours .carte::before,
     body.en-parcours .carte::after { display: none; }
-    body.en-parcours #zoneLive { flex: 1; min-height: 0; display: flex; width: 100%; }
-    body.en-parcours #zoneLive > .sl { flex: 1; }
+    /* COLONNE, et non rangée. En mode individuel, un bouton « Suivant » est
+       ajouté comme second enfant de #zoneLive : en rangée, la carte et le
+       bouton se partageaient la largeur, d'où une carte comprimée de moitié et
+       un bouton géant à côté. */
+    body.en-parcours #zoneLive { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; gap: 10px; }
+    body.en-parcours #zoneLive > .sl { flex: 1; min-height: 0; }
+
+    /* Barre « Suivant » du mode individuel : discrète, centrée sous la carte. */
+    .barre-suivant { flex: none; display: flex; justify-content: center; }
+    .suivant-ind {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-width: 168px; background: #1e6e3e; color: #fff; border: none; border-radius: 50px;
+      padding: 10px 24px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.95rem;
+      cursor: pointer; transition: opacity .15s;
+    }
+    .suivant-ind:hover:not(:disabled) { opacity: 0.9; }
+    .suivant-ind:disabled { opacity: 0.45; cursor: default; }
 
     /* Liseré coloré en haut de carte, teinté selon le type de slide : repère
        visuel qui change à chaque étape et rythme le parcours. */
@@ -576,23 +591,75 @@
     }
 
     /** Mode individuel : le participant avance lui-même. */
+    /* ══════════ MODE INDIVIDUEL — bouton « Suivant » ══════════
+       Le participant avance seul : rien ne l'empêche de marteler le bouton et
+       de traverser tout le parcours sans rien lire. Trois verrous, du plus fort
+       au plus faible, décident du moment où « Suivant » s'active :
+
+         1. slide notée   → il faut avoir répondu ;
+         2. vidéo ou son  → il faut être allé au bout de la lecture ;
+         3. le reste      → un temps de lecture minimum, décompté sur le bouton.
+
+       Limite assumée : une vidéo YouTube ou Vimeo passe par une <iframe>, et la
+       plateforme ne dit rien de l'avancement de la lecture sans qu'on charge
+       son API. Ces slides retombent donc sur le délai du cas 3 ; seuls les
+       fichiers servis en <video>/<audio> peuvent réellement être attendus.
+
+       Le bouton reste TOUJOURS affiché, simplement inerte avec son motif. La
+       version précédente ne l'affichait pas du tout tant qu'on n'avait pas
+       répondu, ce qui se lisait comme une page cassée. */
+    const ATTENTE_MINI = 4;      // secondes
+    let ticSuivant = null;
+
     function ajouterSuivantIndividuel(z, d) {
+      if (ticSuivant) { clearInterval(ticSuivant); ticSuivant = null; }
       if (!d.evenement || d.evenement.mode !== 'individuel') return;
-      if (d.repond && !d.ma_reponse) return;   // pas de saut d'une question notée
-      const dernier = (d.index >= d.total - 1);
+
+      const barre = document.createElement('div');
+      barre.className = 'barre-suivant';
       const b = document.createElement('button');
-      b.className = 'btn';
-      b.style.marginTop = '12px';
-      b.textContent = dernier ? '🏁 Parcours terminé' : 'Suivant →';
-      b.disabled = dernier;
-      if (!dernier) b.onclick = () => {
+      b.type = 'button';
+      b.className = 'suivant-ind';
+      barre.appendChild(b);
+      z.appendChild(barre);
+
+      const bloquer = (motif) => { b.disabled = true; b.textContent = motif; };
+      const ouvrir = () => { b.disabled = false; b.textContent = 'Suivant →'; };
+
+      if (d.index >= d.total - 1) { bloquer('🏁 Parcours terminé'); return; }
+
+      b.onclick = () => {
         b.disabled = true;
         fetch(API + '/live.php?action=suivant', { method: 'POST', body: new URLSearchParams({ token: token }) })
           .then(r => r.json())
           .then(res => { if (res.ok) { rendu = ''; chargerEtat(); } else { afficher(res.error || 'Impossible.', false); b.disabled = false; } })
           .catch(() => { afficher('Erreur réseau.', false); b.disabled = false; });
       };
-      z.appendChild(b);
+
+      // 1. Quiz, jeu, sondage, question ouverte : répondre d'abord.
+      if (d.repond && !d.ma_reponse) { bloquer('Réponds pour continuer'); return; }
+
+      // 2. Vidéo ou audio que le navigateur sait suivre : aller au bout.
+      const lecteur = z.querySelector('video, audio');
+      if (lecteur) {
+        bloquer("Écoute jusqu'au bout");
+        lecteur.addEventListener('ended', ouvrir);
+        // « ended » ne se déclenche pas si on saute manuellement à la fin :
+        // on accepte aussi d'être à moins d'une seconde du terme.
+        lecteur.addEventListener('timeupdate', () => {
+          if (lecteur.duration && lecteur.currentTime >= lecteur.duration - 1) ouvrir();
+        });
+        return;
+      }
+
+      // 3. Slide d'affichage : un temps de lecture minimum, visible.
+      let reste = ATTENTE_MINI;
+      bloquer('Suivant → ' + reste);
+      ticSuivant = setInterval(() => {
+        reste--;
+        if (reste <= 0) { clearInterval(ticSuivant); ticSuivant = null; ouvrir(); }
+        else b.textContent = 'Suivant → ' + reste;
+      }, 1000);
     }
 
     function cablerSlide(z, d) {
