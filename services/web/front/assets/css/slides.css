@@ -28,6 +28,15 @@
   --sl-tendre:  #e8f5e9;   /* pastilles, encarts */
   --sl-trait:   rgba(26, 58, 37, 0.12);
   --sl-rad:     26px;
+
+  /* La scène : le décor sur lequel repose la carte. Volontairement dans la
+     famille claire de la charte (celle de .score-bar et des pastilles) plutôt
+     que dans le vert profond du hero : la carte est blanche, un fond sombre
+     l'écrase et fatigue au bout d'un atelier entier de vidéoprojection. */
+  --sl-scene1:  #cbeada;
+  --sl-scene2:  #9ad5b4;
+  --sl-scene3:  #6dbf91;
+  --sl-scene-motif: url('/assets/img/motif-branchage-vert.svg');
 }
 
 html.dark {
@@ -41,18 +50,25 @@ html.dark {
   --sl-accent2: #2e2410;
   --sl-tendre:  #16291c;
   --sl-trait:   rgba(232, 245, 238, 0.14);
+  /* En sombre la carte est sombre elle aussi : le décor doit rester en dessous
+     d'elle en luminosité, sans quoi la hiérarchie s'inverse. */
+  --sl-scene1:  #0d2f18;
+  --sl-scene2:  #12401f;
+  --sl-scene3:  #1a5c33;
+  --sl-scene-motif: url('/assets/img/motif-branchage-dark.svg');
 }
 
-/* ── Décor de fond (la « scène » où repose la carte) ────────────────────── */
+/* ── Décor de fond (la « scène » où repose la carte) ──────────────────────
+   Une seule définition, pilotée par les jetons --sl-scene*. La page participant
+   et la projection de l'animateur la partagent : l'écrire deux fois, c'est
+   garantir qu'elles finiront par diverger. */
 .sl-scene {
-  background-color: var(--sl-fond2);
-  background-image: url('/assets/img/motif-branchage-light.svg'),
-                    linear-gradient(160deg, var(--sl-fond1) 0%, var(--sl-fond2) 55%, var(--sl-fond3) 100%);
+  background-color: var(--sl-scene2);
+  background-image: var(--sl-scene-motif),
+                    linear-gradient(160deg, var(--sl-scene1) 0%, var(--sl-scene2) 55%, var(--sl-scene3) 100%);
   background-repeat: repeat, no-repeat;
-  background-size: 220px 220px, cover;
+  background-size: var(--sl-scene-motif-taille, 220px 220px), cover;
 }
-html.dark .sl-scene { background-image: url('/assets/img/motif-branchage-dark.svg'),
-                    linear-gradient(160deg, var(--sl-fond1) 0%, var(--sl-fond2) 55%, var(--sl-fond3) 100%); }
 
 /* ── La carte ───────────────────────────────────────────────────────────── */
 .sl {
@@ -303,6 +319,15 @@ html.dark .sl__verdict--rate .sl__verdict-titre { color: #ef9a9a; }
   --sl-tendre:  #efe8d8;
   --sl-trait:   rgba(30, 110, 62, 0.28);
   --sl-rad:     20px;
+
+  /* La scène abandonne le dégradé feuillage pour un papier à pois. Le motif
+     n'est plus une image mais un dégradé : --sl-scene-motif accepte les deux,
+     le canal reste le même. */
+  --sl-scene1:  #f5f0e4;
+  --sl-scene2:  #efe8d8;
+  --sl-scene3:  #e5dbc5;
+  --sl-scene-motif: radial-gradient(circle, rgba(47, 74, 43, 0.10) 1.4px, transparent 1.5px);
+  --sl-scene-motif-taille: 22px 22px;
 }
 html.dark [data-theme-slide="papier"] {
   --sl-carte:   #1b2418;
@@ -312,20 +337,11 @@ html.dark [data-theme-slide="papier"] {
   --sl-accent2: #3a251c;
   --sl-tendre:  #232d1f;
   --sl-trait:   rgba(236, 235, 221, 0.22);
-}
-
-/* La scène abandonne le dégradé feuillage pour un papier à pois. */
-[data-theme-slide="papier"].sl-scene,
-[data-theme-slide="papier"] .sl-scene,
-body[data-theme-slide="papier"].en-parcours {
-  background-color: #efe8d8;
-  background-image: radial-gradient(circle, rgba(47, 74, 43, 0.10) 1.4px, transparent 1.5px);
-  background-size: 22px 22px;
-}
-html.dark body[data-theme-slide="papier"].en-parcours,
-html.dark [data-theme-slide="papier"].sl-scene {
-  background-color: #12180f;
-  background-image: radial-gradient(circle, rgba(236, 235, 221, 0.09) 1.4px, transparent 1.5px);
+  --sl-scene1:  #171d13;
+  --sl-scene2:  #12180f;
+  --sl-scene3:  #0e130c;
+  --sl-scene-motif: radial-gradient(circle, rgba(236, 235, 221, 0.09) 1.4px, transparent 1.5px);
+  --sl-scene-motif-taille: 22px 22px;
 }
 
 /* Cadre épais + ombre dure : la signature du thème. */

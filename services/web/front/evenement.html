@@ -41,14 +41,17 @@
     .overlay.open { opacity: 1; pointer-events: all; }
 
     /* Bandeau de score : visible seulement pendant le parcours */
-    .score-bar { display: none; width: 100%; background: #a8e6bf; color: #1a3a25; padding: 9px 14px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.95rem; align-items: center; gap: 10px; }
+    /* Vert profond et non plus vert tendre : depuis que la scène du parcours est
+       claire, un bandeau en #a8e6bf s'y fondait complètement (contraste 1,1).
+       Inversé, il redevient une vraie barre d'en-tête. */
+    .score-bar { display: none; width: 100%; background: #1e6e3e; color: #fff; padding: 9px 14px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.95rem; align-items: center; gap: 10px; }
     .score-bar.visible { display: flex; }
     .score-bar .qui { flex: 1; text-align: center; }
-    .score-bar .eq { font-weight: 700; font-size: 0.8rem; opacity: 0.8; }
+    .score-bar .eq { font-weight: 700; font-size: 0.8rem; opacity: 0.82; }
     /* Sortie toujours offerte : sans elle, un participant dont l'atelier tourne
        mal n'a aucun moyen de revenir à la page d'accueil des événements. */
-    .score-bar .quitter { flex: none; border: none; background: rgba(26,58,37,0.12); color: #1a3a25; font-family: inherit; font-weight: 800; font-size: 0.78rem; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
-    .score-bar .quitter:hover { background: rgba(26,58,37,0.22); }
+    .score-bar .quitter { flex: none; border: none; background: rgba(255,255,255,0.18); color: #fff; font-family: inherit; font-weight: 800; font-size: 0.78rem; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
+    .score-bar .quitter:hover { background: rgba(255,255,255,0.30); }
 
     .hero { text-align: center; padding: 26px 20px 6px; }
     .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.8rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
@@ -67,12 +70,12 @@
        fait bouger toute la page pour rien. On utilise dvh et non vh : sur
        mobile, vh inclut la barre d'URL rétractable et déborde donc de la zone
        réellement visible. */
+    /* Le décor lui-même vient de .sl-scene (slides.css), posée sur le body en
+       même temps que cette classe : il était auparavant recopié ici à l'identique,
+       et la projection de l'animateur et cette page divergeaient dès qu'on
+       touchait à l'un des deux. Ne restent ici que la mise en page. */
     body.en-parcours {
       height: 100vh; height: 100dvh; overflow: hidden;
-      background-color: #1e6e3e;
-      background-image: url('/assets/img/motif-branchage-light.svg'), linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2d9959 100%);
-      background-repeat: repeat, no-repeat;
-      background-size: 220px 220px, cover;
       background-attachment: fixed;
     }
     body.en-parcours .hero,
@@ -197,11 +200,6 @@
     html.dark .somm li { color: #c8e6d4; background: #1e2d22; border-left-color: #2d4030; }
     html.dark .somm li.passee { border-left-color: #263a2b; }
     html.dark .somm li.courante { background: #16291c; border-left-color: #52b788; color: #7fc99a; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-    /* Motif dédié au thème sombre (le tracé clair y disparaîtrait). */
-    html.dark body.en-parcours {
-      background-color: #0d2f18;
-      background-image: url('/assets/img/motif-branchage-dark.svg'), linear-gradient(160deg, #0d2f18 0%, #12401f 55%, #1a5c33 100%);
-    }
     html.dark .carte::after { background-image: url('/assets/img/motif-branchage-dark.svg'); opacity: 0.09; }
     html.dark .field label { color: #7ab88e; }
     html.dark .field input, html.dark .field textarea { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
@@ -306,6 +304,7 @@
       document.getElementById('hero').style.display     = etape === 'live' ? 'none' : '';
       // En parcours, la carte prend la hauteur de l'écran et centre son contenu.
       document.body.classList.toggle('en-parcours', etape === 'live');
+      document.body.classList.toggle('sl-scene', etape === 'live');
       if (etape !== 'live') document.getElementById('scoreBar').classList.remove('visible');
       if (etape !== 'live') document.getElementById('carte').removeAttribute('data-type');
     }
