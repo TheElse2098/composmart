@@ -198,7 +198,7 @@ if ($action === 'reglages') {
 
     $mp = in_array($_POST['mode_parcours'] ?? '', ['commun', 'individuel'], true) ? $_POST['mode_parcours'] : 'commun';
     $me = in_array($_POST['mode_equipes'] ?? '', ['aucun', 'manuel', 'auto', 'libre'], true) ? $_POST['mode_equipes'] : 'aucun';
-    $th = in_array($_POST['theme_slides'] ?? '', ['foret', 'papier'], true) ? $_POST['theme_slides'] : 'foret';
+    $th = in_array($_POST['theme_slides'] ?? '', ['foret', 'papier', 'simpliste'], true) ? $_POST['theme_slides'] : 'foret';
 
     $stmt = mysqli_prepare($conn, 'UPDATE evenements SET mode_parcours = ?, mode_equipes = ?, theme_slides = ? WHERE id = ? AND supprime = 0');
     $stmt->bind_param('sssi', $mp, $me, $th, $id);

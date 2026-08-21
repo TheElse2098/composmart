@@ -37,6 +37,11 @@
   --sl-scene2:  #9ad5b4;
   --sl-scene3:  #6dbf91;
   --sl-scene-motif: url('/assets/img/motif-branchage-vert.svg');
+
+  /* Couleur dominante de la gerbe de confettis. Distincte de --sl-accent :
+     en simpliste l'accent est un vert lisible sur blanc, trop sourd pour des
+     confettis sur fond vert foncé. */
+  --sl-conf1:   var(--sl-accent);
 }
 
 html.dark {
@@ -398,6 +403,137 @@ html.dark [data-theme-slide="papier"] .sl { box-shadow: 14px 14px 0 rgba(0, 0, 0
 [data-theme-slide="papier"] .sl__media-etiq { border-radius: 6px; background: var(--sl-accent); }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   THÈME « SIMPLISTE » — cadre vert Composmart, carte blanche
+
+   La variante sobre : un cadre vert plein tout autour, une carte blanche
+   dedans, des titres centrés, et rien d'autre. Pas de dégradé, pas de motif,
+   pas de forme organique en filigrane — les deux autres thèmes ont chacun leur
+   ornement, celui-ci n'en a aucun. C'est ce qui le rend utilisable chez un
+   client qui a déjà sa propre identité visuelle et n'en veut pas une seconde.
+
+   Le cadre est une simple bordure : avec border-radius, le rayon intérieur vaut
+   automatiquement rayon − épaisseur, ce qui reproduit exactement la carte
+   blanche encastrée du gabarit sans imbriquer un élément de plus.
+
+   Les titres abandonnent Baloo 2 pour la graisse 800 de Nunito, resserrée :
+   c'est la seule chose qui distingue vraiment le ton « sobre » du ton « jeu ».
+   ══════════════════════════════════════════════════════════════════════════ */
+[data-theme-slide="simpliste"] {
+  --sl-fond1:   #2e7442;   /* vert foncé — blocs média, carte de fête */
+  --sl-fond2:   #00a34e;   /* vert lisible sur blanc — textes, traits */
+  --sl-fond3:   #00c25f;   /* vert vif — le cadre */
+  --sl-carte:   #ffffff;
+  --sl-encre:   #1d2c22;
+  --sl-doux:    #6c7a70;
+  --sl-accent:  #00a34e;
+  --sl-accent2: #e3f6e9;
+  --sl-tendre:  #e3f6e9;
+  --sl-trait:   rgba(29, 44, 34, 0.12);
+  --sl-rad:     26px;
+
+  /* La scène est un gris-vert neutre, sans motif : le cadre vert suffit à
+     détacher la carte, un décor de plus ferait redondance. */
+  --sl-scene1:  #f7f9f5;
+  --sl-scene2:  #f2f5f0;
+  --sl-scene3:  #e5ebe1;
+  --sl-scene-motif: none;
+}
+html.dark [data-theme-slide="simpliste"] {
+  --sl-fond1:   #16351f;
+  --sl-fond2:   #2ea862;
+  --sl-fond3:   #1f8a4a;
+  --sl-carte:   #141a16;
+  --sl-encre:   #e9f3ec;
+  --sl-doux:    #8ea395;
+  --sl-accent:  #35c273;
+  --sl-accent2: #12241a;
+  --sl-tendre:  #17241b;
+  --sl-trait:   rgba(233, 243, 236, 0.16);
+  --sl-scene1:  #12180f;
+  --sl-scene2:  #0e130c;
+  --sl-scene3:  #0a0f09;
+  --sl-scene-motif: none;
+}
+
+/* Le cadre vert. Le rayon intérieur découle de la bordure, aucun élément
+   supplémentaire n'est nécessaire. */
+[data-theme-slide="simpliste"] .sl {
+  border: clamp(9px, 2.9cqw, 16px) solid var(--sl-fond3);
+  box-shadow: 0 18px 40px -22px rgba(29, 44, 34, 0.4);
+}
+html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.6); }
+
+/* Aucun ornement : ni bandeau, ni formes organiques, ni grain. */
+[data-theme-slide="simpliste"] .sl__bandeau,
+[data-theme-slide="simpliste"] .sl__deco,
+[data-theme-slide="simpliste"] .sl__grain,
+[data-theme-slide="simpliste"] .sl__filet,
+[data-theme-slide="simpliste"] .sl__barre { display: none; }
+
+/* Titres : Nunito 800 resserré, centré. */
+[data-theme-slide="simpliste"] .sl__titre,
+[data-theme-slide="simpliste"] .sl__verdict-titre,
+[data-theme-slide="simpliste"] .sl__num,
+[data-theme-slide="simpliste"] .sl__verdict-pts,
+[data-theme-slide="simpliste"] .sl__badge-pts,
+[data-theme-slide="simpliste"] .sl__pastille {
+  font-family: 'Nunito', Arial, sans-serif; font-weight: 800; letter-spacing: -0.02em;
+}
+[data-theme-slide="simpliste"] .sl__titre { text-align: center; }
+[data-theme-slide="simpliste"] .sl__sous  { text-align: center; }
+
+/* Kicker et pastille : du texte vert en petites capitales, pas une gélule. */
+[data-theme-slide="simpliste"] .sl__pastille {
+  background: none; color: var(--sl-fond2); padding: 0;
+  letter-spacing: 0.2em; text-transform: uppercase;
+}
+[data-theme-slide="simpliste"] .sl__kicker { color: var(--sl-fond2); letter-spacing: 0.2em; }
+[data-theme-slide="simpliste"] .sl__ligne { justify-content: space-between; }
+[data-theme-slide="simpliste"] .sl__badge-pts { background: var(--sl-tendre); color: var(--sl-fond2); }
+
+/* Carte de titre : blanche et centrée, pas de fond plein. */
+[data-theme-slide="simpliste"] .sl--plein {
+  background: var(--sl-carte); color: var(--sl-encre);
+  justify-content: center; text-align: center;
+}
+[data-theme-slide="simpliste"] .sl--plein .sl__titre { color: var(--sl-encre); }
+[data-theme-slide="simpliste"] .sl--plein .sl__sous,
+[data-theme-slide="simpliste"] .sl--plein .sl__texte { color: var(--sl-doux); }
+[data-theme-slide="simpliste"] .sl--plein .sl__kicker { color: var(--sl-fond2); }
+[data-theme-slide="simpliste"] .sl--plein .sl__pied { color: var(--sl-doux); border-top: 1px solid var(--sl-trait); }
+[data-theme-slide="simpliste"] .sl--plein .sl__num { color: var(--sl-fond2); }
+[data-theme-slide="simpliste"] .sl__entete { background: var(--sl-fond1); }
+
+/* Réponses : carte blanche cerclée, pastille ronde en vert tendre. */
+[data-theme-slide="simpliste"] .sl__rep {
+  border-radius: 16px; border-width: 2px; border-color: var(--sl-trait);
+  background: var(--sl-carte);
+}
+[data-theme-slide="simpliste"] .sl__rep:hover:not(:disabled) {
+  transform: translateY(-2px); box-shadow: none; border-color: var(--sl-fond2);
+}
+[data-theme-slide="simpliste"] .sl__rep-marque {
+  border-radius: 50%; background: var(--sl-tendre); color: var(--sl-encre);
+}
+[data-theme-slide="simpliste"] .sl__rep--juste {
+  border-color: var(--sl-fond3); background: var(--sl-tendre); color: var(--sl-encre);
+}
+[data-theme-slide="simpliste"] .sl__rep--juste .sl__rep-marque { background: var(--sl-fond3); color: #fff; }
+
+/* Verdict, puces, sommaire, classement : même gélule verte tendre partout. */
+[data-theme-slide="simpliste"] .sl__verdict {
+  border-radius: 16px; border: none; background: var(--sl-tendre);
+}
+[data-theme-slide="simpliste"] .sl__somm li { border-radius: 0 12px 12px 0; background: var(--sl-tendre); }
+[data-theme-slide="simpliste"] .sl__somm li.courante { border-left-color: var(--sl-fond3); }
+[data-theme-slide="simpliste"] .sl__clst li { border-radius: 12px; background: var(--sl-tendre); }
+
+/* Médias : bloc vert foncé à coins largement arrondis. */
+[data-theme-slide="simpliste"] .sl__media,
+[data-theme-slide="simpliste"] .sl__lecteur { border-radius: 22px; background: var(--sl-fond1); }
+[data-theme-slide="simpliste"] .sl__media-etiq { border-radius: 999px; background: var(--sl-fond2); }
+
+/* ══════════════════════════════════════════════════════════════════════════
    SLIDE D'ENCOURAGEMENT — deux animations au choix
 
    1. LA POUSSE. Une plante qui se construit en boucle : la tige se DESSINE
@@ -631,6 +767,31 @@ html.dark [data-theme-slide="papier"] .sl { box-shadow: 14px 14px 0 rgba(0, 0, 0
   border-color: rgba(253, 250, 241, 0.4); background: rgba(253, 250, 241, 0.14);
 }
 [data-theme-slide="papier"] .sl--fete .sl__jauge-txt { color: rgba(253, 250, 241, 0.72); }
+
+/* ── Encouragement, thème simpliste ────────────────────────────────────────
+   La plante reprend le vert foncé pour la tige et les feuilles, le vert vif
+   pour les pétales : c'est le contraste du gabarit. Pas de halo — ce thème
+   n'a d'ornement nulle part ailleurs, en poser un ici jurerait. */
+[data-theme-slide="simpliste"] { --sl-conf1: var(--sl-fond3); }
+[data-theme-slide="simpliste"] .sl__halo { display: none; }
+[data-theme-slide="simpliste"] .sl__tige { stroke: var(--sl-fond1); }
+[data-theme-slide="simpliste"] .sl__feuille { fill: var(--sl-fond1); }
+[data-theme-slide="simpliste"] .sl__petale { fill: var(--sl-fond3); }
+[data-theme-slide="simpliste"] .sl__pistil { fill: var(--sl-fond1); }
+[data-theme-slide="simpliste"] .sl__mot span { border-radius: 16px; }
+[data-theme-slide="simpliste"] .sl__bravo {
+  font-family: 'Nunito', Arial, sans-serif; font-weight: 800; letter-spacing: -0.03em;
+}
+
+/* Carte de la gerbe : le cadre vert reste, l'intérieur passe au vert foncé.
+   Doit venir après la règle .sl--plein du thème (même spécificité). */
+[data-theme-slide="simpliste"] .sl--fete { background: var(--sl-fond1); color: #fff; }
+[data-theme-slide="simpliste"] .sl--fete .sl__titre { color: #fff; }
+[data-theme-slide="simpliste"] .sl--fete .sl__texte,
+[data-theme-slide="simpliste"] .sl--fete .sl__verdict-pts { color: rgba(255, 255, 255, 0.82); }
+[data-theme-slide="simpliste"] .sl--fete .sl__pastille { color: rgba(255, 255, 255, 0.72); }
+[data-theme-slide="simpliste"] .sl--fete .sl__anneau--accent { border-color: var(--sl-fond3); }
+[data-theme-slide="simpliste"] .sl--fete .sl__jauge-txt { color: rgba(255, 255, 255, 0.72); }
 
 /* Accessibilité — la slide d'encouragement est un cas à part.
 

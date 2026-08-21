@@ -219,9 +219,11 @@
           var burst = 3.4;
           var ox = +(26 + alea() * 48).toFixed(1);        // origine de la gerbe, en %
           var oy = +(30 + alea() * 34).toFixed(1);
-          var teintes = papier
-            ? ['var(--sl-accent)', '#fdfaf1', 'var(--sl-tendre)', '#e0c05f', '#fdfaf1', 'var(--sl-accent)']
-            : ['var(--sl-accent)', '#ffffff', 'var(--sl-tendre)', '#e0c05f', '#ffffff', 'var(--sl-accent)'];
+          // --sl-conf1 laisse chaque thème choisir sa dominante : l'accent
+          // convient en forêt et en papier, pas en simpliste où il est trop
+          // sourd sur le vert foncé de la carte.
+          var blanc = papier ? '#fdfaf1' : '#ffffff';
+          var teintes = ['var(--sl-conf1)', blanc, 'var(--sl-tendre)', '#e0c05f', blanc, 'var(--sl-conf1)'];
 
           var NB = 38, pieces = '';
           for (var k = 0; k < NB; k++) {
