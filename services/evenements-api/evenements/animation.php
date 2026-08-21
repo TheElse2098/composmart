@@ -144,7 +144,7 @@ if ($action === 'etat') {
             'statut'        => $evt['statut'],
             'mode_parcours' => $evt['mode_parcours'],
             'mode_equipes'  => $evt['mode_equipes'],
-            'theme'         => $evt['theme_slides'] ?? 'foret',
+            'theme'         => ($evt['theme_slides'] ?? '') ?: 'foret',
         ],
         'slide'           => $slide,
         'index'           => $index,

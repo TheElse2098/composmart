@@ -110,7 +110,7 @@ if ($action === 'etat') {
     $base = [
         'participant'  => ['nom' => $p['nom_affiche'], 'points' => score_participant($conn, $p['id'])],
         'evenement'    => ['titre' => $evt['titre'], 'statut' => $evt['statut'], 'mode' => $evt['mode_parcours'],
-                            'theme' => $evt['theme_slides'] ?? 'foret'],
+                            'theme' => ($evt['theme_slides'] ?? '') ?: 'foret'],
         'mode_equipes' => $evt['mode_equipes'],
     ];
 

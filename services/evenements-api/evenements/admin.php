@@ -202,7 +202,27 @@ if ($action === 'reglages') {
 
     $stmt = mysqli_prepare($conn, 'UPDATE evenements SET mode_parcours = ?, mode_equipes = ?, theme_slides = ? WHERE id = ? AND supprime = 0');
     $stmt->bind_param('sssi', $mp, $me, $th, $id);
+    if (!$stmt->execute()) {
+        echo json_encode(['error' => 'La base a refusé ces réglages : ' . $stmt->error]);
+        exit;
+    }
+
+    // On RELIT la valeur stockée au lieu de faire confiance à l'UPDATE. Quand la
+    // colonne theme_slides ne connaît pas encore une valeur (migration pas
+    // appliquée), MariaDB la refuse en mode strict, mais la TRONQUE en silence
+    // sinon : execute() renvoie true, la ligne contient '', et l'écran annonçait
+    // « Enregistré » alors que le thème revenait au précédent au rechargement.
+    $stmt = mysqli_prepare($conn, 'SELECT theme_slides FROM evenements WHERE id = ?');
+    $stmt->bind_param('i', $id);
     $stmt->execute();
+    $apres = $stmt->get_result()->fetch_assoc();
+    if (!$apres || $apres['theme_slides'] !== $th) {
+        echo json_encode(['error' =>
+            "Le thème « $th » n'a pas pu être enregistré : la colonne theme_slides ne connaît pas "
+            . "encore cette valeur. Applique db/migration-2026-08-evenements-theme-simpliste.sql "
+            . "sur db-evenements, puis réessaie."], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 
     echo json_encode(['ok' => true]);
     exit;

@@ -566,7 +566,12 @@
         // elles doivent suivre chaque sondage. Les autres sont figées une fois
         // dessinées — les redessiner casserait leur animation et leurs médias.
         const besoin = (d.slide.type === 'classement') || (d.slide.type === 'fin' && c0.afficher_classement);
-        const sig = [d.slide.id, d.index, d.total].join('|');
+        // Le thème entre dans la signature : la plupart des écarts entre chartes
+        // sont purement CSS et s'appliquent sans redessiner, mais pas tous — le
+        // nombre de pétales de la slide d'encouragement, par exemple, est figé au
+        // rendu. Sans ça, changer de thème sans changer de slide laissait un
+        // aperçu à moitié à jour.
+        const sig = [d.slide.id, d.index, d.total, (d.evenement && d.evenement.theme) || ''].join('|');
         if (besoin) { sigApercu = ''; chargerClassementData().then(dessiner).catch(() => dessiner(null)); }
         else if (sig !== sigApercu) { sigApercu = sig; dessiner(null); }
       }
