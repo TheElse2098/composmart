@@ -5,10 +5,12 @@
  * pas à ce que la personne rapporte, etc.).
  *
  * Volontairement MINIMAL — pseudo, niveau, XP totale, historique d'XP (pour le
- * graphe) : rien de plus. Ni email, ni date d'inscription, ni statut admin de
- * la cible, ni aucune donnée de compte. Les cours/jeux terminés sont renvoyés
- * séparément par courses-api/games-api (le front assemble les deux), chacun
- * limité de la même façon à « quoi », jamais à autre chose sur la personne.
+ * graphe), cours terminés : rien de plus. Ni email, ni date d'inscription, ni
+ * statut admin de la cible, ni aucune autre donnée de compte. Les cours
+ * viennent d'ici (même base, db-core) ; les jeux, eux, vivent dans db-games et
+ * sont renvoyés séparément par games-api (le front assemble les deux) — même
+ * principe de limiter chacun au strict « quoi », jamais à autre chose sur la
+ * personne.
  *
  * Appelé par le navigateur de l'admin (pas un service) : gardé par sa PROPRE
  * session, relue en base à chaque appel — un compte rétrogradé perd l'accès
@@ -70,10 +72,31 @@ while ($row = $res->fetch_assoc()) {
     $xp_history[] = ['delta' => (int)$row['delta'], 'created_at' => $row['created_at']];
 }
 
+// Cours terminés : même requête que profile.php (self), même limitation au
+// strict nécessaire pour les identifier — pas la description, pas le thème.
+$cours = [];
+$stmt = mysqli_prepare($c,
+    'SELECT c.slug, c.titre, c.emoji, up.completed_at
+     FROM user_progress up JOIN cours c ON c.slug = up.cours_id
+     WHERE up.user_id = ?
+     ORDER BY up.completed_at DESC');
+$stmt->bind_param('i', $uid);
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    $cours[] = [
+        'slug'         => $row['slug'],
+        'titre'        => $row['titre'],
+        'emoji'        => $row['emoji'] ?: '📘',
+        'completed_at' => $row['completed_at'],
+    ];
+}
+
 echo json_encode([
     'ok'         => true,
     'username'   => $u['username'],
     'niveau'     => (int)$u['niveau'],
     'xp'         => (int)$u['xp'],
     'xp_history' => $xp_history,
+    'cours'      => $cours,
 ], JSON_UNESCAPED_UNICODE);
