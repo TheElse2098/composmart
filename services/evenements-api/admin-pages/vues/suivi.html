@@ -13,10 +13,6 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
-    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
-    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
-    .nav-logo span { color: #a8e6bf; }
-    .nav-back { color: rgba(255,255,255,0.85); text-decoration: none; font-weight: 700; font-size: 0.85rem; }
 
     .page-content { width: 100%; max-width: 900px; padding: 18px 16px; }
     .loader { text-align: center; padding: 60px; color: #4a7a5a; font-weight: 700; }
@@ -105,6 +101,10 @@
     .hint { font-size: 0.78rem; color: #888; margin-top: 6px; }
 
     /* Mode projection : on masque tout sauf l'aperçu, pour l'écran de la salle */
+    /* #site-nav et le fil de retour s'ajoutent ici : le bandeau est désormais
+       injecté dans un conteneur, masquer le seul <nav> laisserait la bande
+       vide du conteneur en haut de l'écran projeté. */
+    body.projection #site-nav, body.projection .fil-retour,
     body.projection nav, body.projection .tabs, body.projection .join-actions,
     body.projection #ongletParticipants, body.projection #ongletReglages,
     body.projection .console-actions, body.projection #zoneResultats { display: none !important; }
@@ -143,16 +143,16 @@
     html.dark .apercu { border-color: #2d4030; }
     html.dark .progress { background: #1e2d22; }
   </style>
+  <link rel="stylesheet" href="/assets/css/site-nav.css">
   <link rel="stylesheet" href="/assets/css/desktop.css">
   <!-- Charte des cartes de slide, partagée avec l'écran participant -->
   <link rel="stylesheet" href="/assets/css/slides.css">
 </head>
 <body>
 
-  <nav>
-    <a href="/" class="nav-logo">Compo<span>Smart</span></a>
-    <a href="/evenements-admin" class="nav-back">← Retour</a>
-  </nav>
+  <!-- Bandeau + sidebar partages (injectes par site-nav.js) -->
+  <div id="site-nav"></div>
+  <div class="fil-retour"><a href="/evenements-admin">← Tous les événements</a></div>
 
   <div class="loader" id="loader">Chargement…</div>
 
@@ -948,6 +948,7 @@
   <script src="/assets/js/confirmer.js"></script>
   <script src="/assets/js/media-embed.js"></script>
   <script src="/assets/js/slide-render.js"></script>
+  <script src="/assets/js/site-nav.js"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 </html>

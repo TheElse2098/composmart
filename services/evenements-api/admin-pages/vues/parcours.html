@@ -13,10 +13,6 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
-    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
-    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
-    .nav-logo span { color: #a8e6bf; }
-    .nav-back { color: rgba(255,255,255,0.85); text-decoration: none; font-weight: 700; font-size: 0.85rem; }
 
     .hero { text-align: center; padding: 24px 20px 10px; }
     .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
@@ -97,14 +93,14 @@
     html.dark .slide-btns button, html.dark .rep-add { background: #16291c; color: #7fc99a; }
     html.dark .slide-pts { background: #2e2410; color: #e8b931; }
   </style>
+  <link rel="stylesheet" href="/assets/css/site-nav.css">
   <link rel="stylesheet" href="/assets/css/desktop.css">
 </head>
 <body>
 
-  <nav>
-    <a href="/" class="nav-logo">Compo<span>Smart</span></a>
-    <a href="/evenements-admin" class="nav-back">← Événements</a>
-  </nav>
+  <!-- Bandeau + sidebar partages (injectes par site-nav.js) -->
+  <div id="site-nav"></div>
+  <div class="fil-retour"><a href="/evenements-admin">← Tous les événements</a></div>
 
   <div class="loader" id="loader">Chargement…</div>
 
@@ -783,6 +779,7 @@
   </script>
   <script src="/assets/js/confirmer.js"></script>
   <script src="/assets/js/emoji-picker.js"></script>
+  <script src="/assets/js/site-nav.js"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 </html>
