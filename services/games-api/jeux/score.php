@@ -171,10 +171,21 @@ if ($action === 'profile') {
         'temps-decompo'  => ['nom' => 'Combien de temps ?', 'emoji' => '⏳', 'max' => 30],
         'tri-eclair'     => ['nom' => 'Tri éclair',        'emoji' => '⚡', 'max' => 15],
     ];
+    // Un admin peut consulter le profil jeux d'un AUTRE joueur (fiche joueur,
+    // page admin) via ?user_id= — ignoré pour tout le monde d'autre : impossible
+    // de lire les scores de quelqu'un en devinant son id dans l'URL. is_admin_session()
+    // est le même contrôle que celui déjà utilisé plus haut (ligne ~69) pour
+    // marquer un score : games-api n'a pas accès à la table users (db-core),
+    // donc pas de relecture en base possible ici — la session fait foi, comme
+    // partout ailleurs dans ce service.
+    $uid = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
+    if (is_admin_session() && isset($_GET['user_id'])) {
+        $uid = (int)$_GET['user_id'];
+    }
+
     $joues = [];
     $parties_total = 0;
-    if (!empty($_SESSION['user_id'])) {
-        $uid = (int)$_SESSION['user_id'];
+    if ($uid > 0) {
         $stmt = mysqli_prepare($conn, 'SELECT jeu_id, MAX(score) AS best, COUNT(*) AS parties FROM scores WHERE user_id = ? GROUP BY jeu_id');
         $stmt->bind_param('i', $uid);
         $stmt->execute();

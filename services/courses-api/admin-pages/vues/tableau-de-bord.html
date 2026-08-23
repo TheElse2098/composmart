@@ -128,6 +128,43 @@
     .tchat-actbtn.danger:hover { background: #fdecea; border-color: #c0392b; }
     .sig-del { background: #fdecea; color: #c0392b; border: 1.5px solid #f5c6c0; border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
     .sig-del:hover { background: #f8d7d2; }
+
+    /* ── FICHE JOUEUR (.tchat-box réutilisée pour le cadre : backdrop, carte,
+       en-tête + croix de fermeture — identiques à la boîte de discussion des
+       tickets, seul le contenu change) ── */
+    .fiche-box { max-width: 420px; }
+    .fiche-corps { padding: 16px; overflow-y: auto; }
+    .fiche-stats { display: flex; gap: 10px; margin-bottom: 18px; }
+    .fiche-stats .stat-card { flex: 1; }
+    /* xp-curve-* : copié de compte.html (page profil du joueur) — la fiche
+       admin doit rendre la MÊME courbe avec le MÊME rendu, pas une variante :
+       xp-chart.js fournit déjà le comportement identique, seul le style visuel
+       doit suivre pour de vrai. */
+    .xp-curve { width: 100%; height: 110px; display: block; overflow: visible; }
+    .xp-curve-grid { stroke: #e3efe5; stroke-width: 1; }
+    .xp-curve-area { fill: #2d9959; fill-opacity: 0.12; stroke: none; }
+    .xp-curve-line { fill: none; stroke: #2d9959; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+    .xp-curve-total { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #1e6e3e; line-height: 1; margin-bottom: 10px; }
+    .xp-curve-total span { font-family: 'Nunito', sans-serif; font-size: 0.75rem; font-weight: 700; color: #7aaa8a; }
+    .xp-curve-axis { display: flex; justify-content: space-between; font-size: 0.68rem; color: #7aaa8a; font-weight: 700; margin-top: 6px; }
+    .xp-chart-empty { font-size: 0.82rem; color: #7aaa8a; font-weight: 600; }
+    .fiche-jeux-list { display: flex; flex-direction: column; gap: 7px; }
+    .fiche-jeu-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #f6faf6; border-radius: 10px; }
+    .fiche-jeu-emoji { font-size: 1.15rem; flex-shrink: 0; }
+    .fiche-jeu-nom { flex: 1; min-width: 0; font-size: 0.83rem; font-weight: 700; color: #1a3a25; }
+    .fiche-jeu-score { font-size: 0.78rem; font-weight: 800; color: #1e6e3e; flex-shrink: 0; }
+    .fiche-jeu-score.vide { color: #b7c9bd; font-weight: 700; }
+    .fiche-user-btn { background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: transparent; transition: text-decoration-color 0.12s; }
+    .fiche-user-btn:hover { text-decoration-color: currentColor; }
+    html.dark .xp-curve-grid { stroke: #243328; }
+    html.dark .xp-curve-area { fill: #52b788; }
+    html.dark .xp-curve-line { stroke: #52b788; }
+    html.dark .xp-curve-total { color: #52b788; }
+    html.dark .xp-curve-total span { color: #7ab88e; }
+    html.dark .xp-chart-empty { color: #7ab88e; }
+    html.dark .fiche-jeu-row { background: #101a13; }
+    html.dark .fiche-jeu-nom { color: #e8f5ee; }
+    html.dark .fiche-jeu-score { color: #52b788; }
     html.dark .sig-del { background: #3d1a1a; border-color: #5a2020; color: #ef9a9a; }
     html.dark .ticket-chip.ouvert { background: #14301f; color: #52b788; }
     html.dark .ticket-chip.clos { background: #1e2d22; color: #8fa398; }
@@ -463,6 +500,20 @@
     </div>
   </div>
 
+  <!-- Fiche joueur : volontairement réduite à niveau + XP (graphe) + jeux
+       terminés — rien de plus (ni email, ni cours, ni aucune autre donnée de
+       compte). Sert à un admin qui enquête sur un bug qu'un joueur signale. -->
+  <div class="tchat-back" id="ficheBack">
+    <div class="tchat-box fiche-box">
+      <div class="tchat-head">
+        <div class="tchat-title" id="ficheTitre">Fiche joueur</div>
+        <button type="button" class="tchat-close" id="ficheClose" aria-label="Fermer">✕</button>
+      </div>
+      <div class="fiche-corps" id="ficheCorps"></div>
+    </div>
+  </div>
+
+  <script src="/assets/js/xp-chart.js"></script>
   <script>
     // ── BURGER ──
     function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
@@ -728,7 +779,7 @@
           actions = roleBtn + ' ' + delBtn;
         }
         tr.innerHTML =
-          '<td><b>' + echap(u.username) + '</b></td>'
+          '<td><button type="button" class="fiche-user-btn" data-fiche-id="' + u.id + '" data-fiche-name="' + echap(u.username) + '"><b>' + echap(u.username) + '</b></button></td>'
           + '<td><span class="lvl-pill">Niv. ' + u.niveau + '</span></td>'
           + '<td>' + u.xp + '</td>'
           + '<td>' + (u.date || '').slice(0, 10) + '</td>'
@@ -739,7 +790,62 @@
       tbody.querySelectorAll('.act-btn').forEach(btn => {
         btn.addEventListener('click', () => userAction(btn.dataset));
       });
+      tbody.querySelectorAll('.fiche-user-btn').forEach(btn => {
+        btn.addEventListener('click', () => ouvrirFiche(+btn.dataset.ficheId, btn.dataset.ficheName));
+      });
     }
+
+    /* ══ FICHE JOUEUR ═══════════════════════════════════════════════════════
+       Volontairement bornée à niveau + XP (graphe) + jeux terminés — rien de
+       plus, sur demande explicite : sert à repérer un bug qu'un joueur
+       signale (score/XP/niveau incohérent), pas à consulter son compte. */
+    const JEUX_META = {
+      'mot-mystere':    { nom: 'Mot mystère',        emoji: '🔤' },
+      'compost-ou-pas': { nom: 'Compost ou pas ?',   emoji: '♻️' },
+      'temps-decompo':  { nom: 'Combien de temps ?', emoji: '⏳' },
+      'tri-eclair':     { nom: 'Tri éclair',         emoji: '⚡' },
+    };
+
+    function ouvrirFiche(id, nom) {
+      document.getElementById('ficheTitre').textContent = '👤 ' + nom;
+      document.getElementById('ficheCorps').innerHTML = '<div class="empty-msg">Chargement…</div>';
+      document.getElementById('ficheBack').classList.add('open');
+
+      Promise.all([
+        fetch('/api/auth/fiche_joueur.php?user_id=' + id).then(r => r.json()).catch(() => ({ error: 'Erreur réseau.' })),
+        fetch('/api/jeux/score.php?action=profile&user_id=' + id).then(r => r.json()).catch(() => ({ records: [] })),
+      ]).then(([joueur, jeux]) => {
+        if (!joueur || joueur.error) {
+          document.getElementById('ficheCorps').innerHTML = '<div class="empty-msg">' + echap((joueur && joueur.error) || 'Chargement impossible.') + '</div>';
+          return;
+        }
+
+        const jeuxHtml = (jeux.records || []).map(r => {
+          const meta = JEUX_META[r.slug] || { nom: r.slug, emoji: '🎮' };
+          const score = r.best === null
+            ? '<span class="fiche-jeu-score vide">Jamais joué</span>'
+            : '<span class="fiche-jeu-score">' + r.best + ' / ' + r.max + '</span>';
+          return '<div class="fiche-jeu-row"><span class="fiche-jeu-emoji">' + meta.emoji + '</span>'
+            + '<span class="fiche-jeu-nom">' + echap(meta.nom) + '</span>' + score + '</div>';
+        }).join('');
+
+        document.getElementById('ficheCorps').innerHTML =
+          '<div class="fiche-stats">'
+          +   '<div class="stat-card"><div class="stat-num">Niv. ' + joueur.niveau + '</div><div class="stat-lbl">Niveau</div></div>'
+          +   '<div class="stat-card"><div class="stat-num">' + joueur.xp + '</div><div class="stat-lbl">XP total</div></div>'
+          + '</div>'
+          + '<div class="section-title" style="margin-top:0">📈 Progression XP</div>'
+          + XpChart.buildXpChartHtml(joueur.xp_history || [], 'Aucun gain d\'XP enregistré pour l\'instant.')
+          + '<div class="section-title">🎮 Jeux terminés</div>'
+          + '<div class="fiche-jeux-list">' + (jeuxHtml || '<div class="empty-msg">Aucun jeu disponible.</div>') + '</div>';
+      });
+    }
+
+    function fermerFiche() { document.getElementById('ficheBack').classList.remove('open'); }
+    document.getElementById('ficheClose').addEventListener('click', fermerFiche);
+    document.getElementById('ficheBack').addEventListener('click', function (e) {
+      if (e.target === this) fermerFiche();
+    });
 
     function userAction(d) {
       const name = d.name || 'cet utilisateur';
