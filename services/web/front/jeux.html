@@ -113,46 +113,11 @@
 
   <div class="bottom-leaf"></div>
 
+  <script src="/assets/js/jeux-registre.js"></script>
   <script>
     // ── BURGER ──
-    // ── REGISTRE DES JEUX ──
-    // Pour ajouter un jeu : créer front/jeu-<slug>.html, ajouter le slug
-    // dans api/jeux/score.php ($JEUX_VALIDES) et une entrée ici.
-    const JEUX = [
-      {
-        slug: 'mot-mystere',
-        emoji: '🔤',
-        nom: 'Mot mystère',
-        desc: 'Reconstitue les mots du compostage à partir de lettres mélangées.',
-        url: '/jeu-mot-mystere',
-        scoreMax: 80
-      },
-      {
-        slug: 'compost-ou-pas',
-        emoji: '♻️',
-        nom: 'Compost ou pas ?',
-        desc: 'Décide si chaque déchet va au compost ou à la poubelle.',
-        url: '/jeu-compost-ou-pas',
-        scoreMax: 12
-      },
-      {
-        slug: 'temps-decompo',
-        emoji: '⏳',
-        nom: 'Combien de temps ?',
-        desc: 'Devine combien de temps chaque déchet met à se décomposer.',
-        url: '/jeu-temps-decompo',
-        scoreMax: 30
-      },
-      {
-        slug: 'tri-eclair',
-        emoji: '⚡',
-        nom: 'Tri éclair',
-        desc: 'Glisse chaque déchet dans le bon bac avant que le temps ne s\'écoule.',
-        url: '/jeu-tri-eclair',
-        scoreMax: 15
-      }
-    ];
-
+    // La liste JEUX vient de /assets/js/jeux-registre.js (chargé ci-dessous,
+    // avant ce bloc) : source unique partagée avec l'accueil.
     function renderJeux(bests) {
       const list = document.getElementById('jeuxList');
       list.innerHTML = '';

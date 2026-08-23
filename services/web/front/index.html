@@ -202,8 +202,8 @@
   <!-- CHIFFRES -->
   <div class="stats">
     <div class="stat"><div class="stat-num" id="statComposts">5 800+</div><div class="stat-label">Composteurs recensés</div></div>
-    <div class="stat"><div class="stat-num">8</div><div class="stat-label">Cours interactifs</div></div>
-    <div class="stat"><div class="stat-num">2</div><div class="stat-label">Mini-jeux</div></div>
+    <div class="stat"><div class="stat-num" id="statCours">–</div><div class="stat-label">Cours interactifs</div></div>
+    <div class="stat"><div class="stat-num" id="statJeux">–</div><div class="stat-label">Mini-jeux</div></div>
     <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Gratuit &amp; open data</div></div>
   </div>
 
@@ -265,6 +265,7 @@
 
   <div class="bottom-leaf"></div>
 
+  <script src="/assets/js/jeux-registre.js"></script>
   <script>
     // Scroll animé "maison" pour les ancres internes : indépendant de scroll-behavior
     // CSS (que certains OS/navigateurs désactivent via prefers-reduced-motion), donc
@@ -297,6 +298,20 @@
     fetch('/api/carte/count.php').then(r => r.json())
       .then(d => { if (d && typeof d.composts === 'number') document.getElementById('statComposts').textContent = d.composts.toLocaleString('fr-FR') + '+'; })
       .catch(() => {});
+
+    // Chiffre "cours" en temps réel : les cours s'ajoutent depuis /admin/themes
+    // sans déploiement, un nombre figé dans le HTML se périme donc de lui-même
+    // dès le premier cours créé après coup.
+    fetch('/api/cours/count.php').then(r => r.json())
+      .then(d => { if (d && typeof d.cours === 'number') document.getElementById('statCours').textContent = d.cours; })
+      .catch(() => {});
+
+    // Chiffre "mini-jeux" : compté depuis le registre partagé (jeux-registre.js),
+    // pas re-tapé en dur ici — c'est justement un chiffre codé en double qui
+    // avait fini par diverger (affichait encore 2 alors que le site en comptait 4).
+    if (typeof JEUX !== 'undefined') {
+      document.getElementById('statJeux').textContent = JEUX.length;
+    }
 
     // Si déjà connecté, le CTA final invite à continuer plutôt qu'à s'inscrire
     fetch('/api/auth/me.php').then(r => r.json())
