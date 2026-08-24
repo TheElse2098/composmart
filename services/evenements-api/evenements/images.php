@@ -19,7 +19,11 @@ $conn = evt_admin_connexion_ou_403();
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 const IMG_TAGS_MAX  = 12;
-const IMG_TAILLE_MAX = 3 * 1024 * 1024;   // 3 Mo : une vignette de slide, pas une photo brute
+// 8 Mo : de quoi accepter une photo sortie d'appareil sans la retoucher. Le
+// Dockerfile monte les plafonds PHP au-dessus (12 Mo), sans quoi le fichier
+// serait refusé avant même que ce script ne s'exécute — c'est le défaut de
+// 2 Mo de php:8.3-apache qui bloquait tout, pas la limite ci-dessous.
+const IMG_TAILLE_MAX = 8 * 1024 * 1024;
 
 /** Formats acceptés → extension. Liste blanche : on ne se fie jamais au nom du
  *  fichier ni au Content-Type annoncé par le navigateur, tous deux falsifiables. */
@@ -139,12 +143,14 @@ if ($action === 'televerser') {
         // plafond sans regarder celui de PHP produirait un message faux.
         $motif = ($f['error'] ?? null) === UPLOAD_ERR_INI_SIZE
             ? 'Fichier refusé par le serveur (limite PHP : ' . ini_get('upload_max_filesize') . ').'
-            : 'Aucun fichier reçu.';
+            : "Aucun fichier reçu. Si l'image est très lourde, elle a pu être "
+              . 'rejetée en bloc par le serveur : au-dessus de post_max_size ('
+              . ini_get('post_max_size') . "), PHP vide à la fois le fichier et les champs du formulaire.";
         echo json_encode(['error' => $motif]);
         exit;
     }
     if ($f['size'] > IMG_TAILLE_MAX) {
-        echo json_encode(['error' => 'Image trop lourde (3 Mo maximum).']); exit;
+        echo json_encode(['error' => 'Image trop lourde (8 Mo maximum).']); exit;
     }
 
     // getimagesize lit les octets réels : c'est ce qui distingue une vraie image

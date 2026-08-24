@@ -128,7 +128,7 @@
         <div class="field"><label>Tags</label>
           <div id="tagsForm"></div></div>
         <button type="submit" class="btn-p" id="btnEnvoi">Téléverser</button>
-        <div class="hint">PNG, JPEG, GIF ou WebP, 3 Mo maximum. Sans tag, l'image ne sera jamais tirée au sort : c'est le tag qui la rend éligible.</div>
+        <div class="hint">PNG, JPEG, GIF ou WebP, 8 Mo maximum. Sans tag, l'image ne sera jamais tirée au sort : c'est le tag qui la rend éligible.</div>
       </form>
     </div>
 
@@ -162,6 +162,10 @@
     /*__ROUTE__*/
     function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
     const API = '/api/evenements/images.php';
+    // Doit rester aligné sur IMG_TAILLE_MAX côté serveur : ce contrôle-ci n'est
+    // qu'une politesse pour éviter un aller-retour de plusieurs mégaoctets qui
+    // finirait refusé. C'est le serveur qui tranche.
+    const TAILLE_MAX = 8 * 1024 * 1024;
     let tagActif = '';
 
     function lireJson(r) {
@@ -347,7 +351,7 @@
       // ajoute à la volée plutôt que de retarder l'affichage de l'aperçu.
       img.onload = () => {
         meta.textContent = img.naturalWidth + '×' + img.naturalHeight + ' · ' + poids(f.size)
-          + (f.size > 3 * 1024 * 1024 ? ' · trop lourde (3 Mo maximum)' : '');
+          + (f.size > TAILLE_MAX ? ' · trop lourde (8 Mo maximum)' : '');
       };
       img.onerror = () => { meta.textContent = 'Fichier illisible — ce n\'est pas une image.'; };
       img.src = urlApercu;
@@ -362,7 +366,7 @@
       // Le serveur revérifie tout (taille ET contenu réel via getimagesize) :
       // ce contrôle-ci n'est qu'une politesse pour éviter un aller-retour de
       // plusieurs mégaoctets qui finirait refusé.
-      if (f.size > 3 * 1024 * 1024) { afficher('Image trop lourde (3 Mo maximum).', false); return; }
+      if (f.size > TAILLE_MAX) { afficher('Image trop lourde (8 Mo maximum).', false); return; }
 
       const btn = document.getElementById('btnEnvoi');
       btn.disabled = true; btn.textContent = 'Envoi…';
