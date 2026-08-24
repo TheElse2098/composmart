@@ -118,13 +118,15 @@
     <div class="card">
       <form id="formImg">
         <div class="field"><label>Fichier</label>
-          <input type="file" id="fichier" accept="image/png,image/jpeg,image/gif,image/webp" required></div>
+          <input type="file" id="fichier" accept="image/png,image/jpeg,image/gif,image/webp" required>
+          <div id="blocApercuFichier" style="display:none;margin-top:10px">
+            <img class="img-vue" id="apercuFichier" src="" alt="Aperçu de l'image choisie" style="max-width:220px">
+            <div class="img-meta" id="metaFichier"></div>
+          </div></div>
         <div class="field"><label>Nom (facultatif)</label>
           <input type="text" id="nom" maxlength="200" placeholder="Laisse vide pour reprendre le nom du fichier"></div>
         <div class="field"><label>Tags</label>
-          <input type="text" id="tags" list="listeTags" placeholder="nature, hiver, chiffre-choc — séparés par des virgules">
-          <datalist id="listeTags"></datalist>
-          <div class="chips" id="apercuTags"></div></div>
+          <div id="tagsForm"></div></div>
         <button type="submit" class="btn-p" id="btnEnvoi">Téléverser</button>
         <div class="hint">PNG, JPEG, GIF ou WebP, 3 Mo maximum. Sans tag, l'image ne sera jamais tirée au sort : c'est le tag qui la rend éligible.</div>
       </form>
@@ -145,8 +147,7 @@
       <div class="field"><label>Nom</label>
         <input type="text" id="modalNom" maxlength="200" placeholder="Un nom lisible"></div>
       <div class="field"><label>Tags</label>
-        <input type="text" id="modalTags" list="listeTags" placeholder="nature, hiver — séparés par des virgules">
-        <div class="chips" id="modalApercu"></div></div>
+        <div id="tagsModal"></div></div>
       <div class="modal-actions">
         <button type="button" class="btn-s" id="modalAnnuler">Annuler</button>
         <button type="button" class="btn-p" id="modalOk">Enregistrer</button>
@@ -156,6 +157,7 @@
 
   <div class="bottom-leaf"></div>
 
+  <script src="/assets/js/tag-picker.js"></script>
   <script>
     /*__ROUTE__*/
     function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
@@ -194,8 +196,7 @@
         .then(d => {
           rendreFiltres(d.tags || []);
           rendreGrille(d.images || []);
-          document.getElementById('listeTags').innerHTML =
-            (d.tags || []).map(t => '<option value="' + echap(t.tag) + '">').join('');
+          majSelecteurs(d.tags || []);
           document.getElementById('loader').style.display = 'none';
           document.getElementById('content').style.display = 'block';
         })
@@ -260,9 +261,7 @@
       imgEdition = im;
       document.getElementById('modalVue').src = im.url;
       document.getElementById('modalNom').value = im.nom || '';
-      const t = document.getElementById('modalTags');
-      t.value = (im.tags || []).join(', ');
-      t.dispatchEvent(new Event('input', { bubbles: true }));
+      selModal.definir(im.tags || []);
       document.getElementById('msgModal').style.display = 'none';
       document.getElementById('modal').classList.add('open');
       document.getElementById('modalNom').focus();
@@ -292,7 +291,7 @@
       // laisser croire à un effacement qui n'aura pas lieu.
       if (!nom) { erreurModale("Donne un nom à l'image."); return; }
 
-      post('modifier', { id: imgEdition.id, nom: nom, tags: document.getElementById('modalTags').value })
+      post('modifier', { id: imgEdition.id, nom: nom, tags: selModal.valeur().join(',') })
         .then(d => {
           if (!d.ok) { erreurModale(d.error || 'Erreur.'); return; }
           fermerModale();
@@ -304,19 +303,57 @@
 
     /* Aperçu vivant : la normalisation (minuscules, espaces resserrés, doublons
        écartés) est faite par le serveur, autant la montrer avant l'envoi. */
-    function brancherApercu(champ, cible) {
-      champ.addEventListener('input', function () {
-        const vus = [];
-        this.value.split(/[,;]+/).forEach(t => {
-          t = t.trim().replace(/[ \t]+/g, ' ').toLowerCase().slice(0, 40);
-          if (t && vus.indexOf(t) < 0 && vus.length < 12) vus.push(t);
-        });
-        document.getElementById(cible).innerHTML =
-          vus.map(t => '<span class="tag">' + echap(t) + '</span>').join('');
-      });
+    /* Deux sélecteurs, un seul vocabulaire. On clique ce qui existe et le (+)
+       ne sert qu'à créer ce qui manque : taper les tags à la main laissait
+       passer les jumeaux de frappe, qui ne retrouvaient jamais leurs images. */
+    const selForm  = creerSelecteurTags(document.getElementById('tagsForm'),
+      { tout: true, messageVide: 'Aucun tag encore. Crée le premier avec le +.' });
+    const selModal = creerSelecteurTags(document.getElementById('tagsModal'),
+      { tout: true, messageVide: 'Aucun tag encore. Crée le premier avec le +.' });
+
+    function majSelecteurs(tags) {
+      // On redonne la sélection après le vocabulaire : redessiner la liste des
+      // tags ne doit pas faire perdre ce qui était coché pendant la saisie.
+      const aForm = selForm.valeur(), aModal = selModal.valeur();
+      selForm.disponibles(tags);  selForm.definir(aForm);
+      selModal.disponibles(tags); selModal.definir(aModal);
     }
-    brancherApercu(document.getElementById('tags'), 'apercuTags');
-    brancherApercu(document.getElementById('modalTags'), 'modalApercu');
+
+    /* Aperçu du fichier choisi, AVANT envoi : c'est le seul moment où l'on peut
+       encore corriger une erreur de fichier sans avoir rempli la banque.
+
+       createObjectURL et non un FileReader en base64 : le navigateur affiche
+       alors le fichier depuis le disque, sans en charger plusieurs mégaoctets
+       en mémoire sous forme de chaîne. L'URL doit être révoquée à la main —
+       elle survit sinon jusqu'au rechargement de la page, et choisir dix
+       fichiers d'affilée en retiendrait dix. */
+    let urlApercu = null;
+    function libererApercu() {
+      if (urlApercu) { URL.revokeObjectURL(urlApercu); urlApercu = null; }
+      document.getElementById('blocApercuFichier').style.display = 'none';
+      document.getElementById('apercuFichier').removeAttribute('src');
+      document.getElementById('metaFichier').textContent = '';
+    }
+
+    document.getElementById('fichier').addEventListener('change', function () {
+      libererApercu();
+      const f = this.files && this.files[0];
+      if (!f) return;
+
+      urlApercu = URL.createObjectURL(f);
+      const img = document.getElementById('apercuFichier');
+      const meta = document.getElementById('metaFichier');
+      // Les dimensions ne sont connues qu'une fois l'image décodée : on les
+      // ajoute à la volée plutôt que de retarder l'affichage de l'aperçu.
+      img.onload = () => {
+        meta.textContent = img.naturalWidth + '×' + img.naturalHeight + ' · ' + poids(f.size)
+          + (f.size > 3 * 1024 * 1024 ? ' · trop lourde (3 Mo maximum)' : '');
+      };
+      img.onerror = () => { meta.textContent = 'Fichier illisible — ce n\'est pas une image.'; };
+      img.src = urlApercu;
+      meta.textContent = poids(f.size);
+      document.getElementById('blocApercuFichier').style.display = '';
+    });
 
     document.getElementById('formImg').addEventListener('submit', e => {
       e.preventDefault();
@@ -333,14 +370,18 @@
       const fd = new FormData();
       fd.append('fichier', f);
       fd.append('nom', document.getElementById('nom').value.trim());
-      fd.append('tags', document.getElementById('tags').value);
+      fd.append('tags', selForm.valeur().join(','));
       fetch(API + '?action=televerser', { method: 'POST', body: fd })
         .then(lireJson)
         .then(d => {
           if (!d.ok) { afficher(d.error || 'Téléversement impossible.', false); return; }
           afficher('Image ajoutée.', true);
           document.getElementById('formImg').reset();
-          document.getElementById('tags').dispatchEvent(new Event('input', { bubbles: true }));
+          selForm.definir([]);
+          // reset() vide le champ fichier mais ne déclenche pas son événement
+          // « change » : sans cet appel, l'aperçu resterait sur l'image déjà
+          // envoyée, comme si elle attendait encore de partir.
+          libererApercu();
           charger();
         })
         .catch(() => afficher('Erreur réseau.', false))
