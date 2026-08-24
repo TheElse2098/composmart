@@ -304,8 +304,18 @@ if ($action === 'reglages') {
     $me = in_array($_POST['mode_equipes'] ?? '', ['aucun', 'manuel', 'auto', 'libre'], true) ? $_POST['mode_equipes'] : 'aucun';
     $th = in_array($_POST['theme_slides'] ?? '', ['foret', 'papier', 'simpliste'], true) ? $_POST['theme_slides'] : 'foret';
 
-    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET mode_parcours = ?, mode_equipes = ?, theme_slides = ? WHERE id = ? AND supprime = 0');
-    $stmt->bind_param('sssi', $mp, $me, $th, $id);
+    // Tags d'images retenus. Normalisés comme dans la banque (minuscules,
+    // espaces resserrés) : un tag mal cadré ne trouverait jamais son image.
+    $tags = [];
+    foreach (preg_split('/[,;]+/u', (string)($_POST['image_tags'] ?? '')) as $t) {
+        $t = mb_strtolower(trim(preg_replace('/\s+/u', ' ', $t)));
+        if ($t !== '' && !in_array($t, $tags, true)) $tags[] = mb_substr($t, 0, 40);
+        if (count($tags) >= 12) break;
+    }
+    $it = mb_substr(implode(',', $tags), 0, 400);
+
+    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET mode_parcours = ?, mode_equipes = ?, theme_slides = ?, image_tags = ? WHERE id = ? AND supprime = 0');
+    $stmt->bind_param('ssssi', $mp, $me, $th, $it, $id);
     if (!$stmt->execute()) {
         echo json_encode(['error' => 'La base a refusé ces réglages : ' . $stmt->error]);
         exit;
@@ -641,7 +651,7 @@ if ($action === 'suivi') {
 
     $stmt = mysqli_prepare($conn,
         'SELECT e.id, e.titre, e.lieu, e.date_debut, e.code, e.statut, e.supprime,
-                e.parcours_id, e.mode_equipes, e.mode_parcours, e.theme_slides,
+                e.parcours_id, e.mode_equipes, e.mode_parcours, e.theme_slides, e.image_tags,
                 (SELECT COUNT(*) FROM evenement_slides s WHERE s.evenement_id = e.id) AS nb_slides,
                 (SELECT p.nom FROM parcours p WHERE p.id = e.parcours_id) AS parcours_nom
          FROM evenements e WHERE e.id = ?');

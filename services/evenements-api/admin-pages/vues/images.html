@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <title>CompoSmart – Banque d'images</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+
+    .hero { text-align: center; padding: 24px 20px 8px; }
+    .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.4rem, 5vw, 2.1rem); font-weight: 900; color: #1a3a25; }
+    .hero-sub { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; margin-top: 5px; }
+
+    .page-content { width: 100%; max-width: 820px; padding: 16px; }
+    .section-titre { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #1a3a25; margin: 14px 4px 10px; display: flex; justify-content: space-between; align-items: center; }
+    .compteur { font-size: 0.82rem; color: #4a7a5a; font-weight: 700; }
+    .card { background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); margin-bottom: 16px; }
+
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 0.74rem; font-weight: 800; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .field input[type=text] { display: block; width: 100%; padding: 9px 12px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.9rem; color: #1a3a25; background: #f7fbf8; outline: none; font-family: inherit; }
+    .field input[type=text]:focus { border-color: #1e6e3e; background: #fff; }
+    .field input[type=file] { font-size: 0.85rem; color: #4a7a5a; font-family: inherit; }
+
+    button { border: none; border-radius: 50px; padding: 10px 20px; font-size: 0.86rem; font-weight: 800; cursor: pointer; font-family: 'Baloo 2', cursive; }
+    .btn-p { background: #1e6e3e; color: #fff; }
+    .btn-s { background: #eceff1; color: #607d8b; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .btn-mini { border-radius: 10px; padding: 5px 11px; font-size: 0.74rem; font-family: inherit; background: #eef4ec; color: #1e6e3e; }
+    .btn-mini.sup { background: #fdecea; color: #c0392b; }
+
+    /* Grille de vignettes : le damier en fond révèle la transparence d'un PNG
+       détouré, qu'un fond blanc uni ferait passer pour un aplat. */
+    .grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .img-carte { background: #fff; border-radius: 14px; padding: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 8px; }
+    .img-vue {
+      width: 100%; aspect-ratio: 1; border-radius: 10px; object-fit: contain;
+      background-color: #f7fbf8;
+      background-image: linear-gradient(45deg, #e6efe8 25%, transparent 25%, transparent 75%, #e6efe8 75%),
+                        linear-gradient(45deg, #e6efe8 25%, transparent 25%, transparent 75%, #e6efe8 75%);
+      background-size: 16px 16px; background-position: 0 0, 8px 8px;
+    }
+    .img-nom { font-size: 0.78rem; font-weight: 800; color: #1a3a25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .img-meta { font-size: 0.7rem; color: #888; }
+    .img-btns { display: flex; gap: 5px; }
+    .img-btns button { flex: 1; }
+
+    .tag { display: inline-block; font-size: 0.68rem; font-weight: 800; background: #fff3e0; color: #b26a00; padding: 2px 9px; border-radius: 10px; margin: 0 4px 4px 0; }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .chips:empty { display: none; }
+
+    .filtres { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+    .filtre { background: #fff; border: 1.5px solid #d4e6d8; color: #4a7a5a; border-radius: 20px; padding: 6px 14px; font-size: 0.79rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .filtre.actif { background: #1e6e3e; border-color: #1e6e3e; color: #fff; }
+
+    .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 16px; background: #fff; border-radius: 12px; }
+    .loader { text-align: center; padding: 40px; color: #4a7a5a; font-weight: 700; }
+    .msg { border-radius: 10px; padding: 10px 13px; font-size: 0.85rem; font-weight: 700; margin-bottom: 12px; display: none; }
+    .msg.error { background: #fdecea; color: #c0392b; }
+    .msg.ok { background: #e8f5e9; color: #1e6e3e; }
+    .hint { font-size: 0.78rem; color: #888; margin-top: 6px; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+
+    html.dark body { background: #101a13; }
+    html.dark h1, html.dark .section-titre { color: #e8f5ee; }
+    html.dark .card, html.dark .img-carte, html.dark .empty-msg, html.dark .filtre { background: #16211a; }
+    html.dark .img-nom { color: #e8f5ee; }
+    html.dark .field label { color: #7ab88e; }
+    html.dark .field input[type=text] { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .field input[type=file] { color: #7ab88e; }
+    html.dark .btn-s { background: #1e2d22; color: #9fb0a5; }
+    html.dark .btn-mini { background: #16291c; color: #7fc99a; }
+    html.dark .btn-mini.sup { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .tag { background: #2e2410; color: #e8b931; }
+    html.dark .filtre { border-color: #2d4030; color: #7ab88e; }
+    html.dark .filtre.actif { background: #2d9959; border-color: #2d9959; color: #fff; }
+    html.dark .img-vue { background-color: #1e2d22; background-image: linear-gradient(45deg, #23342a 25%, transparent 25%, transparent 75%, #23342a 75%), linear-gradient(45deg, #23342a 25%, transparent 25%, transparent 75%, #23342a 75%); }
+  </style>
+  <link rel="stylesheet" href="/assets/css/site-nav.css">
+  <link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+
+  <!-- Bandeau + sidebar partages (injectes par site-nav.js) -->
+  <div id="site-nav"></div>
+  <div class="fil-retour"><a href="/evenements-admin">← Tous les événements</a></div>
+
+  <div class="loader" id="loader">Chargement…</div>
+
+  <div class="page-content" id="content" style="display:none">
+    <div class="hero">
+      <div class="hero-badge">🖼️ Images</div>
+      <h1>Banque d'images</h1>
+      <p class="hero-sub">Les illustrations du thème « simpliste ». Chaque événement choisit des tags dans ses réglages, et ses slides piochent au hasard parmi les images qui les portent.</p>
+    </div>
+
+    <div class="msg" id="msg"></div>
+
+    <div class="section-titre">➕ Ajouter une image</div>
+    <div class="card">
+      <form id="formImg">
+        <div class="field"><label>Fichier</label>
+          <input type="file" id="fichier" accept="image/png,image/jpeg,image/gif,image/webp" required></div>
+        <div class="field"><label>Tags</label>
+          <input type="text" id="tags" list="listeTags" placeholder="nature, hiver, chiffre-choc — séparés par des virgules">
+          <datalist id="listeTags"></datalist>
+          <div class="chips" id="apercuTags"></div></div>
+        <button type="submit" class="btn-p" id="btnEnvoi">Téléverser</button>
+        <div class="hint">PNG, JPEG, GIF ou WebP, 3 Mo maximum. Sans tag, l'image ne sera jamais tirée au sort : c'est le tag qui la rend éligible.</div>
+      </form>
+    </div>
+
+    <div class="section-titre">🖼️ Images <span class="compteur" id="nb"></span></div>
+    <div class="filtres" id="filtres"></div>
+    <div class="grille" id="grille"></div>
+  </div>
+
+  <div class="bottom-leaf"></div>
+
+  <script>
+    /*__ROUTE__*/
+    function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
+    const API = '/api/evenements/images.php';
+    let tagActif = '';
+
+    function lireJson(r) {
+      if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); }
+      return r.text().then(t => {
+        try { return JSON.parse(t); }
+        catch (e) { throw new Error('Réponse inattendue du serveur (HTTP ' + r.status + ').'); }
+      });
+    }
+    function panne(e) {
+      const l = document.getElementById('loader');
+      if (l && l.style.display !== 'none') l.textContent = '⚠️ ' + (e && e.message ? e.message : 'Erreur de chargement');
+      else afficher(e && e.message ? e.message : 'Erreur', false);
+    }
+    function afficher(texte, ok) {
+      const el = document.getElementById('msg');
+      el.className = 'msg ' + (ok ? 'ok' : 'error');
+      el.textContent = texte;
+      el.style.display = 'block';
+      if (ok) setTimeout(() => { el.style.display = 'none'; }, 2200);
+    }
+    function post(action, body) {
+      return fetch(API + '?action=' + action, { method: 'POST', body: new URLSearchParams(body) }).then(lireJson);
+    }
+    function poids(o) {
+      return o < 1024 ? o + ' o' : (o < 1024 * 1024 ? Math.round(o / 1024) + ' Ko' : (o / 1048576).toFixed(1) + ' Mo');
+    }
+
+    function charger() {
+      fetch(API + '?action=liste' + (tagActif ? '&tag=' + encodeURIComponent(tagActif) : ''))
+        .then(lireJson)
+        .then(d => {
+          rendreFiltres(d.tags || []);
+          rendreGrille(d.images || []);
+          document.getElementById('listeTags').innerHTML =
+            (d.tags || []).map(t => '<option value="' + echap(t.tag) + '">').join('');
+          document.getElementById('loader').style.display = 'none';
+          document.getElementById('content').style.display = 'block';
+        })
+        .catch(panne);
+    }
+
+    function rendreFiltres(tags) {
+      const box = document.getElementById('filtres');
+      box.innerHTML = '<button type="button" class="filtre' + (tagActif === '' ? ' actif' : '') + '" data-t="">Toutes</button>'
+        + tags.map(t => '<button type="button" class="filtre' + (tagActif === t.tag ? ' actif' : '') + '" data-t="'
+            + echap(t.tag) + '">' + echap(t.tag) + ' <span style="opacity:.6">' + t.n + '</span></button>').join('');
+      box.querySelectorAll('[data-t]').forEach(b => {
+        b.onclick = () => { tagActif = b.dataset.t; charger(); };
+      });
+    }
+
+    function rendreGrille(liste) {
+      document.getElementById('nb').textContent = '(' + liste.length + ')';
+      const box = document.getElementById('grille');
+      if (!liste.length) { box.innerHTML = '<div class="empty-msg">Aucune image. Téléverse la première ci-dessus.</div>'; return; }
+      box.innerHTML = '';
+      liste.forEach(im => {
+        const div = document.createElement('div');
+        div.className = 'img-carte';
+        div.innerHTML = '<img class="img-vue" src="' + echap(im.url) + '" alt="' + echap(im.nom) + '" loading="lazy">'
+          + '<div class="img-nom" title="' + echap(im.nom) + '">' + echap(im.nom) + '</div>'
+          + '<div class="img-meta">' + (im.largeur ? im.largeur + '×' + im.hauteur + ' · ' : '') + poids(im.taille) + '</div>'
+          + '<div class="chips">' + (im.tags || []).map(t =>
+              '<span class="tag" data-tag="' + echap(t) + '" style="cursor:pointer">' + echap(t) + '</span>').join('') + '</div>'
+          + '<div class="img-btns"><button class="btn-mini" data-a="tags">🏷 Tags</button>'
+          + '<button class="btn-mini sup" data-a="del">🗑</button></div>';
+
+        div.querySelectorAll('[data-tag]').forEach(x => {
+          x.onclick = () => { tagActif = x.dataset.tag; charger(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+        });
+        div.querySelector('[data-a=tags]').onclick = () => retaguer(im);
+        div.querySelector('[data-a=del]').onclick = async () => {
+          const ok = await confirmer({
+            titre: 'Supprimer cette image ?',
+            texte: 'Les slides qui la montraient piocheront une autre image parmi les tags de leur événement.',
+            valider: 'Supprimer', danger: true,
+          });
+          if (!ok) return;
+          post('supprimer', { id: im.id })
+            .then(d => { if (d.ok) charger(); else afficher(d.error || 'Suppression impossible.', false); })
+            .catch(() => afficher('Erreur réseau.', false));
+        };
+        box.appendChild(div);
+      });
+    }
+
+    /* Retaguer se fait sur place plutôt que dans le formulaire du haut : le
+       fichier ne se remplace pas, il n'y a donc rien d'autre à modifier, et
+       remonter la page pour deux mots serait pénible sur une grille longue. */
+    async function retaguer(im) {
+      const saisi = window.prompt('Tags de « ' + im.nom +' » (séparés par des virgules) :', (im.tags || []).join(', '));
+      if (saisi === null) return;
+      post('modifier', { id: im.id, tags: saisi })
+        .then(d => { if (d.ok) { afficher('Tags enregistrés.', true); charger(); } else afficher(d.error || 'Erreur.', false); })
+        .catch(() => afficher('Erreur réseau.', false));
+    }
+
+    /* Aperçu vivant : la normalisation (minuscules, espaces resserrés, doublons
+       écartés) est faite par le serveur, autant la montrer avant l'envoi. */
+    document.getElementById('tags').addEventListener('input', function () {
+      const vus = [];
+      this.value.split(/[,;]+/).forEach(t => {
+        t = t.trim().replace(/[ \t]+/g, ' ').toLowerCase().slice(0, 40);
+        if (t && vus.indexOf(t) < 0 && vus.length < 12) vus.push(t);
+      });
+      document.getElementById('apercuTags').innerHTML =
+        vus.map(t => '<span class="tag">' + echap(t) + '</span>').join('');
+    });
+
+    document.getElementById('formImg').addEventListener('submit', e => {
+      e.preventDefault();
+      const f = document.getElementById('fichier').files[0];
+      if (!f) { afficher('Choisis un fichier.', false); return; }
+      // Le serveur revérifie tout (taille ET contenu réel via getimagesize) :
+      // ce contrôle-ci n'est qu'une politesse pour éviter un aller-retour de
+      // plusieurs mégaoctets qui finirait refusé.
+      if (f.size > 3 * 1024 * 1024) { afficher('Image trop lourde (3 Mo maximum).', false); return; }
+
+      const btn = document.getElementById('btnEnvoi');
+      btn.disabled = true; btn.textContent = 'Envoi…';
+
+      const fd = new FormData();
+      fd.append('fichier', f);
+      fd.append('tags', document.getElementById('tags').value);
+      fetch(API + '?action=televerser', { method: 'POST', body: fd })
+        .then(lireJson)
+        .then(d => {
+          if (!d.ok) { afficher(d.error || 'Téléversement impossible.', false); return; }
+          afficher('Image ajoutée.', true);
+          document.getElementById('formImg').reset();
+          document.getElementById('tags').dispatchEvent(new Event('input', { bubbles: true }));
+          charger();
+        })
+        .catch(() => afficher('Erreur réseau.', false))
+        .finally(() => { btn.disabled = false; btn.textContent = 'Téléverser'; });
+    });
+
+    charger();
+  </script>
+  <script src="/assets/js/confirmer.js"></script>
+  <script src="/assets/js/site-nav.js"></script>
+  <script src="/assets/js/theme.js"></script>
+</body>
+</html>

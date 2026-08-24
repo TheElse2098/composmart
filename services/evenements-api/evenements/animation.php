@@ -18,7 +18,7 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 /** Charge un événement ou termine la requête. */
 function charger_evenement($conn, $id) {
     $stmt = mysqli_prepare($conn,
-        'SELECT id, titre, code, statut, mode_parcours, mode_equipes, theme_slides, slide_courante_id FROM evenements WHERE id = ?');
+        'SELECT id, titre, code, statut, mode_parcours, mode_equipes, theme_slides, image_tags, slide_courante_id FROM evenements WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $e = $stmt->get_result()->fetch_assoc();
@@ -112,6 +112,8 @@ if ($action === 'etat') {
             $courante = resoudre_anecdote($conn, $courante);
         }
         $courante = resoudre_sommaire($conn, $courante, $id);
+        // L'écran projeté doit montrer exactement ce que voient les téléphones.
+        $courante = resoudre_illustration($conn, $courante, $evt);
         $c = json_decode($courante['contenu'] ?? '', true);
         $slide = [
             'id'      => (int)$courante['id'],

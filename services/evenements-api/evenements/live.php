@@ -57,7 +57,7 @@ function participant_ou_403($conn) {
 
 function charger_evenement($conn, $id) {
     $stmt = mysqli_prepare($conn,
-        'SELECT id, titre, statut, supprime, mode_parcours, mode_equipes, theme_slides, slide_courante_id FROM evenements WHERE id = ?');
+        'SELECT id, titre, statut, supprime, mode_parcours, mode_equipes, theme_slides, image_tags, slide_courante_id FROM evenements WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     return $stmt->get_result()->fetch_assoc();
@@ -162,6 +162,9 @@ if ($action === 'etat') {
     // les parties du parcours.
     $courante = resoudre_anecdote($conn, $courante, (int)$p['id']);
     $courante = resoudre_sommaire($conn, $courante, (int)$p['evenement_id']);
+    // Illustration de la banque d'images : même image pour toute la salle,
+    // et seulement sur le thème simpliste (cf. resoudre_illustration).
+    $courante = resoudre_illustration($conn, $courante, $evt);
 
     echo json_encode($base + [
         'ecran'       => 'slide',

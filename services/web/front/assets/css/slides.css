@@ -528,6 +528,32 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
 [data-theme-slide="simpliste"] .sl__somm li.courante { border-left-color: var(--sl-fond3); }
 [data-theme-slide="simpliste"] .sl__clst li { border-radius: 12px; background: var(--sl-tendre); }
 
+/* ── Illustration tirée de la banque d'images ──────────────────────────────
+   Bloc de TAILLE FIXE, posé en bas de carte, hors du flux : le texte de la
+   slide garde ainsi exactement la même mise en page qu'une carte sans image,
+   et une illustration plus haute que prévu ne peut pas pousser le contenu
+   hors du cadre. C'est la carte qui réserve la place, via .sl--illu.
+
+   object-fit:contain plutôt que cover : la banque accueille aussi bien des
+   photos que des pictogrammes détourés, et rogner un pictogramme le mutile. */
+[data-theme-slide="simpliste"] .sl__illu {
+  position: absolute; left: 7cqw; bottom: 4cqw;
+  width: 22cqw; max-width: 118px; height: 22cqw; max-height: 118px;
+  object-fit: contain; object-position: left bottom;
+  pointer-events: none; user-select: none;
+}
+/* La place réservée en bas du corps, pour que le texte ne passe pas dessous. */
+[data-theme-slide="simpliste"] .sl--illu .sl__corps { padding-bottom: 28cqw; }
+[data-theme-slide="simpliste"] .sl--illu.sl--plein { padding-bottom: 28cqw; }
+/* Sur la carte de gerbe, fond sombre : l'illustration passe à droite pour ne
+   pas se superposer au bandeau de score. */
+[data-theme-slide="simpliste"] .sl--fete .sl__illu { left: auto; right: 7cqw; object-position: right bottom; }
+
+/* Les autres thèmes n'affichent pas d'illustration — le serveur n'en pose pas,
+   cette règle n'est qu'un garde-fou si un contenu en gardait une trace. */
+.sl__illu { display: none; }
+[data-theme-slide="simpliste"] .sl__illu { display: block; }
+
 /* Médias : bloc vert foncé à coins largement arrondis. */
 [data-theme-slide="simpliste"] .sl__media,
 [data-theme-slide="simpliste"] .sl__lecteur { border-radius: 22px; background: var(--sl-fond1); }

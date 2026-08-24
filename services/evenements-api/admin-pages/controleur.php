@@ -96,6 +96,9 @@ if ($seg[0] === 'parcours') {
 // /evenements-admin/anecdotes — banque partagée par tous les parcours
 if ($seg[0] === 'anecdotes' && count($seg) === 1) rendre('anecdotes.html');
 
+// /evenements-admin/images — banque d'illustrations du thème simpliste
+if ($seg[0] === 'images' && count($seg) === 1) rendre('images.html');
+
 // /evenements-admin/<id>
 if (count($seg) === 1 && ctype_digit($seg[0])) {
     rendre('suivi.html', ['evenement_id' => (int)$seg[0]]);

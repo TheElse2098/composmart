@@ -34,6 +34,9 @@ CREATE TABLE `evenements` (
   -- 'papier' (fond crème, cadres épais, accent terracotta) ou 'simpliste'
   -- (cadre vert Composmart, carte blanche, sans ornement). Cf. slides.css.
   `theme_slides`  enum('foret','papier','simpliste') NOT NULL DEFAULT 'foret',
+  -- Tags d'images retenus pour cet evenement (liste separee par des virgules).
+  -- Reglage, pas une entite : enregistre d'un bloc avec le theme et les modes.
+  `image_tags`    varchar(400) NOT NULL DEFAULT '',
   `slide_courante_id` int      DEFAULT NULL,       -- mode commun : slide projetée
   `cree_par`      varchar(100) DEFAULT NULL,       -- username admin, dénormalisé (cf. cours_versions.auteur)
   `created_at`    datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -75,6 +78,31 @@ CREATE TABLE `parcours_slides` (
 -- peut soit porter son propre texte, soit pointer une anecdote d'ici, soit
 -- en tirer une au hasard (le tirage est dérivé du couple participant/slide
 -- côté PHP : il est donc stable, et différent d'un participant à l'autre).
+-- ── BANQUE D'IMAGES ────────────────────────────────────────────────────────
+-- Stockage en base et non sur un volume, comme cours_medias dans db-core : le
+-- stockage k3s par defaut est ReadWriteOnce et le service peut monter a
+-- plusieurs replicas, qui divergeraient chacun sur son disque local.
+CREATE TABLE `images` (
+  `id`         int          NOT NULL AUTO_INCREMENT,
+  `nom`        varchar(200) NOT NULL,
+  `mime`       varchar(80)  NOT NULL,
+  `taille`     int          NOT NULL,
+  `largeur`    int          DEFAULT NULL,
+  `hauteur`    int          DEFAULT NULL,
+  `donnees`    longblob     NOT NULL,
+  `cree_par`   varchar(100) DEFAULT NULL,
+  `created_at` datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `image_tags` (
+  `image_id` int         NOT NULL,
+  `tag`      varchar(40) NOT NULL,
+  PRIMARY KEY (`image_id`, `tag`),
+  KEY `tag` (`tag`),
+  CONSTRAINT `imgtags_ibfk_1` FOREIGN KEY (`image_id`) REFERENCES `images` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `anecdotes` (
   `id`         int          NOT NULL AUTO_INCREMENT,
   `texte`      varchar(1000) NOT NULL,

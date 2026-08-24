@@ -405,10 +405,23 @@
     var deco = plein || entete
       ? '<div class="sl__grain"></div><div class="sl__deco sl__deco--haut"></div>' : '';
 
+    /* Illustration de la banque d'images. L'URL est posée par le serveur dans
+       le contenu de la slide (resoudre_illustration), et seulement pour le
+       thème simpliste : le renderer n'a donc rien à décider, il affiche ce
+       qu'on lui donne. La classe .sl--illu remonte l'information à la carte,
+       pour que le CSS puisse dégager la place en bas du corps.
+
+       loading="lazy" est délibérément ABSENT : la carte est déjà à l'écran au
+       moment où elle est construite, et un chargement différé ferait apparaître
+       l'image après coup, en pleine projection. */
+    var illu = c.illustration
+      ? '<img class="sl__illu" src="' + e(c.illustration) + '" alt="" decoding="async">' : '';
+    if (illu) cls += ' sl--illu';
+
     return '<div class="' + cls + '" data-type="' + e(s.type) + '">'
       + (entete ? '<div class="sl__entete"><div class="sl__deco sl__deco--bas"></div>'
                   + '<div style="position:relative">' + entete + '</div></div>' : '')
       + (plein ? deco : '')
-      + corps + '</div>';
+      + corps + illu + '</div>';
   };
 })();

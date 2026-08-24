@@ -302,6 +302,67 @@ function resoudre_anecdote($conn, $slide, $graine = null) {
 }
 
 /**
+ * Types de slides qui reçoivent une illustration de la banque d'images.
+ *
+ * Sont écartés : `media` (elle porte déjà son propre visuel, en ajouter un
+ * second brouillerait le message), `classement` et `sommaire` (des listes qui
+ * remplissent déjà la carte), et `jeu` (les items ont leurs propres emojis).
+ */
+function illustration_types() {
+    return ['titre', 'texte', 'anecdote', 'encouragement', 'fin',
+            'quiz', 'vrai_faux', 'estimation', 'sondage', 'question_ouverte', 'defi'];
+}
+
+/**
+ * Pose une illustration sur la slide, tirée de la banque d'images parmi celles
+ * portant AU MOINS UN des tags retenus pour l'événement.
+ *
+ * Réservé au thème « simpliste » : les deux autres chartes ont leur propre
+ * décor (feuillage, papier à pois) et une vignette y ferait doublon.
+ *
+ * Le tirage est déterministe — crc32 de l'identifiant de slide — donc le
+ * vidéoprojecteur et tous les téléphones de la salle montrent la MÊME image.
+ * Un tirage par participant est possible techniquement, mais l'animateur
+ * commente ce qui est projeté : la salle doit voir la même chose que lui.
+ *
+ * Toute impasse (pas de tag, aucune image éligible, banque vide) rend la slide
+ * inchangée : une carte sans illustration reste une carte lisible, alors qu'une
+ * erreur en pleine séance ne se rattrape pas.
+ */
+function resoudre_illustration($conn, $slide, $evt) {
+    if (($evt['theme_slides'] ?? '') !== 'simpliste') return $slide;
+    if (!in_array($slide['type'] ?? '', illustration_types(), true)) return $slide;
+
+    $tags = [];
+    foreach (preg_split('/[,;]+/u', (string)($evt['image_tags'] ?? '')) as $t) {
+        $t = mb_strtolower(trim($t));
+        if ($t !== '' && !in_array($t, $tags, true)) $tags[] = $t;
+    }
+    if (!$tags) return $slide;
+
+    $in = implode(',', array_fill(0, count($tags), '?'));
+    $stmt = mysqli_prepare($conn,
+        'SELECT DISTINCT image_id FROM image_tags WHERE tag IN (' . $in . ') ORDER BY image_id');
+    if (!$stmt) return $slide;
+    $stmt->bind_param(str_repeat('s', count($tags)), ...$tags);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $ids = [];
+    while ($row = $res->fetch_assoc()) $ids[] = (int)$row['image_id'];
+    if (!$ids) return $slide;
+
+    $choisie = $ids[crc32('illu-' . (int)($slide['id'] ?? 0)) % count($ids)];
+
+    // L'URL voyage DANS le contenu : slide_publique() reconstruit un tableau
+    // avec des clés fixes, une clé posée à la racine de $slide serait perdue.
+    $c = json_decode($slide['contenu'] ?? '', true);
+    if (!is_array($c)) $c = [];
+    $c['illustration'] = '/api/evenements/image.php?id=' . $choisie;
+    $slide['contenu'] = json_encode($c, JSON_UNESCAPED_UNICODE);
+    return $slide;
+}
+
+/**
  * Construit le sommaire à la volée : chaque slide « titre » du parcours est une
  * partie, et l'on marque celle où l'on se trouve — comme le sommaire de Beamer.
  *
