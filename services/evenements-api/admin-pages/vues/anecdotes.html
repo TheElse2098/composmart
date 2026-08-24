@@ -46,6 +46,13 @@
     .anec-btns { display: flex; gap: 5px; flex-shrink: 0; }
 
     .filtres { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+    /* Deux axes de filtre côte à côte : sans le libellé à gauche, deux rangées
+       de pastilles identiques ne diraient pas laquelle filtre quoi. */
+    .filtre-ligne { display: flex; align-items: baseline; gap: 10px; }
+    .filtre-titre { flex: 0 0 auto; font-size: 0.7rem; font-weight: 800; color: #7aaa8a; text-transform: uppercase; letter-spacing: 0.6px; padding-top: 7px; }
+    .mot { display: inline-block; font-size: 0.68rem; font-weight: 800; background: #fff3e0; color: #b26a00; padding: 2px 9px; border-radius: 10px; margin: 6px 4px 0 0; }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .chips:empty { display: none; }
     .filtre { background: #fff; border: 1.5px solid #d4e6d8; color: #4a7a5a; border-radius: 20px; padding: 6px 14px; font-size: 0.79rem; font-weight: 700; cursor: pointer; font-family: inherit; }
     .filtre.actif { background: #1e6e3e; border-color: #1e6e3e; color: #fff; }
 
@@ -69,6 +76,8 @@
     html.dark .btn-mini { background: #16291c; color: #7fc99a; }
     html.dark .btn-mini.sup { background: #3d1a1a; color: #ef9a9a; }
     html.dark .anec-theme { background: #1e2d22; color: #7ab88e; }
+    html.dark .mot { background: #2e2410; color: #e8b931; }
+    html.dark .filtre-titre { color: #5d8a6d; }
     html.dark .filtre { border-color: #2d4030; color: #7ab88e; }
     html.dark .filtre.actif { background: #2d9959; border-color: #2d9959; color: #fff; }
   </style>
@@ -105,14 +114,19 @@
             <input type="text" id="theme" maxlength="60" list="listeThemes" placeholder="compost, tri, biodiversité…">
             <datalist id="listeThemes"></datalist></div>
         </div>
+        <div class="field"><label>Mots-clés (facultatif)</label>
+          <input type="text" id="mots" list="listeMots" placeholder="chiffre-choc, démarrage, eau — séparés par des virgules">
+          <datalist id="listeMots"></datalist>
+          <div class="chips" id="apercuMots"></div></div>
         <button type="submit" class="btn-p" id="btnEnr">Ajouter</button>
         <button type="button" class="btn-s" id="btnAnnuler" style="display:none">Annuler</button>
-        <div class="hint">Le thème sert à restreindre un tirage aléatoire à une famille d'anecdotes.</div>
+        <div class="hint">Le thème est unique et sert à restreindre un tirage aléatoire. Les mots-clés, eux, sont libres et cumulables : une même anecdote peut être à la fois « chiffre-choc » et « eau ».</div>
       </form>
     </div>
 
     <div class="section-titre">📚 Anecdotes <span class="compteur" id="nb"></span></div>
-    <div class="filtres" id="filtres"></div>
+    <div class="filtre-ligne"><span class="filtre-titre">Thème</span><div class="filtres" id="filtres"></div></div>
+    <div class="filtre-ligne" id="ligneMots"><span class="filtre-titre">Mots-clés</span><div class="filtres" id="filtresMots"></div></div>
     <div id="liste"></div>
   </div>
 
@@ -122,7 +136,7 @@
     /*__ROUTE__*/
     function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
     const API = '/api/evenements/anecdotes.php';
-    let themeActif = '';
+    let themeActif = '', motActif = '';
 
     function lireJson(r) {
       if (r.status === 403) { window.location.replace('/'); throw new Error('forbidden'); }
@@ -148,13 +162,19 @@
     }
 
     function charger() {
-      fetch(API + '?action=liste' + (themeActif ? '&theme=' + encodeURIComponent(themeActif) : ''))
+      const q = [];
+      if (themeActif) q.push('theme=' + encodeURIComponent(themeActif));
+      if (motActif) q.push('mot=' + encodeURIComponent(motActif));
+      fetch(API + '?action=liste' + (q.length ? '&' + q.join('&') : ''))
         .then(lireJson)
         .then(d => {
           rendreFiltres(d.themes || []);
+          rendreFiltresMots(d.mots || []);
           rendreListe(d.anecdotes || []);
           const dl = document.getElementById('listeThemes');
           dl.innerHTML = (d.themes || []).map(t => '<option value="' + echap(t) + '">').join('');
+          document.getElementById('listeMots').innerHTML =
+            (d.mots || []).map(m => '<option value="' + echap(m.mot) + '">').join('');
           document.getElementById('loader').style.display = 'none';
           document.getElementById('content').style.display = 'block';
         })
@@ -170,6 +190,19 @@
       });
     }
 
+    /** Barre des mots-cles. Le compteur evite d'aller cliquer un mot qui ne
+     *  ramenerait qu'une anecdote deja sous les yeux. */
+    function rendreFiltresMots(mots) {
+      document.getElementById('ligneMots').style.display = mots.length ? 'flex' : 'none';
+      const box = document.getElementById('filtresMots');
+      box.innerHTML = '<button type="button" class="filtre' + (motActif === '' ? ' actif' : '') + '" data-m="">Tous</button>'
+        + mots.map(m => '<button type="button" class="filtre' + (motActif === m.mot ? ' actif' : '') + '" data-m="'
+            + echap(m.mot) + '">' + echap(m.mot) + ' <span style="opacity:.6">' + m.n + '</span></button>').join('');
+      box.querySelectorAll('[data-m]').forEach(b => {
+        b.onclick = () => { motActif = b.dataset.m; charger(); };
+      });
+    }
+
     function rendreListe(liste) {
       document.getElementById('nb').textContent = '(' + liste.length + ')';
       const box = document.getElementById('liste');
@@ -180,10 +213,17 @@
         div.className = 'anec';
         div.innerHTML = '<div class="anec-emoji">' + echap(a.emoji || '💡') + '</div>'
           + '<div class="anec-main"><div class="anec-texte">' + echap(a.texte) + '</div>'
-          + (a.theme ? '<span class="anec-theme">' + echap(a.theme) + '</span>' : '') + '</div>'
+          + (a.theme ? '<span class="anec-theme">' + echap(a.theme) + '</span>' : '')
+          + (a.mots || []).map(m => '<span class="mot" data-mot="' + echap(m) + '" style="cursor:pointer">' + echap(m) + '</span>').join('')
+          + '</div>'
           + '<div class="anec-btns"><button class="btn-mini" data-a="edit">✏️</button>'
           + '<button class="btn-mini sup" data-a="del">🗑</button></div>';
         div.querySelector('[data-a=edit]').onclick = () => editer(a);
+        // Cliquer une pastille filtre dessus : c'est le geste attendu, et ca
+        // evite d'aller rechercher le meme mot dans la barre du dessus.
+        div.querySelectorAll('[data-mot]').forEach(x => {
+          x.onclick = () => { motActif = x.dataset.mot; charger(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+        });
         div.querySelector('[data-a=del]').onclick = async () => {
           if (!(await confirmer({ titre: 'Supprimer cette anecdote ?', texte: 'Les slides qui la visaient afficheront un texte de repli.', valider: 'Supprimer', danger: true }))) return;
           post('supprimer', { id: a.id }).then(d => { if (d.ok) charger(); else afficher(d.error || 'Suppression impossible.', false); });
@@ -199,6 +239,9 @@
       em.value = a.emoji || '';
       em.dispatchEvent(new Event('input', { bubbles: true }));
       document.getElementById('theme').value = a.theme || '';
+      const im = document.getElementById('mots');
+      im.value = (a.mots || []).join(', ');
+      im.dispatchEvent(new Event('input', { bubbles: true }));
       document.getElementById('titreForm').textContent = '✏️ Modifier l\'anecdote';
       document.getElementById('btnEnr').textContent = 'Enregistrer';
       document.getElementById('btnAnnuler').style.display = 'inline-block';
@@ -209,6 +252,7 @@
       document.getElementById('formAnec').reset();
       document.getElementById('anecId').value = '';
       document.getElementById('emoji').dispatchEvent(new Event('input', { bubbles: true }));
+      document.getElementById('mots').dispatchEvent(new Event('input', { bubbles: true }));
       document.getElementById('titreForm').textContent = '➕ Nouvelle anecdote';
       document.getElementById('btnEnr').textContent = 'Ajouter';
       document.getElementById('btnAnnuler').style.display = 'none';
@@ -222,6 +266,7 @@
         texte: document.getElementById('texte').value.trim(),
         emoji: document.getElementById('emoji').value.trim(),
         theme: document.getElementById('theme').value.trim(),
+        mots: document.getElementById('mots').value.trim(),
       };
       if (id) corps.id = id;
       post(id ? 'modifier' : 'creer', corps)
@@ -232,6 +277,20 @@
           charger();
         })
         .catch(() => afficher('Erreur réseau.', false));
+    });
+
+    /* Apercu vivant des mots-cles saisis. La normalisation (minuscules, espaces
+       resserres, doublons ecartes) est faite par le serveur : autant la montrer
+       AVANT d'enregistrer, plutot que de laisser decouvrir apres coup que
+       « Compost » et « compost » n'ont fait qu'un. */
+    document.getElementById('mots').addEventListener('input', function () {
+      const vus = [];
+      this.value.split(/[,;]+/).forEach(m => {
+        m = m.trim().replace(/[ 	]+/g, ' ').toLowerCase().slice(0, 40);
+        if (m && vus.indexOf(m) < 0 && vus.length < 12) vus.push(m);
+      });
+      document.getElementById('apercuMots').innerHTML =
+        vus.map(m => '<span class="mot">' + echap(m) + '</span>').join('');
     });
 
     charger();

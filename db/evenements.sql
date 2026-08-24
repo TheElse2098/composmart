@@ -86,6 +86,17 @@ CREATE TABLE `anecdotes` (
   KEY `theme` (`theme`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Mots-cles d'une anecdote. Table de liaison plutot qu'une colonne de mots
+-- separes par des virgules : filtrer un varchar imposerait un LIKE '%tri%',
+-- qui attrape aussi « nutrition ». La cle composite interdit le doublon.
+CREATE TABLE `anecdote_mots` (
+  `anecdote_id` int         NOT NULL,
+  `mot`         varchar(40) NOT NULL,
+  PRIMARY KEY (`anecdote_id`, `mot`),
+  KEY `mot` (`mot`),
+  CONSTRAINT `anecmots_ibfk_1` FOREIGN KEY (`anecdote_id`) REFERENCES `anecdotes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ── SLIDES D'UN ÉVÉNEMENT (copie figée du parcours) ─────────────────────────
 -- Copie et non pointeur vers parcours_slides, à dessein : l'animateur peut
 -- adapter le déroulé pour UN client sans toucher au modèle, et retoucher le
