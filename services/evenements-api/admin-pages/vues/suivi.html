@@ -337,6 +337,7 @@
 
   <div class="bottom-leaf"></div>
 
+  <script src="/assets/js/tag-picker.js"></script>
   <script>
     /*__ROUTE__*/
     function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
@@ -596,27 +597,36 @@
         .catch(() => { tagsDispo = []; rendreChoixTags(); });
     }
 
+    /* Même composant que la banque d'images (tag-picker.js), avec « Tous » pour
+       tout cocher d'un geste. Le (+) y est désactivé : on choisit ici parmi les
+       tags qui existent, en inventer un ne désignerait aucune image. */
+    let selTags = null;
+
     function rendreChoixTags() {
       const box = document.getElementById('choixTags');
       const hint = document.getElementById('hintImages');
-      if (tagsDispo === null) { box.innerHTML = '<span class="hint">Chargement…</span>'; return; }
+      if (tagsDispo === null) { box.textContent = 'Chargement…'; return; }
+
+      if (!selTags) {
+        selTags = creerSelecteurTags(box, {
+          disponibles: tagsDispo, choisis: tagsChoisis, creation: false, tout: true,
+          messageVide: "La banque d'images est vide.",
+          onChange: t => { tagsChoisis = t; majHint(); },
+        });
+      } else {
+        selTags.disponibles(tagsDispo);
+        selTags.definir(tagsChoisis);
+      }
+
       if (!tagsDispo.length) {
-        box.innerHTML = '';
         hint.innerHTML = "La banque d'images est vide. <a href=\"/evenements-admin/images\" style=\"color:#1e6e3e;font-weight:800\">Ajoute des images</a> et donne-leur des tags pour pouvoir en choisir ici.";
         return;
       }
-      box.innerHTML = tagsDispo.map(t =>
-        '<button type="button" class="filtre' + (tagsChoisis.includes(t.tag) ? ' actif' : '') + '" data-tg="'
-        + echap(t.tag) + '">' + echap(t.tag) + ' <span style="opacity:.6">' + t.n + '</span></button>').join('');
-      box.querySelectorAll('[data-tg]').forEach(b => {
-        b.onclick = () => {
-          const t = b.dataset.tg;
-          const i = tagsChoisis.indexOf(t);
-          if (i < 0) tagsChoisis.push(t); else tagsChoisis.splice(i, 1);
-          rendreChoixTags();
-        };
-      });
-      hint.textContent = tagsChoisis.length
+      majHint();
+    }
+
+    function majHint() {
+      document.getElementById('hintImages').textContent = tagsChoisis.length
         ? 'Les slides piocheront au hasard parmi les images portant AU MOINS UN de ces tags — la même image pour toute la salle.'
         : 'Aucun tag coché : les slides resteront sans illustration.';
     }
