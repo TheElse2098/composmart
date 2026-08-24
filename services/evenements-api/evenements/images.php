@@ -159,12 +159,20 @@ if ($action === 'televerser') {
     $donnees = file_get_contents($f['tmp_name']);
     if ($donnees === false) { echo json_encode(['error' => 'Lecture du fichier impossible.']); exit; }
 
-    // Le nom d'origine ne sert qu'à s'y retrouver dans la banque : on le nettoie
-    // et on lui recolle l'extension déduite du CONTENU, pas celle annoncée.
-    $nom = pathinfo((string)($f['name'] ?? 'image'), PATHINFO_FILENAME);
-    $nom = trim(preg_replace('/[^\p{L}\p{N} _-]+/u', '', $nom));
-    if ($nom === '') $nom = 'image';
-    $nom = mb_substr($nom, 0, 180) . '.' . $ext;
+    // Le nom n'est qu'une étiquette pour s'y retrouver dans la banque. Celui
+    // saisi au téléversement prime ; à défaut on retombe sur le nom du fichier,
+    // nettoyé, auquel on recolle l'extension déduite du CONTENU (jamais celle
+    // annoncée). Un nom donné à la main n'a pas d'extension : il est là pour
+    // être lu, le format est affiché à part.
+    $nom = trim((string)($_POST['nom'] ?? ''));
+    if ($nom !== '') {
+        $nom = mb_substr($nom, 0, 200);
+    } else {
+        $nom = pathinfo((string)($f['name'] ?? 'image'), PATHINFO_FILENAME);
+        $nom = trim(preg_replace('/[^\p{L}\p{N} _-]+/u', '', $nom));
+        if ($nom === '') $nom = 'image';
+        $nom = mb_substr($nom, 0, 180) . '.' . $ext;
+    }
 
     $taille  = (int)$f['size'];
     $largeur = (int)$info[0];

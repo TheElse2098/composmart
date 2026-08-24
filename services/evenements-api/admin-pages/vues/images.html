@@ -68,11 +68,20 @@
     .msg.ok { background: #e8f5e9; color: #1e6e3e; }
     .hint { font-size: 0.78rem; color: #888; margin-top: 6px; }
 
+    /* Modale d'édition, même grammaire que celle de l'éditeur de parcours. */
+    .modal-back { position: fixed; inset: 0; background: rgba(15,24,17,0.55); z-index: 300; display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal-back.open { display: flex; }
+    .modal-box { background: #fff; border-radius: 18px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; padding: 22px; }
+    .modal-titre { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin-bottom: 14px; }
+    .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-actions button { flex: 1; }
+
     .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
 
     html.dark body { background: #101a13; }
     html.dark h1, html.dark .section-titre { color: #e8f5ee; }
-    html.dark .card, html.dark .img-carte, html.dark .empty-msg, html.dark .filtre { background: #16211a; }
+    html.dark .card, html.dark .img-carte, html.dark .empty-msg, html.dark .filtre, html.dark .modal-box { background: #16211a; }
+    html.dark .modal-titre { color: #e8f5ee; }
     html.dark .img-nom { color: #e8f5ee; }
     html.dark .field label { color: #7ab88e; }
     html.dark .field input[type=text] { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
@@ -110,6 +119,8 @@
       <form id="formImg">
         <div class="field"><label>Fichier</label>
           <input type="file" id="fichier" accept="image/png,image/jpeg,image/gif,image/webp" required></div>
+        <div class="field"><label>Nom (facultatif)</label>
+          <input type="text" id="nom" maxlength="200" placeholder="Laisse vide pour reprendre le nom du fichier"></div>
         <div class="field"><label>Tags</label>
           <input type="text" id="tags" list="listeTags" placeholder="nature, hiver, chiffre-choc — séparés par des virgules">
           <datalist id="listeTags"></datalist>
@@ -122,6 +133,25 @@
     <div class="section-titre">🖼️ Images <span class="compteur" id="nb"></span></div>
     <div class="filtres" id="filtres"></div>
     <div class="grille" id="grille"></div>
+  </div>
+
+  <!-- Édition d'une image : nom et tags. Le fichier, lui, ne se remplace pas —
+       son identifiant sert de clé de cache « immutable » pendant un an. -->
+  <div class="modal-back" id="modal">
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <div class="modal-titre" id="modalTitre">Modifier l'image</div>
+      <div class="msg" id="msgModal"></div>
+      <img class="img-vue" id="modalVue" src="" alt="" style="max-height:180px;margin-bottom:12px">
+      <div class="field"><label>Nom</label>
+        <input type="text" id="modalNom" maxlength="200" placeholder="Un nom lisible"></div>
+      <div class="field"><label>Tags</label>
+        <input type="text" id="modalTags" list="listeTags" placeholder="nature, hiver — séparés par des virgules">
+        <div class="chips" id="modalApercu"></div></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-s" id="modalAnnuler">Annuler</button>
+        <button type="button" class="btn-p" id="modalOk">Enregistrer</button>
+      </div>
+    </div>
   </div>
 
   <div class="bottom-leaf"></div>
@@ -195,13 +225,13 @@
           + '<div class="img-meta">' + (im.largeur ? im.largeur + '×' + im.hauteur + ' · ' : '') + poids(im.taille) + '</div>'
           + '<div class="chips">' + (im.tags || []).map(t =>
               '<span class="tag" data-tag="' + echap(t) + '" style="cursor:pointer">' + echap(t) + '</span>').join('') + '</div>'
-          + '<div class="img-btns"><button class="btn-mini" data-a="tags">🏷 Tags</button>'
+          + '<div class="img-btns"><button class="btn-mini" data-a="edit">✏️ Modifier</button>'
           + '<button class="btn-mini sup" data-a="del">🗑</button></div>';
 
         div.querySelectorAll('[data-tag]').forEach(x => {
           x.onclick = () => { tagActif = x.dataset.tag; charger(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
         });
-        div.querySelector('[data-a=tags]').onclick = () => retaguer(im);
+        div.querySelector('[data-a=edit]').onclick = () => ouvrirModale(im);
         div.querySelector('[data-a=del]').onclick = async () => {
           const ok = await confirmer({
             titre: 'Supprimer cette image ?',
@@ -217,28 +247,76 @@
       });
     }
 
-    /* Retaguer se fait sur place plutôt que dans le formulaire du haut : le
-       fichier ne se remplace pas, il n'y a donc rien d'autre à modifier, et
-       remonter la page pour deux mots serait pénible sur une grille longue. */
-    async function retaguer(im) {
-      const saisi = window.prompt('Tags de « ' + im.nom +' » (séparés par des virgules) :', (im.tags || []).join(', '));
-      if (saisi === null) return;
-      post('modifier', { id: im.id, tags: saisi })
-        .then(d => { if (d.ok) { afficher('Tags enregistrés.', true); charger(); } else afficher(d.error || 'Erreur.', false); })
-        .catch(() => afficher('Erreur réseau.', false));
+    /* Édition sur place plutôt que dans le formulaire du haut : remonter la
+       page pour renommer une vignette serait pénible sur une grille longue.
+
+       Modale intégrée et non window.prompt() : celui-ci est dépareillé, bloque
+       le fil d'exécution, et certains navigateurs mobiles le suppriment purement
+       et simplement — la modification passait alors à la trappe sans que rien
+       ne le signale. Même raison que pour confirmer.js. */
+    let imgEdition = null;
+
+    function ouvrirModale(im) {
+      imgEdition = im;
+      document.getElementById('modalVue').src = im.url;
+      document.getElementById('modalNom').value = im.nom || '';
+      const t = document.getElementById('modalTags');
+      t.value = (im.tags || []).join(', ');
+      t.dispatchEvent(new Event('input', { bubbles: true }));
+      document.getElementById('msgModal').style.display = 'none';
+      document.getElementById('modal').classList.add('open');
+      document.getElementById('modalNom').focus();
     }
+
+    function fermerModale() {
+      document.getElementById('modal').classList.remove('open');
+      imgEdition = null;
+    }
+    function erreurModale(texte) {
+      const m = document.getElementById('msgModal');
+      m.className = 'msg error';
+      m.textContent = texte;
+      m.style.display = 'block';
+    }
+
+    document.getElementById('modalAnnuler').onclick = fermerModale;
+    document.getElementById('modal').onclick = ev => { if (ev.target.id === 'modal') fermerModale(); };
+    document.addEventListener('keydown', ev => {
+      if (ev.key === 'Escape' && document.getElementById('modal').classList.contains('open')) fermerModale();
+    });
+
+    document.getElementById('modalOk').onclick = () => {
+      if (!imgEdition) return;
+      const nom = document.getElementById('modalNom').value.trim();
+      // Le serveur traite un nom vide comme « inchangé ». Le dire ici évite de
+      // laisser croire à un effacement qui n'aura pas lieu.
+      if (!nom) { erreurModale("Donne un nom à l'image."); return; }
+
+      post('modifier', { id: imgEdition.id, nom: nom, tags: document.getElementById('modalTags').value })
+        .then(d => {
+          if (!d.ok) { erreurModale(d.error || 'Erreur.'); return; }
+          fermerModale();
+          afficher('Image modifiée.', true);
+          charger();
+        })
+        .catch(() => erreurModale('Erreur réseau.'));
+    };
 
     /* Aperçu vivant : la normalisation (minuscules, espaces resserrés, doublons
        écartés) est faite par le serveur, autant la montrer avant l'envoi. */
-    document.getElementById('tags').addEventListener('input', function () {
-      const vus = [];
-      this.value.split(/[,;]+/).forEach(t => {
-        t = t.trim().replace(/[ \t]+/g, ' ').toLowerCase().slice(0, 40);
-        if (t && vus.indexOf(t) < 0 && vus.length < 12) vus.push(t);
+    function brancherApercu(champ, cible) {
+      champ.addEventListener('input', function () {
+        const vus = [];
+        this.value.split(/[,;]+/).forEach(t => {
+          t = t.trim().replace(/[ \t]+/g, ' ').toLowerCase().slice(0, 40);
+          if (t && vus.indexOf(t) < 0 && vus.length < 12) vus.push(t);
+        });
+        document.getElementById(cible).innerHTML =
+          vus.map(t => '<span class="tag">' + echap(t) + '</span>').join('');
       });
-      document.getElementById('apercuTags').innerHTML =
-        vus.map(t => '<span class="tag">' + echap(t) + '</span>').join('');
-    });
+    }
+    brancherApercu(document.getElementById('tags'), 'apercuTags');
+    brancherApercu(document.getElementById('modalTags'), 'modalApercu');
 
     document.getElementById('formImg').addEventListener('submit', e => {
       e.preventDefault();
@@ -254,6 +332,7 @@
 
       const fd = new FormData();
       fd.append('fichier', f);
+      fd.append('nom', document.getElementById('nom').value.trim());
       fd.append('tags', document.getElementById('tags').value);
       fetch(API + '?action=televerser', { method: 'POST', body: fd })
         .then(lireJson)
