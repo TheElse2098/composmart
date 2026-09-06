@@ -25,6 +25,33 @@ function normaliser_code($code) {
     return strtoupper(preg_replace('/\s+/', '', (string)$code));
 }
 
+/**
+ * L'événement accepte-t-il un nouveau participant ?
+ * Renvoie null si oui, sinon le motif du refus, écrit pour être lu par le
+ * participant lui-même — il doit comprendre pourquoi ça ne marche pas plutôt
+ * que de croire à une faute de frappe dans le code.
+ *
+ * « Ouvert » laisse toujours entrer. « En cours » aussi, MAIS uniquement en
+ * parcours individuel : chacun y avance à son rythme depuis la première slide,
+ * donc arriver après le début ne pose aucun problème — c'est ce qui rend
+ * possible un événement qui dure la journée, où les gens passent quand ils
+ * veulent. En parcours commun l'écran suit l'animateur : un retardataire
+ * tomberait au milieu d'une question dont il n'a pas vu l'énoncé, sans aucune
+ * chance de rattraper les points déjà distribués.
+ */
+function evt_motif_refus($evt) {
+    if ($evt['statut'] === 'ouvert') return null;
+    if ($evt['statut'] === 'en_cours' && ($evt['mode_parcours'] ?? 'commun') === 'individuel') return null;
+
+    $motifs = [
+        'prevu'    => "Cet événement n'est pas encore ouvert aux inscriptions.",
+        'en_cours' => "L'atelier a déjà commencé : les inscriptions sont closes.",
+        'termine'  => "Cet atelier est terminé.",
+        'annule'   => "Cet événement a été annulé.",
+    ];
+    return $motifs[$evt['statut']] ?? "Cet événement n'accepte pas d'inscription.";
+}
+
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // ── VÉRIFIER UN CODE (avant inscription, pour afficher titre/lieu) ─────────
@@ -39,7 +66,7 @@ if ($action === 'verifier_code') {
     $code = normaliser_code($_GET['code'] ?? $_POST['code'] ?? '');
     if ($code === '') { echo json_encode(['error' => 'Code manquant.']); exit; }
 
-    $stmt = mysqli_prepare($conn, 'SELECT id, titre, lieu, date_debut, statut, supprime FROM evenements WHERE code = ?');
+    $stmt = mysqli_prepare($conn, 'SELECT id, titre, lieu, date_debut, statut, supprime, mode_parcours FROM evenements WHERE code = ?');
     $stmt->bind_param('s', $code);
     $stmt->execute();
     $evt = $stmt->get_result()->fetch_assoc();
@@ -51,19 +78,8 @@ if ($action === 'verifier_code') {
         exit;
     }
 
-    // Seul « ouvert » laisse entrer. Les autres statuts renvoient un motif
-    // explicite : le participant doit comprendre pourquoi ça ne marche pas,
-    // plutôt que de croire à une faute de frappe dans le code.
-    $motifs = [
-        'prevu'    => "Cet événement n'est pas encore ouvert aux inscriptions.",
-        'en_cours' => "L'atelier a déjà commencé : les inscriptions sont closes.",
-        'termine'  => "Cet atelier est terminé.",
-        'annule'   => "Cet événement a été annulé.",
-    ];
-    if ($evt['statut'] !== 'ouvert') {
-        echo json_encode(['error' => $motifs[$evt['statut']] ?? "Cet événement n'accepte pas d'inscription."]);
-        exit;
-    }
+    $refus = evt_motif_refus($evt);
+    if ($refus !== null) { echo json_encode(['error' => $refus], JSON_UNESCAPED_UNICODE); exit; }
 
     echo json_encode([
         'ok'      => true,
@@ -88,7 +104,7 @@ if ($action === 'rejoindre') {
         exit;
     }
 
-    $stmt = mysqli_prepare($conn, 'SELECT id, titre, statut, supprime, mode_equipes FROM evenements WHERE code = ?');
+    $stmt = mysqli_prepare($conn, 'SELECT id, titre, statut, supprime, mode_equipes, mode_parcours FROM evenements WHERE code = ?');
     $stmt->bind_param('s', $code);
     $stmt->execute();
     $evt = $stmt->get_result()->fetch_assoc();
@@ -97,19 +113,11 @@ if ($action === 'rejoindre') {
         echo json_encode(['error' => 'Code invalide.']);
         exit;
     }
-    // Même règle qu'à la vérification du code : seul « ouvert » laisse entrer.
-    // Le contrôle est refait ici, et pas seulement à l'étape précédente : le
-    // statut a pu changer entre la saisie du code et la validation du nom.
-    if ($evt['statut'] !== 'ouvert') {
-        $motifs = [
-            'prevu'    => "Cet événement n'est pas encore ouvert aux inscriptions.",
-            'en_cours' => "L'atelier a déjà commencé : les inscriptions sont closes.",
-            'termine'  => "Cet atelier est terminé.",
-            'annule'   => "Cet événement a été annulé.",
-        ];
-        echo json_encode(['error' => $motifs[$evt['statut']] ?? "Cet événement n'accepte pas d'inscription."]);
-        exit;
-    }
+    // Même règle qu'à la vérification du code, et refaite ici et pas seulement
+    // à l'étape précédente : le statut a pu changer entre la saisie du code et
+    // la validation du nom.
+    $refus = evt_motif_refus($evt);
+    if ($refus !== null) { echo json_encode(['error' => $refus], JSON_UNESCAPED_UNICODE); exit; }
 
     $user_id = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
 

@@ -306,6 +306,7 @@
             <option value="commun">En commun — l'animateur fait avancer</option>
             <option value="individuel">Individuel — chacun à son rythme</option>
           </select>
+          <div class="hint" id="hintMode"></div>
         </div>
         <div class="field">
           <label>Équipes</label>
@@ -425,6 +426,7 @@
           // sélection en cours.
           if (ongletActif !== 'reglages') {
             document.getElementById('regMode').value = d.evenement.mode_parcours;
+            majHintMode();
             document.getElementById('regEquipes').value = d.evenement.mode_equipes;
             document.getElementById('regTheme').value = d.evenement.theme_slides || 'foret';
             tagsChoisis = (d.evenement.image_tags || '').split(',').map(t => t.trim()).filter(Boolean);
@@ -627,6 +629,17 @@
       }
       majHint();
     }
+
+    /* Le mode de parcours ne décide pas que du pilotage : il décide aussi de
+       qui peut encore entrer une fois l'atelier démarré. C'est contre-intuitif,
+       donc c'est écrit sous le sélecteur plutôt que découvert en séance. */
+    function majHintMode() {
+      const individuel = document.getElementById('regMode').value === 'individuel';
+      document.getElementById('hintMode').textContent = individuel
+        ? "Chacun avance à son rythme depuis la première slide. Les retardataires peuvent rejoindre même une fois l'atelier démarré — c'est ce qui permet un événement qui dure la journée."
+        : "L'écran de tous suit le bouton Suivant de l'animateur. Une fois l'atelier démarré, plus personne ne peut rejoindre : un retardataire tomberait au milieu d'une question.";
+    }
+    document.getElementById('regMode').addEventListener('change', majHintMode);
 
     function majHint() {
       document.getElementById('hintImages').textContent = tagsChoisis.length
