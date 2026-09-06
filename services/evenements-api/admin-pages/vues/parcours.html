@@ -49,6 +49,11 @@
     /* Liste des slides */
     .slide-row { background: #fff; border-radius: 12px; padding: 11px 14px; margin-bottom: 8px; box-shadow: 0 1px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; }
     .slide-rang { font-family: 'Baloo 2', cursive; font-weight: 900; color: #7aaa8a; min-width: 22px; }
+    /* Repère de type. Taille fixe : les emojis n'ont pas tous la même
+       chasse, sans largeur imposée les titres ne s'alignaient plus d'une
+       ligne à l'autre. */
+    .slide-icone { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px; background: #eef4ec;
+                   display: flex; align-items: center; justify-content: center; font-size: 1rem; line-height: 1; }
     .slide-info { flex: 1; min-width: 0; }
     .slide-titre { font-weight: 800; color: #1a3a25; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .slide-type { font-size: 0.72rem; color: #888; }
@@ -92,6 +97,7 @@
     html.dark .btn-d, html.dark .slide-btns button.sup, html.dark .rep-row .rep-del { background: #3d1a1a; color: #ef9a9a; }
     html.dark .slide-btns button, html.dark .rep-add { background: #16291c; color: #7fc99a; }
     html.dark .slide-pts { background: #2e2410; color: #e8b931; }
+    html.dark .slide-icone { background: #16291c; }
   </style>
   <link rel="stylesheet" href="/assets/css/site-nav.css">
   <link rel="stylesheet" href="/assets/css/desktop.css">
@@ -558,7 +564,9 @@
       editionType = type;
       editionId = slide ? slide.id : null;
       const verbe = modifiable ? (slide ? 'Modifier' : 'Nouvelle slide') : 'Consulter';
-      document.getElementById('modalTitre').textContent = verbe + ' — ' + (REGISTRE[type] || {}).nom;
+      const regType = REGISTRE[type] || {};
+      document.getElementById('modalTitre').textContent =
+        (regType.icone ? regType.icone + '  ' : '') + verbe + ' — ' + regType.nom;
       document.getElementById('slideTitre').value = slide ? (slide.titre || '') : '';
       document.getElementById('slidePoints').value = slide ? slide.points : 10;
       document.getElementById('msgModal').style.display = 'none';
@@ -643,8 +651,14 @@
       slides.forEach((s, i) => {
         const div = document.createElement('div');
         div.className = 'slide-row';
-        const meta = (REGISTRE[s.type] || {}).nom || s.type;
+        const reg = REGISTRE[s.type] || {};
+        const meta = reg.nom || s.type;
+        // L'icône porte un title plutôt qu'un alt : le nom du type est déjà
+        // écrit juste en dessous, la répéter aux lecteurs d'écran n'apporte
+        // rien — d'où aussi le aria-hidden.
         div.innerHTML = '<div class="slide-rang">' + (i + 1) + '</div>'
+          + '<div class="slide-icone" title="' + echap(meta) + '" aria-hidden="true">'
+          + echap(reg.icone || '📄') + '</div>'
           + '<div class="slide-info"><div class="slide-titre">' + echap(s.titre || meta) + '</div>'
           + '<div class="slide-type">' + echap(meta) + '</div></div>'
           + (s.points ? '<span class="slide-pts">' + s.points + ' pts</span>' : '')
@@ -770,7 +784,7 @@
         const sel = document.getElementById('nouveauType');
         Object.keys(REGISTRE).forEach(t => {
           const o = document.createElement('option');
-          o.value = t; o.textContent = REGISTRE[t].nom;
+          o.value = t; o.textContent = (REGISTRE[t].icone || '') + '  ' + REGISTRE[t].nom;
           sel.appendChild(o);
         });
         if (CIBLE.id) chargerParcours(); else chargerListe();

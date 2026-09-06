@@ -23,21 +23,26 @@
  */
 function slides_registre() {
     return [
-        'titre'            => ['nom' => 'Titre de partie',      'note' => false,    'repond' => false],
-        'texte'            => ['nom' => 'Texte',                'note' => false,    'repond' => false],
-        'anecdote'         => ['nom' => 'Anecdote',             'note' => false,    'repond' => false],
-        'sommaire'         => ['nom' => 'Sommaire',             'note' => false,    'repond' => false],
-        'media'            => ['nom' => 'Média plein écran',    'note' => false,    'repond' => false],
-        'classement'       => ['nom' => 'Classement',           'note' => false,    'repond' => false],
-        'fin'              => ['nom' => 'Remerciement',         'note' => false,    'repond' => false],
-        'encouragement'    => ['nom' => 'Encouragement',        'note' => false,    'repond' => false],
-        'quiz'             => ['nom' => 'Quiz (QCM)',           'note' => 'auto',   'repond' => true],
-        'vrai_faux'        => ['nom' => 'Vrai / Faux',          'note' => 'auto',   'repond' => true],
-        'estimation'       => ['nom' => 'Estimation',           'note' => 'auto',   'repond' => true],
-        'jeu'              => ['nom' => 'Extrait de jeu',       'note' => 'auto',   'repond' => true],
-        'sondage'          => ['nom' => 'Sondage',              'note' => false,    'repond' => true],
-        'question_ouverte' => ['nom' => 'Question ouverte',     'note' => 'manuel', 'repond' => true],
-        'defi'             => ['nom' => 'Défi terrain',         'note' => 'manuel', 'repond' => false],
+        // `icone` : repère visuel du type, pour distinguer d'un coup d'œil les
+        // lignes d'un déroulé long. Elle vit ICI et pas dans les vues : la
+        // bibliothèque de parcours et la console d'animation l'affichent toutes
+        // deux, et deux tables d'icônes finiraient par diverger — c'est déjà le
+        // rôle de ce registre pour `nom`, `note` et `repond`.
+        'titre'            => ['nom' => 'Titre de partie',      'icone' => '🔖', 'note' => false,    'repond' => false],
+        'texte'            => ['nom' => 'Texte',                'icone' => '📄', 'note' => false,    'repond' => false],
+        'anecdote'         => ['nom' => 'Anecdote',             'icone' => '💡', 'note' => false,    'repond' => false],
+        'sommaire'         => ['nom' => 'Sommaire',             'icone' => '🗂️', 'note' => false,    'repond' => false],
+        'media'            => ['nom' => 'Média plein écran',    'icone' => '🎬', 'note' => false,    'repond' => false],
+        'classement'       => ['nom' => 'Classement',           'icone' => '🏆', 'note' => false,    'repond' => false],
+        'fin'              => ['nom' => 'Remerciement',         'icone' => '🙏', 'note' => false,    'repond' => false],
+        'encouragement'    => ['nom' => 'Encouragement',        'icone' => '🌱', 'note' => false,    'repond' => false],
+        'quiz'             => ['nom' => 'Quiz (QCM)',           'icone' => '🧠', 'note' => 'auto',   'repond' => true],
+        'vrai_faux'        => ['nom' => 'Vrai / Faux',          'icone' => '⚖️', 'note' => 'auto',   'repond' => true],
+        'estimation'       => ['nom' => 'Estimation',           'icone' => '📏', 'note' => 'auto',   'repond' => true],
+        'jeu'              => ['nom' => 'Extrait de jeu',       'icone' => '🎮', 'note' => 'auto',   'repond' => true],
+        'sondage'          => ['nom' => 'Sondage',              'icone' => '📊', 'note' => false,    'repond' => true],
+        'question_ouverte' => ['nom' => 'Question ouverte',     'icone' => '✍️', 'note' => 'manuel', 'repond' => true],
+        'defi'             => ['nom' => 'Défi terrain',         'icone' => '🎯', 'note' => 'manuel', 'repond' => false],
     ];
 }
 

@@ -84,6 +84,9 @@
     .liste .nom { flex: 1; font-weight: 700; color: #1a3a25; }
     .liste .pts { font-weight: 800; color: #b26a00; }
     .liste .eq { font-size: 0.74rem; color: #7aaa8a; font-weight: 700; }
+    /* Repère de type dans le sommaire. Largeur fixe : les emojis n'ont pas tous
+       la même chasse, et les titres se désalignaient d'une ligne à l'autre. */
+    .liste .ic { flex: 0 0 auto; width: 22px; text-align: center; font-size: 0.95rem; line-height: 1; }
     .note-input { width: 70px; border: 1.5px solid #c8dfc8; border-radius: 8px; padding: 5px 8px; font-family: inherit; font-size: 0.84rem; background: #fff; color: #1a3a25; }
     .btn-mini { border-radius: 10px; padding: 5px 12px; font-size: 0.75rem; font-family: inherit; background: #eef4ec; color: #1e6e3e; }
 
@@ -711,6 +714,8 @@
       document.getElementById('sommaire').innerHTML = '<ul class="liste">' + (d.sommaire || []).map((s, i) =>
         '<li' + (d.slide && s.id === d.slide.id ? ' style="outline:2px solid #1e6e3e"' : '') + '>'
         + '<span class="rang">' + (i + 1) + '</span>'
+        + '<span class="ic" title="' + echap((TYPES[s.type] || {}).nom || s.type) + '" aria-hidden="true">'
+        + echap((TYPES[s.type] || {}).icone || '📄') + '</span>'
         + '<span class="nom">' + echap(s.titre || (TYPES[s.type] || {}).nom || s.type) + '</span>'
         + '<button class="btn-mini" data-slide="' + s.id + '">Aller</button></li>').join('') + '</ul>';
       document.querySelectorAll('#sommaire [data-slide]').forEach(b => {
