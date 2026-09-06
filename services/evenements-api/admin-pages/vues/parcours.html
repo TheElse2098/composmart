@@ -49,6 +49,16 @@
     /* Liste des slides */
     .slide-row { background: #fff; border-radius: 12px; padding: 11px 14px; margin-bottom: 8px; box-shadow: 0 1px 5px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 10px; }
     .slide-rang { font-family: 'Baloo 2', cursive; font-weight: 900; color: #7aaa8a; min-width: 22px; }
+    /* Poignée de glissement. La ligne entière est draggable — la poignée n'est
+       qu'une affordance — mais elle porte le curseur qui annonce le geste. */
+    .slide-poignee { flex: 0 0 auto; color: #b9d0c0; font-size: 1.05rem; line-height: 1; cursor: grab; user-select: none; letter-spacing: -2px; }
+    .slide-row:active .slide-poignee { cursor: grabbing; }
+    /* La ligne en cours de déplacement s'efface ; le liseré marque où elle ira.
+       On utilise inset et non une bordure : une bordure change la hauteur de la
+       ligne, et toute la liste sursauterait au survol. */
+    .slide-row.glisse { opacity: 0.4; }
+    .slide-row.cible-avant { box-shadow: inset 0 3px 0 #1e6e3e; }
+    .slide-row.cible-apres { box-shadow: inset 0 -3px 0 #1e6e3e; }
     /* Repère de type. Taille fixe : les emojis n'ont pas tous la même
        chasse, sans largeur imposée les titres ne s'alignaient plus d'une
        ligne à l'autre. */
@@ -98,6 +108,9 @@
     html.dark .slide-btns button, html.dark .rep-add { background: #16291c; color: #7fc99a; }
     html.dark .slide-pts { background: #2e2410; color: #e8b931; }
     html.dark .slide-icone { background: #16291c; }
+    html.dark .slide-poignee { color: #3d5544; }
+    html.dark .slide-row.cible-avant { box-shadow: inset 0 3px 0 #52b788; }
+    html.dark .slide-row.cible-apres { box-shadow: inset 0 -3px 0 #52b788; }
   </style>
   <link rel="stylesheet" href="/assets/css/site-nav.css">
   <link rel="stylesheet" href="/assets/css/desktop.css">
@@ -656,7 +669,8 @@
         // L'icône porte un title plutôt qu'un alt : le nom du type est déjà
         // écrit juste en dessous, la répéter aux lecteurs d'écran n'apporte
         // rien — d'où aussi le aria-hidden.
-        div.innerHTML = '<div class="slide-rang">' + (i + 1) + '</div>'
+        div.innerHTML = (modifiable ? '<div class="slide-poignee" title="Glisser pour déplacer" aria-hidden="true">⠿</div>' : '')
+          + '<div class="slide-rang">' + (i + 1) + '</div>'
           + '<div class="slide-icone" title="' + echap(meta) + '" aria-hidden="true">'
           + echap(reg.icone || '📄') + '</div>'
           + '<div class="slide-info"><div class="slide-titre">' + echap(s.titre || meta) + '</div>'
@@ -675,9 +689,91 @@
         // qui ne fait rien est pire qu'un bouton grisé.
         if (!modifiable) {
           ['up', 'down', 'del'].forEach(a => { div.querySelector('[data-a=' + a + ']').disabled = true; });
+        } else {
+          brancherGlisser(div, i);
         }
         box.appendChild(div);
       });
+    }
+
+    /* ══════════ GLISSER-DÉPOSER ══════════
+       Les flèches ↑↓ restent : le glisser-déposer HTML5 ne répond pas au
+       toucher, et cet éditeur sert aussi depuis une tablette. Elles sont aussi
+       le seul chemin accessible au clavier.
+
+       La liste n'est PAS réordonnée pendant le survol, seulement au dépôt :
+       redessiner en cours de glissement détruirait l'élément que le navigateur
+       est en train de déplacer, et le geste s'interromprait net. Un liseré sur
+       la ligne survolée indique donc où la slide atterrira. */
+    let indexGlisse = null;
+
+    function nettoyerCibles() {
+      document.querySelectorAll('.slide-row').forEach(r => {
+        r.classList.remove('cible-avant', 'cible-apres');
+      });
+    }
+
+    function brancherGlisser(ligne, i) {
+      ligne.draggable = true;
+
+      ligne.addEventListener('dragstart', ev => {
+        indexGlisse = i;
+        ligne.classList.add('glisse');
+        // Firefox n'amorce pas le glissement sans données transférées.
+        ev.dataTransfer.effectAllowed = 'move';
+        try { ev.dataTransfer.setData('text/plain', String(i)); } catch (e) { /* vieux navigateurs */ }
+      });
+
+      ligne.addEventListener('dragend', () => {
+        ligne.classList.remove('glisse');
+        indexGlisse = null;
+        nettoyerCibles();
+      });
+
+      ligne.addEventListener('dragover', ev => {
+        if (indexGlisse === null || indexGlisse === i) return;
+        ev.preventDefault();                     // sans quoi le dépôt est refusé
+        ev.dataTransfer.dropEffect = 'move';
+        const r = ligne.getBoundingClientRect();
+        const avant = (ev.clientY - r.top) < r.height / 2;
+        nettoyerCibles();
+        ligne.classList.add(avant ? 'cible-avant' : 'cible-apres');
+      });
+
+      ligne.addEventListener('dragleave', ev => {
+        // dragleave se déclenche aussi en passant sur un enfant : on ne nettoie
+        // que si le curseur a réellement quitté la ligne.
+        if (!ligne.contains(ev.relatedTarget)) {
+          ligne.classList.remove('cible-avant', 'cible-apres');
+        }
+      });
+
+      ligne.addEventListener('drop', ev => {
+        ev.preventDefault();
+        if (indexGlisse === null || indexGlisse === i) return;
+        const r = ligne.getBoundingClientRect();
+        const avant = (ev.clientY - r.top) < r.height / 2;
+
+        let cible = avant ? i : i + 1;
+        // Retirer l'élément décale tout ce qui le suit : la position visée
+        // recule d'un cran quand on descend dans la liste.
+        if (indexGlisse < cible) cible--;
+        if (cible === indexGlisse) { nettoyerCibles(); return; }
+
+        const [depl] = slides.splice(indexGlisse, 1);
+        slides.splice(cible, 0, depl);
+        indexGlisse = null;
+        rendreSlides();
+        enregistrerOrdre();
+      });
+    }
+
+    function enregistrerOrdre() {
+      const corpsOrdre = { ordre: slides.map(s => s.id) };
+      corpsOrdre[CIBLE.cle] = CIBLE.id;
+      return postSlide('slide_reordonner', corpsOrdre, true)
+        .then(d => { if (!d.ok) afficher('msgEdit', d.error || 'Réordonnancement impossible.', false); })
+        .catch(() => afficher('msgEdit', 'Erreur réseau.', false));
     }
 
     function deplacer(i, delta) {
@@ -685,11 +781,7 @@
       if (j < 0 || j >= slides.length) return;
       const tmp = slides[i]; slides[i] = slides[j]; slides[j] = tmp;
       rendreSlides();
-      const corpsOrdre = { ordre: slides.map(s => s.id) };
-      corpsOrdre[CIBLE.cle] = CIBLE.id;
-      postSlide('slide_reordonner', corpsOrdre, true)
-        .then(d => { if (!d.ok) afficher('msgEdit', d.error || 'Réordonnancement impossible.', false); })
-        .catch(() => afficher('msgEdit', 'Erreur réseau.', false));
+      enregistrerOrdre();
     }
 
     async function supprimerSlide(id) {
