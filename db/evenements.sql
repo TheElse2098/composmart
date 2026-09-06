@@ -26,7 +26,13 @@ CREATE TABLE `evenements` (
   -- Parcours source, à titre informatif : les slides sont COPIÉES dans
   -- evenement_slides à l'affectation (cf. commentaire de cette table).
   `parcours_id`   int          DEFAULT NULL,
-  `mode_equipes`  enum('aucun','manuel','auto','libre') NOT NULL DEFAULT 'aucun',
+  -- 'autonome' : les participants creent eux-memes leurs equipes et s'y
+  -- retrouvent par recherche, la ou 'libre' impose la liste de l'animateur.
+  `mode_equipes`  enum('aucun','manuel','auto','libre','autonome') NOT NULL DEFAULT 'aucun',
+  -- Plafonds du mode autonome. 0 = illimite, pour que les evenements deja en
+  -- base n'heritent pas d'une contrainte surprise.
+  `equipes_max`       int NOT NULL DEFAULT 0,
+  `equipe_taille_max` int NOT NULL DEFAULT 0,
   -- 'commun' = tout le monde sur la même slide, l'animateur fait avancer.
   -- 'individuel' = chacun progresse à son rythme (participants.slide_index).
   `mode_parcours` enum('commun','individuel') NOT NULL DEFAULT 'commun',
@@ -172,9 +178,14 @@ CREATE TABLE `equipes` (
   `nom`          varchar(80) NOT NULL,
   `couleur`      varchar(20) DEFAULT NULL,
   `ordre`        int         NOT NULL DEFAULT 0,
+  -- Participant a l'origine de l'equipe (mode autonome). SET NULL : l'equipe
+  -- survit a son depart, elle appartient a ses membres.
+  `creee_par`    int         DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `evenement` (`evenement_id`),
-  CONSTRAINT `equipes_ibfk_1` FOREIGN KEY (`evenement_id`) REFERENCES `evenements` (`id`) ON DELETE CASCADE
+  KEY `createur` (`creee_par`),
+  CONSTRAINT `equipes_ibfk_1` FOREIGN KEY (`evenement_id`) REFERENCES `evenements` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `equipes_ibfk_2` FOREIGN KEY (`creee_par`) REFERENCES `participants` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Participants inscrits via le code/QR. Pas de FK vers `users` (db-core, base

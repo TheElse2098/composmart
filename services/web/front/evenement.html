@@ -53,6 +53,11 @@
     .score-bar.visible { display: flex; }
     .score-bar .qui { flex: 1; text-align: center; }
     .score-bar .eq { font-weight: 700; font-size: 0.8rem; opacity: 0.82; }
+    /* La pastille d'équipe devient un bouton quand le changement est permis.
+       Elle garde exactement l'apparence du <span> qu'elle remplace : c'est le
+       crayon qui signale l'action, pas un cadre de bouton en plein bandeau. */
+    button.eq { background: none; border: none; color: inherit; font-family: inherit; cursor: pointer; padding: 0; }
+    button.eq:hover { opacity: 1; text-decoration: underline; }
     /* Sortie toujours offerte : sans elle, un participant dont l'atelier tourne
        mal n'a aucun moyen de revenir à la page d'accueil des événements. */
     .score-bar .quitter { flex: none; border: none; background: rgba(255,255,255,0.18); color: #fff; font-family: inherit; font-weight: 800; font-size: 0.78rem; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
@@ -470,9 +475,18 @@
           + '<button type="button" class="quitter" id="btnQuitter">Quitter</button>';
         cablerQuitter();
       }
+      // L'équipe devient cliquable quand elle est modifiable : le changement
+      // est autorisé à tout moment, encore faut-il un endroit où le demander.
+      const changeable = (d.mode_equipes === 'libre' || d.mode_equipes === 'autonome');
       el.querySelector('.qui').innerHTML = '👤 ' + echap(d.participant.nom)
         + ' · ' + (d.participant.points || 0) + ' pts'
-        + (d.equipe ? ' <span class="eq">— ' + echap(d.equipe.nom) + '</span>' : '');
+        + (d.equipe
+            ? ' <' + (changeable ? 'button type="button" id="btnEquipe"' : 'span') + ' class="eq">— '
+              + echap(d.equipe.nom) + (changeable ? ' ✎' : '')
+              + '</' + (changeable ? 'button' : 'span') + '>'
+            : '');
+      const be = document.getElementById('btnEquipe');
+      if (be) be.onclick = ouvrirEquipes;
     }
 
     function cablerQuitter() {
@@ -490,11 +504,17 @@
     function rendreEcran(d) {
       // En mode « libre », le choix d'équipe passe avant tout le reste : tant
       // qu'il n'a pas choisi, le participant ne suit pas le parcours.
-      const doitChoisir = (d.mode_equipes === 'libre' && !d.equipe);
+      // `forcerEquipe` : le participant a demandé à revoir l'écran des équipes
+      // alors qu'il en a déjà une. Le changement d'équipe est autorisé à tout
+      // moment, il faut donc un chemin pour y revenir en cours de parcours.
+      const modeEq = d.mode_equipes;
+      const doitChoisir = (modeEq === 'libre' || modeEq === 'autonome')
+        && (!d.equipe || forcerEquipe);
 
       // Signature : on ne réécrit le DOM que si l'écran change réellement,
       // sinon la saisie en cours serait effacée à chaque sondage.
-      const sig = [doitChoisir ? 'equipes' : d.ecran, d.slide ? d.slide.id : 0, d.ma_reponse ? 'R' : '-'].join('|');
+      const sig = [doitChoisir ? 'equipes' : d.ecran, d.slide ? d.slide.id : 0,
+                   d.ma_reponse ? 'R' : '-', d.equipe ? d.equipe.id : 0].join('|');
       if (sig === rendu) return;
       rendu = sig;
 
@@ -519,50 +539,198 @@
       rendreSlide(z, d);
     }
 
-    // ══════════ CHOIX D'ÉQUIPE (mode libre) ══════════
+        /* ══════════ ÉQUIPES (modes « libre » et « autonome ») ══════════
+       « libre »    : l'animateur a fixé la liste, on y choisit sa place.
+       « autonome » : les participants créent eux-mêmes leurs équipes, puis se
+                      retrouvent en cherchant celle de leurs collègues.
+
+       Trois écrans, un seul état local : accueil (créer / rejoindre), création,
+       recherche. Cet état ne passe PAS par la signature de rendu de
+       chargerEtat() : le sondage tourne toutes les 2,5 s et ramènerait le
+       participant sur l'accueil à chaque tour, en pleine saisie d'un nom. */
+    let ecranEquipe = 'accueil';   // accueil | creer | rejoindre
+    let filtreEquipe = '';
+    let forcerEquipe = false;      // revoir l'écran alors qu'on a déjà une équipe
+
+    /** Rouvre l'écran des équipes en cours de parcours (changement autorisé
+     *  à tout moment). Appelé depuis la pastille d'équipe du bandeau. */
+    function ouvrirEquipes() {
+      forcerEquipe = true;
+      ecranEquipe = 'accueil';
+      filtreEquipe = '';
+      rendu = '';
+      chargerEtat();
+    }
+
+    /** Referme l'écran et rend la main au parcours. */
+    function fermerEquipes() {
+      forcerEquipe = false;
+      ecranEquipe = 'accueil';
+      filtreEquipe = '';
+      rendu = '';
+      chargerEtat();
+    }
+
     function rendreChoixEquipe(z, d) {
+      const autonome = d.mode_equipes === 'autonome';
       z.innerHTML = '<div class="attente" style="padding-bottom:4px">'
         + '<div class="attente-emoji">👥</div>'
-        + '<div class="slide-titre">Choisis ton équipe</div></div>'
-        + '<div id="listeEquipes"><div class="attente-txt">Chargement…</div></div>';
+        + '<div class="slide-titre">' + (autonome ? 'Ton équipe' : 'Choisis ton équipe') + '</div></div>'
+        + '<div id="zoneEquipes"><div class="attente-txt">Chargement…</div></div>';
+      chargerEquipes();
+    }
 
+    function chargerEquipes() {
       fetch(API + '/live.php?action=equipes&token=' + encodeURIComponent(token))
         .then(r => r.json())
         .then(res => {
-          const box = document.getElementById('listeEquipes');
-          if (!box) return;
-          const eqs = res.equipes || [];
-          if (!eqs.length) {
-            box.innerHTML = '<div class="attente-txt">Les équipes ne sont pas encore créées.<br>Patiente un instant.</div>';
-            // L'animateur ne les a pas encore définies : on repassera par ici
-            // au prochain sondage.
-            rendu = '';
-            return;
-          }
-          box.innerHTML = eqs.map(e =>
-            '<button class="opt" data-eq="' + e.id + '" style="border-left:6px solid ' + echap(e.couleur || '#1e6e3e') + '">'
-            + echap(e.nom) + ' <span style="float:right;opacity:0.6">' + e.membres + '</span></button>').join('');
-          box.querySelectorAll('[data-eq]').forEach(b => {
-            b.onclick = () => {
-              box.querySelectorAll('.opt').forEach(x => x.disabled = true);
-              fetch(API + '/live.php?action=choisir_equipe', {
-                method: 'POST',
-                body: new URLSearchParams({ token: token, equipe_id: b.dataset.eq }),
-              })
-                .then(r => r.json())
-                .then(rep => {
-                  if (!rep.ok) { afficher(rep.error || 'Choix impossible.', false); box.querySelectorAll('.opt').forEach(x => x.disabled = false); return; }
-                  rendu = '';
-                  chargerEtat();
-                })
-                .catch(() => { afficher('Erreur réseau.', false); box.querySelectorAll('.opt').forEach(x => x.disabled = false); });
-            };
-          });
+          const box = document.getElementById('zoneEquipes');
+          if (box) dessinerEquipes(box, res);
         })
-        .catch(() => {});
+        .catch(() => {
+          const box = document.getElementById('zoneEquipes');
+          if (box) box.innerHTML = '<div class="attente-txt">Connexion perdue. Nouvel essai dans un instant…</div>';
+        });
     }
 
-    // ══════════ RENDU D'UNE SLIDE ══════════
+    function dessinerEquipes(box, res) {
+      const eqs = res.equipes || [];
+      const autonome = res.mode === 'autonome';
+
+      // Mode libre, liste vide : l'animateur n'a pas encore défini les équipes.
+      // On repassera par ici au prochain sondage.
+      if (!autonome && !eqs.length) {
+        box.innerHTML = '<div class="attente-txt">Les équipes ne sont pas encore créées.<br>Patiente un instant.</div>';
+        rendu = '';
+        return;
+      }
+
+      if (autonome && ecranEquipe === 'accueil') { ecranAccueilEquipe(box, res); return; }
+      if (autonome && ecranEquipe === 'creer')   { ecranCreerEquipe(box, res);   return; }
+      ecranRejoindreEquipe(box, res, autonome);
+    }
+
+    /** Accueil : les deux portes d'entrée. */
+    function ecranAccueilEquipe(box, res) {
+      const nb = (res.equipes || []).length;
+      const mienne = (res.equipes || []).find(e => e.mienne);
+      box.innerHTML =
+        (mienne
+          ? '<div class="attente-txt" style="margin-bottom:12px">Tu es dans <b>' + echap(mienne.nom)
+            + '</b>. Tu peux en changer quand tu veux.</div>' : '') +
+        (res.peut_creer
+          ? '<button class="btn" id="eqCreer">➕ Créer une équipe</button>'
+          : '<div class="attente-txt" style="margin-bottom:10px">Le nombre d\'équipes est atteint ('
+            + res.equipes_max + ') : rejoins une équipe existante.</div>')
+        + '<button class="btn btn-s" id="eqRejoindre" style="margin-top:8px"' + (nb ? '' : ' disabled')
+        + '>🔍 Rejoindre une équipe' + (nb ? ' (' + nb + ')' : ' — aucune pour l\'instant') + '</button>';
+
+      if (mienne || forcerEquipe) {
+        box.insertAdjacentHTML('beforeend',
+          '<button class="btn btn-s" id="eqFermer" style="margin-top:8px">← Revenir au parcours</button>');
+        document.getElementById('eqFermer').onclick = fermerEquipes;
+      }
+      const bc = document.getElementById('eqCreer');
+      if (bc) bc.onclick = () => { ecranEquipe = 'creer'; chargerEquipes(); };
+      document.getElementById('eqRejoindre').onclick = () => {
+        ecranEquipe = 'rejoindre'; filtreEquipe = ''; chargerEquipes();
+      };
+    }
+
+    /** Création : un nom, rien d'autre. */
+    function ecranCreerEquipe(box, res) {
+      box.innerHTML = '<div class="field"><label>Nom de l\'équipe</label>'
+        + '<input type="text" id="eqNom" maxlength="80" placeholder="Les Composteurs" autocomplete="off"></div>'
+        + '<button class="btn" id="eqValider">Créer et rejoindre</button>'
+        + '<button class="btn btn-s" id="eqRetour" style="margin-top:8px">← Retour</button>';
+
+      const champ = document.getElementById('eqNom');
+      const bouton = document.getElementById('eqValider');
+      champ.focus();
+
+      const creer = () => {
+        const nom = champ.value.trim();
+        if (!nom) { afficher('Donne un nom à ton équipe.', false); champ.focus(); return; }
+        bouton.disabled = true;
+        fetch(API + '/live.php?action=creer_equipe', {
+          method: 'POST',
+          body: new URLSearchParams({ token: token, nom: nom }),
+        })
+          .then(r => r.json())
+          .then(rep => {
+            if (!rep.ok) { afficher(rep.error || 'Création impossible.', false); bouton.disabled = false; return; }
+            fermerEquipes();
+          })
+          .catch(() => { afficher('Erreur réseau.', false); bouton.disabled = false; });
+      };
+      bouton.onclick = creer;
+      champ.onkeydown = ev => { if (ev.key === 'Enter') { ev.preventDefault(); creer(); } };
+      document.getElementById('eqRetour').onclick = () => { ecranEquipe = 'accueil'; chargerEquipes(); };
+    }
+
+    /** Recherche : filtre côté navigateur. Une liste d'atelier tient en
+     *  quelques dizaines d'équipes, inutile d'interroger le serveur à chaque
+     *  touche frappée. */
+    function ecranRejoindreEquipe(box, res, autonome) {
+      const eqs = res.equipes || [];
+      const q = filtreEquipe.trim().toLowerCase();
+      const vues = q ? eqs.filter(e => e.nom.toLowerCase().includes(q)) : eqs;
+
+      box.innerHTML =
+        (eqs.length > 6 || q
+          ? '<div class="field"><input type="text" id="eqRech" placeholder="Chercher une équipe" autocomplete="off" value="' + echap(filtreEquipe) + '"></div>'
+          : '')
+        + '<div id="eqListe">' + (vues.length
+            ? vues.map(e =>
+                '<button class="opt" data-eq="' + e.id + '"' + (e.complete && !e.mienne ? ' disabled' : '')
+                + ' style="border-left:6px solid ' + echap(e.couleur || '#1e6e3e') + '">'
+                + echap(e.nom)
+                + '<span style="float:right;opacity:0.6">'
+                + (e.mienne ? '✓ ' : '') + e.membres + (e.complete ? ' · complète' : '') + '</span></button>').join('')
+            : '<div class="attente-txt">Aucune équipe à ce nom.</div>') + '</div>'
+        + (autonome ? '<button class="btn btn-s" id="eqRetour" style="margin-top:8px">← Retour</button>' : '');
+
+      const rech = document.getElementById('eqRech');
+      if (rech) {
+        rech.oninput = () => {
+          filtreEquipe = rech.value;
+          const pos = rech.selectionStart;
+          dessinerEquipes(box, res);
+          // Le champ est recréé à chaque frappe : sans ces deux lignes le
+          // curseur repart au début et la saisie devient impraticable.
+          const neuf = document.getElementById('eqRech');
+          if (neuf) { neuf.focus(); neuf.setSelectionRange(pos, pos); }
+        };
+        if (q) rech.focus();
+      }
+
+      box.querySelectorAll('[data-eq]').forEach(b => {
+        b.onclick = () => {
+          box.querySelectorAll('.opt').forEach(x => x.disabled = true);
+          fetch(API + '/live.php?action=choisir_equipe', {
+            method: 'POST',
+            body: new URLSearchParams({ token: token, equipe_id: b.dataset.eq }),
+          })
+            .then(r => r.json())
+            .then(rep => {
+              if (!rep.ok) {
+                // « Complète » notamment : quelqu'un a pu prendre la dernière
+                // place entre l'affichage et le clic. On relit la liste.
+                afficher(rep.error || 'Choix impossible.', false);
+                chargerEquipes();
+                return;
+              }
+              fermerEquipes();
+            })
+            .catch(() => { afficher('Erreur réseau.', false); chargerEquipes(); });
+        };
+      });
+
+      const ret = document.getElementById('eqRetour');
+      if (ret) ret.onclick = () => { ecranEquipe = 'accueil'; filtreEquipe = ''; chargerEquipes(); };
+    }
+
+// ══════════ RENDU D'UNE SLIDE ══════════
     // Le markup vient de /assets/js/slide-render.js, partagé avec la console
     // d'animation : les téléphones et l'écran projeté montrent la même carte.
     function rendreSlide(z, d) {

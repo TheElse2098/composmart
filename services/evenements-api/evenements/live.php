@@ -57,7 +57,8 @@ function participant_ou_403($conn) {
 
 function charger_evenement($conn, $id) {
     $stmt = mysqli_prepare($conn,
-        'SELECT id, titre, statut, supprime, mode_parcours, mode_equipes, theme_slides, image_tags, slide_courante_id FROM evenements WHERE id = ?');
+        'SELECT id, titre, statut, supprime, mode_parcours, mode_equipes, equipes_max, equipe_taille_max,
+                theme_slides, image_tags, slide_courante_id FROM evenements WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     return $stmt->get_result()->fetch_assoc();
@@ -273,13 +274,30 @@ if ($action === 'suivant') {
 if ($action === 'choisir_equipe') {
     $p   = participant_ou_403($conn);
     $evt = charger_evenement($conn, $p['evenement_id']);
-    if (!$evt || $evt['mode_equipes'] !== 'libre') { echo json_encode(['error' => 'Les équipes sont définies par l\'animateur.']); exit; }
+    // « libre » et « autonome » laissent tous deux le participant se placer ;
+    // seule la provenance de la liste diffère.
+    if (!$evt || !in_array($evt['mode_equipes'], ['libre', 'autonome'], true)) {
+        echo json_encode(['error' => "Les équipes sont définies par l'animateur."], JSON_UNESCAPED_UNICODE); exit;
+    }
 
     $equipe_id = (int)($_POST['equipe_id'] ?? 0);
     $stmt = mysqli_prepare($conn, 'SELECT id FROM equipes WHERE id = ? AND evenement_id = ?');
     $stmt->bind_param('ii', $equipe_id, $p['evenement_id']);
     $stmt->execute();
     if (!$stmt->get_result()->fetch_assoc()) { echo json_encode(['error' => 'Équipe inconnue.']); exit; }
+
+    // Plafond de membres. On ne le vérifie que si l'on CHANGE d'équipe :
+    // renvoyer « complète » à quelqu'un qui y est déjà n'aurait aucun sens.
+    $taille_max = (int)($evt['equipe_taille_max'] ?? 0);
+    if ($taille_max > 0 && (int)$p['equipe_id'] !== $equipe_id) {
+        $stmt = mysqli_prepare($conn, 'SELECT COUNT(*) AS n FROM participants WHERE equipe_id = ?');
+        $stmt->bind_param('i', $equipe_id);
+        $stmt->execute();
+        if ((int)$stmt->get_result()->fetch_assoc()['n'] >= $taille_max) {
+            echo json_encode(['error' => 'Cette équipe est complète (' . $taille_max . ' membres).'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+    }
 
     $stmt = mysqli_prepare($conn, 'UPDATE participants SET equipe_id = ? WHERE id = ?');
     $stmt->bind_param('ii', $equipe_id, $p['id']);
@@ -289,20 +307,105 @@ if ($action === 'choisir_equipe') {
     exit;
 }
 
+// ── CRÉER SON ÉQUIPE (mode autonome) ───────────────────────────────────────
+// Le créateur y est placé dans la foulée : créer une équipe pour ne pas y
+// entrer n'aurait pas de sens, et ça évite un aller-retour de plus.
+if ($action === 'creer_equipe') {
+    $p   = participant_ou_403($conn);
+    $evt = charger_evenement($conn, $p['evenement_id']);
+    if (!$evt || $evt['mode_equipes'] !== 'autonome') {
+        echo json_encode(['error' => "Les équipes sont définies par l'animateur."], JSON_UNESCAPED_UNICODE); exit;
+    }
+    if (!rate_limit('evt_creer_equipe', 120, 60)) {
+        echo json_encode(['error' => 'Trop de tentatives, patiente un instant.']); exit;
+    }
+
+    $nom = trim(preg_replace('/\s+/u', ' ', (string)($_POST['nom'] ?? '')));
+    if ($nom === '' || mb_strlen($nom) > 80) {
+        echo json_encode(['error' => "Donne un nom à ton équipe (80 caractères maximum)."], JSON_UNESCAPED_UNICODE); exit;
+    }
+
+    // Doublon de nom refusé : dans une liste où l'on se cherche mutuellement,
+    // deux « Les Composteurs » rendent la recherche inutilisable.
+    $stmt = mysqli_prepare($conn, 'SELECT id FROM equipes WHERE evenement_id = ? AND LOWER(nom) = LOWER(?)');
+    $stmt->bind_param('is', $p['evenement_id'], $nom);
+    $stmt->execute();
+    if ($stmt->get_result()->fetch_assoc()) {
+        echo json_encode(['error' => 'Une équipe porte déjà ce nom. Rejoins-la, ou trouves-en un autre.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $stmt = mysqli_prepare($conn, 'SELECT COUNT(*) AS n, COALESCE(MAX(ordre), -1) AS m FROM equipes WHERE evenement_id = ?');
+    $stmt->bind_param('i', $p['evenement_id']);
+    $stmt->execute();
+    $agg = $stmt->get_result()->fetch_assoc();
+
+    $equipes_max = (int)($evt['equipes_max'] ?? 0);
+    if ($equipes_max > 0 && (int)$agg['n'] >= $equipes_max) {
+        echo json_encode(['error' => "Le nombre d'équipes est atteint (" . $equipes_max . '). Rejoins une équipe existante.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // Couleur dérivée du nom : stable, distincte d'une équipe à l'autre, et
+    // sans demander un choix de plus au participant.
+    $palette = ['#1e6e3e', '#c04f2e', '#2d9959', '#b26a00', '#5b7596', '#7a6ba8', '#3f7a75', '#a3651f'];
+    $couleur = $palette[crc32(mb_strtolower($nom)) % count($palette)];
+    $ordre   = (int)$agg['m'] + 1;
+
+    $stmt = mysqli_prepare($conn,
+        'INSERT INTO equipes (evenement_id, nom, couleur, ordre, creee_par) VALUES (?, ?, ?, ?, ?)');
+    $stmt->bind_param('issii', $p['evenement_id'], $nom, $couleur, $ordre, $p['id']);
+    if (!$stmt->execute()) {
+        echo json_encode(['error' => "L'équipe n'a pas pu être créée."], JSON_UNESCAPED_UNICODE); exit;
+    }
+    $equipe_id = $stmt->insert_id;
+
+    $stmt = mysqli_prepare($conn, 'UPDATE participants SET equipe_id = ? WHERE id = ?');
+    $stmt->bind_param('ii', $equipe_id, $p['id']);
+    $stmt->execute();
+
+    echo json_encode(['ok' => true, 'equipe_id' => $equipe_id, 'nom' => $nom], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // ── ÉQUIPES DISPONIBLES (écran de choix, mode libre) ───────────────────────
 if ($action === 'equipes') {
-    $p = participant_ou_403($conn);
+    $p   = participant_ou_403($conn);
+    $evt = charger_evenement($conn, $p['evenement_id']);
+
     $stmt = mysqli_prepare($conn,
         'SELECT e.id, e.nom, e.couleur, (SELECT COUNT(*) FROM participants x WHERE x.equipe_id = e.id) AS membres
          FROM equipes e WHERE e.evenement_id = ? ORDER BY e.ordre, e.id');
     $stmt->bind_param('i', $p['evenement_id']);
     $stmt->execute();
     $res = $stmt->get_result();
+
+    $taille_max = (int)($evt['equipe_taille_max'] ?? 0);
     $equipes = [];
     while ($row = $res->fetch_assoc()) {
-        $equipes[] = ['id' => (int)$row['id'], 'nom' => $row['nom'], 'couleur' => $row['couleur'], 'membres' => (int)$row['membres']];
+        $n = (int)$row['membres'];
+        $equipes[] = [
+            'id' => (int)$row['id'], 'nom' => $row['nom'], 'couleur' => $row['couleur'],
+            'membres' => $n,
+            // Calcule ici et non dans le navigateur : c'est le serveur qui
+            // tranchera de toute facon au moment de rejoindre, autant que
+            // l'ecran dise la meme chose que lui.
+            'complete' => $taille_max > 0 && $n >= $taille_max,
+            'mienne'   => (int)$p['equipe_id'] === (int)$row['id'],
+        ];
     }
-    echo json_encode(['equipes' => $equipes], JSON_UNESCAPED_UNICODE);
+
+    $equipes_max = (int)($evt['equipes_max'] ?? 0);
+    echo json_encode([
+        'equipes'           => $equipes,
+        'mode'              => $evt['mode_equipes'] ?? 'aucun',
+        // Le bouton de creation disparait quand le plafond est atteint, plutot
+        // que d'echouer apres la saisie d'un nom.
+        'peut_creer'        => ($evt['mode_equipes'] ?? '') === 'autonome'
+                               && ($equipes_max === 0 || count($equipes) < $equipes_max),
+        'equipes_max'       => $equipes_max,
+        'equipe_taille_max' => $taille_max,
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 

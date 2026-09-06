@@ -301,7 +301,11 @@ if ($action === 'reglages') {
     if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
 
     $mp = in_array($_POST['mode_parcours'] ?? '', ['commun', 'individuel'], true) ? $_POST['mode_parcours'] : 'commun';
-    $me = in_array($_POST['mode_equipes'] ?? '', ['aucun', 'manuel', 'auto', 'libre'], true) ? $_POST['mode_equipes'] : 'aucun';
+    $me = in_array($_POST['mode_equipes'] ?? '', ['aucun', 'manuel', 'auto', 'libre', 'autonome'], true) ? $_POST['mode_equipes'] : 'aucun';
+    // Plafonds du mode autonome. 0 = illimite ; bornes hautes pour qu'une
+    // saisie fantaisiste ne cree pas un plafond absurde.
+    $emax = max(0, min(200, (int)($_POST['equipes_max'] ?? 0)));
+    $tmax = max(0, min(200, (int)($_POST['equipe_taille_max'] ?? 0)));
     $th = in_array($_POST['theme_slides'] ?? '', ['foret', 'papier', 'simpliste'], true) ? $_POST['theme_slides'] : 'foret';
 
     // Tags d'images retenus. Normalisés comme dans la banque (minuscules,
@@ -314,8 +318,8 @@ if ($action === 'reglages') {
     }
     $it = mb_substr(implode(',', $tags), 0, 400);
 
-    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET mode_parcours = ?, mode_equipes = ?, theme_slides = ?, image_tags = ? WHERE id = ? AND supprime = 0');
-    $stmt->bind_param('ssssi', $mp, $me, $th, $it, $id);
+    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET mode_parcours = ?, mode_equipes = ?, equipes_max = ?, equipe_taille_max = ?, theme_slides = ?, image_tags = ? WHERE id = ? AND supprime = 0');
+    $stmt->bind_param('ssiissi', $mp, $me, $emax, $tmax, $th, $it, $id);
     if (!$stmt->execute()) {
         echo json_encode(['error' => 'La base a refusé ces réglages : ' . $stmt->error]);
         exit;
@@ -548,6 +552,23 @@ if ($action === 'equipes_definir') {
     if (count($noms) < 2) { echo json_encode(['error' => 'Il faut au moins deux équipes.']); exit; }
     if (count($noms) > 12) { echo json_encode(['error' => '12 équipes au maximum.']); exit; }
 
+    // En mode autonome, les équipes appartiennent aux participants : redéfinir
+    // la liste ferait un DELETE qui emporterait leur travail d'organisation et
+    // renverrait tout le monde à l'écran de choix, en pleine séance. On refuse
+    // plutôt que d'effacer — l'animateur garde la réaffectation individuelle
+    // depuis l'onglet Participants.
+    $stmt = mysqli_prepare($conn, 'SELECT mode_equipes FROM evenements WHERE id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $m = $stmt->get_result()->fetch_assoc();
+    if ($m && $m['mode_equipes'] === 'autonome') {
+        echo json_encode(['error' =>
+            "En mode autonome, ce sont les participants qui créent les équipes : les redéfinir ici "
+            . "effacerait les leurs. Change de mode d'équipes si tu veux reprendre la main."],
+            JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     $stmt = mysqli_prepare($conn, 'DELETE FROM equipes WHERE evenement_id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
@@ -651,7 +672,8 @@ if ($action === 'suivi') {
 
     $stmt = mysqli_prepare($conn,
         'SELECT e.id, e.titre, e.lieu, e.date_debut, e.code, e.statut, e.supprime,
-                e.parcours_id, e.mode_equipes, e.mode_parcours, e.theme_slides, e.image_tags,
+                e.parcours_id, e.mode_equipes, e.equipes_max, e.equipe_taille_max,
+                e.mode_parcours, e.theme_slides, e.image_tags,
                 (SELECT COUNT(*) FROM evenement_slides s WHERE s.evenement_id = e.id) AS nb_slides,
                 (SELECT p.nom FROM parcours p WHERE p.id = e.parcours_id) AS parcours_nom
          FROM evenements e WHERE e.id = ?');

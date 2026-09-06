@@ -92,7 +92,7 @@
 
     .field { margin-bottom: 12px; }
     .field label { display: block; font-size: 0.74rem; font-weight: 800; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-    .field select { display: block; width: 100%; padding: 9px 12px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.9rem; color: #1a3a25; background: #f7fbf8; font-family: inherit; }
+    .field select, .field input[type=number] { display: block; width: 100%; padding: 9px 12px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.9rem; color: #1a3a25; background: #f7fbf8; font-family: inherit; }
     .rep-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
     .rep-row input { flex: 1; border: 1.5px solid #c8dfc8; border-radius: 9px; padding: 8px 11px; font-family: inherit; font-size: 0.88rem; background: #f7fbf8; color: #1a3a25; }
     .rep-row input:focus { outline: none; border-color: #1e6e3e; background: #fff; }
@@ -141,7 +141,7 @@
     html.dark .btn-supprimer { background: #3d1a1a; color: #ef9a9a; }
     html.dark .btn-restaurer, html.dark .btn-mini { background: #16291c; color: #7fc99a; }
     html.dark .field label { color: #7ab88e; }
-    html.dark .field select, html.dark .note-input, html.dark .rep-row input { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .field select, html.dark .field input[type=number], html.dark .note-input, html.dark .rep-row input { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
     html.dark .rep-row .sup { background: #3d1a1a; color: #ef9a9a; }
     html.dark .apercu { border-color: #2d4030; }
     html.dark .progress { background: #1e2d22; }
@@ -314,8 +314,24 @@
             <option value="aucun">Pas d'équipes</option>
             <option value="manuel">Réparties par l'animateur</option>
             <option value="auto">Réparties automatiquement</option>
-            <option value="libre">Les participants choisissent</option>
+            <option value="libre">Les participants choisissent dans ma liste</option>
+            <option value="autonome">Les participants créent leurs équipes</option>
           </select>
+          <div class="hint" id="hintEquipes"></div>
+        </div>
+        <!-- Plafonds du mode autonome : sans eux, on finit avec trente équipes
+             d'une personne, ou tout le monde dans la première créée. -->
+        <div id="blocPlafonds" style="display:none">
+          <div class="field">
+            <label>Nombre maximum d'équipes</label>
+            <input type="number" id="regEquipesMax" min="0" max="200" step="1" placeholder="0">
+            <div class="hint">0 = sans limite. Au-delà, il ne reste qu'à rejoindre une équipe existante.</div>
+          </div>
+          <div class="field">
+            <label>Membres maximum par équipe</label>
+            <input type="number" id="regTailleMax" min="0" max="200" step="1" placeholder="0">
+            <div class="hint">0 = sans limite. Une équipe pleine apparaît grisée et marquée « complète ».</div>
+          </div>
         </div>
         <div class="field">
           <label>Thème visuel des slides</label>
@@ -428,6 +444,9 @@
             document.getElementById('regMode').value = d.evenement.mode_parcours;
             majHintMode();
             document.getElementById('regEquipes').value = d.evenement.mode_equipes;
+            document.getElementById('regEquipesMax').value = d.evenement.equipes_max || 0;
+            document.getElementById('regTailleMax').value = d.evenement.equipe_taille_max || 0;
+            majHintEquipes();
             document.getElementById('regTheme').value = d.evenement.theme_slides || 'foret';
             tagsChoisis = (d.evenement.image_tags || '').split(',').map(t => t.trim()).filter(Boolean);
             majBlocImages();
@@ -633,6 +652,24 @@
     /* Le mode de parcours ne décide pas que du pilotage : il décide aussi de
        qui peut encore entrer une fois l'atelier démarré. C'est contre-intuitif,
        donc c'est écrit sous le sélecteur plutôt que découvert en séance. */
+    /* Les plafonds n'ont de sens qu'en mode autonome : les montrer ailleurs
+       ferait croire qu'ils s'appliquent aux équipes définies à la main. */
+    function majHintEquipes() {
+      const mode = document.getElementById('regEquipes').value;
+      document.getElementById('blocPlafonds').style.display = mode === 'autonome' ? '' : 'none';
+      // Guillemets doubles : ces phrases sont pleines d'apostrophes, et une
+      // seule non échappée casse tout le script de la page.
+      const textes = {
+        aucun:    "Aucun classement par équipe : chacun joue pour lui.",
+        manuel:   "Tu crées les équipes et tu y places les participants depuis l'onglet Participants.",
+        auto:     "Chaque arrivant est placé dans l'équipe la moins fournie, pour garder des effectifs équilibrés.",
+        libre:    "Tu crées les équipes, les participants choisissent la leur dans ta liste.",
+        autonome: "Les participants créent leurs propres équipes et se retrouvent en cherchant par nom. Ils peuvent en changer à tout moment.",
+      };
+      document.getElementById('hintEquipes').textContent = textes[mode] || '';
+    }
+    document.getElementById('regEquipes').addEventListener('change', majHintEquipes);
+
     function majHintMode() {
       const individuel = document.getElementById('regMode').value === 'individuel';
       document.getElementById('hintMode').textContent = individuel
@@ -652,6 +689,8 @@
         id: EVT,
         mode_parcours: document.getElementById('regMode').value,
         mode_equipes: document.getElementById('regEquipes').value,
+        equipes_max: document.getElementById('regEquipesMax').value || 0,
+        equipe_taille_max: document.getElementById('regTailleMax').value || 0,
         theme_slides: document.getElementById('regTheme').value,
         image_tags: tagsChoisis.join(','),
       }).then(d => {
