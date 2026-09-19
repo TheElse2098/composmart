@@ -16,10 +16,14 @@ if (!rate_limit('login', 10, 600)) {
     exit;
 }
 
-$username = trim($_POST['username'] ?? '');
-$password = $_POST['password'] ?? '';
+// "username" du formulaire accepte en réalité le pseudo OU l'adresse email :
+// un pseudo ne peut jamais contenir de '@' (règle de validation à l'inscription,
+// cf. register.php), donc pas de risque qu'un identifiant matche les deux
+// colonnes à la fois — le OR est donc sans ambiguïté.
+$identifiant = trim($_POST['username'] ?? '');
+$password    = $_POST['password'] ?? '';
 
-if (!$username || !$password) { echo json_encode(['error' => 'Champs manquants']); exit; }
+if (!$identifiant || !$password) { echo json_encode(['error' => 'Champs manquants']); exit; }
 
 $conn = mysqli_connect(
     getenv('DB_HOST') ?: 'db',
@@ -29,8 +33,8 @@ $conn = mysqli_connect(
 );
 if (!$conn) { echo json_encode(['error' => 'Connexion DB échouée']); exit; }
 
-$stmt = mysqli_prepare($conn, 'SELECT id, username, password_hash, isAdmin FROM users WHERE username = ?');
-$stmt->bind_param('s', $username);
+$stmt = mysqli_prepare($conn, 'SELECT id, username, password_hash, isAdmin FROM users WHERE username = ? OR email = ?');
+$stmt->bind_param('ss', $identifiant, $identifiant);
 $stmt->execute();
 $row = $stmt->get_result()->fetch_assoc();
 
