@@ -46,6 +46,8 @@
     .carte { background: #fff; border-radius: 15px; padding: 18px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); margin-bottom: 14px; }
     .carte-tete { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
     .carte-titre { font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; flex: 1; min-width: 0; }
+    .q-multi-toggle { display: flex; align-items: center; gap: 5px; font-size: 0.82rem; font-weight: 700; color: #4a6a50; white-space: nowrap; cursor: pointer; }
+    .q-multi-toggle input { cursor: pointer; }
 
     .champs { display: grid; gap: 12px; }
     @media (min-width: 760px) { .champs.deux { grid-template-columns: repeat(2, minmax(0, 1fr)); } .champs.trois { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -250,7 +252,10 @@
     <div class="vue" id="vueQuiz">
       <div class="aide">
         Le quiz s'affiche après la dernière section. Coche la bonne réponse ; il faut au moins deux
-        options pour qu'une question soit conservée.
+        options pour qu'une question soit conservée. Pour une question à plusieurs bonnes réponses,
+        active « Réponses multiples » : chaque bonne réponse cochée par le joueur rapporte 1/n du
+        point de la question, chaque mauvaise en retire 1/n (n = nombre de bonnes réponses) — jamais
+        moins que 0, jamais plus que le point plein.
       </div>
       <div id="questions"></div>
       <button class="btn btn-clair" id="btnAjouterQuestion">＋ Ajouter une question</button>
@@ -628,9 +633,11 @@
       questions.forEach(function (q, i) {
         var carte = document.createElement('div');
         carte.className = 'carte';
+        var estMulti = !!q.multiple;
         carte.innerHTML =
             '<div class="carte-tete">'
           +   '<div class="carte-titre">Question ' + (i + 1) + '</div>'
+          +   '<label class="q-multi-toggle"><input type="checkbox" data-q-multi="' + i + '"' + (estMulti ? ' checked' : '') + '> Réponses multiples</label>'
           +   '<button type="button" class="btn btn-clair btn-petit" data-q-monter="' + i + '"' + (i === 0 ? ' disabled' : '') + '>↑</button>'
           +   '<button type="button" class="btn btn-clair btn-petit" data-q-descendre="' + i + '"' + (i === questions.length - 1 ? ' disabled' : '') + '>↓</button>'
           +   '<button type="button" class="btn btn-clair btn-petit" data-q-sup="' + i + '" style="color:#c0392b">Supprimer</button>'
@@ -639,10 +646,17 @@
           +   '<label>Énoncé</label>'
           +   '<textarea data-q-texte="' + i + '" rows="2">' + esc(q.question) + '</textarea>'
           + '</div>'
-          + '<div class="champ"><label>Réponses — coche la bonne</label>'
+          + '<div class="champ"><label>Réponses — ' + (estMulti ? 'coche toutes les bonnes réponses' : 'coche la bonne') + '</label>'
           +   q.options.map(function (o, j) {
+                // Radios (une seule bonne réponse) ou cases à cocher (plusieurs) :
+                // le type d'input change avec q.multiple, mais data-q-correct et
+                // sa lecture dans brancherQuestions() restent identiques dans les
+                // deux cas — seule la valeur stockée (entier vs tableau) diffère.
+                var coche = estMulti ? q.correct.indexOf(j) !== -1 : q.correct === j;
+                var typeInput = estMulti ? 'checkbox' : 'radio';
+                var nomRadio = estMulti ? '' : ' name="correct-' + i + '"';
                 return '<div class="option">'
-                  + '<input type="radio" name="correct-' + i + '" data-q-correct="' + i + '-' + j + '"' + (q.correct === j ? ' checked' : '') + '>'
+                  + '<input type="' + typeInput + '"' + nomRadio + ' data-q-correct="' + i + '-' + j + '"' + (coche ? ' checked' : '') + '>'
                   + '<input type="text" data-q-opt="' + i + '-' + j + '" value="' + esc(o) + '" placeholder="Réponse ' + (j + 1) + '">'
                   + '<button type="button" class="sup" data-q-opt-sup="' + i + '-' + j + '" title="Retirer">✕</button>'
                   + '</div>';
@@ -664,22 +678,49 @@
           questions[+p[0]].options[+p[1]] = el.value; toucher();
         });
       });
+      document.querySelectorAll('[data-q-multi]').forEach(function (el) {
+        el.addEventListener('change', function () {
+          var q = questions[+el.dataset.qMulti];
+          q.multiple = el.checked;
+          // Convertit la valeur stockée entre les deux formats (entier ↔
+          // tableau) pour que dessinerQuestions() retrouve un état cohérent,
+          // qu'il y ait déjà une bonne réponse cochée ou non.
+          if (q.multiple) q.correct = (typeof q.correct === 'number') ? [q.correct] : (q.correct || []);
+          else q.correct = Array.isArray(q.correct) ? (q.correct[0] || 0) : (q.correct || 0);
+          toucher(); dessinerQuestions();
+        });
+      });
       document.querySelectorAll('[data-q-correct]').forEach(function (el) {
         el.addEventListener('change', function () {
           var p = el.dataset.qCorrect.split('-');
-          questions[+p[0]].correct = +p[1]; toucher();
+          var q = questions[+p[0]], j = +p[1];
+          if (q.multiple) {
+            if (!Array.isArray(q.correct)) q.correct = [];
+            var idx = q.correct.indexOf(j);
+            if (el.checked && idx === -1) q.correct.push(j);
+            else if (!el.checked && idx !== -1) q.correct.splice(idx, 1);
+          } else {
+            q.correct = j;
+          }
+          toucher();
         });
       });
       document.querySelectorAll('[data-q-opt-sup]').forEach(function (el) {
         el.addEventListener('click', function () {
           var p = el.dataset.qOptSup.split('-');
-          var q = questions[+p[0]];
+          var q = questions[+p[0]], j = +p[1];
           if (q.options.length <= 2) { erreur('Une question doit garder au moins deux réponses.'); return; }
-          q.options.splice(+p[1], 1);
-          // L'index de la bonne réponse suit la suppression, sinon il désigne
-          // silencieusement une autre option.
-          if (q.correct === +p[1]) q.correct = 0;
-          else if (q.correct > +p[1]) q.correct--;
+          q.options.splice(j, 1);
+          // L'index (ou les index) de bonne réponse suivent la suppression,
+          // sinon ils désignent silencieusement une autre option.
+          if (q.multiple) {
+            q.correct = (Array.isArray(q.correct) ? q.correct : [])
+              .filter(function (n) { return n !== j; })
+              .map(function (n) { return n > j ? n - 1 : n; });
+          } else {
+            if (q.correct === j) q.correct = 0;
+            else if (q.correct > j) q.correct--;
+          }
           toucher(); dessinerQuestions();
         });
       });
@@ -843,7 +884,11 @@
           chargerThemes(d.theme_id);
           panneaux = parserMarkdown(d.texte);
           questions = (d.quiz || []).map(function (q) {
-            return { question: q.question || '', options: (q.options || []).slice(), correct: q.correct || 0 };
+            var multiple = !!q.multiple;
+            var correct = multiple
+              ? (Array.isArray(q.correct) ? q.correct.slice() : [])
+              : (q.correct || 0);
+            return { question: q.question || '', options: (q.options || []).slice(), correct: correct, multiple: multiple };
           });
           remplirFicheMedia('v', d.video);
           remplirFicheMedia('p', d.podcast);

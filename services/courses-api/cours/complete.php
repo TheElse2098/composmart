@@ -51,9 +51,28 @@ if (!empty($cours['quiz'])) {
             echo json_encode(['success' => false, 'message' => 'Réponses du quiz manquantes']);
             exit;
         }
+        // Question à réponse unique : 1 point plein ou 0, comme avant.
+        // Question à réponses multiples (correct = tableau d'index) : crédit
+        // partiel — 1/n par bonne réponse cochée, -1/n par mauvaise réponse
+        // cochée (n = nombre de bonnes réponses de LA question), borné à
+        // [0, 1] pour qu'elle ne puisse ni dépasser son propre poids ni faire
+        // perdre des points aux autres questions.
         foreach ($quiz as $i => $q) {
-            if (isset($answers[$i]) && intval($answers[$i]) === intval($q['correct'])) $correct++;
+            if (!isset($answers[$i])) continue;
+            $multiple = !empty($q['multiple']) && is_array($q['correct']);
+            if ($multiple) {
+                $bonnes = array_map('intval', $q['correct']);
+                $n = count($bonnes);
+                if ($n < 1) continue;
+                $choisies = is_array($answers[$i]) ? array_map('intval', $answers[$i]) : [];
+                $vrais = count(array_intersect($choisies, $bonnes));
+                $faux  = count(array_diff($choisies, $bonnes));
+                $correct += max(0, min(1, ($vrais - $faux) / $n));
+            } else {
+                if (intval($answers[$i]) === intval($q['correct'])) $correct++;
+            }
         }
+        $correct = round($correct, 2);
         $score = ['correct' => $correct, 'total' => $total];
         if ($correct / $total < 0.5) {
             mysqli_close($c);

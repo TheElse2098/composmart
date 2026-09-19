@@ -49,6 +49,13 @@ if (strlen($texte) > 400000) {
 // ── Quiz : validé question par question ────────────────────────────────────
 // Un index `correct` hors bornes passerait inaperçu à l'enregistrement et
 // rendrait la question impossible à réussir côté lecteur.
+//
+// « multiple » est un choix PAR QUESTION, pas un mode global du quiz : une
+// question à choix multiples stocke `correct` comme un TABLEAU d'index
+// (au lieu d'un entier) plus `multiple: true`. Absent partout ailleurs — les
+// questions à réponse unique gardent exactement le format d'avant, byte pour
+// byte, donc aucune des questions déjà écrites n'est modifiée en se
+// resauvegardant.
 $quiz = [];
 foreach ((array)($d['quiz'] ?? []) as $q) {
     $question = trim((string)($q['question'] ?? ''));
@@ -56,9 +63,26 @@ foreach ((array)($d['quiz'] ?? []) as $q) {
         fn($o) => trim((string)$o), (array)($q['options'] ?? [])
     ), fn($o) => $o !== ''));
     if ($question === '' || count($options) < 2) continue;
-    $correct = (int)($q['correct'] ?? 0);
-    if ($correct < 0 || $correct >= count($options)) $correct = 0;
-    $quiz[] = ['question' => $question, 'options' => $options, 'correct' => $correct];
+
+    $multiple = !empty($q['multiple']);
+    if ($multiple) {
+        $bruts = is_array($q['correct'] ?? null) ? $q['correct'] : [];
+        $correct = array_values(array_unique(array_filter(
+            array_map('intval', $bruts),
+            fn($n) => $n >= 0 && $n < count($options)
+        )));
+        // Une question « multiple » sans aucune bonne réponse cochée n'a pas
+        // de sens (impossible à réussir même en partie) : elle repart en
+        // question simple plutôt que d'être enregistrée cassée.
+        if (!$correct) { $multiple = false; $correct = 0; }
+    } else {
+        $correct = (int)($q['correct'] ?? 0);
+        if ($correct < 0 || $correct >= count($options)) $correct = 0;
+    }
+
+    $item = ['question' => $question, 'options' => $options, 'correct' => $correct];
+    if ($multiple) $item['multiple'] = true;
+    $quiz[] = $item;
 }
 
 $m = metriques_contenu($texte, $quiz);

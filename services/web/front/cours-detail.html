@@ -802,19 +802,23 @@
         div.id = 'qs-' + i;
         // Ordre d'affichage aléatoire ; oi reste l'index d'origine (celui que
         // validerQuiz compare à q.correct et que le serveur revalide).
+        var multi = !!q.multiple;
         var opts = shuffledIndices(q.options.length).map(function(oi) {
-          return '<button class="quiz-opt" id="qopt-' + i + '-' + oi + '" onclick="choisirOpt(' + i + ',' + oi + ',this)">' + esc(q.options[oi]) + '</button>';
+          return '<button class="quiz-opt" id="qopt-' + i + '-' + oi + '" onclick="choisirOpt(' + i + ',' + oi + ',this,' + multi + ')">' + esc(q.options[oi]) + '</button>';
         }).join('');
+        // correct est un entier en mode simple, un tableau d'index en mode
+        // multiple — JSON.stringify produit un littéral tableau valide en JS.
+        var correctAttr = multi ? JSON.stringify(q.correct) : q.correct;
         // Deux temps : on choisit (réversible), puis on valide. « Continuer »
         // ne remplace « Valider » qu'une fois la correction affichée.
         div.innerHTML =
           '<div class="quiz-card">' +
-          '<div class="quiz-badge">🧠 Question ' + (i + 1) + ' / ' + quizTotal + '</div>' +
+          '<div class="quiz-badge">🧠 Question ' + (i + 1) + ' / ' + quizTotal + (multi ? ' · plusieurs bonnes réponses' : '') + '</div>' +
           '<div class="quiz-question">' + esc(q.question) + '</div>' +
           '<div class="quiz-options" id="qopts-' + i + '">' + opts + '</div>' +
           '<div class="quiz-feedback" id="qfb-' + i + '"></div>' +
           '</div>' +
-          '<button class="btn-next" id="qval-' + i + '" onclick="validerQuiz(' + i + ',' + q.correct + ')" disabled>Valider ma réponse</button>' +
+          '<button class="btn-next" id="qval-' + i + '" onclick="validerQuiz(' + i + ',' + correctAttr + ')" disabled>Valider ma réponse</button>' +
           '<button class="btn-next" id="qbtn-' + i + '" onclick="goNextQuiz(' + i + ')" style="display:none">Continuer ➜</button>';
         container.appendChild(div);
       });
@@ -873,39 +877,85 @@
     }
 
     // Choix (réversible tant que non validé) : on met juste l'option en avant
-    // et on débloque le bouton de validation.
-    function choisirOpt(qi, oi, btn) {
-      quizChoix[qi] = oi;
-      document.querySelectorAll('#qopts-' + qi + ' .quiz-opt')
-        .forEach(function(b) { b.classList.remove('choisi'); });
-      btn.classList.add('choisi');
-      var val = document.getElementById('qval-' + qi);
-      if (val) val.disabled = false;
+    // et on débloque le bouton de validation. En mode multiple, chaque
+    // option se coche/décoche indépendamment (quizChoix[qi] est un tableau).
+    function choisirOpt(qi, oi, btn, multi) {
+      if (multi) {
+        var set = quizChoix[qi];
+        if (!Array.isArray(set)) set = quizChoix[qi] = [];
+        var idx = set.indexOf(oi);
+        if (idx === -1) { set.push(oi); btn.classList.add('choisi'); }
+        else { set.splice(idx, 1); btn.classList.remove('choisi'); }
+        var val = document.getElementById('qval-' + qi);
+        if (val) val.disabled = set.length === 0;
+      } else {
+        quizChoix[qi] = oi;
+        document.querySelectorAll('#qopts-' + qi + ' .quiz-opt')
+          .forEach(function(b) { b.classList.remove('choisi'); });
+        btn.classList.add('choisi');
+        var val2 = document.getElementById('qval-' + qi);
+        if (val2) val2.disabled = false;
+      }
     }
 
-    // Validation : c'est ici que la réponse est figée et corrigée.
+    // Validation : c'est ici que la réponse est figée et corrigée. `correct`
+    // est un tableau en mode multiple (type utilisé comme discriminant, comme
+    // côté éditeur et complete.php) — même formule de crédit partiel que le
+    // serveur, pour que le score affiché ne contredise jamais l'XP accordée.
     function validerQuiz(qi, correct) {
+      var multi = Array.isArray(correct);
       var oi = quizChoix[qi];
-      if (oi === undefined) return;          // sécurité : bouton actif sans choix
+      if (multi ? !oi || !oi.length : oi === undefined) return; // sécurité : bouton actif sans choix
       if (quizAnswers[qi] !== undefined) return; // déjà validée : pas de double comptage
 
       var allOpts = document.querySelectorAll('#qopts-' + qi + ' .quiz-opt');
       allOpts.forEach(function(b) { b.disabled = true; b.classList.remove('choisi'); });
 
-      var btn = document.getElementById('qopt-' + qi + '-' + oi);
-      var fb  = document.getElementById('qfb-' + qi);
+      var fb = document.getElementById('qfb-' + qi);
       quizAnswers[qi] = oi;
-      if (oi === correct) {
-        if (btn) btn.classList.add('correct');
-        quizCorrect++;
-        fb.className = 'quiz-feedback show ok';
-        fb.innerHTML = '✅ <strong>Bonne réponse !</strong>';
+
+      if (multi) {
+        var n = correct.length;
+        var vrais = oi.filter(function(o) { return correct.indexOf(o) !== -1; }).length;
+        var faux  = oi.filter(function(o) { return correct.indexOf(o) === -1; }).length;
+        var credit = Math.max(0, Math.min(1, (vrais - faux) / n));
+        quizCorrect += credit;
+
+        oi.forEach(function(o) {
+          var b = document.getElementById('qopt-' + qi + '-' + o);
+          if (b) b.classList.add(correct.indexOf(o) !== -1 ? 'correct' : 'wrong');
+        });
+        correct.forEach(function(cIdx) {
+          if (oi.indexOf(cIdx) === -1) {
+            var b = document.getElementById('qopt-' + qi + '-' + cIdx);
+            if (b) b.classList.add('correct');
+          }
+        });
+
+        if (credit >= 1) {
+          fb.className = 'quiz-feedback show ok';
+          fb.innerHTML = '✅ <strong>Toutes les bonnes réponses !</strong>';
+        } else if (credit > 0) {
+          fb.className = 'quiz-feedback show ok';
+          fb.innerHTML = '🌗 <strong>' + vrais + ' / ' + n + ' bonnes réponses.</strong> Les bonnes réponses sont surlignées en vert.';
+        } else {
+          fb.className = 'quiz-feedback show ko';
+          fb.innerHTML = '❌ <strong>Pas de bonne réponse cette fois.</strong> Les bonnes réponses sont surlignées en vert.';
+        }
       } else {
-        if (btn) btn.classList.add('wrong');
-        var correctBtn = document.getElementById('qopt-' + qi + '-' + correct);
-        if (correctBtn) correctBtn.classList.add('correct');
-        fb.className = 'quiz-feedback show ko';
-        fb.innerHTML = '❌ <strong>Pas tout à fait.</strong> La bonne réponse est surlignée en vert.';
+        var btn = document.getElementById('qopt-' + qi + '-' + oi);
+        if (oi === correct) {
+          if (btn) btn.classList.add('correct');
+          quizCorrect++;
+          fb.className = 'quiz-feedback show ok';
+          fb.innerHTML = '✅ <strong>Bonne réponse !</strong>';
+        } else {
+          if (btn) btn.classList.add('wrong');
+          var correctBtn = document.getElementById('qopt-' + qi + '-' + correct);
+          if (correctBtn) correctBtn.classList.add('correct');
+          fb.className = 'quiz-feedback show ko';
+          fb.innerHTML = '❌ <strong>Pas tout à fait.</strong> La bonne réponse est surlignée en vert.';
+        }
       }
 
       var val = document.getElementById('qval-' + qi);
@@ -933,16 +983,22 @@
       document.getElementById('quizLabel').textContent = 'Résultats';
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      var pct = Math.round(quizCorrect / quizTotal * 100);
-      document.getElementById('resultScore').textContent = quizCorrect + ' / ' + quizTotal;
+      // Arrondi à 2 décimales comme complete.php côté serveur : une question à
+      // réponses multiples accumule un crédit fractionnaire (1/n par bonne
+      // réponse), et le score affiché ici doit rester cohérent avec le seuil
+      // de réussite et l'XP décidés côté serveur avec la même formule.
+      var score = Math.round(quizCorrect * 100) / 100;
+      var pct = Math.round(score / quizTotal * 100);
+      var parfait = score >= quizTotal;
+      document.getElementById('resultScore').textContent = Math.round(score) + ' / ' + quizTotal;
 
       if (pct >= 50) {
-        document.getElementById('resultEmoji').textContent = quizCorrect === quizTotal ? '🏆' : '🌟';
-        document.getElementById('resultTitle').textContent = quizCorrect === quizTotal ? 'Parfait !' : 'Très bien !';
-        document.getElementById('resultMsg').textContent = quizCorrect === quizTotal
+        document.getElementById('resultEmoji').textContent = parfait ? '🏆' : '🌟';
+        document.getElementById('resultTitle').textContent = parfait ? 'Parfait !' : 'Très bien !';
+        document.getElementById('resultMsg').textContent = parfait
           ? 'Tu as tout bon ! Tu maîtrises ce sujet.'
           : 'Bon score ! Relis les leçons pour consolider.';
-        if (quizCorrect === quizTotal) launchConfetti();
+        if (parfait) launchConfetti();
       } else {
         document.getElementById('resultEmoji').textContent = '💪';
         document.getElementById('resultTitle').textContent = 'Continue !';
