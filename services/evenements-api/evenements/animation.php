@@ -241,12 +241,23 @@ if ($action === 'resultats') {
             'correct'        => $row['correct'] === null ? null : (bool)$row['correct'],
         ];
         if (in_array($s['type'], ['quiz', 'sondage', 'vrai_faux'], true)) {
-            // Normalisation en '0'/'1' : (string)false vaut '' en PHP, ce qui
-            // ne correspondrait à aucune clé côté front.
-            if (is_bool($val))        $cle = $val ? '1' : '0';
-            elseif (is_scalar($val))  $cle = (string)$val;
-            else                      $cle = '?';
-            $repartition[$cle] = ($repartition[$cle] ?? 0) + 1;
+            if (is_array($val)) {
+                // Quiz à plusieurs bonnes réponses : chaque option cochée
+                // incrémente sa propre part (une personne compte dans plusieurs
+                // cases à la fois, la somme ne vaut donc pas le nombre de
+                // répondants).
+                foreach ($val as $v) {
+                    $cle = is_scalar($v) ? (string)$v : '?';
+                    $repartition[$cle] = ($repartition[$cle] ?? 0) + 1;
+                }
+            } else {
+                // Normalisation en '0'/'1' : (string)false vaut '' en PHP, ce qui
+                // ne correspondrait à aucune clé côté front.
+                if (is_bool($val))        $cle = $val ? '1' : '0';
+                elseif (is_scalar($val))  $cle = (string)$val;
+                else                      $cle = '?';
+                $repartition[$cle] = ($repartition[$cle] ?? 0) + 1;
+            }
         }
     }
 

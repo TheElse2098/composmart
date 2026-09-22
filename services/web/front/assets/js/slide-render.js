@@ -64,27 +64,37 @@
   /** Bloc de réponses pour quiz / vrai-faux / sondage. */
   function reponses(s, c, o) {
     var opts, sondage = (s.type === 'sondage');
+    // Quiz à plusieurs bonnes réponses : `correct` (et la réponse envoyée) sont
+    // des tableaux d'index au lieu d'un entier — même discriminant de type que
+    // le quiz des cours. Un clic coche/décoche au lieu de répondre tout de
+    // suite, d'où le bouton « Valider » ajouté sous les options.
+    var multi = (s.type === 'quiz' && !!c.multiple);
     if (s.type === 'vrai_faux') opts = ['Vrai', 'Faux'];
     else opts = c.options || [];
 
     var rep = o.maReponse;
-    return '<div class="sl__reps">' + opts.map(function (lib, i) {
+    var repChoix = (multi && rep && Array.isArray(rep.reponse)) ? rep.reponse : [];
+    var boutons = opts.map(function (lib, i) {
       // Vrai/Faux : l'index 0 vaut « Vrai », donc la valeur envoyée est booléenne.
       var valeur = (s.type === 'vrai_faux') ? (i === 0 ? 1 : 0) : i;
       var cls = 'sl__rep', marque = LETTRES[i] || (i + 1);
 
       if (rep) {
-        var choisi = (s.type === 'vrai_faux')
-          ? (Boolean(rep.reponse) === (i === 0))
+        var choisi = multi ? (repChoix.indexOf(i) !== -1)
+          : (s.type === 'vrai_faux') ? (Boolean(rep.reponse) === (i === 0))
           : (rep.reponse === i);
         if (sondage) { if (choisi) cls += ' sl__rep--choisie'; }
         else {
-          var bonne = (s.type === 'vrai_faux') ? (Boolean(c.correct) === (i === 0)) : (c.correct === i);
+          var bonne = multi ? (Array.isArray(c.correct) && c.correct.indexOf(i) !== -1)
+            : (s.type === 'vrai_faux') ? (Boolean(c.correct) === (i === 0))
+            : (c.correct === i);
           if (bonne) { cls += ' sl__rep--juste'; marque = '✓'; }
           else if (choisi) { cls += ' sl__rep--fausse'; marque = '✕'; }
         }
       } else if (o.correction && !sondage) {
-        var juste = (s.type === 'vrai_faux') ? (Boolean(c.correct) === (i === 0)) : (c.correct === i);
+        var juste = multi ? (Array.isArray(c.correct) && c.correct.indexOf(i) !== -1)
+          : (s.type === 'vrai_faux') ? (Boolean(c.correct) === (i === 0))
+          : (c.correct === i);
         if (juste) { cls += ' sl__rep--juste'; marque = '✓'; }
       }
 
@@ -92,7 +102,13 @@
         + (o.interactif && !rep ? '' : ' disabled') + '>'
         + '<span class="sl__rep-marque">' + e(marque) + '</span>'
         + '<span>' + e(lib) + '</span></button>';
-    }).join('') + '</div>';
+    }).join('');
+
+    var validerMulti = (multi && o.interactif && !rep)
+      ? '<button type="button" class="sl__rep" id="slValider" style="justify-content:center;font-family:\'Baloo 2\',cursive;font-weight:900">Valider</button>'
+      : '';
+
+    return '<div class="sl__reps">' + boutons + '</div>' + validerMulti;
   }
 
   function verdict(s, c, o) {

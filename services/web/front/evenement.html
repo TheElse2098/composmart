@@ -834,8 +834,11 @@
       const s = d.slide;
       if (!d.repond || d.ma_reponse) return;   // rien à câbler : déjà répondu ou slide d'affichage
 
+      const multi = (s.type === 'quiz' && (s.contenu || {}).multiple);
+
       z.querySelectorAll('.sl__rep[data-rep]').forEach(b => {
         b.onclick = () => {
+          if (multi) { b.classList.toggle('sl__rep--choisie'); return; } // attend « Valider »
           z.querySelectorAll('.sl__rep').forEach(x => x.disabled = true);
           repondre(s.id, Number(b.dataset.rep));
         };
@@ -857,6 +860,12 @@
           const out = [...z.querySelectorAll('[data-jeu]')].map(el =>
             jeu === 'temps-decompo' ? Number(el.value || 0) : el.value);
           repondre(s.id, out);
+        } else if (multi) {
+          const choisies = [...z.querySelectorAll('.sl__rep[data-rep].sl__rep--choisie')]
+            .map(b => Number(b.dataset.rep));
+          if (!choisies.length) return;
+          z.querySelectorAll('.sl__rep').forEach(x => x.disabled = true);
+          repondre(s.id, choisies);
         }
       };
     }

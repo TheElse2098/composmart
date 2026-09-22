@@ -155,14 +155,32 @@ function valider_contenu($type, $d) {
                 if ($o !== null) $options[] = $o;
             }
             if (count($options) < 2) return $err('Un quiz demande au moins deux réponses possibles.');
-            $correct = (int)($d['correct'] ?? -1);
-            if ($correct < 0 || $correct >= count($options)) return $err('La bonne réponse ne correspond à aucune option.');
-            return $ok([
+
+            // « multiple » : la question porte plusieurs bonnes réponses. `correct`
+            // devient alors un tableau d'index au lieu d'un entier — le même
+            // discriminant de type que les quiz de cours (cours_save.php). Absent
+            // par défaut : les slides existantes gardent leur forme d'origine.
+            $multiple = !empty($d['multiple']);
+            if ($multiple) {
+                $bruts = is_array($d['correct'] ?? null) ? $d['correct'] : [];
+                $correct = array_values(array_unique(array_filter(
+                    array_map('intval', $bruts),
+                    fn($n) => $n >= 0 && $n < count($options)
+                )));
+                if (!$correct) return $err('Coche au moins une bonne réponse.');
+            } else {
+                $correct = (int)($d['correct'] ?? -1);
+                if ($correct < 0 || $correct >= count($options)) return $err('La bonne réponse ne correspond à aucune option.');
+            }
+
+            $item = [
                 'question'    => $q,
                 'options'     => $options,
                 'correct'     => $correct,
                 'explication' => is_string($d['explication'] ?? null) ? mb_substr(trim($d['explication']), 0, 1000) : '',
-            ]);
+            ];
+            if ($multiple) $item['multiple'] = true;
+            return $ok($item);
 
         case 'vrai_faux':
             $q = _txt($d['question'] ?? null, 500);
@@ -459,6 +477,19 @@ function corriger($type, $contenu, $reponse, $points_max) {
 
     switch ($type) {
         case 'quiz':
+            if (!empty($contenu['multiple']) && is_array($contenu['correct'] ?? null)) {
+                // Crédit partiel, même formule que les quiz de cours
+                // (complete.php) : 1/n par bonne réponse cochée, -1/n par
+                // mauvaise, borné à [0, 1] (n = nombre de bonnes réponses).
+                $bonnes = array_map('intval', $contenu['correct']);
+                $n = count($bonnes);
+                if ($n < 1) return ['points' => 0, 'correct' => false];
+                $choisies = is_array($reponse) ? array_map('intval', $reponse) : [];
+                $vrais = count(array_intersect($choisies, $bonnes));
+                $faux  = count(array_diff($choisies, $bonnes));
+                $credit = max(0, min(1, ($vrais - $faux) / $n));
+                return ['points' => (int)round($points_max * $credit), 'correct' => $credit >= 1];
+            }
             $bon = ((int)$reponse === (int)($contenu['correct'] ?? -1));
             return ['points' => $bon ? $points_max : 0, 'correct' => $bon];
 

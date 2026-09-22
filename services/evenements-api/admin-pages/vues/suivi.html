@@ -833,7 +833,9 @@
             opts.forEach((o, i) => {
               // Les clés de répartition sont normalisées en '0'/'1' côté serveur.
               const nb = d.repartition[String(i)] || 0;
-              const juste = d.type === 'vrai_faux' ? (Boolean(d.contenu.correct) === (i === 1)) : (d.contenu.correct === i);
+              const juste = d.type === 'vrai_faux' ? (Boolean(d.contenu.correct) === (i === 1))
+                : Array.isArray(d.contenu.correct) ? d.contenu.correct.includes(i)
+                : (d.contenu.correct === i);
               h += '<div class="apercu-opt' + (juste && d.type !== 'sondage' ? ' juste' : '') + '">'
                  + '<span>' + echap(o) + '</span><span class="nb">' + nb + '</span></div>';
             });

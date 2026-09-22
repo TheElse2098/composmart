@@ -298,6 +298,10 @@
       fin:              [['message', 'Message de fin', 'textarea'],
                          ['afficher_classement', 'Afficher le classement final', 'check']],
       quiz:             [['question', 'Question', 'textarea'],
+                         ['multiple', 'Plusieurs bonnes réponses possibles', 'check',
+                          'Chaque bonne réponse cochée par le joueur rapporte 1/n du point de la question, '
+                          + 'chaque mauvaise en retire 1/n (n = nombre de bonnes réponses) — jamais moins que 0, '
+                          + 'jamais plus que le point plein.'],
                          ['options', 'Réponses possibles', 'options'],
                          ['explication', 'Explication (après réponse)', 'textarea']],
       vrai_faux:        [['question', 'Affirmation', 'textarea'],
@@ -325,14 +329,15 @@
       if (type === 'select_theme') return '<div class="field" data-champ="' + cle + '"><label>' + label + '</label><select id="' + id + '"></select></div>';
       if (type === 'textarea') return '<div class="field" data-champ="' + cle + '"><label>' + label + '</label><textarea id="' + id + '"></textarea></div>';
       if (type === 'number')   return '<div class="field"><label>' + label + '</label><input type="number" step="any" id="' + id + '"></div>';
-      if (type === 'check')    return '<div class="field"><label class="check"><input type="checkbox" id="' + id + '"> ' + label + '</label></div>';
+      if (type === 'check')    return '<div class="field"><label class="check"><input type="checkbox" id="' + id + '"> ' + label + '</label>'
+                                      + (extra ? '<div class="hint">' + extra + '</div>' : '') + '</div>';
       if (type === 'select')   return '<div class="field"><label>' + label + '</label><select id="' + id + '">'
                                       + extra.map(o => '<option value="' + o + '">' + o + '</option>').join('') + '</select></div>';
       if (type === 'select_vf') return '<div class="field"><label>' + label + '</label><select id="' + id + '"><option value="1">Vrai</option><option value="0">Faux</option></select></div>';
       if (type === 'options' || type === 'options_simple')
         return '<div class="field"><label>' + label + '</label><div id="' + id + '"></div>'
              + '<button type="button" class="rep-add" data-add="' + cle + '">+ Ajouter</button>'
-             + (type === 'options' ? '<div class="hint">Coche la bonne réponse.</div>' : '') + '</div>';
+             + (type === 'options' ? '<div class="hint">Coche la bonne réponse (ou les bonnes réponses si « Plusieurs bonnes réponses » est activé).</div>' : '') + '</div>';
       if (type === 'items_jeu')
         return '<div class="field"><label>' + label + '</label><div id="' + id + '"></div>'
              + '<button type="button" class="rep-add" data-add="' + cle + '">+ Ajouter</button> '
@@ -345,11 +350,15 @@
     }
 
     // Lignes répétables ------------------------------------------------------
-    function ligneOption(valeur, coche, avecCorrect) {
+    // `multi` bascule le marqueur radio (une seule bonne réponse) en case à
+    // cocher (plusieurs) — même bascule que l'éditeur de quiz des cours.
+    function ligneOption(valeur, coche, avecCorrect, multi) {
       const div = document.createElement('div');
       div.className = 'rep-row';
+      const typeMarque = multi ? 'checkbox' : 'radio';
+      const nomMarque = multi ? '' : ' name="opt_correct"';
       div.innerHTML = '<input type="text" maxlength="300" value="' + echap(valeur || '') + '" placeholder="Réponse">'
-        + (avecCorrect ? '<label class="rep-correct"><input type="radio" name="opt_correct"' + (coche ? ' checked' : '') + '> juste</label>' : '')
+        + (avecCorrect ? '<label class="rep-correct"><input type="' + typeMarque + '"' + nomMarque + (coche ? ' checked' : '') + '> juste</label>' : '')
         + '<button type="button" class="rep-del">✕</button>';
       div.querySelector('.rep-del').onclick = () => div.remove();
       return div;
@@ -435,7 +444,12 @@
         if (t === 'select_vf') { el.value = contenu[cle] ? '1' : '0'; return; }
         if (t === 'options' || t === 'options_simple') {
           const avecCorrect = (t === 'options');
-          (contenu.options || ['', '']).forEach((o, i) => el.appendChild(ligneOption(o, avecCorrect && contenu.correct === i, avecCorrect)));
+          const multi = avecCorrect && !!contenu.multiple;
+          const correctSet = multi && Array.isArray(contenu.correct) ? contenu.correct : [];
+          (contenu.options || ['', '']).forEach((o, i) => {
+            const coche = avecCorrect && (multi ? correctSet.indexOf(i) !== -1 : contenu.correct === i);
+            el.appendChild(ligneOption(o, coche, avecCorrect, multi));
+          });
           return;
         }
         if (t === 'sections') {
@@ -461,6 +475,28 @@
           else cont.appendChild(ligneOption('', false, def[2] === 'options'));
         };
       });
+
+      // Bascule « Plusieurs bonnes réponses » : reconstruit les lignes avec le
+      // bon type de marqueur (radio ↔ case à cocher), en gardant les textes déjà
+      // saisis. Le passage multi → simple ne garde que la première coche.
+      const selMulti = document.getElementById('ch_multiple');
+      if (selMulti && type === 'quiz') selMulti.onchange = () => {
+        const cont = document.getElementById('ch_options');
+        if (!cont) return;
+        const lignes = [...cont.querySelectorAll('.rep-row')];
+        const etats = lignes.map(l => ({
+          valeur: l.querySelector('input[type=text]').value,
+          coche: !!l.querySelector('input[type=radio], input[type=checkbox]')?.checked,
+        }));
+        const multi = selMulti.checked;
+        cont.innerHTML = '';
+        let dejaCoche = false;
+        etats.forEach(({ valeur, coche }) => {
+          const c = multi ? coche : (coche && !dejaCoche);
+          if (c && !multi) dejaCoche = true;
+          cont.appendChild(ligneOption(valeur, c, true, multi));
+        });
+      };
 
       // Changer de jeu réinitialise la clé de correction de chaque ligne
       const selJeu = document.getElementById('ch_jeu');
@@ -544,7 +580,13 @@
           const lignes = [...el.querySelectorAll('.rep-row')];
           out.options = lignes.map(l => l.querySelector('input[type=text]').value.trim()).filter(v => v !== '');
           if (t === 'options') {
-            out.correct = Math.max(0, lignes.findIndex(l => { const r = l.querySelector('input[type=radio]'); return r && r.checked; }));
+            if (out.multiple) {
+              out.correct = lignes
+                .map((l, i) => (l.querySelector('input[type=checkbox]')?.checked ? i : -1))
+                .filter(i => i !== -1);
+            } else {
+              out.correct = Math.max(0, lignes.findIndex(l => { const r = l.querySelector('input[type=radio]'); return r && r.checked; }));
+            }
           }
           return;
         }
