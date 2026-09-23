@@ -388,8 +388,15 @@
           + verdict(s, c, o) + '</div>';
         break;
 
-      case 'jeu':
+      case 'jeu': {
         entete = ligne('Extrait de jeu', badgePts) + '<h2 class="sl__titre">' + e(s.titre || 'À toi de jouer !') + '</h2>';
+        // Réponses du participant, alignées sur l'ordre des items (posées par
+        // repondre() dans evenement.html) — présentes dès que o.maReponse
+        // existe, pour révéler item par item ce qu'il a répondu et la bonne
+        // réponse, comme le fait déjà verdict() pour quiz/vrai-faux/estimation.
+        // Jusqu'ici cette révélation n'existait que sur l'écran de l'animateur
+        // (o.correction) : le participant retrouvait une ligne vide après coup.
+        var repItems = (o.maReponse && Array.isArray(o.maReponse.reponse)) ? o.maReponse.reponse : null;
         corps = '<div class="sl__corps">' + (c.items || []).map(function (it, i) {
             var interactifSansRep = o.interactif && !o.maReponse;
 
@@ -415,7 +422,7 @@
                 + '</div>';
             }
 
-            var champ = '';
+            var champ = '', cls = 'sl__rep';
             if (interactifSansRep) {
               if (c.jeu === 'compost-ou-pas') {
                 champ = '<select data-jeu="' + i + '"><option value="">?</option>'
@@ -423,17 +430,40 @@
               } else {
                 champ = '<input type="number" min="0" data-jeu="' + i + '" placeholder="jours" style="max-width:32%">';
               }
+            } else if (repItems) {
+              var r = repItems[i], bon, maLabel, bonneLabel;
+              if (c.jeu === 'compost-ou-pas') {
+                var LIB = { oui: '✅ Oui', attention: '⚠️ Prudence', non: '❌ Non' };
+                bon = (r === it.cat);
+                maLabel = LIB[r] || '—'; bonneLabel = LIB[it.cat] || '—';
+              } else if (c.jeu === 'temps-decompo') {
+                var val = Number(r);
+                // Même tolérance que corriger() côté serveur (±50 %, au moins
+                // 1 jour) : la couleur affichée doit coïncider avec les points.
+                bon = Number.isFinite(val) && it.jours !== undefined
+                  && Math.abs(val - it.jours) <= Math.max(1, it.jours * 0.5);
+                maLabel = Number.isFinite(val) ? val + ' j' : '—';
+                bonneLabel = '~' + it.jours + ' j';
+              } else { // mot-mystere
+                var mot = (typeof r === 'string') ? r.trim().toUpperCase() : '';
+                bon = mot === it.mot;
+                maLabel = mot || '—'; bonneLabel = it.mot;
+              }
+              cls += bon ? ' sl__rep--juste' : ' sl__rep--fausse';
+              champ = bon ? '<b>' + e(bonneLabel) + '</b>'
+                : '<span style="text-decoration:line-through;opacity:.7">' + e(maLabel) + '</span> <b>' + e(bonneLabel) + '</b>';
             } else if (o.correction) {
               var k = it.cat !== undefined ? it.cat : (it.jours !== undefined ? it.jours + ' j' : it.mot);
               champ = '<span class="sl__verdict-pts">' + e(k) + '</span>';
             }
-            return '<div class="sl__rep" style="cursor:default"><span class="sl__rep-marque">' + e(it.emoji || '•') + '</span>'
+            return '<div class="' + cls + '" style="cursor:default;flex-wrap:wrap"><span class="sl__rep-marque">' + e(it.emoji || '•') + '</span>'
               + '<span style="flex:1">' + e(it.nom) + '</span>' + champ + '</div>';
           }).join('')
           + (o.interactif && !o.maReponse
              ? '<button type="button" class="sl__rep" id="slValider" style="justify-content:center;font-family:\'Baloo 2\',cursive;font-weight:900">Valider</button>' : '')
           + verdict(s, c, o) + '</div>';
         break;
+      }
 
       default:
         corps = '<div class="sl__corps"><h2 class="sl__titre">' + e(s.titre || '') + '</h2></div>';
