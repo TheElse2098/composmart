@@ -208,6 +208,34 @@ html.dark {
 html.dark .sl__rep--juste  { background: #16291c; color: #7fc99a; border-color: #43a047; }
 html.dark .sl__rep--fausse { background: #3d1a1a; color: #ef9a9a; border-color: #e53935; }
 
+/* ── Mot-mystère (extrait de jeu) : mêmes cases + tuiles que jeu-mot-mystere.html,
+   redimensionnées en cqw pour vivre dans la carte de slide. ── */
+.sl__mm { display: flex; flex-direction: column; gap: 2.4cqw; padding: 3.2cqw 4cqw; border-radius: 18px; background: var(--sl-carte); border: 2px solid var(--sl-trait); }
+.sl__mm-indice { display: flex; align-items: center; gap: 2.8cqw; font-size: clamp(13px, 3.2cqw, 17px); font-weight: 700; color: var(--sl-doux); }
+.sl__mm-slots, .sl__mm-tiles { display: flex; flex-wrap: wrap; gap: 1.6cqw; }
+.sl__mm-slots { justify-content: center; }
+.sl__mm-slot {
+  width: 9cqw; height: 10cqw; min-width: 30px; min-height: 34px; max-width: 42px; max-height: 48px;
+  border-radius: 9px; border: 2px dashed var(--sl-trait); background: var(--sl-tendre);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(14px, 3.6cqw, 20px); color: var(--sl-encre);
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.sl__mm-slot.filled { border-style: solid; border-color: var(--sl-fond2); }
+.sl__mm-slots.good .sl__mm-slot { border-color: var(--sl-fond2); background: #c8e6c9; }
+.sl__mm-slots.bad .sl__mm-slot { border-color: #e53935; background: #fdecea; animation: sl-mm-shake 0.4s; }
+@keyframes sl-mm-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.sl__mm-tiles { justify-content: center; }
+.sl__mm-tile {
+  appearance: none; cursor: pointer; border: none; border-radius: 9px;
+  width: 9cqw; height: 10.5cqw; min-width: 30px; min-height: 36px; max-width: 42px; max-height: 48px;
+  background: var(--sl-fond2); color: #fff;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(14px, 3.6cqw, 20px);
+  box-shadow: 0 3px 0 var(--sl-fond1); transition: opacity 0.15s, transform 0.15s;
+}
+.sl__mm-tile:hover:not(:disabled) { transform: translateY(-2px); }
+.sl__mm-tile:disabled { opacity: 0.25; cursor: default; box-shadow: none; }
+
 /* ── Encart de verdict ──────────────────────────────────────────────────── */
 @keyframes sl-monte { from { transform: translateY(6px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
 .sl__verdict {

@@ -830,10 +830,56 @@
       }, 1000);
     }
 
+    /** Tuiles du mot-mystère (extrait de jeu) : même mécanique que
+        jeu-mot-mystere.html — cliquer une tuile la pose dans la première case
+        libre, cliquer une case pleine la libère. Le mot assemblé est recopié
+        dans l'input caché [data-jeu] que « Valider » lit comme les autres
+        sous-types de jeu (cablerSlide, ci-dessous). Pas de vérification
+        immédiate mot par mot : la bonne réponse est masquée côté serveur tant
+        que la slide entière n'a pas été validée. */
+    function cablerMotMystere(z) {
+      z.querySelectorAll('[data-mm-tiles]').forEach(tilesEl => {
+        const i = tilesEl.dataset.mmTiles;
+        const slotsEl = z.querySelector('[data-mm-slots="' + i + '"]');
+        const hidden = z.querySelector('input[data-jeu="' + i + '"]');
+        if (!slotsEl || !hidden) return;
+        const slots = [...slotsEl.querySelectorAll('.sl__mm-slot')];
+        let reponse = []; // [{ lettre, idx }] dans l'ordre posé
+
+        const majSlots = () => {
+          slots.forEach((sl, pos) => {
+            sl.textContent = reponse[pos] ? reponse[pos].lettre : '';
+            sl.classList.toggle('filled', !!reponse[pos]);
+          });
+          hidden.value = reponse.map(r => r.lettre).join('');
+        };
+
+        tilesEl.querySelectorAll('.sl__mm-tile').forEach(tile => {
+          tile.onclick = () => {
+            if (tile.disabled || reponse.length >= slots.length) return;
+            tile.disabled = true;
+            reponse.push({ lettre: tile.textContent, idx: tile.dataset.mmTile });
+            majSlots();
+          };
+        });
+
+        slots.forEach((sl, pos) => {
+          sl.onclick = () => {
+            if (pos >= reponse.length) return;
+            const retiree = reponse.splice(pos, 1)[0];
+            const t = tilesEl.querySelector('.sl__mm-tile[data-mm-tile="' + retiree.idx + '"]');
+            if (t) t.disabled = false;
+            majSlots();
+          };
+        });
+      });
+    }
+
     function cablerSlide(z, d) {
       const s = d.slide;
       if (!d.repond || d.ma_reponse) return;   // rien à câbler : déjà répondu ou slide d'affichage
 
+      cablerMotMystere(z);
       const multi = (s.type === 'quiz' && (s.contenu || {}).multiple);
 
       z.querySelectorAll('.sl__rep[data-rep]').forEach(b => {

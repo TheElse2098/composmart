@@ -169,7 +169,7 @@ if ($action === 'etat') {
 
     echo json_encode($base + [
         'ecran'       => 'slide',
-        'slide'       => slide_publique($courante, $deja !== null),
+        'slide'       => slide_publique($courante, $deja !== null, (int)$p['id']),
         'repond'      => (bool)($reg[$courante['type']]['repond'] ?? false),
         'ma_reponse'  => $deja,
     ], JSON_UNESCAPED_UNICODE);

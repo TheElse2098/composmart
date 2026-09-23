@@ -391,15 +391,37 @@
       case 'jeu':
         entete = ligne('Extrait de jeu', badgePts) + '<h2 class="sl__titre">' + e(s.titre || 'À toi de jouer !') + '</h2>';
         corps = '<div class="sl__corps">' + (c.items || []).map(function (it, i) {
+            var interactifSansRep = o.interactif && !o.maReponse;
+
+            // Mot-mystère : mêmes cases + tuiles cliquables que le jeu de base
+            // (jeu-mot-mystere.html), câblées ici avec les lettres déjà
+            // mélangées par le serveur (it.lettres — cf. slide_publique).
+            // L'input caché garde la compatibilité avec la lecture générique
+            // de [data-jeu] au clic sur « Valider » (cablerSlide, evenement.html).
+            if (c.jeu === 'mot-mystere' && interactifSansRep) {
+              var lettres = it.lettres || [];
+              var slots = lettres.map(function (_, pos) {
+                return '<span class="sl__mm-slot" data-mm-slot="' + i + '-' + pos + '"></span>';
+              }).join('');
+              var tuiles = lettres.map(function (l, idx) {
+                return '<button type="button" class="sl__mm-tile" data-mm-tile="' + i + '-' + idx + '">' + e(l) + '</button>';
+              }).join('');
+              return '<div class="sl__mm">'
+                + '<div class="sl__mm-indice"><span class="sl__rep-marque">' + e(it.emoji || '🔤') + '</span>'
+                + '<span>' + e(it.nom) + '</span></div>'
+                + '<div class="sl__mm-slots" data-mm-slots="' + i + '">' + slots + '</div>'
+                + '<div class="sl__mm-tiles" data-mm-tiles="' + i + '">' + tuiles + '</div>'
+                + '<input type="hidden" data-jeu="' + i + '" value="">'
+                + '</div>';
+            }
+
             var champ = '';
-            if (o.interactif && !o.maReponse) {
+            if (interactifSansRep) {
               if (c.jeu === 'compost-ou-pas') {
                 champ = '<select data-jeu="' + i + '"><option value="">?</option>'
                   + '<option value="oui">✅ Oui</option><option value="attention">⚠️ Prudence</option><option value="non">❌ Non</option></select>';
-              } else if (c.jeu === 'temps-decompo') {
-                champ = '<input type="number" min="0" data-jeu="' + i + '" placeholder="jours" style="max-width:32%">';
               } else {
-                champ = '<input type="text" data-jeu="' + i + '" placeholder="le mot" style="max-width:42%">';
+                champ = '<input type="number" min="0" data-jeu="' + i + '" placeholder="jours" style="max-width:32%">';
               }
             } else if (o.correction) {
               var k = it.cat !== undefined ? it.cat : (it.jours !== undefined ? it.jours + ' j' : it.mot);

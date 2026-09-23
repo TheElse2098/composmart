@@ -431,8 +431,13 @@ function resoudre_sommaire($conn, $slide, $evenement_id) {
  * la clé de correction est retirée du contenu. C'est la garantie centrale du
  * jeu — sans elle, la bonne réponse est lisible côté navigateur avant même de
  * cliquer. L'explication est également retenue jusqu'à la réponse.
+ *
+ * @param int|null $graine identifiant du participant, pour le tirage déterministe
+ *                         des tuiles du mot-mystère (cf. plus bas) — null côté
+ *                         animateur (qui reçoit de toute façon le contenu complet
+ *                         ailleurs, jamais par cette fonction).
  */
-function slide_publique($slide, $reponse_donnee = false) {
+function slide_publique($slide, $reponse_donnee = false, $graine = null) {
     $c = json_decode($slide['contenu'] ?? '', true);
     if (!is_array($c)) $c = [];
 
@@ -449,10 +454,38 @@ function slide_publique($slide, $reponse_donnee = false) {
             case 'jeu':
                 // Les items gardent nom/emoji (nécessaires à l'affichage) mais
                 // perdent la réponse et le commentaire qui la révèle.
-                $c['items'] = array_map(function ($it) {
+                //
+                // Le mot-mystère est un cas particulier : le participant doit
+                // pouvoir RÉARRANGER les lettres du mot, comme dans le jeu de
+                // base (jeu-mot-mystere.html) — il lui faut donc les lettres,
+                // seul leur ORDRE (la clé de correction) est secret. Le tirage
+                // est dérivé du participant + de la slide + de l'item plutôt que
+                // vraiment aléatoire : l'écran se rafraîchit toutes les 2,5 s
+                // (chargerEtat en polling), un nouveau tirage à chaque appel
+                // mélangerait les tuiles sous les doigts du joueur en pleine
+                // partie. Même logique que resoudre_anecdote().
+                $jeu_slide = $c['jeu'] ?? '';
+                $sid = (int)($slide['id'] ?? 0);
+                $c['items'] = array_map(function ($it, $i) use ($jeu_slide, $sid, $graine) {
+                    if ($jeu_slide === 'mot-mystere' && isset($it['mot']) && is_string($it['mot'])) {
+                        // mb_str_split, pas str_split : un mot accentué (ÉCOSYSTÈME)
+                        // couperait un caractère UTF-8 en deux octets invalides.
+                        $lettres = mb_str_split($it['mot']);
+                        $cle = ($graine === null ? 'animateur' : (string)$graine) . '-' . $sid . '-' . $i;
+                        for ($k = count($lettres) - 1; $k > 0; $k--) {
+                            $j = crc32($cle . '-' . $k) % ($k + 1);
+                            [$lettres[$k], $lettres[$j]] = [$lettres[$j], $lettres[$k]];
+                        }
+                        // Un tirage qui retombe sur l'ordre d'origine donnerait
+                        // le mot tout cuit : permuter les deux premières tuiles.
+                        if (count($lettres) > 1 && implode('', $lettres) === $it['mot']) {
+                            [$lettres[0], $lettres[1]] = [$lettres[1], $lettres[0]];
+                        }
+                        $it['lettres'] = $lettres;
+                    }
                     unset($it['cat'], $it['jours'], $it['mot'], $it['info']);
                     return $it;
-                }, $c['items'] ?? []);
+                }, $c['items'] ?? [], array_keys($c['items'] ?? []));
                 break;
         }
     }
