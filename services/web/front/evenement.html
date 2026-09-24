@@ -106,16 +106,30 @@
     body.en-parcours #zoneLive { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; gap: 10px; }
     body.en-parcours #zoneLive > .sl { flex: 1; min-height: 0; }
 
-    /* Barre « Suivant » du mode individuel : discrète, centrée sous la carte. */
-    .barre-suivant { flex: none; display: flex; justify-content: center; }
+    /* Barre « Suivant » du mode individuel : fixée en bas de l'ÉCRAN (pas de la
+       carte), pour rester visible sur tous les formats de téléphone même quand
+       une carte haute déborde et pousserait un bouton en flux normal hors
+       champ. Quitte à recouvrir un peu de la slide — mieux vaut ça qu'un
+       bouton invisible qui bloque la progression. pointer-events: none sur la
+       barre laisse les clics traverser la zone transparente du dégradé
+       jusqu'à la slide en dessous ; seul le bouton lui-même les intercepte. */
+    .barre-suivant {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+      display: flex; justify-content: center; pointer-events: none;
+      padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(to top, rgba(238,244,236,0.98) 55%, rgba(238,244,236,0) 100%);
+    }
     .suivant-ind {
+      pointer-events: auto;
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       min-width: 168px; background: #1e6e3e; color: #fff; border: none; border-radius: 50px;
       padding: 10px 24px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.95rem;
       cursor: pointer; transition: opacity .15s;
+      box-shadow: 0 6px 18px rgba(20,50,30,0.3);
     }
     .suivant-ind:hover:not(:disabled) { opacity: 0.9; }
     .suivant-ind:disabled { opacity: 0.45; cursor: default; }
+    html.dark .barre-suivant { background: linear-gradient(to top, rgba(16,26,19,0.98) 55%, rgba(16,26,19,0) 100%); }
 
     /* Liseré coloré en haut de carte, teinté selon le type de slide : repère
        visuel qui change à chaque étape et rythme le parcours. */
