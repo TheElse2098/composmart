@@ -32,6 +32,46 @@ Les cours s'éditent depuis `/admin` et vivent en base (db-core). Le dossier
 que de graine : le seed l'importe dans une base vierge et n'écrase jamais un
 cours existant. Un quiz est validé à partir de 50 % de bonnes réponses.
 
+## Administration
+
+`/admin` est l'accueil du back-office : une tuile par espace, chacun servi et
+protégé par son propre service.
+
+| Espace | URL | Service |
+|---|---|---|
+| Admin panel (signalements, ajouts, messages, comptes, journal) | `/admin/panel` | courses-api |
+| Édition des cours | `/admin/themes` | courses-api |
+| Édition des jeux | `/jeux-admin` | games-api |
+| Event panel | `/evenements-admin` | evenements-api |
+
+La case rouge « Admin » du bandeau (`partials/site-nav.html`) est révélée par
+`assets/js/admin-badge.js` pour les administrateurs ; ce script est inclus en
+`?v=N` : incrémenter N dans toutes les pages à chaque modification.
+
+## Jeux
+
+Le contenu (déchets, mots, durées), les règles (nombre par partie, points,
+vies, chrono), les textes et les messages de fin des mini-jeux vivent dans la
+table `jeux` de db-games et s'éditent depuis `/jeux-admin`. Chaque page
+`jeu-<slug>.html` n'est plus qu'une mécanique : elle reçoit son jeu de
+`/api/jeux/catalogue.php` via `assets/js/jeu-base.js`.
+
+- **Forme des règles et du contenu** : `services/games-api/jeux/_jeux.php`
+  (validation, score maximum déduit des règles). Une nouvelle règle se code
+  là, dans la page du jeu et dans l'éditeur (`REGLES`, `CHAMPS` de
+  `admin-pages/vues/editeur.html`).
+- **Score maximum qui change** : chaque score garde le maximum en vigueur
+  lors de la partie (`scores.score_max`) ; records et classements le
+  convertissent à la nouvelle échelle à la lecture, rien n'est réécrit. L'XP se
+  calcule sur la part du maximum atteinte : un changement de règles ne la
+  recrédite pas.
+- **Historique** : chaque sauvegarde archive l'état précédent
+  (`jeux_versions`, 40 versions par jeu), restaurable depuis l'éditeur.
+- On ne crée pas de nouveau jeu depuis l'admin : un jeu est une mécanique
+  (page + règles dans `_jeux.php`).
+- Les slides « Extrait de jeu » des ateliers importent les éléments via
+  `/api/jeux/catalogue.php?action=pools` et les figent dans la slide.
+
 ## Données de la carte
 
 | Source | Mise à jour |

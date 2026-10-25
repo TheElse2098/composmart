@@ -263,7 +263,6 @@
 
   <div class="bottom-leaf"></div>
 
-  <script src="/assets/js/jeux-registre.js"></script>
   <script>
     // Scroll animé "maison" pour les ancres internes : indépendant de scroll-behavior
     // CSS (que certains OS/navigateurs désactivent via prefers-reduced-motion), donc
@@ -304,12 +303,17 @@
       .then(d => { if (d && typeof d.cours === 'number') document.getElementById('statCours').textContent = d.cours; })
       .catch(() => {});
 
-    // Chiffre "mini-jeux" : compté depuis le registre partagé (jeux-registre.js),
-    // pas re-tapé en dur ici — c'est justement un chiffre codé en double qui
-    // avait fini par diverger (affichait encore 2 alors que le site en comptait 4).
-    if (typeof JEUX !== 'undefined') {
-      document.getElementById('statJeux').textContent = JEUX.length;
-    }
+    // Chiffre "mini-jeux" : compté depuis la base (jeux publiés), pas re-tapé en
+    // dur ici — c'est justement un chiffre codé en double qui avait fini par
+    // diverger (affichait encore 2 alors que le site en comptait 4). Un admin
+    // reçoit aussi les brouillons : ils ne comptent pas.
+    fetch('/api/jeux/catalogue.php?action=liste').then(r => r.json())
+      .then(d => {
+        if (d && Array.isArray(d.jeux)) {
+          document.getElementById('statJeux').textContent = d.jeux.filter(j => j.statut === 'publie').length;
+        }
+      })
+      .catch(() => {});
 
     // Si déjà connecté, le CTA final invite à continuer plutôt qu'à s'inscrire
     fetch('/api/auth/me.php').then(r => r.json())

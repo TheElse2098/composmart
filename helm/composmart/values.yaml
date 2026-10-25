@@ -112,6 +112,10 @@ services:
     env:
       # Crédit d'XP des jeux vers db-core via l'endpoint interne d'auth-api.
       XP_REMOTE_URL: http://auth-api/api/auth/xp.php
+      # Journal d'audit des modifications de jeux (table audit_log de db-core).
+      AUDIT_REMOTE_URL: http://auth-api/api/auth/audit.php
+      # Vérification isAdmin des pages /jeux-admin (users vit dans db-core).
+      AUTH_ADMIN_CHECK_URL: http://auth-api/api/auth/est_admin.php
     health: /api/jeux/health.php
     resources:
       requests: { cpu: "50m", memory: "96Mi" }
@@ -251,4 +255,6 @@ ingress:
     - { path: /api/evenements,  service: evenements-api }
     # Pages d'administration des événements, même principe que /admin.
     - { path: /evenements-admin, service: evenements-api }
+    # Édition des mini-jeux, même principe que /admin.
+    - { path: /jeux-admin,      service: games-api }
     - { path: /,                service: web }

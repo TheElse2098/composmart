@@ -1,0 +1,11 @@
+# Racine de games-api (déployé en /var/www/html/.htaccess).
+#
+# Les pages /jeux-admin ne sont pas des fichiers : elles passent par le
+# contrôleur, qui vérifie isAdmin via auth-api avant de servir quoi que ce soit
+# (cf. courses-api/htaccess-racine, même principe). Les gabarits vivent hors
+# de la racine web (/var/www/jeux-admin-vues/).
+#
+# Le motif ne touche pas /api/jeux/... : la règle porte sur le chemin sans
+# barre initiale, et « api/jeux/admin.php » ne commence pas par « jeux-admin ».
+RewriteEngine On
+RewriteRule ^jeux-admin(/.*)?$ /jeux-admin-controleur.php [L,QSA]

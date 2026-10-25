@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <title>CompoSmart — Page introuvable (404)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+
+
+    .err { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 48px 24px 80px; }
+    .err-emoji { font-size: clamp(4rem, 16vw, 7rem); line-height: 1; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15)); }
+    .err-code { font-family: 'Baloo 2', cursive; font-size: clamp(3rem, 14vw, 6rem); font-weight: 900; color: #1e6e3e; line-height: 1; margin-top: 8px; }
+    .err-title { font-family: 'Baloo 2', cursive; font-size: clamp(1.3rem, 5vw, 2rem); font-weight: 900; color: #1a3a25; margin-top: 8px; }
+    .err-sub { font-size: 1rem; color: #4a7a5a; font-weight: 600; margin-top: 12px; max-width: 460px; line-height: 1.5; }
+    .err-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 30px; }
+    .err-btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 26px; border-radius: 50px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1rem; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; }
+    .err-btn.primary { background: #1e6e3e; color: #fff; box-shadow: 0 6px 18px rgba(30,110,62,0.3); }
+    .err-btn.primary:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(30,110,62,0.4); }
+    .err-btn.ghost { background: #fff; color: #1e6e3e; border: 1.5px solid #cfe6d6; }
+    .err-btn.ghost:hover { transform: translateY(-3px); }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+
+    html.dark body { background: #0f1811; }
+    html.dark .err-title { color: #e8f5ee; }
+    html.dark .err-code { color: #52b788; }
+    html.dark .err-sub { color: #7ab88e; }
+    html.dark .err-btn.ghost { background: #16211a; border-color: #2d4030; color: #7ab88e; }
+  </style>
+  <link rel="stylesheet" href="/assets/css/site-nav.css">
+  <link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+
+  <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
+  <div id="site-nav"></div>
+
+  <div class="err">
+    <div class="err-emoji">🍂</div>
+    <div class="err-code">404</div>
+    <div class="err-title">Cette page est partie au compost</div>
+    <div class="err-sub">La page que tu cherches n'existe pas ou a été déplacée. Pas de panique, on te ramène en terrain connu !</div>
+    <div class="err-btns">
+      <a href="/" class="err-btn primary">🏠 Retour à l'accueil</a>
+      <a href="/carte.html" class="err-btn ghost">🗺️ Voir la carte</a>
+    </div>
+  </div>
+
+    <!-- Footer partagé (injecté par site-footer.js) -->
+  <div id="site-footer"></div>
+
+  <div class="bottom-leaf"></div>
+
+  <script src="/assets/js/site-footer.js"></script>
+  <script src="/assets/js/site-nav.js"></script>
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/admin-badge.js?v=3"></script>
+</body>
+</html>

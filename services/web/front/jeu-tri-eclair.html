@@ -200,69 +200,31 @@
 
   <div class="bottom-leaf"></div>
 
+  <script src="/assets/js/jeu-base.js"></script>
   <script>
     const JEU_ID = 'tri-eclair';
-    const NB_ITEMS = 15;
-    const VIES_MAX = 3;
-    // Durée du chrono par manche, en secondes : décroît linéairement jusqu'à un
-    // plancher, pour donner la sensation d'accélération promise par le jeu sans
-    // jamais rendre une manche littéralement injouable.
-    const DUREE_DEBUT = 3.5;
-    const DUREE_PAS   = 0.13;
-    const DUREE_MIN   = 1.4;
+    // Contenu (déchets) et règles (manches, vies, chrono) : édités dans
+    // /jeux-admin, reçus par JeuBase.lancer. Le chrono de chaque manche part de
+    // DUREE_DEBUT et perd DUREE_PAS secondes par manche, jusqu'au plancher
+    // DUREE_MIN : la sensation d'accélération promise par le jeu, sans jamais
+    // rendre une manche littéralement injouable.
+    let JEU = null, NB_ITEMS = 0, VIES_MAX = 3, DUREE_DEBUT = 3.5, DUREE_PAS = 0.13, DUREE_MIN = 1.4;
 
-    // cat : 'compost' | 'recyclage' | 'poubelle'. Pool dédié à ce jeu (distinct de
-    // celui de « Compost ou pas ? ») : il lui faut un troisième bac clair, alors
+    // cat : 'compost' | 'recyclage' | 'poubelle'. Contenu dédié à ce jeu (distinct
+    // de celui de « Compost ou pas ? ») : il lui faut un troisième bac clair, alors
     // que l'autre jeu joue justement sur la nuance « avec prudence ». Mélanger les
     // deux logiques dans un jeu chronométré aurait été injouable en quelques secondes.
-    const POOL = [
-      { nom: 'Épluchures de légumes', emoji: '🥕', cat: 'compost', info: 'Riche en azote, se décompose vite.' },
-      { nom: 'Marc de café',          emoji: '☕', cat: 'compost', info: 'Et le filtre papier peut y aller aussi.' },
-      { nom: 'Coquilles d\'œuf',      emoji: '🥚', cat: 'compost', info: 'Écrasées, elles apportent du calcium.' },
-      { nom: 'Trognon de pomme',      emoji: '🍎', cat: 'compost', info: 'Comme tous les restes de fruits.' },
-      { nom: 'Feuilles mortes',       emoji: '🍂', cat: 'compost', info: 'Une bonne source de carbone (matière brune).' },
-      { nom: 'Fleurs fanées',         emoji: '💐', cat: 'compost', info: 'Un déchet vert classique.' },
-      { nom: 'Sachet de thé',         emoji: '🍵', cat: 'compost', info: 'Si le sachet est en papier, sans agrafe.' },
-      { nom: 'Peau de banane',        emoji: '🍌', cat: 'compost', info: 'Se décompose en quelques semaines.' },
-
-      { nom: 'Bouteille en plastique', emoji: '🧴', cat: 'recyclage', info: 'Vide et sans bouchon dans certaines villes : au tri.' },
-      { nom: 'Boîte de conserve',      emoji: '🥫', cat: 'recyclage', info: 'Le métal se recycle à l\'infini.' },
-      { nom: 'Journal',                emoji: '📰', cat: 'recyclage', info: 'Le papier journal se recycle bien.' },
-      { nom: 'Carton d\'emballage',    emoji: '📦', cat: 'recyclage', info: 'Aplati, il prend moins de place au tri.' },
-      { nom: 'Bouteille en verre',     emoji: '🍾', cat: 'recyclage', info: 'Le verre se recycle à l\'infini, sans perte de qualité.' },
-      { nom: 'Brique de lait',         emoji: '🥛', cat: 'recyclage', info: 'Carton + plastique fin : au tri quand même.' },
-      { nom: 'Pot de confiture',       emoji: '🍯', cat: 'recyclage', info: 'Un bocal en verre, comme une bouteille.' },
-      { nom: 'Prospectus publicitaire', emoji: '📃', cat: 'recyclage', info: 'Du papier, même s\'il finit vite à la poubelle des boîtes aux lettres.' },
-
-      { nom: 'Mégot de cigarette',     emoji: '🚬', cat: 'poubelle', info: 'Filtre toxique et non biodégradable : ni compost, ni recyclage.' },
-      { nom: 'Brosse à dents usagée',  emoji: '🪥', cat: 'poubelle', info: 'Plusieurs matières mélangées, non triables.' },
-      { nom: 'Éponge usagée',          emoji: '🧽', cat: 'poubelle', info: 'Résidus et matière synthétique : poubelle classique.' },
-      { nom: 'Assiette cassée',        emoji: '🍽️', cat: 'poubelle', info: 'La céramique ne se recycle pas comme le verre.' },
-      { nom: 'Litière de chat',        emoji: '🐈', cat: 'poubelle', info: 'Déchet souillé, ni compost ni recyclage.' },
-      { nom: 'Mouchoir usagé',         emoji: '🤧', cat: 'poubelle', info: 'Le papier souillé n\'est pas recyclable.' },
-      { nom: 'Barquette en polystyrène', emoji: '🍱', cat: 'poubelle', info: 'Le polystyrène n\'est presque jamais recyclé.' },
-      { nom: 'Stylo vide',             emoji: '🖊️', cat: 'poubelle', info: 'Plastique et encre mélangés : poubelle.' }
-    ];
     const LIBELLE_BAC = { compost: 'Compost', recyclage: 'Recyclage', poubelle: 'Poubelle' };
 
-    let items = [], round = 0, score = 0, vies = VIES_MAX, verrou = false;
+    let items = [], round = 0, score = 0, vies = 0, verrou = false;
     let timeoutId = null;
-
-    function melanger(arr) {
-      const a = arr.slice();
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    }
 
     function dureeRound(r) {
       return Math.max(DUREE_MIN, DUREE_DEBUT - r * DUREE_PAS);
     }
 
     function demarrer() {
-      items = melanger(POOL).slice(0, NB_ITEMS);
+      items = JeuBase.melanger(JEU.items).slice(0, NB_ITEMS);
       round = 0; score = 0; vies = VIES_MAX; verrou = false;
       document.getElementById('endScreen').style.display = 'none';
       document.getElementById('gameZone').style.display = 'block';
@@ -419,70 +381,27 @@
 
     function finJeu(complet) {
       clearTimeout(timeoutId);
-      document.getElementById('gameZone').style.display = 'none';
-      document.getElementById('endScreen').style.display = 'block';
-      document.getElementById('endScore').textContent = score + ' / ' + NB_ITEMS;
-      const pct = score / NB_ITEMS;
-      const emoji = pct >= 0.9 ? '🏆' : (pct >= 0.65 ? '🌟' : (pct >= 0.4 ? '🌱' : '🐌'));
-      let msg = pct >= 0.9 ? 'Réflexes au top, le tri n\'a plus de secret pour toi !'
-              : pct >= 0.65 ? 'Bien joué ! Encore un peu de rapidité et ce sera parfait.'
-              : pct >= 0.4 ? 'Pas mal, mais quelques bacs se sont trompés de déchet...'
-              : 'Trop rapide ? Un tour par les cours et ça ira mieux !';
-      if (!complet) msg += ' Partie écourtée : plus de vies !';
-      document.getElementById('endEmoji').textContent = emoji;
-      document.getElementById('endMsg').textContent = msg;
-      sauvegarderEtClasser();
-    }
-
-    function sauvegarderEtClasser() {
-      fetch('/api/jeux/score.php', {
-        method: 'POST',
-        body: new URLSearchParams({ action: 'save', jeu_id: JEU_ID, score: score })
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (d.error === 'not_logged_in') {
-          document.getElementById('saveInfo').style.display = 'block';
-        } else if (d.ok && d.record && score > 0) {
-          document.getElementById('endRecord').style.display = 'inline-block';
-        }
-        if (d.ok && d.xp_gagne > 0) {
-          var endXp = document.getElementById('endXp');
-          endXp.textContent = '⚡ +' + d.xp_gagne + ' XP';
-          endXp.style.display = 'inline-block';
-        }
-        return fetch('/api/jeux/score.php?action=infos&jeu_id=' + JEU_ID);
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (!d || !d.top || !d.top.length) return;
-        const rows = document.getElementById('lbRows');
-        rows.innerHTML = '';
-        const medailles = ['🥇', '🥈', '🥉', '4.', '5.'];
-        d.top.forEach((t, i) => {
-          const row = document.createElement('div');
-          row.className = 'lb-row';
-          const nom = document.createElement('span');
-          nom.textContent = medailles[i] + ' ' + t.username;
-          const sc = document.createElement('span');
-          sc.textContent = t.score;
-          row.appendChild(nom); row.appendChild(sc);
-          rows.appendChild(row);
-        });
-        document.getElementById('leaderboard').style.display = 'block';
-      })
-      .catch(() => {});
+      JeuBase.afficherFin(JEU, score, complet ? '' : 'Partie écourtée : plus de vies !');
+      JeuBase.sauvegarder(JEU_ID, score);
     }
 
     document.getElementById('btnRejouer').addEventListener('click', () => {
-      document.getElementById('endRecord').style.display = 'none';
-      document.getElementById('endXp').style.display = 'none';
-      document.getElementById('leaderboard').style.display = 'none';
-      document.getElementById('saveInfo').style.display = 'none';
+      JeuBase.reinitialiserFin();
       demarrer();
     });
 
-    demarrer();
+    JeuBase.lancer(JEU_ID, function (jeu) {
+      JEU = jeu;
+      const r = jeu.regles;
+      NB_ITEMS = r.nb_items; VIES_MAX = r.vies;
+      DUREE_DEBUT = r.duree_debut; DUREE_PAS = r.duree_pas; DUREE_MIN = r.duree_min;
+      // La consigne cite les règles : elle suit leurs valeurs.
+      document.querySelector('.regle').textContent =
+        'Glisse le déchet vers le bon bac, ou touche directement le bac. '
+        + VIES_MAX + (VIES_MAX > 1 ? ' vies' : ' vie')
+        + (DUREE_PAS > 0 ? ', et le temps se resserre à chaque manche !' : ', et le chrono ne pardonne pas !');
+      demarrer();
+    });
   </script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/admin-badge.js?v=3"></script>

@@ -111,36 +111,51 @@
 
   <div class="bottom-leaf"></div>
 
-  <script src="/assets/js/jeux-registre.js"></script>
   <script>
-    // ── BURGER ──
-    // La liste JEUX vient de /assets/js/jeux-registre.js (chargé ci-dessous,
-    // avant ce bloc) : source unique partagée avec l'accueil.
-    function renderJeux(bests) {
+    // La liste des jeux vient de la base (/api/jeux/catalogue.php, édités dans
+    // /jeux-admin) : source unique partagée avec l'accueil. Textes saisis dans
+    // l'admin → posés en textContent, jamais en HTML. Un admin reçoit aussi les
+    // brouillons, marqués comme tels.
+    let JEUX = [], BESTS = null;
+
+    function el(tag, classe, texte) {
+      const e = document.createElement(tag);
+      if (classe) e.className = classe;
+      if (texte !== undefined) e.textContent = texte;
+      return e;
+    }
+
+    function renderJeux() {
       const list = document.getElementById('jeuxList');
-      list.innerHTML = '';
+      list.textContent = '';
       JEUX.forEach(j => {
-        const a = document.createElement('a');
-        a.className = 'jeu-card';
-        a.href = j.url;
-        const best = bests && bests[j.slug] !== undefined
-          ? '<div><span class="jeu-best">🏆 Record : ' + bests[j.slug] + ' / ' + j.scoreMax + '</span></div>'
-          : '';
-        a.innerHTML =
-          '<div class="jeu-emoji">' + j.emoji + '</div>'
-          + '<div class="jeu-info"><div class="jeu-nom">' + j.nom + '</div>'
-          + '<div class="jeu-desc">' + j.desc + '</div>' + best + '</div>'
-          + '<button type="button" class="jeu-jouer">Jouer</button>';
+        const a = el('a', 'jeu-card');
+        a.href = '/jeu-' + j.slug;
+        const info = el('div', 'jeu-info');
+        info.appendChild(el('div', 'jeu-nom', j.nom + (j.statut === 'brouillon' ? ' (brouillon)' : '')));
+        info.appendChild(el('div', 'jeu-desc', j.description));
+        if (BESTS && BESTS[j.slug] !== undefined) {
+          const ligne = el('div');
+          ligne.appendChild(el('span', 'jeu-best', '🏆 Record : ' + BESTS[j.slug] + ' / ' + j.score_max));
+          info.appendChild(ligne);
+        }
+        const bouton = el('button', 'jeu-jouer', 'Jouer');
+        bouton.type = 'button';
+        a.append(el('div', 'jeu-emoji', j.emoji), info, bouton);
         list.appendChild(a);
       });
     }
 
-    renderJeux(null);
+    fetch('/api/jeux/catalogue.php?action=liste')
+      .then(r => r.json())
+      .then(d => { JEUX = (d && d.jeux) || []; renderJeux(); })
+      .catch(() => {});
     fetch('/api/jeux/score.php?action=bests')
       .then(r => r.json())
       .then(d => {
         if (!d.logged_in) { document.getElementById('loginInvite').style.display = 'flex'; return; }
-        renderJeux(d.bests || {});
+        BESTS = d.bests || {};
+        renderJeux();
       })
       .catch(() => {});
   </script>

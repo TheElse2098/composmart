@@ -406,11 +406,13 @@
       return s ? s.value : 'compost-ou-pas';
     }
 
-    // Pools des jeux, chargés une seule fois et gardés en mémoire.
+    // Pools des jeux, chargés une seule fois et gardés en mémoire. Ils viennent
+    // de games-api, où le contenu des jeux s'édite (/jeux-admin) : l'import
+    // reprend donc toujours la version en ligne du jeu.
     let POOLS = null;
     function chargerPools() {
       if (POOLS) return Promise.resolve(POOLS);
-      return fetch(API + '?action=pools')
+      return fetch('/api/jeux/catalogue.php?action=pools')
         .then(r => r.json())
         .then(d => { POOLS = d.pools || {}; return POOLS; })
         .catch(() => ({}));

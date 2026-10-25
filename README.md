@@ -21,7 +21,8 @@ fonctionnalités, architecture, infrastructure, sécurité et conformité RGPD.
   proposent des ajouts et signalent des erreurs, validés par un administrateur.
 - **Cours et quiz** sur le compostage, avec progression, points d'expérience et
   niveaux ; contenu éditable depuis un back-office.
-- **Mini-jeux** et classements.
+- **Mini-jeux** et classements ; contenu et règles de chaque jeu éditables
+  depuis le back-office, avec historique des versions.
 - **Ateliers en présentiel** : les participants rejoignent une session par code
   ou QR code, forment des équipes et répondent à un parcours de questions
   piloté en direct par l'animateur.
@@ -59,7 +60,7 @@ flowchart LR
   U([Navigateur]) --> I[Ingress Traefik<br/>HTTPS Let's Encrypt]
   I -->|/| W[web<br/>front statique]
   I -->|/api/carte| M[map-api]
-  I -->|/api/jeux| G[games-api]
+  I -->|/api/jeux, /jeux-admin| G[games-api]
   I -->|/api/cours, /admin| C[courses-api]
   I -->|/api/auth| A[auth-api]
   I -->|/api/evenements| E[evenements-api]
@@ -75,7 +76,7 @@ flowchart LR
 |---|---|---|
 | **web** | Interface (HTML, CSS, JavaScript, Leaflet) | — |
 | **map-api** | Composteurs, propositions, signalements | db-map |
-| **games-api** | Scores des mini-jeux | db-games |
+| **games-api** | Mini-jeux : contenu, règles, scores, back-office | db-games |
 | **courses-api** | Cours, quiz, contact, back-office | db-core |
 | **auth-api** | Comptes, authentification, profil, classements | db-core |
 | **evenements-api** | Ateliers, parcours de questions, suivi en direct | db-evenements |

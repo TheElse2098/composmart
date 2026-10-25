@@ -39,27 +39,8 @@ function introuvable() {
     exit;
 }
 
-/** Vérifie isAdmin via l'endpoint interne d'auth-api. Refuse si l'appel échoue. */
-function est_admin_via_auth($uid) {
-    $url = getenv('AUTH_ADMIN_CHECK_URL') ?: '';
-    if ($url === '') return false;
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => json_encode(['uid' => $uid]),
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'X-Audit-Secret: ' . (getenv('AUDIT_SECRET') ?: '')],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 3,
-    ]);
-    $raw = curl_exec($ch);
-    $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    if ($http !== 200 || $raw === false) return false;
-    $rep = json_decode($raw, true);
-    return is_array($rep) && !empty($rep['ok']) && !empty($rep['isAdmin']);
-}
-
 // ── Garde ──────────────────────────────────────────────────────────────────
+// est_admin_via_auth() : shared/_guard.php (partagé avec /jeux-admin).
 if (empty($_SESSION['user_id'])) introuvable();
 if (!est_admin_via_auth((int)$_SESSION['user_id'])) introuvable();
 

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <title>CompoSmart – Éditer un jeu</title>
+  <!--
+    /jeux-admin/<slug> : éditeur d'un mini-jeu. Une seule vue pour les quatre
+    jeux : les formulaires des règles et du contenu sont construits d'après le
+    slug (CHAMPS et REGLES ci-dessous), la validation qui fait foi est celle du
+    serveur (games-api/jeux/_jeux.php), qui renvoie une erreur nommée.
+    Chaque sauvegarde archive l'état précédent : l'historique permet d'y revenir.
+  -->
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; color: #1a3a25; }
+    .fil-retour a + a::before { content: '›'; margin: 0 8px; color: #7a9a85; }
+
+    .tete { width: 100%; max-width: 1400px; margin: 0 auto; padding: 14px 16px 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+    .tete-emoji { font-size: 2.6rem; line-height: 1; }
+    .tete-titre { flex: 1; min-width: 200px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.4rem, 4.5vw, 2rem); font-weight: 900; line-height: 1.1; }
+    .tete-stats { font-size: 0.82rem; color: #4a7a5a; font-weight: 700; margin-top: 2px; }
+    .btn { border: none; border-radius: 50px; padding: 9px 18px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.88rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-vert { background: #1e6e3e; color: #fff; }
+    .btn-vert:hover { background: #17572f; }
+    .btn-vert:disabled { opacity: 0.5; cursor: default; }
+    .btn-clair { background: #fff; color: #1e6e3e; border: 1.5px solid #cfe6d6; }
+    .btn-clair:hover { border-color: #1e6e3e; }
+    .btn-mini { padding: 5px 12px; font-size: 0.78rem; }
+
+    /* Mobile : une colonne. Ordinateur : réglages à gauche, contenu sur toute
+       la largeur restante à droite (c'est la partie qu'on édite le plus). */
+    .editeur { width: 100%; max-width: 1400px; margin: 0 auto; padding: 10px 16px 120px; display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
+    @media (min-width: 1100px) {
+      .editeur { padding: 12px 24px 120px; grid-template-columns: 400px 1fr;
+                 grid-template-areas: "pres contenu" "regles contenu" "messages contenu" "histo contenu"; }
+      #cartePres { grid-area: pres; } #carteRegles { grid-area: regles; } #carteContenu { grid-area: contenu; }
+      #carteMessages { grid-area: messages; } #carteHisto { grid-area: histo; }
+    }
+
+    .carte { background: #fff; border-radius: 16px; padding: 18px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); }
+    .carte h2 { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; margin-bottom: 4px; }
+    .carte-aide { font-size: 0.8rem; color: #5f8a6d; margin-bottom: 12px; line-height: 1.45; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 0.72rem; font-weight: 800; color: #2c4a34; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .field .aide { font-size: 0.75rem; color: #7a9a85; margin-top: 4px; }
+    input[type=text], input[type=number], textarea, select {
+      width: 100%; padding: 8px 11px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.88rem;
+      color: #1a3a25; background: #f7fbf8; outline: none; font-family: inherit;
+    }
+    input:focus, textarea:focus, select:focus { border-color: #1e6e3e; background: #fff; }
+    textarea { resize: vertical; min-height: 38px; line-height: 1.4; }
+    .rangee { display: flex; gap: 10px; flex-wrap: wrap; }
+    .rangee > .field { flex: 1 1 120px; }
+
+    .score-max { margin-top: 4px; padding: 10px 12px; border-radius: 10px; background: #eef4ec; font-weight: 800; font-size: 0.88rem; }
+    .score-max .conv { display: block; font-weight: 600; font-size: 0.8rem; color: #b26a00; margin-top: 4px; }
+
+    /* Contenu */
+    .outils { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .outils input[type=text] { flex: 1 1 200px; width: auto; }
+    .resume { font-size: 0.82rem; font-weight: 700; color: #4a7a5a; margin-bottom: 12px; line-height: 1.5; }
+    .resume .ko { color: #c0392b; }
+    .lignes { display: flex; flex-direction: column; gap: 8px; }
+    .ligne { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: flex-start; padding: 8px; border-radius: 12px; background: #f7fbf8; border: 1px solid #e3efe6; }
+    .ligne.neuve { border-color: #52b788; }
+    .ligne-n { flex: 0 0 26px; font-size: 0.72rem; font-weight: 800; color: #7a9a85; padding-top: 10px; text-align: right; }
+    .ch { min-width: 0; }
+    .ch-emoji { flex: 0 0 58px; }
+    .ch-emoji input { text-align: center; padding: 8px 4px; }
+    .ch-texte { flex: 1 1 170px; }
+    .ch-mot { flex: 0 0 150px; }
+    .ch-mot input { text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+    .ch-cat { flex: 0 0 150px; }
+    .ch-jours { flex: 0 0 160px; }
+    .ch-jours .aide { font-size: 0.72rem; color: #7a9a85; margin-top: 3px; padding-left: 4px; }
+    .ch-zone, .ch-large { flex: 2 1 260px; }
+    .suppr { flex: 0 0 auto; background: none; border: none; color: #c0392b; font-size: 1rem; cursor: pointer; padding: 8px 6px; border-radius: 8px; }
+    .suppr:hover { background: #fdecea; }
+    .cache { display: none !important; }
+
+    /* Messages de fin */
+    .palier { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; }
+    .palier .p-min { flex: 0 0 84px; }
+    .palier .p-emoji { flex: 0 0 auto; }
+    .palier .p-emoji input { width: 58px; text-align: center; }
+    .palier .p-texte { flex: 1 1 180px; }
+    .p-min-wrap { display: flex; align-items: center; gap: 4px; font-weight: 800; font-size: 0.85rem; color: #4a7a5a; }
+
+    /* Historique */
+    .version { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #e3efe6; font-size: 0.82rem; }
+    .version:first-child { border-top: none; }
+    .version-info { flex: 1; min-width: 0; }
+    .version-date { font-weight: 800; }
+    .version-det { color: #7a9a85; font-size: 0.76rem; }
+    .vide { color: #7a9a85; font-size: 0.85rem; }
+
+    /* Barre d'enregistrement, toujours visible */
+    .barre { position: fixed; left: 0; right: 0; bottom: 6px; z-index: 50; display: flex; justify-content: center; padding: 0 12px 10px; pointer-events: none; }
+    .barre-in { pointer-events: auto; background: #fff; border-radius: 50px; box-shadow: 0 6px 24px rgba(0,0,0,0.16); padding: 8px 8px 8px 18px; display: flex; align-items: center; gap: 12px; max-width: 760px; width: 100%; }
+    .barre-etat { flex: 1; font-size: 0.85rem; font-weight: 700; color: #7a9a85; min-width: 0; }
+    .barre-etat.sale { color: #b26a00; }
+    .barre-etat.ko { color: #c0392b; }
+    .barre-etat.ok { color: #2e7d32; }
+
+    .loader { text-align: center; padding: 60px; color: #4a7a5a; font-weight: 700; }
+
+    html.dark body { background-color: #0f1712; color: #e8f5ee; }
+    html.dark .carte, html.dark .barre-in { background: #16211a; }
+    html.dark .tete-stats, html.dark .resume, html.dark .p-min-wrap { color: #b0d4be; }
+    html.dark .carte-aide, html.dark .field .aide, html.dark .version-det, html.dark .vide, html.dark .ligne-n { color: #7ab88e; }
+    html.dark .field label { color: #7ab88e; }
+    html.dark input[type=text], html.dark input[type=number], html.dark textarea, html.dark select { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .ligne { background: #1a271e; border-color: #243a2c; }
+    html.dark .score-max { background: #1e2d22; }
+    html.dark .version { border-top-color: #243a2c; }
+    html.dark .btn-clair { background: #16211a; color: #7fc99a; border-color: #2d4030; }
+    html.dark .btn-vert { background: #2d9959; }
+    html.dark .suppr:hover { background: #3d1a1a; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+  </style>
+  <link rel="stylesheet" href="/assets/css/site-nav.css">
+  <link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+
+  <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
+  <div id="site-nav"></div>
+
+  <div class="fil-retour"><a href="/admin">Administration</a><a href="/jeux-admin">Jeux</a></div>
+
+  <div class="loader" id="loader">Chargement…</div>
+
+  <div id="page" style="display:none">
+    <div class="tete">
+      <div class="tete-emoji" id="teteEmoji"></div>
+      <div class="tete-titre">
+        <h1 id="teteNom"></h1>
+        <div class="tete-stats" id="teteStats"></div>
+      </div>
+      <a class="btn btn-clair" id="btnTester" target="_blank" rel="noopener" title="Ouvre la version enregistrée du jeu dans un nouvel onglet">▶ Tester le jeu</a>
+    </div>
+
+    <main class="editeur">
+      <section class="carte" id="cartePres">
+        <h2>Présentation</h2>
+        <div class="carte-aide">Ce que voient les joueurs sur la page Jeux et en tête du jeu.</div>
+        <div class="rangee">
+          <div class="field" style="flex:0 0 auto"><label for="fEmoji">Emoji</label><input type="text" id="fEmoji" maxlength="16" style="width:64px;text-align:center"></div>
+          <div class="field"><label for="fNom">Nom</label><input type="text" id="fNom" maxlength="80"></div>
+        </div>
+        <div class="field"><label for="fDescription">Description</label><textarea id="fDescription" maxlength="300" rows="2"></textarea></div>
+        <div class="rangee">
+          <div class="field"><label for="fStatut">Statut</label>
+            <select id="fStatut"><option value="publie">Publié</option><option value="brouillon">Brouillon (admins seulement)</option></select></div>
+          <div class="field"><label for="fXp">Réserve d'XP</label><input type="number" id="fXp" min="0" max="500" step="1">
+            <div class="aide">XP gagnée au score parfait, par paliers.</div></div>
+        </div>
+      </section>
+
+      <section class="carte" id="carteRegles">
+        <h2>Règles</h2>
+        <div class="carte-aide" id="reglesAide"></div>
+        <div id="regles"></div>
+        <div class="score-max" id="scoreMax"></div>
+      </section>
+
+      <section class="carte" id="carteContenu">
+        <h2>Contenu</h2>
+        <div class="carte-aide" id="contenuAide"></div>
+        <div class="outils">
+          <input type="text" id="recherche" placeholder="🔍 Filtrer les éléments…" aria-label="Filtrer les éléments">
+          <button type="button" class="btn btn-vert btn-mini" id="btnAjouter">➕ Ajouter</button>
+        </div>
+        <div class="resume" id="resume"></div>
+        <div class="lignes" id="lignes"></div>
+      </section>
+
+      <section class="carte" id="carteMessages">
+        <h2>Messages de fin</h2>
+        <div class="carte-aide">Affichés en fin de partie selon le score obtenu : le palier le plus élevé atteint l'emporte. Un palier à 0 % est obligatoire.</div>
+        <div id="paliers"></div>
+        <button type="button" class="btn btn-clair btn-mini" id="btnPalier">➕ Ajouter un palier</button>
+      </section>
+
+      <section class="carte" id="carteHisto">
+        <h2>Historique</h2>
+        <div class="carte-aide">Chaque enregistrement garde l'état précédent. Restaurer une version archive d'abord l'état actuel.</div>
+        <div id="versions"></div>
+      </section>
+    </main>
+
+    <div class="barre">
+      <div class="barre-in">
+        <div class="barre-etat" id="etat">Aucune modification.</div>
+        <button type="button" class="btn btn-vert" id="btnEnregistrer">💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer partagé (injecté par site-footer.js) -->
+  <div id="site-footer"></div>
+  <div class="bottom-leaf"></div>
+
+  <script src="/assets/js/confirmer.js"></script>
+  <script src="/assets/js/emoji-picker.js"></script>
+  <script>
+    /*__ROUTE__*/
+    const API = '/api/jeux/admin.php';
+    const SLUG = window.ROUTE.slug;
+    let ETAT = null, MOTEUR = {}, PARTIES = 0, JOUEURS = 0;
+    let sale = false;
+
+    // ── Utilitaires ─────────────────────────────────────────────────────────
+    function $(id) { return document.getElementById(id); }
+    function el(tag, classe, texte) {
+      const e = document.createElement(tag);
+      if (classe) e.className = classe;
+      if (texte !== undefined) e.textContent = texte;
+      return e;
+    }
+    function pluriel(n, un, plusieurs) { return n + ' ' + (n > 1 ? plusieurs : un); }
+    function dateFr(s) {
+      if (!s) return '';
+      const [d, h] = s.split(' ');
+      return d.split('-').reverse().join('/') + (h ? ' à ' + h.slice(0, 5) : '');
+    }
+    function sansAccents(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+    function nombre(id) { const v = $(id).value.trim(); return v === '' ? NaN : Number(v); }
+    // Même découpage que la page du jeu (jeu-temps-decompo.html).
+    function fmtDuree(j) {
+      if (j < 14)  { const n = Math.round(j);     return n + (n > 1 ? ' jours' : ' jour'); }
+      if (j < 60)  { const n = Math.round(j / 7); return n + ' semaine' + (n > 1 ? 's' : ''); }
+      if (j < 350) { const n = Math.round(j / 30); return n + ' mois'; }
+      const n = Math.round(j / 365);
+      return n + ' an' + (n > 1 ? 's' : '');
+    }
+
+    function etat(texte, classe) {
+      const e = $('etat');
+      e.textContent = texte;
+      e.className = 'barre-etat' + (classe ? ' ' + classe : '');
+    }
+    function marquerSale() {
+      if (!sale) { sale = true; etat('Modifications non enregistrées.', 'sale'); }
+    }
+    window.addEventListener('beforeunload', e => { if (sale) { e.preventDefault(); e.returnValue = ''; } });
+
+    // ── Règles : un formulaire par jeu ──────────────────────────────────────
+    // `lire` renvoie l'objet envoyé au serveur ; `max` calcule le score maximum
+    // comme games-api/jeux/_jeux.php (jeux_score_max), pour l'afficher en direct.
+    function champNombre(id, titre, valeur, opts) {
+      const f = el('div', 'field');
+      const l = el('label', null, titre); l.htmlFor = id;
+      const i = el('input'); i.type = 'number'; i.id = id; i.value = valeur;
+      i.min = opts.min; i.max = opts.max; i.step = opts.step || 1;
+      f.append(l, i);
+      if (opts.aide) f.appendChild(el('div', 'aide', opts.aide));
+      return f;
+    }
+    function rangee(...champs) { const r = el('div', 'rangee'); r.append(...champs); return r; }
+
+    const REGLES = {
+      'mot-mystere': {
+        aide: 'Chaque mot rapporte plus s\'il est trouvé du premier coup.',
+        rendre: r => [
+          champNombre('rNb', 'Mots par partie', r.nb_mots, { min: 3, max: 20 }),
+          rangee(
+            champNombre('rP0', 'Points · 1er essai', r.points[0], { min: 1, max: 50 }),
+            champNombre('rP1', '2e essai', r.points[1], { min: 0, max: 50 }),
+            champNombre('rP2', '3e essai et +', r.points[2], { min: 0, max: 50 })),
+        ],
+        lire: () => ({ nb_mots: nombre('rNb'), points: [nombre('rP0'), nombre('rP1'), nombre('rP2')] }),
+        max: r => r.nb_mots * r.points[0],
+      },
+      'compost-ou-pas': {
+        aide: 'Les déchets d\'une partie sont tirés au hasard dans le contenu ; 1 point par bonne réponse.',
+        rendre: r => [champNombre('rNb', 'Déchets par partie', r.nb_items, { min: 3, max: 30 })],
+        lire: () => ({ nb_items: nombre('rNb') }),
+        max: r => r.nb_items,
+      },
+      'temps-decompo': {
+        aide: 'Une partie mélange des déchets courts (1 an ou moins) et longs. Sur la ligne (échelle logarithmique, 1 jour → 1000 ans), plus l\'estimation est proche, plus elle rapporte.',
+        rendre: r => {
+          const blocs = [rangee(
+            champNombre('rCourts', 'Déchets courts', r.nb_courts, { min: 0, max: 15 }),
+            champNombre('rLongs', 'Déchets longs', r.nb_longs, { min: 0, max: 15 }))];
+          const noms = ['Palier 1 (le plus précis)', 'Palier 2', 'Palier 3 (le plus large)'];
+          r.seuils.forEach((s, i) => blocs.push(rangee(
+            champNombre('rD' + i, noms[i] + ' · tolérance %', Math.round(s.d * 100), { min: 1, max: 50, aide: i === 0 ? 'Écart maximal, en % de la largeur de la ligne.' : '' }),
+            champNombre('rPts' + i, 'Points', s.pts, { min: 0, max: 10 }))));
+          return blocs;
+        },
+        lire: () => ({
+          nb_courts: nombre('rCourts'), nb_longs: nombre('rLongs'),
+          seuils: [0, 1, 2].map(i => ({ d: nombre('rD' + i) / 100, pts: nombre('rPts' + i) })),
+        }),
+        max: r => (r.nb_courts + r.nb_longs) * r.seuils[0].pts,
+      },
+      'tri-eclair': {
+        aide: '1 point par déchet bien trié. Le chrono part de la durée de départ et se resserre à chaque manche, sans descendre sous le minimum.',
+        rendre: r => [
+          rangee(
+            champNombre('rNb', 'Manches', r.nb_items, { min: 3, max: 40 }),
+            champNombre('rVies', 'Vies', r.vies, { min: 1, max: 10 })),
+          rangee(
+            champNombre('rDebut', 'Chrono départ (s)', r.duree_debut, { min: 1, max: 15, step: 0.05 }),
+            champNombre('rPas', 'Accélération (s/manche)', r.duree_pas, { min: 0, max: 2, step: 0.01 }),
+            champNombre('rMin', 'Chrono minimum (s)', r.duree_min, { min: 0.5, max: 15, step: 0.05 })),
+        ],
+        lire: () => ({ nb_items: nombre('rNb'), vies: nombre('rVies'), duree_debut: nombre('rDebut'), duree_pas: nombre('rPas'), duree_min: nombre('rMin') }),
+        max: r => r.nb_items,
+      },
+    };
+
+    function majScoreMax() {
+      const r = REGLES[SLUG].lire();
+      const max = REGLES[SLUG].max(r);
+      const bloc = $('scoreMax');
+      bloc.textContent = '';
+      if (!Number.isFinite(max) || max <= 0) { bloc.textContent = 'Score max d\'une partie : —'; majResume(); return; }
+      bloc.append('Score max d\'une partie : ' + max);
+      if (max !== ETAT.score_max && PARTIES > 0) {
+        const ex = ETAT.score_max;
+        bloc.appendChild(el('span', 'conv',
+          'Il passera de ' + ex + ' à ' + max + ' : les ' + pluriel(PARTIES, 'partie déjà jouée sera convertie', 'parties déjà jouées seront converties')
+          + ' à la nouvelle échelle (' + ex + '/' + ex + ' → ' + max + '/' + max + ').'));
+      }
+      majResume();
+    }
+
+    // ── Contenu : colonnes de chaque jeu ────────────────────────────────────
+    const CHAMPS = {
+      'mot-mystere': [
+        { k: 'mot', type: 'mot', titre: 'Mot (3 à 12 lettres)' },
+        { k: 'indice', type: 'texte', titre: 'Indice', max: 200, large: true },
+        { k: 'emoji', type: 'emoji', titre: 'Emoji (ateliers)' },
+      ],
+      'compost-ou-pas': [
+        { k: 'emoji', type: 'emoji', titre: 'Emoji' },
+        { k: 'nom', type: 'texte', titre: 'Déchet', max: 80 },
+        { k: 'cat', type: 'cat', titre: 'Catégorie' },
+        { k: 'info', type: 'zone', titre: 'Explication affichée après la réponse', max: 400 },
+      ],
+      'temps-decompo': [
+        { k: 'emoji', type: 'emoji', titre: 'Emoji' },
+        { k: 'nom', type: 'texte', titre: 'Déchet, ex. « un trognon de pomme »', max: 80 },
+        { k: 'jours', type: 'jours', titre: 'Durée en jours' },
+        { k: 'info', type: 'zone', titre: 'Explication affichée après la réponse', max: 400 },
+      ],
+    };
+    CHAMPS['tri-eclair'] = CHAMPS['compost-ou-pas'];
+
+    const AIDES_CONTENU = {
+      'mot-mystere': 'Les lettres du mot deviennent les tuiles à remettre dans l\'ordre (accents et caractères spéciaux retirés). L\'emoji ne sert que dans les slides d\'atelier.',
+      'compost-ou-pas': 'Chaque partie tire des déchets au hasard dans cette liste.',
+      'temps-decompo': 'Question posée : « Combien de temps met <déchet> à se décomposer ? ». Jusqu\'à 365 jours, un déchet est « court », au-delà « long ».',
+      'tri-eclair': 'Chaque partie tire des déchets au hasard dans cette liste.',
+    };
+
+    function majAideJours(input) {
+      const aide = input.parentNode.querySelector('.aide');
+      const j = Number(input.value);
+      aide.textContent = input.value === '' || !(j >= 1) ? '' : '≈ ' + fmtDuree(j) + ' · ' + (j <= MOTEUR.seuil_court ? 'court' : 'long');
+    }
+
+    function creerLigne(it) {
+      const ligne = el('div', 'ligne');
+      ligne.appendChild(el('span', 'ligne-n'));
+      CHAMPS[SLUG].forEach(c => {
+        const ch = el('div', 'ch ch-' + (c.large ? 'large' : c.type));
+        let champ;
+        if (c.type === 'cat') {
+          champ = el('select');
+          Object.entries(MOTEUR.categories).forEach(([v, lib]) => {
+            const o = el('option', null, lib); o.value = v; champ.appendChild(o);
+          });
+          champ.value = it[c.k] || Object.keys(MOTEUR.categories)[0];
+        } else if (c.type === 'zone') {
+          champ = el('textarea'); champ.rows = 2; champ.maxLength = c.max; champ.value = it[c.k] || '';
+        } else if (c.type === 'jours') {
+          champ = el('input'); champ.type = 'number'; champ.min = 1; champ.max = 365000; champ.step = 1;
+          champ.value = it[c.k] ?? '';
+        } else {
+          champ = el('input'); champ.type = 'text';
+          champ.maxLength = c.type === 'emoji' ? 16 : (c.type === 'mot' ? 20 : c.max);
+          champ.value = it[c.k] || '';
+        }
+        champ.dataset.k = c.k;
+        champ.placeholder = c.titre;
+        champ.title = c.titre;
+        champ.setAttribute('aria-label', c.titre);
+        ch.appendChild(champ);
+        if (c.type === 'jours') { ch.appendChild(el('div', 'aide')); majAideJours(champ); }
+        ligne.appendChild(ch);
+      });
+      const suppr = el('button', 'suppr', '✕');
+      suppr.type = 'button'; suppr.title = 'Retirer cet élément';
+      suppr.onclick = () => { ligne.remove(); numeroter(); marquerSale(); majResume(); };
+      ligne.appendChild(suppr);
+      return ligne;
+    }
+
+    function numeroter() {
+      document.querySelectorAll('#lignes .ligne').forEach((l, i) => { l.querySelector('.ligne-n').textContent = i + 1; });
+    }
+
+    function lireItems() {
+      return [...document.querySelectorAll('#lignes .ligne')].map(l => {
+        const it = {};
+        l.querySelectorAll('[data-k]').forEach(c => {
+          it[c.dataset.k] = c.dataset.k === 'jours' ? (c.value === '' ? '' : Number(c.value)) : c.value;
+        });
+        return it;
+      });
+    }
+
+    function majResume() {
+      const items = lireItems();
+      const r = REGLES[SLUG].lire();
+      const res = $('resume');
+      res.textContent = '';
+      const ajout = (texte, ko) => { res.appendChild(ko ? el('span', 'ko', texte) : document.createTextNode(texte)); };
+      if (SLUG === 'temps-decompo') {
+        const courts = items.filter(i => i.jours !== '' && i.jours <= MOTEUR.seuil_court).length;
+        const longs = items.filter(i => i.jours !== '' && i.jours > MOTEUR.seuil_court).length;
+        ajout(pluriel(courts, 'déchet court', 'déchets courts') + ' (' + (r.nb_courts || 0) + ' par partie)', courts < r.nb_courts);
+        ajout(' · ');
+        ajout(pluriel(longs, 'déchet long', 'déchets longs') + ' (' + (r.nb_longs || 0) + ' par partie)', longs < r.nb_longs);
+        return;
+      }
+      const parPartie = SLUG === 'mot-mystere' ? r.nb_mots : r.nb_items;
+      ajout(pluriel(items.length, SLUG === 'mot-mystere' ? 'mot' : 'élément', SLUG === 'mot-mystere' ? 'mots' : 'éléments')
+        + ' (' + (parPartie || 0) + ' par partie)', items.length < parPartie);
+      if (MOTEUR.categories) {
+        const parts = Object.entries(MOTEUR.categories).map(([v, lib]) => items.filter(i => i.cat === v).length + ' ' + lib.toLowerCase());
+        ajout(' — ' + parts.join(' · '));
+      }
+    }
+
+    function filtrer() {
+      const q = sansAccents($('recherche').value.trim());
+      document.querySelectorAll('#lignes .ligne').forEach(l => {
+        const texte = [...l.querySelectorAll('[data-k]')].map(c => c.tagName === 'SELECT' ? c.selectedOptions[0].textContent : c.value).join(' ');
+        l.classList.toggle('cache', q !== '' && !sansAccents(texte).includes(q));
+      });
+    }
+
+    // ── Messages de fin ─────────────────────────────────────────────────────
+    function creerPalier(m) {
+      const p = el('div', 'palier');
+      const minW = el('div', 'p-min-wrap p-min');
+      const min = el('input'); min.type = 'number'; min.min = 0; min.max = 100; min.step = 1;
+      min.value = Math.round((m.min || 0) * 100); min.className = 'm-min'; min.setAttribute('aria-label', 'Seuil en %');
+      minW.append('≥', min, '%');
+      const emW = el('div', 'p-emoji');
+      const em = el('input'); em.type = 'text'; em.maxLength = 16; em.value = m.emoji || ''; em.className = 'm-emoji'; em.setAttribute('aria-label', 'Emoji');
+      emW.appendChild(em);
+      const tx = el('input'); tx.type = 'text'; tx.maxLength = 200; tx.value = m.texte || ''; tx.className = 'm-texte p-texte'; tx.placeholder = 'Message';
+      const suppr = el('button', 'suppr', '✕');
+      suppr.type = 'button'; suppr.title = 'Retirer ce palier';
+      suppr.onclick = () => {
+        if (document.querySelectorAll('#paliers .palier').length <= 2) { etat('Il faut au moins deux paliers.', 'ko'); return; }
+        p.remove(); marquerSale();
+      };
+      p.append(minW, emW, tx, suppr);
+      return p;
+    }
+    function lireMessages() {
+      return [...document.querySelectorAll('#paliers .palier')].map(p => ({
+        min: p.querySelector('.m-min').value === '' ? '' : Number(p.querySelector('.m-min').value) / 100,
+        emoji: p.querySelector('.m-emoji').value,
+        texte: p.querySelector('.m-texte').value,
+      }));
+    }
+
+    // ── Historique ──────────────────────────────────────────────────────────
+    function rendreVersions(versions) {
+      const c = $('versions');
+      c.textContent = '';
+      if (!versions.length) { c.appendChild(el('div', 'vide', 'Aucune version antérieure : l\'historique commence au premier enregistrement.')); return; }
+      versions.forEach(v => {
+        const ligne = el('div', 'version');
+        const info = el('div', 'version-info');
+        info.appendChild(el('div', 'version-date', dateFr(v.date) + (v.auteur ? ' · ' + v.auteur : '')));
+        info.appendChild(el('div', 'version-det', pluriel(v.nb_items, 'élément', 'éléments') + ' · score max ' + v.score_max + ' · ' + (v.statut === 'publie' ? 'publié' : 'brouillon')));
+        const b = el('button', 'btn btn-clair btn-mini', 'Restaurer');
+        b.type = 'button';
+        b.onclick = () => restaurer(v);
+        ligne.append(info, b);
+        c.appendChild(ligne);
+      });
+    }
+
+    async function restaurer(v) {
+      const ok = await confirmer({
+        titre: 'Restaurer la version du ' + dateFr(v.date) + ' ?',
+        texte: 'L\'état actuel sera d\'abord archivé dans l\'historique : tu pourras y revenir.'
+          + (sale ? ' Les modifications non enregistrées de cette page seront perdues.' : ''),
+        valider: 'Restaurer',
+      });
+      if (!ok) return;
+      envoyer('restaurer', { slug: SLUG, version_id: v.id }, 'Version restaurée ✓');
+    }
+
+    // ── Chargement et rendu ─────────────────────────────────────────────────
+    function rendre(d) {
+      ETAT = d.jeu; MOTEUR = d.moteur || {}; PARTIES = d.parties || 0; JOUEURS = d.joueurs || 0;
+      document.title = 'CompoSmart – ' + ETAT.nom;
+      $('teteEmoji').textContent = ETAT.emoji;
+      $('teteNom').textContent = ETAT.nom;
+      $('teteStats').textContent = (ETAT.statut === 'publie' ? 'Publié' : 'Brouillon') + ' · '
+        + pluriel(PARTIES, 'partie jouée', 'parties jouées') + ' · ' + pluriel(JOUEURS, 'joueur', 'joueurs')
+        + (ETAT.maj_at ? ' · modifié le ' + dateFr(ETAT.maj_at) + (ETAT.maj_par ? ' par ' + ETAT.maj_par : '') : '');
+      $('btnTester').href = '/jeu-' + SLUG;
+
+      $('fNom').value = ETAT.nom;
+      $('fEmoji').value = ETAT.emoji;
+      $('fEmoji').dispatchEvent(new Event('input'));   // bouton du sélecteur à jour
+      $('fDescription').value = ETAT.description;
+      $('fStatut').value = ETAT.statut;
+      $('fXp').value = ETAT.xp_reserve;
+
+      $('reglesAide').textContent = REGLES[SLUG].aide;
+      const regles = $('regles');
+      regles.textContent = '';
+      REGLES[SLUG].rendre(ETAT.regles).forEach(b => regles.appendChild(b));
+
+      $('contenuAide').textContent = AIDES_CONTENU[SLUG];
+      const lignes = $('lignes');
+      lignes.textContent = '';
+      ETAT.items.forEach(it => lignes.appendChild(creerLigne(it)));
+      numeroter();
+      filtrer();
+
+      const paliers = $('paliers');
+      paliers.textContent = '';
+      ETAT.messages.forEach(m => paliers.appendChild(creerPalier(m)));
+
+      rendreVersions(d.versions || []);
+      majScoreMax();
+      sale = false;
+    }
+
+    function charger() {
+      return fetch(API + '?action=jeu&slug=' + encodeURIComponent(SLUG))
+        .then(r => r.json())
+        .then(d => {
+          $('loader').style.display = 'none';
+          if (!d.jeu) { $('loader').style.display = ''; $('loader').textContent = d.error || 'Chargement impossible.'; return; }
+          $('page').style.display = '';
+          rendre(d);
+        });
+    }
+
+    // ── Enregistrement ──────────────────────────────────────────────────────
+    function envoyer(action, corps, messageOk) {
+      $('btnEnregistrer').disabled = true;
+      etat('Enregistrement…');
+      return fetch(API + '?action=' + action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(corps),
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (!d.ok) { etat(d.error || 'L\'enregistrement a échoué.', 'ko'); return; }
+          sale = false;
+          return charger().then(() => etat(messageOk, 'ok'));
+        })
+        .catch(() => etat('Erreur réseau : rien n\'a été enregistré.', 'ko'))
+        .finally(() => { $('btnEnregistrer').disabled = false; });
+    }
+
+    async function enregistrer() {
+      const corps = {
+        slug: SLUG,
+        nom: $('fNom').value,
+        emoji: $('fEmoji').value,
+        description: $('fDescription').value,
+        statut: $('fStatut').value,
+        xp_reserve: nombre('fXp'),
+        regles: REGLES[SLUG].lire(),
+        messages: lireMessages(),
+        items: lireItems(),
+      };
+      // Les nombres invalides partent tels quels : le serveur répond avec une
+      // erreur nommée, qui est affichée dans la barre.
+      const max = REGLES[SLUG].max(corps.regles);
+
+      if (ETAT.statut === 'publie' && corps.statut === 'brouillon') {
+        const ok = await confirmer({
+          titre: 'Repasser ce jeu en brouillon ?',
+          texte: 'Il disparaîtra du site pour les joueurs (page Jeux, accueil, profils) jusqu\'à sa republication. Les scores sont conservés.',
+          valider: 'Passer en brouillon', danger: true,
+        });
+        if (!ok) return;
+      }
+      if (Number.isFinite(max) && max > 0 && max !== ETAT.score_max && PARTIES > 0) {
+        const ok = await confirmer({
+          titre: 'Le score maximum change : ' + ETAT.score_max + ' → ' + max,
+          texte: 'Les ' + pluriel(PARTIES, 'partie déjà jouée sera convertie', 'parties déjà jouées seront converties')
+            + ' à la nouvelle échelle dans les records et les classements (' + ETAT.score_max + '/' + ETAT.score_max + ' devient ' + max + '/' + max + '). Les scores enregistrés ne sont pas modifiés.',
+          valider: 'Enregistrer',
+        });
+        if (!ok) return;
+      }
+      envoyer('sauver', corps, 'Enregistré ✓');
+    }
+
+    // ── Câblage ─────────────────────────────────────────────────────────────
+    attacherSelecteurEmoji($('fEmoji'));
+    $('page').addEventListener('input', e => {
+      if (e.target.id === 'recherche') { filtrer(); return; }
+      marquerSale();
+      if (e.target.closest('#regles')) majScoreMax();
+      if (e.target.closest('#lignes')) {
+        if (e.target.dataset.k === 'jours') majAideJours(e.target);
+        majResume();
+      }
+    });
+    $('page').addEventListener('change', e => {
+      if (e.target.tagName === 'SELECT' && e.target.closest('#lignes')) { marquerSale(); majResume(); }
+    });
+    $('btnAjouter').onclick = () => {
+      const l = creerLigne({});
+      l.classList.add('neuve');
+      $('lignes').prepend(l);
+      $('recherche').value = '';
+      filtrer();
+      numeroter();
+      marquerSale();
+      majResume();
+      l.querySelector('[data-k]').focus();
+    };
+    $('btnPalier').onclick = () => {
+      if (document.querySelectorAll('#paliers .palier').length >= 6) { etat('Six paliers au maximum.', 'ko'); return; }
+      $('paliers').appendChild(creerPalier({ min: 0.5, emoji: '', texte: '' }));
+      marquerSale();
+    };
+    $('btnEnregistrer').onclick = enregistrer;
+
+    charger().catch(() => { $('loader').textContent = 'Erreur réseau.'; });
+  </script>
+  <script src="/assets/js/site-footer.js"></script>
+  <script src="/assets/js/site-nav.js"></script>
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/admin-badge.js?v=3"></script>
+</body>
+</html>

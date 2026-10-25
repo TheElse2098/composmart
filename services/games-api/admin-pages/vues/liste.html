@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <title>CompoSmart – Édition des jeux</title>
+  <!--
+    /jeux-admin : les mini-jeux, leur statut et leur activité. L'ordre choisi
+    ici est celui du hub /jeux et de l'accueil. Servi par le contrôleur de
+    games-api (admin-pages/controleur.php) après vérification des droits.
+  -->
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; color: #1a3a25; }
+
+    .hero { text-align: center; padding: 18px 20px 6px; }
+    .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; }
+    .hero-sous { color: #4a7a5a; font-weight: 600; font-size: 0.92rem; margin-top: 4px; }
+
+    .grille { width: 100%; max-width: 1240px; margin: 0 auto; padding: 20px 16px 56px; display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 760px)  { .grille { grid-template-columns: 1fr 1fr; padding: 24px 24px 64px; } }
+
+    .carte { background: #fff; border-radius: 18px; padding: 18px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); display: flex; gap: 14px; align-items: flex-start; }
+    .carte-emoji { font-size: 2.3rem; line-height: 1; flex-shrink: 0; }
+    .carte-corps { flex: 1; min-width: 0; }
+    .carte-nom { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 1.2rem; color: #1e6e3e; text-decoration: none; }
+    .carte-nom:hover { text-decoration: underline; }
+    .carte-desc { color: #4a7a5a; font-size: 0.86rem; margin: 2px 0 8px; line-height: 1.4; }
+    .puces { display: flex; flex-wrap: wrap; gap: 6px; }
+    .puce { font-size: 0.74rem; font-weight: 800; padding: 3px 9px; border-radius: 10px; background: #eef4ec; color: #1e6e3e; white-space: nowrap; }
+    .puce.brouillon { background: #fff3e0; color: #b26a00; }
+    .puce.publie { background: #e8f5e9; color: #2e7d32; }
+    .carte-maj { font-size: 0.75rem; color: #7a9a85; margin-top: 8px; }
+    .carte-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; align-items: flex-end; }
+    .btn { border: none; border-radius: 50px; padding: 8px 16px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.85rem; cursor: pointer; text-decoration: none; display: inline-block; text-align: center; }
+    .btn-edit { background: #1e6e3e; color: #fff; }
+    .btn-edit:hover { background: #17572f; }
+    .ordre { display: flex; gap: 4px; }
+    .btn-ordre { background: #eef4ec; color: #1e6e3e; padding: 6px 11px; }
+    .btn-ordre:disabled { opacity: 0.35; cursor: default; }
+
+    .msg { max-width: 1240px; margin: 0 auto; padding: 0 24px; font-weight: 700; font-size: 0.88rem; min-height: 1.2em; }
+    .msg.ko { color: #c0392b; }
+    .loader { text-align: center; padding: 40px; color: #4a7a5a; font-weight: 700; }
+
+    html.dark body { background-color: #0f1712; color: #e8f5ee; }
+    html.dark .carte { background: #16211a; }
+    html.dark .carte-nom { color: #7fc99a; }
+    html.dark .carte-desc, html.dark .hero-sous { color: #b0d4be; }
+    html.dark .puce, html.dark .btn-ordre { background: #1e2d22; color: #7fc99a; }
+    html.dark .puce.brouillon { background: #2e2410; color: #e8b931; }
+    html.dark .puce.publie { background: #16291c; color: #7fc99a; }
+    html.dark .btn-edit { background: #2d9959; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+  </style>
+  <link rel="stylesheet" href="/assets/css/site-nav.css">
+  <link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+
+  <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
+  <div id="site-nav"></div>
+
+  <div class="fil-retour"><a href="/admin">← Administration</a></div>
+
+  <div class="hero">
+    <div class="hero-badge">🎮 Administration</div>
+    <h1>Édition des jeux</h1>
+    <div class="hero-sous">Contenu, règles et textes des mini-jeux. L'ordre est celui de la page Jeux.</div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+  <div class="loader" id="loader">Chargement…</div>
+  <main class="grille" id="grille"></main>
+
+  <!-- Footer partagé (injecté par site-footer.js) -->
+  <div id="site-footer"></div>
+  <div class="bottom-leaf"></div>
+
+  <script>
+    /*__ROUTE__*/
+    const API = '/api/jeux/admin.php';
+    let JEUX = [];
+
+    function el(tag, classe, texte) {
+      const e = document.createElement(tag);
+      if (classe) e.className = classe;
+      if (texte !== undefined) e.textContent = texte;
+      return e;
+    }
+    function pluriel(n, un, plusieurs) { return n + ' ' + (n > 1 ? plusieurs : un); }
+    function dateFr(s) {
+      if (!s) return '';
+      const [d, h] = s.split(' ');
+      return d.split('-').reverse().join('/') + (h ? ' à ' + h.slice(0, 5) : '');
+    }
+    function message(texte, ko) {
+      const m = document.getElementById('msg');
+      m.textContent = texte || '';
+      m.className = 'msg' + (ko ? ' ko' : '');
+    }
+
+    function rendre() {
+      const g = document.getElementById('grille');
+      g.textContent = '';
+      JEUX.forEach((j, i) => {
+        const carte = el('div', 'carte');
+        carte.appendChild(el('div', 'carte-emoji', j.emoji));
+
+        const corps = el('div', 'carte-corps');
+        const nom = el('a', 'carte-nom', j.nom);
+        nom.href = '/jeux-admin/' + j.slug;
+        corps.appendChild(nom);
+        corps.appendChild(el('div', 'carte-desc', j.description));
+        const puces = el('div', 'puces');
+        puces.appendChild(el('span', 'puce ' + j.statut, j.statut === 'publie' ? 'Publié' : 'Brouillon'));
+        puces.appendChild(el('span', 'puce', pluriel(j.nb_items, 'élément', 'éléments')));
+        puces.appendChild(el('span', 'puce', 'Score max ' + j.score_max));
+        puces.appendChild(el('span', 'puce', pluriel(j.parties, 'partie', 'parties') + ' · ' + pluriel(j.joueurs, 'joueur', 'joueurs')));
+        corps.appendChild(puces);
+        if (j.maj_at) corps.appendChild(el('div', 'carte-maj', 'Modifié le ' + dateFr(j.maj_at) + (j.maj_par ? ' par ' + j.maj_par : '')));
+        carte.appendChild(corps);
+
+        const actions = el('div', 'carte-actions');
+        const edit = el('a', 'btn btn-edit', 'Modifier');
+        edit.href = '/jeux-admin/' + j.slug;
+        actions.appendChild(edit);
+        const ordre = el('div', 'ordre');
+        const haut = el('button', 'btn btn-ordre', '↑');
+        haut.type = 'button'; haut.title = 'Monter'; haut.disabled = i === 0;
+        haut.onclick = () => deplacer(i, -1);
+        const bas = el('button', 'btn btn-ordre', '↓');
+        bas.type = 'button'; bas.title = 'Descendre'; bas.disabled = i === JEUX.length - 1;
+        bas.onclick = () => deplacer(i, 1);
+        ordre.append(haut, bas);
+        actions.appendChild(ordre);
+        carte.appendChild(actions);
+
+        g.appendChild(carte);
+      });
+    }
+
+    function deplacer(i, sens) {
+      const j = i + sens;
+      if (j < 0 || j >= JEUX.length) return;
+      [JEUX[i], JEUX[j]] = [JEUX[j], JEUX[i]];
+      rendre();
+      fetch(API + '?action=ordre', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slugs: JEUX.map(x => x.slug) })
+      })
+        .then(r => r.json())
+        .then(d => message(d.ok ? 'Ordre enregistré.' : (d.error || 'Échec de l’enregistrement.'), !d.ok))
+        .catch(() => message('Erreur réseau : ordre non enregistré.', true));
+    }
+
+    fetch(API + '?action=liste')
+      .then(r => r.json())
+      .then(d => {
+        document.getElementById('loader').style.display = 'none';
+        if (!d.jeux) { message(d.error || 'Chargement impossible.', true); return; }
+        JEUX = d.jeux;
+        rendre();
+      })
+      .catch(() => {
+        document.getElementById('loader').style.display = 'none';
+        message('Erreur réseau.', true);
+      });
+  </script>
+  <script src="/assets/js/site-footer.js"></script>
+  <script src="/assets/js/site-nav.js"></script>
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/admin-badge.js?v=3"></script>
+</body>
+</html>

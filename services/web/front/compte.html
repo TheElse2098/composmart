@@ -544,7 +544,7 @@
           <div class="panel-head">🎮 Records de jeux</div>
           ${u.records.map(r => `
             <a href="/jeu-${r.slug}" class="game-row">
-              <div class="game-row-emoji">${r.emoji}</div>
+              <div class="game-row-emoji">${esc(r.emoji)}</div>
               <div class="game-row-info">
                 <div class="game-row-name">${esc(r.nom)}</div>
                 <div class="game-row-sub">${r.parties > 0 ? r.parties + ' partie' + (r.parties > 1 ? 's' : '') + ' jouée' + (r.parties > 1 ? 's' : '') : 'Pas encore joué'}</div>

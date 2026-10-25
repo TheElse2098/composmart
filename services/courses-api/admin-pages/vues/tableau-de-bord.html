@@ -795,13 +795,9 @@
     /* ══ FICHE JOUEUR ═══════════════════════════════════════════════════════
        Volontairement bornée à niveau + XP (graphe) + jeux terminés — rien de
        plus, sur demande explicite : sert à repérer un bug qu'un joueur
-       signale (score/XP/niveau incohérent), pas à consulter son compte. */
-    const JEUX_META = {
-      'mot-mystere':    { nom: 'Mot mystère',        emoji: '🔤' },
-      'compost-ou-pas': { nom: 'Compost ou pas ?',   emoji: '♻️' },
-      'temps-decompo':  { nom: 'Combien de temps ?', emoji: '⏳' },
-      'tri-eclair':     { nom: 'Tri éclair',         emoji: '⚡' },
-    };
+       signale (score/XP/niveau incohérent), pas à consulter son compte.
+       Nom et emoji de chaque jeu : renvoyés par score.php?action=profile,
+       qui les lit dans la table jeux (db-games). */
 
     function ouvrirFiche(id, nom) {
       document.getElementById('ficheTitre').textContent = '👤 ' + nom;
@@ -825,12 +821,11 @@
         }).join('');
 
         const jeuxHtml = (jeux.records || []).map(r => {
-          const meta = JEUX_META[r.slug] || { nom: r.slug, emoji: '🎮' };
           const score = r.best === null
             ? '<span class="fiche-jeu-score vide">Jamais joué</span>'
             : '<span class="fiche-jeu-score">' + r.best + ' / ' + r.max + '</span>';
-          return '<div class="fiche-jeu-row"><span class="fiche-jeu-emoji">' + meta.emoji + '</span>'
-            + '<span class="fiche-jeu-nom">' + echap(meta.nom) + '</span>' + score + '</div>';
+          return '<div class="fiche-jeu-row"><span class="fiche-jeu-emoji">' + echap(r.emoji || '🎮') + '</span>'
+            + '<span class="fiche-jeu-nom">' + echap(r.nom || r.slug) + '</span>' + score + '</div>';
         }).join('');
 
         document.getElementById('ficheCorps').innerHTML =

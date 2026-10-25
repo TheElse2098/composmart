@@ -1,5 +1,5 @@
-# games-api — endpoints jeux (scores des mini-jeux).
-# Sources : services/games-api/jeux/ + garde partagé shared/_guard.php.
+# games-api — mini-jeux : contenu et règles (table jeux), scores, pages /jeux-admin.
+# Sources : services/games-api/jeux/ + admin-pages/ + garde partagé shared/_guard.php.
 # Build depuis la racine du repo :
 #   docker build -f services/games-api/Dockerfile -t composmart/games-api .
 FROM php:8.3.36-apache
@@ -18,4 +18,10 @@ RUN apt-get update \
 COPY shared/_guard.php         /var/www/html/api/_guard.php
 COPY services/games-api/jeux/  /var/www/html/api/jeux/
 
-RUN chown -R www-data:www-data /var/www/html
+# ── Pages d'administration (/jeux-admin) ───────────────────────────────────
+# Contrôleur + gabarits hors racine web, cf. courses-api et evenements-api.
+COPY services/games-api/admin-pages/controleur.php /var/www/html/jeux-admin-controleur.php
+COPY services/games-api/admin-pages/vues/          /var/www/jeux-admin-vues/
+COPY services/games-api/htaccess-racine            /var/www/html/.htaccess
+
+RUN chown -R www-data:www-data /var/www/html /var/www/jeux-admin-vues

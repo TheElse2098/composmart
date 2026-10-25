@@ -2,35 +2,37 @@
 ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
-require_once __DIR__ . '/../_guard.php';
+require_once __DIR__ . '/_jeux.php';
 secure_session_start();
 header('Content-Type: application/json; charset=utf-8');
 ob_clean();
 csrf_check();
 
-$conn = mysqli_connect(
-    getenv('DB_HOST') ?: 'db',
-    getenv('DB_USER') ?: 'composmart',
-    getenv('DB_PASSWORD') ?: '',
-    getenv('DB_NAME') ?: 'Composmart'
-);
+$conn = jeux_connexion();
 if (!$conn) { echo json_encode(['error' => 'Connexion DB échouée']); exit; }
 
-// Registre des jeux : slug => score maximum atteignable.
-// Ajouter une entrée ici quand on crée un nouveau jeu.
-$JEUX_MAX = ['mot-mystere' => 80, 'compost-ou-pas' => 12, 'temps-decompo' => 30, 'tri-eclair' => 15];
-$JEUX_VALIDES = array_keys($JEUX_MAX);
+// Score maximum et réserve d'XP de chaque jeu : table `jeux`, éditée depuis
+// /jeux-admin (le maximum y est déduit des règles, cf. _jeux.php).
+$JEUX = jeux_parametres($conn);
 
-// Réserve d'XP de chaque jeu. L'XP acquise = réserve × (record ÷ score max),
-// créditée par paliers : seule l'amélioration du record rapporte la différence
-// (80 % du max = 80 % de la réserve ; passer à 90 % ne rapporte que les 10 %
-// manquants). Bornée par la réserve : impossible de farmer à l'infini.
-$JEUX_XP = ['mot-mystere' => 50, 'compost-ou-pas' => 50, 'temps-decompo' => 50, 'tri-eclair' => 50];
+// ── Conversion des scores ──────────────────────────────────────────────────
+// Chaque score garde le maximum en vigueur quand il a été joué (score_max).
+// Si les règles changent ce maximum, un ancien score est ramené à la nouvelle
+// échelle à la lecture : 12/12 devient 15/15 quand une partie passe à 15
+// déchets. Rien n'est réécrit en base. NULLIF protège d'un maximum à 0.
+// `j` = table jeux jointe, `s` = table scores.
+const SCORE_CONVERTI = 'ROUND(s.score * j.score_max / COALESCE(NULLIF(s.score_max, 0), j.score_max))';
+// Part du maximum atteinte, indépendante des règles : base du calcul d'XP.
+const SCORE_RATIO = 's.score / COALESCE(NULLIF(s.score_max, 0), j.score_max)';
 
-// XP cumulée pour un record donné (arrondi au plus proche).
-function xp_pour_best($jeu_id, $best) {
-    global $JEUX_XP, $JEUX_MAX;
-    return (int)round($JEUX_XP[$jeu_id] * max(0, $best) / $JEUX_MAX[$jeu_id]);
+// Réserve d'XP de chaque jeu. L'XP acquise = réserve × (meilleure part du score
+// max atteinte), créditée par paliers : seule l'amélioration du record rapporte
+// la différence (80 % du max = 80 % de la réserve ; passer à 90 % ne rapporte
+// que les 10 % manquants). Bornée par la réserve : impossible de farmer à
+// l'infini. Calculée sur la PART du maximum et non sur le score brut : un
+// changement de règles ne recrédite donc pas une XP déjà acquise.
+function xp_pour_ratio($reserve, $ratio) {
+    return (int)round($reserve * max(0, min(1, $ratio)));
 }
 
 // Crédite l'XP côté db-core via l'endpoint interne d'auth-api (même pattern
@@ -52,6 +54,12 @@ function crediter_xp($uid, $delta, $jeu_id) {
     return (is_array($rep) && !empty($rep['ok'])) ? $rep : null;
 }
 
+/** Jeu jouable par la session courante : publié, ou brouillon testé par un admin. */
+function jeu_ouvert($jeu_id) {
+    global $JEUX;
+    return isset($JEUX[$jeu_id]) && ($JEUX[$jeu_id]['statut'] === 'publie' || is_admin_session());
+}
+
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // ── ENREGISTRER UN SCORE (connecté uniquement) ─────────────────────────────
@@ -59,31 +67,43 @@ if ($action === 'save') {
     if (empty($_SESSION['user_id'])) { echo json_encode(['error' => 'not_logged_in']); exit; }
     $jeu_id = trim($_POST['jeu_id'] ?? '');
     $score  = intval($_POST['score'] ?? -1);
-    if (!in_array($jeu_id, $JEUX_VALIDES, true) || $score < 0 || $score > $JEUX_MAX[$jeu_id]) {
+    // Un score au-dessus du maximum ACTUEL est refusé : celui qui jouait pendant
+    // qu'un admin réduisait la partie perd ce score-là, ce qui est rare et sans
+    // gravité, alors qu'accepter un maximum annoncé par le client permettrait
+    // de s'attribuer 100 % avec « 1 sur 1 ».
+    if (!jeu_ouvert($jeu_id) || $score < 0 || $score > $JEUX[$jeu_id]['score_max']) {
         echo json_encode(['error' => 'Données invalides']);
         exit;
     }
+    $max     = $JEUX[$jeu_id]['score_max'];
+    $reserve = $JEUX[$jeu_id]['xp_reserve'];
     $uid = (int)$_SESSION['user_id'];
     // username/is_admin dénormalisés (users vit dans db-core, pas joignable depuis games-api)
     $uname    = $_SESSION['username'] ?? '';
     $is_admin = is_admin_session() ? 1 : 0;
 
-    // Record AVANT ce score : sert de base au palier d'XP déjà acquis.
-    $stmt = mysqli_prepare($conn, 'SELECT MAX(score) AS best FROM scores WHERE user_id = ? AND jeu_id = ?');
+    // Record AVANT ce score, converti à l'échelle actuelle, et meilleure part
+    // du maximum jamais atteinte (base du palier d'XP déjà acquis).
+    $stmt = mysqli_prepare($conn,
+        'SELECT MAX(' . SCORE_CONVERTI . ') AS best, MAX(' . SCORE_RATIO . ') AS ratio
+         FROM scores s JOIN jeux j ON j.slug = s.jeu_id
+         WHERE s.user_id = ? AND s.jeu_id = ?');
     $stmt->bind_param('is', $uid, $jeu_id);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
-    $ancien_best = ($row && $row['best'] !== null) ? (int)$row['best'] : 0;
+    $ancien_best  = ($row && $row['best'] !== null) ? (int)$row['best'] : 0;
+    $ancien_ratio = ($row && $row['ratio'] !== null) ? (float)$row['ratio'] : 0.0;
 
-    $stmt = mysqli_prepare($conn, 'INSERT INTO scores (user_id, username, is_admin, jeu_id, score) VALUES (?, ?, ?, ?, ?)');
-    $stmt->bind_param('isisi', $uid, $uname, $is_admin, $jeu_id, $score);
+    $stmt = mysqli_prepare($conn, 'INSERT INTO scores (user_id, username, is_admin, jeu_id, score, score_max) VALUES (?, ?, ?, ?, ?, ?)');
+    $stmt->bind_param('isisii', $uid, $uname, $is_admin, $jeu_id, $score, $max);
     $stmt->execute();
 
     $best = max($ancien_best, $score);
 
-    // XP : seule l'amélioration du record rapporte la différence de palier.
+    // XP : seule l'amélioration de la meilleure part du maximum rapporte.
     $xp_gagne = 0; $xp_total = null; $niveau = null;
-    $delta = xp_pour_best($jeu_id, $best) - xp_pour_best($jeu_id, $ancien_best);
+    $ratio = $max > 0 ? $score / $max : 0;
+    $delta = xp_pour_ratio($reserve, max($ratio, $ancien_ratio)) - xp_pour_ratio($reserve, $ancien_ratio);
     if ($delta > 0) {
         $rep = crediter_xp($uid, $delta, $jeu_id);
         if ($rep) {
@@ -107,12 +127,15 @@ if ($action === 'save') {
 // ── INFOS D'UN JEU : record perso + top 5 global ───────────────────────────
 if ($action === 'infos') {
     $jeu_id = trim($_GET['jeu_id'] ?? $_POST['jeu_id'] ?? '');
-    if (!in_array($jeu_id, $JEUX_VALIDES, true)) { echo json_encode(['error' => 'Jeu inconnu']); exit; }
+    if (!jeu_ouvert($jeu_id)) { echo json_encode(['error' => 'Jeu inconnu']); exit; }
 
     $best = null;
     if (!empty($_SESSION['user_id'])) {
         $uid = (int)$_SESSION['user_id'];
-        $stmt = mysqli_prepare($conn, 'SELECT MAX(score) AS best FROM scores WHERE user_id = ? AND jeu_id = ?');
+        $stmt = mysqli_prepare($conn,
+            'SELECT MAX(' . SCORE_CONVERTI . ') AS best
+             FROM scores s JOIN jeux j ON j.slug = s.jeu_id
+             WHERE s.user_id = ? AND s.jeu_id = ?');
         $stmt->bind_param('is', $uid, $jeu_id);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
@@ -122,8 +145,8 @@ if ($action === 'infos') {
     // username dénormalisé : plus de JOIN users (table dans db-core).
     // is_admin exclu du top public (HAVING : un seul score marqué admin suffit à exclure le joueur).
     $stmt = mysqli_prepare($conn,
-        'SELECT s.username, MAX(s.score) AS best
-         FROM scores s
+        'SELECT s.username, MAX(' . SCORE_CONVERTI . ') AS best
+         FROM scores s JOIN jeux j ON j.slug = s.jeu_id
          WHERE s.jeu_id = ?
          GROUP BY s.user_id, s.username
          HAVING MAX(s.is_admin) = 0
@@ -149,7 +172,10 @@ if ($action === 'infos') {
 if ($action === 'bests') {
     if (empty($_SESSION['user_id'])) { echo json_encode(['logged_in' => false, 'bests' => new stdClass()]); exit; }
     $uid = (int)$_SESSION['user_id'];
-    $stmt = mysqli_prepare($conn, 'SELECT jeu_id, MAX(score) AS best FROM scores WHERE user_id = ? GROUP BY jeu_id');
+    $stmt = mysqli_prepare($conn,
+        'SELECT s.jeu_id, MAX(' . SCORE_CONVERTI . ') AS best
+         FROM scores s JOIN jeux j ON j.slug = s.jeu_id
+         WHERE s.user_id = ? GROUP BY s.jeu_id');
     $stmt->bind_param('i', $uid);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -165,19 +191,13 @@ if ($action === 'bests') {
 // Sert à profile.php (auth-api) qui ne peut plus lire la table scores (db-games).
 // Renvoie aussi la méta (nom/emoji/max) pour que le front affiche sans dépendre d'auth.
 if ($action === 'profile') {
-    $meta = [
-        'mot-mystere'    => ['nom' => 'Mot mystère',       'emoji' => '🔤', 'max' => 80],
-        'compost-ou-pas' => ['nom' => 'Compost ou pas ?',  'emoji' => '♻️', 'max' => 12],
-        'temps-decompo'  => ['nom' => 'Combien de temps ?', 'emoji' => '⏳', 'max' => 30],
-        'tri-eclair'     => ['nom' => 'Tri éclair',        'emoji' => '⚡', 'max' => 15],
-    ];
     // Un admin peut consulter le profil jeux d'un AUTRE joueur (fiche joueur,
     // page admin) via ?user_id= — ignoré pour tout le monde d'autre : impossible
     // de lire les scores de quelqu'un en devinant son id dans l'URL. is_admin_session()
-    // est le même contrôle que celui déjà utilisé plus haut (ligne ~69) pour
-    // marquer un score : games-api n'a pas accès à la table users (db-core),
-    // donc pas de relecture en base possible ici — la session fait foi, comme
-    // partout ailleurs dans ce service.
+    // est le même contrôle que celui déjà utilisé plus haut pour marquer un
+    // score : games-api n'a pas accès à la table users (db-core), donc pas de
+    // relecture en base possible ici — la session fait foi, comme partout
+    // ailleurs dans ce service.
     $uid = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
     if (is_admin_session() && isset($_GET['user_id'])) {
         $uid = (int)$_GET['user_id'];
@@ -186,7 +206,10 @@ if ($action === 'profile') {
     $joues = [];
     $parties_total = 0;
     if ($uid > 0) {
-        $stmt = mysqli_prepare($conn, 'SELECT jeu_id, MAX(score) AS best, COUNT(*) AS parties FROM scores WHERE user_id = ? GROUP BY jeu_id');
+        $stmt = mysqli_prepare($conn,
+            'SELECT s.jeu_id, MAX(' . SCORE_CONVERTI . ') AS best, COUNT(*) AS parties
+             FROM scores s JOIN jeux j ON j.slug = s.jeu_id
+             WHERE s.user_id = ? GROUP BY s.jeu_id');
         $stmt->bind_param('i', $uid);
         $stmt->execute();
         $res = $stmt->get_result();
@@ -195,13 +218,16 @@ if ($action === 'profile') {
             $parties_total += (int)$row['parties'];
         }
     }
+    // Jeux publiés seulement : un brouillon n'a pas à apparaître dans un profil.
     $records = [];
-    foreach ($meta as $slug => $info) {
+    $res = mysqli_query($conn, "SELECT slug, nom, emoji, score_max FROM jeux WHERE statut = 'publie' ORDER BY ordre, slug");
+    while ($res && ($info = mysqli_fetch_assoc($res))) {
+        $slug = $info['slug'];
         $records[] = [
             'slug'    => $slug,
             'nom'     => $info['nom'],
             'emoji'   => $info['emoji'],
-            'max'     => $info['max'],
+            'max'     => (int)$info['score_max'],
             'best'    => isset($joues[$slug]) ? $joues[$slug]['best'] : null,
             'parties' => isset($joues[$slug]) ? $joues[$slug]['parties'] : 0,
         ];

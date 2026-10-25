@@ -380,6 +380,17 @@ function appel_interne($url, $payload) {
 }
 
 /**
+ * isAdmin relu EN BASE (db-core) via l'endpoint interne d'auth-api, pour les
+ * services qui n'ont pas la table users : contrôleurs des pages
+ * /evenements-admin et /jeux-admin. Variable AUTH_ADMIN_CHECK_URL.
+ * Un échec réseau vaut refus, jamais accès accordé par défaut.
+ */
+function est_admin_via_auth($uid) {
+    $rep = appel_interne(getenv('AUTH_ADMIN_CHECK_URL') ?: '', ['uid' => (int)$uid]);
+    return is_array($rep) && !empty($rep['ok']) && !empty($rep['isAdmin']);
+}
+
+/**
  * Garde des endpoints internes (purge, export…) : POST + secret partagé, sinon
  * 405/403 et fin du script. Renvoie le corps JSON décodé de la requête.
  */

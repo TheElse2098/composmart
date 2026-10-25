@@ -172,48 +172,22 @@
 
   <div class="bottom-leaf"></div>
 
+  <script src="/assets/js/jeu-base.js"></script>
   <script>
     const JEU_ID = 'compost-ou-pas';
-    const NB_ITEMS = 12;
+    // Contenu (déchets) et règles (nombre par partie) : édités dans /jeux-admin,
+    // reçus de /api/jeux/catalogue.php par JeuBase.lancer (cf. jeu-base.js).
     // cat : 'oui' au compost sans réserve · 'attention' réservé à un compost mûr
     // et bien conduit · 'non' jamais. Un booléen ne suffisait plus, et il forçait
     // à trancher arbitrairement pour la viande et le poisson — qui étaient de ce
     // fait retirés du jeu.
-    const POOL = [
-      { nom: 'Épluchures de légumes', emoji: '🥕', cat: 'oui', info: 'Parfaites pour le compost, c\'est la base !' },
-      { nom: 'Marc de café',          emoji: '☕', cat: 'oui', info: 'Excellent ! Les vers en raffolent, filtre papier compris.' },
-      { nom: 'Coquilles d\'œuf',      emoji: '🥚', cat: 'oui', info: 'Oui ! Écrasées, elles apportent du calcium.' },
-      { nom: 'Tonte de pelouse',      emoji: '🌱', cat: 'oui', info: 'Oui, en couches fines pour éviter que ça fermente.' },
-      { nom: 'Feuilles mortes',       emoji: '🍂', cat: 'oui', info: 'Oui ! Une super source de carbone.' },
-
-      { nom: 'Viande',                emoji: '🥩', cat: 'attention', info: 'Possible dans un compost mûr et actif : en petits morceaux, enfouis au centre. Dans un bac jeune ou peu brassé, odeurs et rongeurs garantis.' },
-      { nom: 'Poisson',               emoji: '🐟', cat: 'attention', info: 'Même règle que la viande : seulement dans un compost bien établi, enfoui et recouvert. À proscrire sur un balcon.' },
-      { nom: 'Pain rassis',           emoji: '🍞', cat: 'attention', info: 'En petits morceaux humidifiés et enfouis. Laissé sec en surface, il moisit et attire les rongeurs.' },
-      { nom: 'Cendres de bois',       emoji: '🔥', cat: 'attention', info: 'Une fine poignée de temps en temps, bien répartie : elles apportent du potassium. En quantité, elles rendent le compost trop basique et le bloquent.' },
-      { nom: 'Essuie-tout',           emoji: '🧻', cat: 'attention', info: 'Oui s\'il n\'a servi qu\'à essuyer de l\'eau ou des aliments. Imbibé de produit ménager, il contamine tout le bac.' },
-      { nom: 'Sachets de thé',        emoji: '🍵', cat: 'attention', info: 'Le thé, toujours. Le sachet, seulement s\'il est en papier non plastifié, et sans l\'agrafe : beaucoup contiennent du polypropylène.' },
-      { nom: 'Produits laitiers',     emoji: '🧀', cat: 'attention', info: 'Un reste de fromage ou de yaourt enfoui dans un compost mûr se dégrade sans problème. En quantité, ça rancit, ça sent fort et ça attire les nuisibles.' },
-
-      { nom: 'Os',                    emoji: '🦴', cat: 'non', info: 'Beaucoup trop longs à se décomposer.' },
-      { nom: 'Huile de friture',      emoji: '🛢️', cat: 'non', info: 'Non : elle étouffe les micro-organismes.' },
-      { nom: 'Sac plastique « biodégradable »', emoji: '🛍️', cat: 'non', info: 'Méfiance : la plupart ne se dégradent pas en compost domestique.' },
-      { nom: 'Plantes malades',       emoji: '🥀', cat: 'non', info: 'Non : les maladies peuvent survivre et contaminer le jardin.' }
-    ];
     const LIBELLE_CAT = { oui: 'Au compost', attention: 'Avec prudence', non: 'Poubelle' };
 
+    let JEU = null, NB_ITEMS = 0;
     let items = [], round = 0, score = 0, verrou = false;
 
-    function melanger(arr) {
-      const a = arr.slice();
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    }
-
     function demarrer() {
-      items = melanger(POOL).slice(0, NB_ITEMS);
+      items = JeuBase.melanger(JEU.items).slice(0, NB_ITEMS);
       round = 0; score = 0; verrou = false;
       document.getElementById('endScreen').style.display = 'none';
       document.getElementById('gameZone').style.display = 'block';
@@ -264,69 +238,20 @@
     });
 
     function finJeu() {
-      document.getElementById('gameZone').style.display = 'none';
-      document.getElementById('endScreen').style.display = 'block';
-      document.getElementById('endScore').textContent = score + ' / ' + NB_ITEMS;
-      const pct = score / NB_ITEMS;
-      const emoji = pct >= 0.9 ? '🏆' : (pct >= 0.65 ? '🌟' : (pct >= 0.4 ? '🌱' : '🪱'));
-      const msg = pct >= 0.9 ? 'Parfait, ton bac à compost est entre de bonnes mains !'
-                : pct >= 0.65 ? 'Très bien ! Encore quelques pièges à éviter.'
-                : pct >= 0.4 ? 'Pas mal, mais le cours sur les bases du compostage t\'aiderait !'
-                : 'Ton compost risque l\'indigestion 😅 Va voir les cours !';
-      document.getElementById('endEmoji').textContent = emoji;
-      document.getElementById('endMsg').textContent = msg;
-      sauvegarderEtClasser();
-    }
-
-    function sauvegarderEtClasser() {
-      fetch('/api/jeux/score.php', {
-        method: 'POST',
-        body: new URLSearchParams({ action: 'save', jeu_id: JEU_ID, score: score })
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (d.error === 'not_logged_in') {
-          document.getElementById('saveInfo').style.display = 'block';
-        } else if (d.ok && d.record && score > 0) {
-          document.getElementById('endRecord').style.display = 'inline-block';
-        }
-        if (d.ok && d.xp_gagne > 0) {
-          var endXp = document.getElementById('endXp');
-          endXp.textContent = '⚡ +' + d.xp_gagne + ' XP';
-          endXp.style.display = 'inline-block';
-        }
-        return fetch('/api/jeux/score.php?action=infos&jeu_id=' + JEU_ID);
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (!d || !d.top || !d.top.length) return;
-        const rows = document.getElementById('lbRows');
-        rows.innerHTML = '';
-        const medailles = ['🥇', '🥈', '🥉', '4.', '5.'];
-        d.top.forEach((t, i) => {
-          const row = document.createElement('div');
-          row.className = 'lb-row';
-          const nom = document.createElement('span');
-          nom.textContent = medailles[i] + ' ' + t.username;
-          const sc = document.createElement('span');
-          sc.textContent = t.score;
-          row.appendChild(nom); row.appendChild(sc);
-          rows.appendChild(row);
-        });
-        document.getElementById('leaderboard').style.display = 'block';
-      })
-      .catch(() => {});
+      JeuBase.afficherFin(JEU, score);
+      JeuBase.sauvegarder(JEU_ID, score);
     }
 
     document.getElementById('btnRejouer').addEventListener('click', () => {
-      document.getElementById('endRecord').style.display = 'none';
-      document.getElementById('endXp').style.display = 'none';
-      document.getElementById('leaderboard').style.display = 'none';
-      document.getElementById('saveInfo').style.display = 'none';
+      JeuBase.reinitialiserFin();
       demarrer();
     });
 
-    demarrer();
+    JeuBase.lancer(JEU_ID, function (jeu) {
+      JEU = jeu;
+      NB_ITEMS = jeu.regles.nb_items;
+      demarrer();
+    });
   </script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/admin-badge.js?v=3"></script>

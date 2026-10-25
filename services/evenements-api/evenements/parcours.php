@@ -53,17 +53,8 @@ if ($action === 'types') {
     exit;
 }
 
-// ── POOLS DES JEUX (pour peupler une slide de type « jeu ») ────────────────
-// Les éléments sont recopiés dans la slide au moment de l'import : un parcours
-// déjà écrit ne bouge donc pas si le jeu d'origine évolue.
-if ($action === 'pools') {
-    $chemin = '/var/www/evenements-data/jeux-pools.json';
-    $brut = @file_get_contents($chemin);
-    $pools = $brut !== false ? json_decode($brut, true) : null;
-    if (!is_array($pools)) { echo json_encode(['error' => 'Pools indisponibles.']); exit; }
-    echo json_encode(['pools' => $pools], JSON_UNESCAPED_UNICODE);
-    exit;
-}
+// Pools des jeux (pour peupler une slide de type « jeu ») : servis par
+// games-api, propriétaire du contenu des jeux (/api/jeux/catalogue.php?action=pools).
 
 // ── LISTE DES PARCOURS ──────────────────────────────────────────────────────
 if ($action === 'liste') {

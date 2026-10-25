@@ -170,37 +170,17 @@
 
   <div class="bottom-leaf"></div>
 
+  <script src="/assets/js/jeu-base.js"></script>
   <script>
     const JEU_ID = 'mot-mystere';
-    const NB_MOTS = 8;
-    const POOL = [
-      { mot: 'COMPOST',  indice: 'Le résultat de la décomposition des biodéchets' },
-      { mot: 'LOMBRIC',  indice: 'Le ver de terre, grand allié du composteur' },
-      { mot: 'EISENIA',  indice: 'Le nom scientifique du ver de compost' },
-      { mot: 'HUMUS',    indice: 'Matière sombre et fertile issue de la décomposition' },
-      { mot: 'AZOTE',    indice: 'Élément apporté par les matières vertes et humides' },
-      { mot: 'CARBONE',  indice: 'Élément apporté par les matières brunes et sèches' },
-      { mot: 'TERREAU',  indice: 'Support de culture riche, parfait pour les semis' },
-      { mot: 'PAILLAGE', indice: 'Couverture protectrice du sol au jardin' },
-      { mot: 'BACTERIE', indice: 'Micro-organisme décomposeur invisible à l\'œil nu' },
-      { mot: 'CLOPORTE', indice: 'Petit crustacé terrestre qui vit dans le compost' },
-      { mot: 'DECHET',   indice: 'Ce que le compostage transforme en ressource' },
-      { mot: 'ENGRAIS',  indice: 'Le compost en est un, 100% naturel et gratuit' }
-    ];
+    // Contenu (mots et indices) et règles (nombre de mots, points selon le
+    // nombre d'erreurs) : édités dans /jeux-admin, reçus par JeuBase.lancer.
+    let JEU = null, NB_MOTS = 0, POINTS = [10, 6, 3];
 
     let mots = [], round = 0, score = 0, erreurs = 0, reponse = [], lettres = [];
 
-    function melanger(arr) {
-      const a = arr.slice();
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    }
-
     function demarrer() {
-      mots = melanger(POOL).slice(0, NB_MOTS);
+      mots = JeuBase.melanger(JEU.items).slice(0, NB_MOTS);
       round = 0; score = 0;
       document.getElementById('endScreen').style.display = 'none';
       document.getElementById('gameZone').style.display = 'block';
@@ -211,14 +191,19 @@
       erreurs = 0;
       reponse = [];
       const mot = mots[round].mot;
-      let tuiles = melanger(mot.split(''));
+      let tuiles = JeuBase.melanger(mot.split(''));
       // éviter que les lettres mélangées affichent directement le mot
       if (tuiles.join('') === mot && mot.length > 1) tuiles = [tuiles[1], tuiles[0]].concat(tuiles.slice(2));
       lettres = tuiles;
 
       document.getElementById('statusMot').textContent = 'Mot ' + (round + 1) + '/' + NB_MOTS;
       document.getElementById('statusScore').textContent = 'Score : ' + score;
-      document.getElementById('indice').innerHTML = '💡 <b>Indice :</b> ' + mots[round].indice;
+      // L'indice est saisi dans l'admin : posé en texte, jamais en HTML.
+      const indice = document.getElementById('indice');
+      const b = document.createElement('b');
+      b.textContent = 'Indice :';
+      indice.textContent = '💡 ';
+      indice.append(b, ' ' + mots[round].indice);
 
       const slots = document.getElementById('slots');
       slots.className = 'slots';
@@ -275,7 +260,8 @@
       const slots = document.getElementById('slots');
       if (essai === mot) {
         slots.classList.add('good');
-        const points = erreurs === 0 ? 10 : (erreurs === 1 ? 6 : 3);
+        // 1er essai, 2e essai, 3e et suivants : points des règles du jeu.
+        const points = POINTS[Math.min(erreurs, 2)];
         score += points;
         document.getElementById('statusScore').textContent = 'Score : ' + score;
         setTimeout(suivant, 900);
@@ -312,70 +298,21 @@
     }
 
     function finJeu() {
-      document.getElementById('gameZone').style.display = 'none';
-      document.getElementById('endScreen').style.display = 'block';
-      const max = NB_MOTS * 10;
-      document.getElementById('endScore').textContent = score + ' / ' + max;
-      const pct = score / max;
-      const emoji = pct >= 0.9 ? '🏆' : (pct >= 0.6 ? '🌟' : (pct >= 0.3 ? '🌱' : '🪱'));
-      const msg = pct >= 0.9 ? 'Incroyable, tu es un maître du compost !'
-                : pct >= 0.6 ? 'Très beau score, le vocabulaire est presque maîtrisé !'
-                : pct >= 0.3 ? 'Pas mal ! Va relire les cours pour progresser.'
-                : 'Les vers de compost te conseillent un petit tour par les cours 😉';
-      document.getElementById('endEmoji').textContent = emoji;
-      document.getElementById('endMsg').textContent = msg;
-      sauvegarderEtClasser();
-    }
-
-    function sauvegarderEtClasser() {
-      fetch('/api/jeux/score.php', {
-        method: 'POST',
-        body: new URLSearchParams({ action: 'save', jeu_id: JEU_ID, score: score })
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (d.error === 'not_logged_in') {
-          document.getElementById('saveInfo').style.display = 'block';
-        } else if (d.ok && d.record && score > 0) {
-          document.getElementById('endRecord').style.display = 'inline-block';
-        }
-        if (d.ok && d.xp_gagne > 0) {
-          var endXp = document.getElementById('endXp');
-          endXp.textContent = '⚡ +' + d.xp_gagne + ' XP';
-          endXp.style.display = 'inline-block';
-        }
-        return fetch('/api/jeux/score.php?action=infos&jeu_id=' + JEU_ID);
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (!d || !d.top || !d.top.length) return;
-        const rows = document.getElementById('lbRows');
-        rows.innerHTML = '';
-        const medailles = ['🥇', '🥈', '🥉', '4.', '5.'];
-        d.top.forEach((t, i) => {
-          const row = document.createElement('div');
-          row.className = 'lb-row';
-          const nom = document.createElement('span');
-          nom.textContent = medailles[i] + ' ' + t.username;
-          const sc = document.createElement('span');
-          sc.textContent = t.score;
-          row.appendChild(nom); row.appendChild(sc);
-          rows.appendChild(row);
-        });
-        document.getElementById('leaderboard').style.display = 'block';
-      })
-      .catch(() => {});
+      JeuBase.afficherFin(JEU, score);
+      JeuBase.sauvegarder(JEU_ID, score);
     }
 
     document.getElementById('btnRejouer').addEventListener('click', () => {
-      document.getElementById('endRecord').style.display = 'none';
-      document.getElementById('endXp').style.display = 'none';
-      document.getElementById('leaderboard').style.display = 'none';
-      document.getElementById('saveInfo').style.display = 'none';
+      JeuBase.reinitialiserFin();
       demarrer();
     });
 
-    demarrer();
+    JeuBase.lancer(JEU_ID, function (jeu) {
+      JEU = jeu;
+      NB_MOTS = jeu.regles.nb_mots;
+      POINTS = jeu.regles.points;
+      demarrer();
+    });
   </script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/admin-badge.js?v=3"></script>

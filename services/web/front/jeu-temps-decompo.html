@@ -224,10 +224,16 @@
 
   <div class="bottom-leaf"></div>
 
+  <script src="/assets/js/jeu-base.js"></script>
   <script>
     const JEU_ID = 'temps-decompo';
-    const NB_ITEMS = 10;
-    const PTS_MAX_ROUND = 3;
+    // Contenu (déchets et durées) et règles (déchets courts/longs par partie,
+    // paliers de précision) : édités dans /jeux-admin, reçus par JeuBase.lancer.
+    // Un déchet est « court » s'il met 1 an ou moins : même seuil que
+    // games-api/jeux/_jeux.php (JEUX_TEMPS_SEUIL_COURT), qui vérifie qu'il y en
+    // a assez de chaque sorte pour une partie.
+    const SEUIL_COURT = 365;
+    let JEU = null, NB_ITEMS = 0, SEUILS = [];
 
     // Échelle logarithmique : 1 jour → 1000 ans. p ∈ [0,1] ↔ log10(jours).
     const JOURS_MAX = 365000;
@@ -235,43 +241,10 @@
     function pVersJours(p) { return Math.pow(10, p * LOG_MAX); }
     function joursVersP(j) { return Math.log10(Math.max(1, j)) / LOG_MAX; }
 
-    // Tolérance en fraction de la largeur de la ligne (échelle log, donc en
-    // ordres de grandeur) : très proche = 3 pts, proche = 2, pas loin = 1.
-    const SEUILS = [
-      { d: 0.05, pts: 3, label: '🎯 En plein dans le mille !' },
-      { d: 0.12, pts: 2, label: '👍 Très proche !' },
-      { d: 0.20, pts: 1, label: '🤏 Pas loin...' }
-    ];
-
-    // Durées de décomposition approximatives (en jours) + anecdote.
-    const POOL_COURTS = [
-      { nom: 'un trognon de pomme',      emoji: '🍎', jours: 60,   info: 'Environ 2 mois. Bien plus long qu\'on ne l\'imagine — ne le jette pas dans la nature !' },
-      { nom: 'une peau de banane',       emoji: '🍌', jours: 45,   info: 'Environ 6 semaines au compost… et jusqu\'à 2 ans en montagne, où il fait froid et sec !' },
-      { nom: 'des épluchures de légumes', emoji: '🥕', jours: 30,  info: 'Environ 1 mois : les stars du compost, elles nourrissent vite le sol.' },
-      { nom: 'du marc de café',          emoji: '☕', jours: 21,   info: 'À peine 3 semaines. Les vers de terre en raffolent !' },
-      { nom: 'du pain',                  emoji: '🍞', jours: 14,   info: 'Environ 2 semaines, l\'un des plus rapides à se décomposer.' },
-      { nom: 'de l\'essuie-tout',        emoji: '🧻', jours: 30,   info: 'Environ 1 mois, s\'il n\'a pas touché de produits chimiques.' },
-      { nom: 'des feuilles mortes',      emoji: '🍂', jours: 180,  info: 'De 3 à 6 mois : une super source de carbone pour le compost.' },
-      { nom: 'une peau d\'orange',       emoji: '🍊', jours: 180,  info: 'Environ 6 mois : la peau des agrumes est épaisse et résistante.' },
-      { nom: 'un sachet de thé en papier', emoji: '🍵', jours: 90, info: 'Environ 3 mois. Attention aux sachets en nylon, qui ne se décomposent pas !' },
-      { nom: 'un journal',               emoji: '📰', jours: 90,   info: 'Environ 3 mois : le papier se composte très bien en petits morceaux.' },
-      { nom: 'du carton',                emoji: '📦', jours: 150,  info: 'Environ 5 mois : déchiré et humide, il se composte très bien.' },
-      { nom: 'une coquille d\'œuf',      emoji: '🥚', jours: 365,  info: 'Environ 1 an pour une coquille entière — écrase-la pour accélérer et apporter du calcium !' },
-      { nom: 'un t-shirt en coton non traité', emoji: '👕', jours: 270, info: 'De 6 mois à 1 an : le coton pur est une fibre naturelle, contrairement au polyester. Teintures, apprêts et mélanges synthétiques rallongent nettement ce délai.' }
-    ];
-    const POOL_LONGS = [
-      { nom: 'un bouchon de liège',      emoji: '🍾', jours: 1095,   info: 'Environ 3 ans. Naturel, mais très lent — il se recycle mieux qu\'il ne se composte.' },
-      { nom: 'un chewing-gum',           emoji: '🍬', jours: 1825,   info: 'Environ 5 ans ! Le chewing-gum est fait de gomme… synthétique, un dérivé du plastique.' },
-      { nom: 'un mégot de cigarette',    emoji: '🚬', jours: 3650,   info: 'Environ 10 ans, et un seul mégot pollue jusqu\'à 500 litres d\'eau.' },
-      { nom: 'une boîte de conserve',    emoji: '🥫', jours: 18250,  info: 'Environ 50 ans. L\'acier rouille lentement… mais se recycle à l\'infini !' },
-      { nom: 'une canette en aluminium', emoji: '🥤', jours: 73000,  info: 'Environ 200 ans dans la nature. Recyclée, elle redevient canette en 60 jours !' },
-      { nom: 'un sac plastique',         emoji: '🛍️', jours: 146000, info: 'Environ 400 ans. Et il ne disparaît pas : il se fragmente en microplastiques.' },
-      { nom: 'une bouteille en plastique', emoji: '🧴', jours: 164250, info: '450 ans ! La bouteille jetée aujourd\'hui sera encore là pour tes arrière-arrière-…-petits-enfants.' },
-      { nom: 'une couche jetable',       emoji: '👶', jours: 164250, info: 'Environ 450 ans. Un bébé en utilise près de 4000 avant la propreté…' },
-      { nom: 'une brosse à dents',       emoji: '🪥', jours: 182500, info: 'Environ 500 ans. Toutes les brosses à dents en plastique jamais fabriquées existent encore.' },
-      { nom: 'un fil de pêche',          emoji: '🎣', jours: 219000, info: 'Environ 600 ans, et un vrai piège mortel pour les animaux marins.' },
-      { nom: 'une barquette en polystyrène', emoji: '🥡', jours: 365000, info: 'Jusqu\'à 1000 ans ! Le polystyrène est quasi indestructible dans la nature.' }
-    ];
+    // Libellés des trois paliers de précision, du plus précis au plus large.
+    // Tolérance (en fraction de la largeur de la ligne, échelle log, donc en
+    // ordres de grandeur) et points de chaque palier : règles du jeu.
+    const LIBELLES_SEUILS = ['🎯 En plein dans le mille !', '👍 Très proche !', '🤏 Pas loin...'];
 
     const TICKS = [
       { label: '1 jour',    jours: 1 },
@@ -289,15 +262,6 @@
     const slider = document.getElementById('slider');
     const bubble = document.getElementById('bubble');
     const trueMarker = document.getElementById('trueMarker');
-
-    function melanger(arr) {
-      const a = arr.slice();
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
-      return a;
-    }
 
     function fmtDuree(j) {
       if (j < 14)   { const n = Math.round(j);       return n + (n > 1 ? ' jours' : ' jour'); }
@@ -332,7 +296,10 @@
     }
 
     function demarrer() {
-      items = melanger(melanger(POOL_COURTS).slice(0, 6).concat(melanger(POOL_LONGS).slice(0, 4)));
+      const courts = JEU.items.filter(i => i.jours <= SEUIL_COURT);
+      const longs  = JEU.items.filter(i => i.jours > SEUIL_COURT);
+      items = JeuBase.melanger(JeuBase.melanger(courts).slice(0, JEU.regles.nb_courts)
+        .concat(JeuBase.melanger(longs).slice(0, JEU.regles.nb_longs)));
       round = 0; score = 0; verrou = false;
       document.getElementById('endScreen').style.display = 'none';
       document.getElementById('gameZone').style.display = 'block';
@@ -367,9 +334,9 @@
       const pVrai = joursVersP(it.jours);
       const ecart = Math.abs(pJoueur - pVrai);
 
-      let pts = 0, label = '❌ Raté !';
-      for (const s of SEUILS) {
-        if (ecart <= s.d) { pts = s.pts; label = s.label; break; }
+      let pts = 0, label = '❌ Raté !', rang = -1;
+      for (let i = 0; i < SEUILS.length; i++) {
+        if (ecart <= SEUILS[i].d) { pts = SEUILS[i].pts; label = LIBELLES_SEUILS[i]; rang = i; break; }
       }
       score += pts;
       document.getElementById('statusScore').textContent = 'Score : ' + score;
@@ -378,10 +345,15 @@
       trueMarker.style.left = pVersPx(pVrai) + 'px';
       trueMarker.classList.add('show');
 
+      // L'explication est saisie dans l'admin : posée en texte, jamais en HTML.
       const fb = document.getElementById('feedback');
-      fb.className = 'feedback ' + (pts >= 3 ? 'ok' : (pts >= 1 ? 'mid' : 'ko'));
-      fb.innerHTML = '<strong>' + label + ' +' + pts + ' pt' + (pts > 1 ? 's' : '') +
-        '</strong><br>Réponse : <strong>' + fmtDuree(it.jours) + '</strong>. ' + it.info;
+      fb.className = 'feedback ' + (rang === 0 ? 'ok' : (pts >= 1 ? 'mid' : 'ko'));
+      const titre = document.createElement('strong');
+      titre.textContent = label + ' +' + pts + ' pt' + (pts > 1 ? 's' : '');
+      const duree = document.createElement('strong');
+      duree.textContent = fmtDuree(it.jours);
+      fb.textContent = '';
+      fb.append(titre, document.createElement('br'), 'Réponse : ', duree, '. ' + it.info);
 
       document.getElementById('btnContinuer').style.display = 'inline-block';
     }
@@ -403,71 +375,22 @@
     });
 
     function finJeu() {
-      document.getElementById('gameZone').style.display = 'none';
-      document.getElementById('endScreen').style.display = 'block';
-      const max = NB_ITEMS * PTS_MAX_ROUND;
-      document.getElementById('endScore').textContent = score + ' / ' + max;
-      const pct = score / max;
-      const emoji = pct >= 0.85 ? '🏆' : (pct >= 0.6 ? '🌟' : (pct >= 0.35 ? '🌱' : '🪱'));
-      const msg = pct >= 0.85 ? 'Impressionnant ! Le temps n\'a plus de secret pour toi.'
-                : pct >= 0.6 ? 'Très bonne intuition ! Quelques surprises quand même, non ?'
-                : pct >= 0.35 ? 'Pas mal ! La nature est parfois plus lente qu\'on ne croit…'
-                : 'Surpris par les réponses ? C\'est bien le but du jeu 😄';
-      document.getElementById('endEmoji').textContent = emoji;
-      document.getElementById('endMsg').textContent = msg;
-      sauvegarderEtClasser();
-    }
-
-    function sauvegarderEtClasser() {
-      fetch('/api/jeux/score.php', {
-        method: 'POST',
-        body: new URLSearchParams({ action: 'save', jeu_id: JEU_ID, score: score })
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (d.error === 'not_logged_in') {
-          document.getElementById('saveInfo').style.display = 'block';
-        } else if (d.ok && d.record && score > 0) {
-          document.getElementById('endRecord').style.display = 'inline-block';
-        }
-        if (d.ok && d.xp_gagne > 0) {
-          var endXp = document.getElementById('endXp');
-          endXp.textContent = '⚡ +' + d.xp_gagne + ' XP';
-          endXp.style.display = 'inline-block';
-        }
-        return fetch('/api/jeux/score.php?action=infos&jeu_id=' + JEU_ID);
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (!d || !d.top || !d.top.length) return;
-        const rows = document.getElementById('lbRows');
-        rows.innerHTML = '';
-        const medailles = ['🥇', '🥈', '🥉', '4.', '5.'];
-        d.top.forEach((t, i) => {
-          const row = document.createElement('div');
-          row.className = 'lb-row';
-          const nom = document.createElement('span');
-          nom.textContent = medailles[i] + ' ' + t.username;
-          const sc = document.createElement('span');
-          sc.textContent = t.score;
-          row.appendChild(nom); row.appendChild(sc);
-          rows.appendChild(row);
-        });
-        document.getElementById('leaderboard').style.display = 'block';
-      })
-      .catch(() => {});
+      JeuBase.afficherFin(JEU, score);
+      JeuBase.sauvegarder(JEU_ID, score);
     }
 
     document.getElementById('btnRejouer').addEventListener('click', () => {
-      document.getElementById('endRecord').style.display = 'none';
-      document.getElementById('endXp').style.display = 'none';
-      document.getElementById('leaderboard').style.display = 'none';
-      document.getElementById('saveInfo').style.display = 'none';
+      JeuBase.reinitialiserFin();
       demarrer();
     });
 
-    placerTicks();
-    demarrer();
+    JeuBase.lancer(JEU_ID, function (jeu) {
+      JEU = jeu;
+      SEUILS = jeu.regles.seuils;
+      NB_ITEMS = jeu.regles.nb_courts + jeu.regles.nb_longs;
+      demarrer();      // rend la zone visible : la largeur du curseur est alors connue
+      placerTicks();
+    });
   </script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/admin-badge.js?v=3"></script>

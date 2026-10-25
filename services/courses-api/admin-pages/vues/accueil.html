@@ -40,10 +40,6 @@
     .tuile-fleche { position: absolute; top: 20px; right: 20px; font-weight: 900; color: #1e6e3e; opacity: 0.5; transition: opacity 0.15s, transform 0.15s; }
     a.tuile:hover .tuile-fleche { opacity: 1; transform: translateX(3px); }
 
-    /* Espace pas encore livré : visible pour annoncer la suite, mais inerte. */
-    .tuile.bientot { opacity: 0.6; cursor: default; }
-    .tuile.bientot .tuile-fleche { display: none; }
-
     html.dark body { background-color: #0f1712; color: #e8f5ee; }
     html.dark h1 { color: #e8f5ee; }
     html.dark .tuile { background: #16211a; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
@@ -86,13 +82,13 @@
       <div class="tuile-etat" id="etatCours"></div>
     </a>
 
-    <div class="tuile bientot" aria-disabled="true">
+    <a class="tuile" href="/jeux-admin">
       <span class="tuile-fleche">→</span>
       <div class="tuile-emoji">🎮</div>
       <div class="tuile-titre">Édition des jeux</div>
       <div class="tuile-desc">Contenu et règles des mini-jeux : déchets, mots, durées, nombre de manches.</div>
-      <div class="tuile-etat"><span class="puce calme">Bientôt disponible</span></div>
-    </div>
+      <div class="tuile-etat" id="etatJeux"></div>
+    </a>
 
     <a class="tuile" href="/evenements-admin">
       <span class="tuile-fleche">→</span>
@@ -152,6 +148,15 @@
       var puces = [{ texte: pluriel(n.publie, 'cours publié', 'cours publiés') }];
       if (n.brouillon > 0) puces.push({ texte: pluriel(n.brouillon, 'brouillon', 'brouillons'), alerte: true });
       afficherEtat('etatCours', puces);
+    }).catch(function () {});
+
+    // ── Jeux : publiés et brouillons ──
+    json('/api/jeux/admin.php?action=liste').then(function (d) {
+      var n = { publie: 0, brouillon: 0 };
+      (d.jeux || []).forEach(function (j) { if (j.statut in n) n[j.statut]++; });
+      var puces = [{ texte: pluriel(n.publie, 'jeu publié', 'jeux publiés') }];
+      if (n.brouillon > 0) puces.push({ texte: pluriel(n.brouillon, 'brouillon', 'brouillons'), alerte: true });
+      afficherEtat('etatJeux', puces);
     }).catch(function () {});
 
     // ── Événements : ceux qui vivent en ce moment ou approchent ──
