@@ -228,12 +228,10 @@
   <script>
     const JEU_ID = 'temps-decompo';
     // Contenu (déchets et durées) et règles (déchets courts/longs par partie,
-    // paliers de précision) : édités dans /jeux-admin, reçus par JeuBase.lancer.
-    // Un déchet est « court » s'il met 1 an ou moins : même seuil que
-    // games-api/jeux/_jeux.php (JEUX_TEMPS_SEUIL_COURT), qui vérifie qu'il y en
-    // a assez de chaque sorte pour une partie.
-    const SEUIL_COURT = 365;
-    let JEU = null, NB_ITEMS = 0, SEUILS = [];
+    // limite court/long en jours, paliers de précision et leurs messages) :
+    // édités dans /jeux-admin, reçus par JeuBase.lancer. games-api vérifie
+    // qu'il y a assez de déchets de chaque sorte pour une partie.
+    let JEU = null, NB_ITEMS = 0, SEUILS = [], SEUIL_COURT = 365;
 
     // Échelle logarithmique : 1 jour → 1000 ans. p ∈ [0,1] ↔ log10(jours).
     const JOURS_MAX = 365000;
@@ -241,10 +239,9 @@
     function pVersJours(p) { return Math.pow(10, p * LOG_MAX); }
     function joursVersP(j) { return Math.log10(Math.max(1, j)) / LOG_MAX; }
 
-    // Libellés des trois paliers de précision, du plus précis au plus large.
-    // Tolérance (en fraction de la largeur de la ligne, échelle log, donc en
-    // ordres de grandeur) et points de chaque palier : règles du jeu.
-    const LIBELLES_SEUILS = ['🎯 En plein dans le mille !', '👍 Très proche !', '🤏 Pas loin...'];
+    // Paliers de précision, du plus précis au plus large : tolérance (en
+    // fraction de la largeur de la ligne, échelle log, donc en ordres de
+    // grandeur), points et message de chaque palier viennent des règles.
 
     const TICKS = [
       { label: '1 jour',    jours: 1 },
@@ -336,7 +333,7 @@
 
       let pts = 0, label = '❌ Raté !', rang = -1;
       for (let i = 0; i < SEUILS.length; i++) {
-        if (ecart <= SEUILS[i].d) { pts = SEUILS[i].pts; label = LIBELLES_SEUILS[i]; rang = i; break; }
+        if (ecart <= SEUILS[i].d) { pts = SEUILS[i].pts; label = SEUILS[i].label; rang = i; break; }
       }
       score += pts;
       document.getElementById('statusScore').textContent = 'Score : ' + score;
@@ -387,6 +384,7 @@
     JeuBase.lancer(JEU_ID, function (jeu) {
       JEU = jeu;
       SEUILS = jeu.regles.seuils;
+      SEUIL_COURT = jeu.regles.seuil_court;
       NB_ITEMS = jeu.regles.nb_courts + jeu.regles.nb_longs;
       demarrer();      // rend la zone visible : la largeur du curseur est alors connue
       placerTicks();

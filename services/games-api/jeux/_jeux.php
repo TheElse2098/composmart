@@ -14,9 +14,6 @@
  */
 require_once __DIR__ . '/../_guard.php';
 
-/** Seuil court / long de « Combien de temps ? », en jours (≤ 1 an = court). */
-const JEUX_TEMPS_SEUIL_COURT = 365;
-
 function jeux_connexion() {
     mysqli_report(MYSQLI_REPORT_OFF);
     $c = mysqli_connect(
@@ -44,8 +41,7 @@ function jeux_moteurs() {
             'categories' => ['oui' => 'Au compost', 'attention' => 'Avec prudence', 'non' => 'Poubelle'],
         ],
         'temps-decompo' => [
-            'consigne'    => 'Estime la durée de décomposition, en jours.',
-            'seuil_court' => JEUX_TEMPS_SEUIL_COURT,
+            'consigne' => 'Estime la durée de décomposition, en jours.',
         ],
         'tri-eclair' => [
             'consigne'   => 'Glisse chaque déchet dans le bon bac avant la fin du chrono.',
@@ -117,12 +113,24 @@ function jeux_valider_regles($slug, $r) {
             $l = jeux_int($r['nb_longs'] ?? null, 0, 15);
             if ($c === null || $l === null) return [null, 'Déchets courts et longs par partie : entre 0 et 15 chacun.'];
             if ($c + $l < 3 || $c + $l > 25) return [null, 'Une partie compte entre 3 et 25 déchets au total.'];
+            // Limite court / long, en jours : un déchet « court » se décompose
+            // en au plus seuil_court jours. Sert au tirage (tant de courts, tant
+            // de longs par partie), pas au score.
+            // Valeurs par défaut quand le champ est ABSENT (versions archivées
+            // avant que ces règles existent, cf. migration-2026-10-jeux-temps-
+            // reglages.sql) ; un champ présent mais vidé reste une erreur.
+            $defauts = ['🎯 En plein dans le mille !', '👍 Très proche !', '🤏 Pas loin...'];
+            $sc = array_key_exists('seuil_court', $r) ? jeux_int($r['seuil_court'], 7, 36500) : 365;
+            if ($sc === null) return [null, 'Limite court / long : entre 7 jours et 100 ans (36 500 jours).'];
             $seuils = [];
-            foreach (array_slice(array_values((array)($r['seuils'] ?? [])), 0, 3) as $s) {
+            foreach (array_slice(array_values((array)($r['seuils'] ?? [])), 0, 3) as $i => $s) {
+                $s = is_array($s) ? $s : [];
                 $d = jeux_num($s['d'] ?? null, 0.01, 0.5);
                 $pts = jeux_int($s['pts'] ?? null, 0, 10);
+                $label = array_key_exists('label', $s) ? jeux_txt($s['label'], 60) : $defauts[$i];
                 if ($d === null || $pts === null) return [null, 'Paliers : tolérance entre 1 % et 50 %, points entre 0 et 10.'];
-                $seuils[] = ['d' => $d, 'pts' => $pts];
+                if ($label === null) return [null, 'Palier ' . ($i + 1) . ' : le message affiché au joueur est obligatoire.'];
+                $seuils[] = ['d' => $d, 'pts' => $pts, 'label' => $label];
             }
             if (count($seuils) !== 3) return [null, 'Il faut exactement trois paliers de précision.'];
             for ($i = 1; $i < 3; $i++) {
@@ -131,7 +139,7 @@ function jeux_valider_regles($slug, $r) {
                 }
             }
             if ($seuils[0]['pts'] < 1) return [null, 'Le meilleur palier doit rapporter au moins 1 point.'];
-            return [['nb_courts' => $c, 'nb_longs' => $l, 'seuils' => $seuils], null];
+            return [['nb_courts' => $c, 'nb_longs' => $l, 'seuil_court' => $sc, 'seuils' => $seuils], null];
 
         case 'tri-eclair':
             $nb    = jeux_int($r['nb_items'] ?? null, 3, 40);
@@ -215,10 +223,11 @@ function jeux_valider_items($slug, $items, $regles) {
             if (count($propres) < $regles['nb_items']) return [null, 'Il faut au moins ' . $regles['nb_items'] . ' déchets pour une partie (' . count($propres) . ' actuellement).'];
             break;
         case 'temps-decompo':
-            $courts = count(array_filter($propres, fn($x) => $x['jours'] <= JEUX_TEMPS_SEUIL_COURT));
+            $sc = $regles['seuil_court'];
+            $courts = count(array_filter($propres, fn($x) => $x['jours'] <= $sc));
             $longs  = count($propres) - $courts;
-            if ($courts < $regles['nb_courts']) return [null, "Il faut au moins {$regles['nb_courts']} déchets courts (1 an ou moins) : $courts actuellement."];
-            if ($longs < $regles['nb_longs'])   return [null, "Il faut au moins {$regles['nb_longs']} déchets longs (plus d'1 an) : $longs actuellement."];
+            if ($courts < $regles['nb_courts']) return [null, "Il faut au moins {$regles['nb_courts']} déchets courts ($sc jours ou moins) : $courts actuellement."];
+            if ($longs < $regles['nb_longs'])   return [null, "Il faut au moins {$regles['nb_longs']} déchets longs (plus de $sc jours) : $longs actuellement."];
             break;
     }
     return [$propres, null];

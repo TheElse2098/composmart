@@ -264,7 +264,16 @@
       if (opts.aide) f.appendChild(el('div', 'aide', opts.aide));
       return f;
     }
+    function champTexte(id, titre, valeur, max) {
+      const f = el('div', 'field');
+      const l = el('label', null, titre); l.htmlFor = id;
+      const i = el('input'); i.type = 'text'; i.id = id; i.value = valeur || ''; i.maxLength = max;
+      f.append(l, i);
+      return f;
+    }
     function rangee(...champs) { const r = el('div', 'rangee'); r.append(...champs); return r; }
+    // Limite court / long de « Combien de temps ? », telle que saisie dans les règles.
+    function seuilCourt() { const v = $('rSeuil') ? nombre('rSeuil') : NaN; return Number.isFinite(v) ? v : 365; }
 
     const REGLES = {
       'mot-mystere': {
@@ -286,20 +295,27 @@
         max: r => r.nb_items,
       },
       'temps-decompo': {
-        aide: 'Une partie mélange des déchets courts (1 an ou moins) et longs. Sur la ligne (échelle logarithmique, 1 jour → 1000 ans), plus l\'estimation est proche, plus elle rapporte.',
+        aide: 'Une partie mélange des déchets courts et longs (la limite se règle ici). Sur la ligne (échelle logarithmique, 1 jour → 1000 ans), plus l\'estimation est proche, plus elle rapporte.',
         rendre: r => {
-          const blocs = [rangee(
-            champNombre('rCourts', 'Déchets courts', r.nb_courts, { min: 0, max: 15 }),
-            champNombre('rLongs', 'Déchets longs', r.nb_longs, { min: 0, max: 15 }))];
+          const blocs = [
+            rangee(
+              champNombre('rCourts', 'Déchets courts', r.nb_courts, { min: 0, max: 15 }),
+              champNombre('rLongs', 'Déchets longs', r.nb_longs, { min: 0, max: 15 })),
+            champNombre('rSeuil', 'Limite court / long (jours)', r.seuil_court ?? 365,
+              { min: 7, max: 36500, aide: 'Un déchet est « court » s\'il se décompose en ce nombre de jours ou moins (365 = 1 an).' }),
+          ];
           const noms = ['Palier 1 (le plus précis)', 'Palier 2', 'Palier 3 (le plus large)'];
-          r.seuils.forEach((s, i) => blocs.push(rangee(
-            champNombre('rD' + i, noms[i] + ' · tolérance %', Math.round(s.d * 100), { min: 1, max: 50, aide: i === 0 ? 'Écart maximal, en % de la largeur de la ligne.' : '' }),
-            champNombre('rPts' + i, 'Points', s.pts, { min: 0, max: 10 }))));
+          r.seuils.forEach((s, i) => {
+            blocs.push(rangee(
+              champNombre('rD' + i, noms[i] + ' · tolérance %', Math.round(s.d * 100), { min: 1, max: 50, aide: i === 0 ? 'Écart maximal, en % de la largeur de la ligne.' : '' }),
+              champNombre('rPts' + i, 'Points', s.pts, { min: 0, max: 10 })));
+            blocs.push(champTexte('rLabel' + i, 'Message du palier ' + (i + 1), s.label, 60));
+          });
           return blocs;
         },
         lire: () => ({
-          nb_courts: nombre('rCourts'), nb_longs: nombre('rLongs'),
-          seuils: [0, 1, 2].map(i => ({ d: nombre('rD' + i) / 100, pts: nombre('rPts' + i) })),
+          nb_courts: nombre('rCourts'), nb_longs: nombre('rLongs'), seuil_court: nombre('rSeuil'),
+          seuils: [0, 1, 2].map(i => ({ d: nombre('rD' + i) / 100, pts: nombre('rPts' + i), label: $('rLabel' + i).value })),
         }),
         max: r => (r.nb_courts + r.nb_longs) * r.seuils[0].pts,
       },
@@ -360,14 +376,14 @@
     const AIDES_CONTENU = {
       'mot-mystere': 'Les lettres du mot deviennent les tuiles à remettre dans l\'ordre (accents et caractères spéciaux retirés). L\'emoji ne sert que dans les slides d\'atelier.',
       'compost-ou-pas': 'Chaque partie tire des déchets au hasard dans cette liste.',
-      'temps-decompo': 'Question posée : « Combien de temps met <déchet> à se décomposer ? ». Jusqu\'à 365 jours, un déchet est « court », au-delà « long ».',
+      'temps-decompo': 'Question posée : « Combien de temps met <déchet> à se décomposer ? ». Court ou long : d\'après la limite fixée dans les règles.',
       'tri-eclair': 'Chaque partie tire des déchets au hasard dans cette liste.',
     };
 
     function majAideJours(input) {
       const aide = input.parentNode.querySelector('.aide');
       const j = Number(input.value);
-      aide.textContent = input.value === '' || !(j >= 1) ? '' : '≈ ' + fmtDuree(j) + ' · ' + (j <= MOTEUR.seuil_court ? 'court' : 'long');
+      aide.textContent = input.value === '' || !(j >= 1) ? '' : '≈ ' + fmtDuree(j) + ' · ' + (j <= seuilCourt() ? 'court' : 'long');
     }
 
     function creerLigne(it) {
@@ -428,8 +444,9 @@
       res.textContent = '';
       const ajout = (texte, ko) => { res.appendChild(ko ? el('span', 'ko', texte) : document.createTextNode(texte)); };
       if (SLUG === 'temps-decompo') {
-        const courts = items.filter(i => i.jours !== '' && i.jours <= MOTEUR.seuil_court).length;
-        const longs = items.filter(i => i.jours !== '' && i.jours > MOTEUR.seuil_court).length;
+        const sc = seuilCourt();
+        const courts = items.filter(i => i.jours !== '' && i.jours <= sc).length;
+        const longs = items.filter(i => i.jours !== '' && i.jours > sc).length;
         ajout(pluriel(courts, 'déchet court', 'déchets courts') + ' (' + (r.nb_courts || 0) + ' par partie)', courts < r.nb_courts);
         ajout(' · ');
         ajout(pluriel(longs, 'déchet long', 'déchets longs') + ' (' + (r.nb_longs || 0) + ' par partie)', longs < r.nb_longs);
@@ -619,7 +636,11 @@
     $('page').addEventListener('input', e => {
       if (e.target.id === 'recherche') { filtrer(); return; }
       marquerSale();
-      if (e.target.closest('#regles')) majScoreMax();
+      if (e.target.closest('#regles')) {
+        // La limite court / long reclasse les déchets : leurs indications suivent.
+        if (e.target.id === 'rSeuil') document.querySelectorAll('#lignes [data-k="jours"]').forEach(majAideJours);
+        majScoreMax();
+      }
       if (e.target.closest('#lignes')) {
         if (e.target.dataset.k === 'jours') majAideJours(e.target);
         majResume();
