@@ -9,7 +9,13 @@ seeds:
 
 # Tâches ponctuelles : ajouter une entrée, lancer ./helm/deploy.sh, lire les
 # journaux affichés à la fin, puis retirer l'entrée.
-ponctuels: {}
-  # purge-essai:
-  #   service: auth-api
-  #   command: ["php", "/var/www/cron/purge_rgpd.php", "--dry"]
+#
+# 25/10/2026 — simulation des purges RGPD (--dry : compte, n'efface rien).
+# À RETIRER après lecture des résultats (remettre `ponctuels: {}`).
+ponctuels:
+  purge-essai:
+    service: auth-api
+    command: ["php", "/var/www/cron/purge_rgpd.php", "--dry"]
+  purge-essai-evenements:
+    service: evenements-api
+    command: ["php", "/var/www/cron/purge_rgpd.php", "--dry"]
