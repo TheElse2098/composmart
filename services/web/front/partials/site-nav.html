@@ -9,6 +9,12 @@
 
      Le lien actif est marqué automatiquement par le JS selon l'URL courante.
      Modifier le menu ICI le répercute sur toutes les pages.
+
+     CASE « ADMIN » (rouge) : trois exemplaires masqués (`hidden`), révélés par
+     admin-badge.js pour les seuls administrateurs — dans les liens (grand écran),
+     dans la zone droite (mobile et petits écrans d'ordinateur, où les liens
+     manquent de place) et en tête de la sidebar. Ce n'est qu'un raccourci :
+     chaque page d'administration vérifie elle-même les droits côté serveur.
      ============================================================================ -->
 <nav>
   <a href="/" class="nav-logo">Compos<span>mart</span></a>
@@ -22,9 +28,11 @@
     <li><a href="/classement" data-match="/classement,/classement.html">Classement</a></li>
     <li><a href="/evenement" data-match="/evenement,/evenement.html">Événements</a></li>
     <li><a href="/contact.html" data-match="/contact,/contact.html">Nous contacter</a></li>
+    <li class="nav-admin" hidden><a href="/admin">Admin</a></li>
   </ul>
 
   <div class="nav-right">
+    <a href="/admin" class="nav-admin-mini" hidden>Admin</a>
     <a href="/compte" class="nav-profil" aria-label="Mon compte">&#128100;</a>
     <button id="themeToggle" aria-label="Thème">🌙</button>
     <button class="burger" id="burgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -39,6 +47,8 @@
     <button class="drawer-close" id="closeBtn">&#x2715;</button>
   </div>
   <ul class="drawer-menu">
+    <li class="nav-admin" hidden><a href="/admin"><span class="menu-icon">🔧</span> Admin</a></li>
+    <div class="drawer-divider nav-admin" hidden></div>
     <li><a href="/" data-match="/,/index.html"><span class="menu-icon">🏠</span> Accueil</a></li>
     <div class="drawer-divider"></div>
     <li><a href="/compte" data-match="/compte,/compte.html"><span class="menu-icon">👤</span> Mon compte</a></li>

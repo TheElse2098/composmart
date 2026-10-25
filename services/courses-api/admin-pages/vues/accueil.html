@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
+  <link rel="stylesheet" href="/assets/css/dark.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <title>CompoSmart – Administration</title>
+  <!--
+    Accueil de l'administration (/admin) : une tuile par espace. Chaque espace
+    garde son URL, son service et son contrôle des droits ; cette page ne fait
+    que les rassembler et afficher ce qui attend une action.
+    Les compteurs sont chargés après l'affichage : un service lent ou en panne
+    laisse sa tuile cliquable, simplement sans chiffre.
+  -->
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; color: #1a3a25; }
+
+    .hero { text-align: center; padding: 26px 20px 8px; }
+    .hero-badge { display: inline-block; background: #e53935; color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; color: #1a3a25; }
+
+    .tuiles { width: 100%; max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px; display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 700px)  { .tuiles { grid-template-columns: 1fr 1fr; padding: 24px 24px 56px; gap: 20px; } }
+    @media (min-width: 1200px) { .tuiles { grid-template-columns: repeat(4, 1fr); } }
+
+    .tuile { position: relative; display: flex; flex-direction: column; gap: 8px; background: #fff; border-radius: 18px; padding: 22px 20px 18px; text-decoration: none; color: inherit; box-shadow: 0 2px 10px rgba(30,110,62,0.08); border: 2px solid transparent; transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; }
+    a.tuile:hover { border-color: #1e6e3e; transform: translateY(-2px); box-shadow: 0 6px 18px rgba(30,110,62,0.14); }
+    a.tuile:focus-visible { outline: 3px solid #52b788; outline-offset: 2px; }
+    .tuile-emoji { font-size: 2.2rem; line-height: 1; }
+    .tuile-titre { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #1e6e3e; }
+    .tuile-desc { font-size: 0.9rem; color: #4a7a5a; line-height: 1.45; flex: 1; }
+    .tuile-etat { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; margin-top: 4px; }
+    .puce { font-size: 0.76rem; font-weight: 800; padding: 4px 10px; border-radius: 12px; background: #eef4ec; color: #1e6e3e; white-space: nowrap; }
+    .puce.alerte { background: #fdecea; color: #c0392b; }
+    .puce.calme { background: transparent; color: #7a9a85; padding-left: 0; }
+    .tuile-fleche { position: absolute; top: 20px; right: 20px; font-weight: 900; color: #1e6e3e; opacity: 0.5; transition: opacity 0.15s, transform 0.15s; }
+    a.tuile:hover .tuile-fleche { opacity: 1; transform: translateX(3px); }
+
+    /* Espace pas encore livré : visible pour annoncer la suite, mais inerte. */
+    .tuile.bientot { opacity: 0.6; cursor: default; }
+    .tuile.bientot .tuile-fleche { display: none; }
+
+    html.dark body { background-color: #0f1712; color: #e8f5ee; }
+    html.dark h1 { color: #e8f5ee; }
+    html.dark .tuile { background: #16211a; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+    html.dark a.tuile:hover { border-color: #52b788; }
+    html.dark .tuile-titre, html.dark .tuile-fleche { color: #7fc99a; }
+    html.dark .tuile-desc { color: #b0d4be; }
+    html.dark .puce { background: #1e2d22; color: #7fc99a; }
+    html.dark .puce.alerte { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .puce.calme { background: transparent; color: #7a9a85; }
+
+    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
+  </style>
+  <link rel="stylesheet" href="/assets/css/site-nav.css">
+  <link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+
+  <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
+  <div id="site-nav"></div>
+
+  <div class="hero">
+    <div class="hero-badge">🔧 Administration</div>
+    <h1>Que veux-tu gérer ?</h1>
+  </div>
+
+  <main class="tuiles">
+    <a class="tuile" href="/admin/panel">
+      <span class="tuile-fleche">→</span>
+      <div class="tuile-emoji">🔧</div>
+      <div class="tuile-titre">Admin panel</div>
+      <div class="tuile-desc">Signalements et ajouts de composteurs, messages, utilisateurs, statistiques et journal.</div>
+      <div class="tuile-etat" id="etatPanel"></div>
+    </a>
+
+    <a class="tuile" href="/admin/themes">
+      <span class="tuile-fleche">→</span>
+      <div class="tuile-emoji">📚</div>
+      <div class="tuile-titre">Édition des cours</div>
+      <div class="tuile-desc">Thèmes, cours, quiz et médias : écrire, publier et réorganiser le catalogue.</div>
+      <div class="tuile-etat" id="etatCours"></div>
+    </a>
+
+    <div class="tuile bientot" aria-disabled="true">
+      <span class="tuile-fleche">→</span>
+      <div class="tuile-emoji">🎮</div>
+      <div class="tuile-titre">Édition des jeux</div>
+      <div class="tuile-desc">Contenu et règles des mini-jeux : déchets, mots, durées, nombre de manches.</div>
+      <div class="tuile-etat"><span class="puce calme">Bientôt disponible</span></div>
+    </div>
+
+    <a class="tuile" href="/evenements-admin">
+      <span class="tuile-fleche">→</span>
+      <div class="tuile-emoji">🎟️</div>
+      <div class="tuile-titre">Event panel</div>
+      <div class="tuile-desc">Ateliers en présentiel : création, déroulé, parcours, banque d'images et d'anecdotes, suivi en direct.</div>
+      <div class="tuile-etat" id="etatEvenements"></div>
+    </a>
+  </main>
+
+  <!-- Footer partagé (injecté par site-footer.js) -->
+  <div id="site-footer"></div>
+  <div class="bottom-leaf"></div>
+
+  <script>
+    function pluriel(n, un, plusieurs) { return n + ' ' + (n > 1 ? plusieurs : un); }
+
+    /** Remplit une tuile avec des puces [{texte, alerte}] ; `calme` si rien à signaler. */
+    function afficherEtat(id, puces, calme) {
+      var el = document.getElementById(id);
+      el.textContent = '';
+      if (!puces.length) {
+        if (!calme) return;   // source injoignable : pas de « rien à traiter » trompeur
+        puces = [{ texte: calme, classe: 'calme' }];
+      }
+      puces.forEach(function (p) {
+        var s = document.createElement('span');
+        s.className = 'puce' + (p.classe ? ' ' + p.classe : (p.alerte ? ' alerte' : ''));
+        s.textContent = p.texte;
+        el.appendChild(s);
+      });
+    }
+
+    function json(url) {
+      return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+    }
+
+    // ── Admin panel : ce qui attend une décision (mêmes sources que ses onglets) ──
+    Promise.all([
+      json('/api/carte/count.php').catch(function () { return null; }),
+      json('/api/admin/tickets.php?count=1').catch(function () { return null; })
+    ]).then(function (r) {
+      var carte = r[0] || {}, tickets = r[1] || {};
+      var puces = [];
+      if (carte.signalements > 0) puces.push({ texte: pluriel(carte.signalements, 'signalement', 'signalements'), alerte: true });
+      if (carte.en_attente > 0)   puces.push({ texte: pluriel(carte.en_attente, 'ajout à valider', 'ajouts à valider'), alerte: true });
+      if (tickets.a_traiter > 0)  puces.push({ texte: pluriel(tickets.a_traiter, 'message', 'messages'), alerte: true });
+      afficherEtat('etatPanel', puces, (r[0] && r[1]) ? 'Rien à traiter ✓' : '');
+    });
+
+    // ── Cours : publiés et brouillons ──
+    json('/api/admin/themes_manage.php').then(function (d) {
+      var n = { publie: 0, brouillon: 0 };
+      (d.themes || []).forEach(function (t) {
+        (t.cours || []).forEach(function (c) { if (c.statut in n) n[c.statut]++; });
+      });
+      var puces = [{ texte: pluriel(n.publie, 'cours publié', 'cours publiés') }];
+      if (n.brouillon > 0) puces.push({ texte: pluriel(n.brouillon, 'brouillon', 'brouillons'), alerte: true });
+      afficherEtat('etatCours', puces);
+    }).catch(function () {});
+
+    // ── Événements : ceux qui vivent en ce moment ou approchent ──
+    json('/api/evenements/admin.php?action=liste').then(function (d) {
+      var n = { en_cours: 0, ouvert: 0, prevu: 0 };
+      (d.evenements || []).forEach(function (e) { if (e.statut in n) n[e.statut]++; });
+      var puces = [];
+      if (n.en_cours > 0) puces.push({ texte: pluriel(n.en_cours, 'en cours', 'en cours'), alerte: true });
+      if (n.ouvert > 0)   puces.push({ texte: pluriel(n.ouvert, 'ouvert', 'ouverts') });
+      if (n.prevu > 0)    puces.push({ texte: pluriel(n.prevu, 'prévu', 'prévus') });
+      afficherEtat('etatEvenements', puces, 'Aucun événement à venir');
+    }).catch(function () {});
+  </script>
+  <script src="/assets/js/site-footer.js"></script>
+  <script src="/assets/js/site-nav.js"></script>
+  <script src="/assets/js/theme.js"></script>
+  <script src="/assets/js/admin-badge.js?v=3"></script>
+</body>
+</html>

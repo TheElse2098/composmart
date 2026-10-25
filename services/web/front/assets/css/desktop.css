@@ -37,6 +37,36 @@
   #site-nav .nav-right { flex-shrink: 0; }
 }
 
+/* ── Case « Admin » (partials/site-nav.html, révélée par admin-badge.js) ──
+   Ici et non dans site-nav.css : desktop.css est la seule feuille chargée par
+   toutes les pages qui portent le bandeau. Le !important protège `hidden` des
+   règles `display` des liens. Deux emplacements, jamais affichés ensemble :
+   dans les liens à partir de 1200px, dans la zone droite en dessous — entre
+   900 et 1200px, une 8e entrée ferait déborder la rangée de liens. */
+.nav-admin[hidden], .nav-admin-mini[hidden] { display: none !important; }
+#site-nav .nav-links .nav-admin { display: none; }
+.nav-admin-mini {
+  display: inline-flex; align-items: center; background: #e53935; color: #fff;
+  font-family: 'Nunito', Arial, sans-serif; font-size: 0.78rem; font-weight: 900;
+  letter-spacing: 0.5px; padding: 5px 12px; border-radius: 20px; text-decoration: none;
+  box-shadow: 0 1px 4px rgba(229, 57, 53, 0.4); flex-shrink: 0; white-space: nowrap;
+}
+.nav-admin-mini:hover, .nav-admin-mini.active { background: #c62828; color: #fff; }
+@media (min-width: 1200px) {
+  #site-nav .nav-links .nav-admin { display: list-item; }
+  #site-nav .nav-links .nav-admin a,
+  #site-nav .nav-links .nav-admin a.active { background: #e53935; color: #fff; }
+  #site-nav .nav-links .nav-admin a:hover { background: #c62828; }
+  #site-nav .nav-links .nav-admin a.active { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.7); }
+  #site-nav .nav-admin-mini { display: none; }
+}
+.drawer-menu .nav-admin a { color: #c62828; }
+.drawer-menu .nav-admin a:hover,
+.drawer-menu .nav-admin a.active { background: #fdecea; border-left-color: #e53935; color: #c62828; }
+html.dark .drawer-menu .nav-admin a { color: #ef9a9a; }
+html.dark .drawer-menu .nav-admin a:hover,
+html.dark .drawer-menu .nav-admin a.active { background: #3d1a1a; border-left-color: #ef9a9a; color: #ef9a9a; }
+
 @media (min-width: 900px) {
 
   /* ── Conteneurs de contenu principaux : plus larges, toujours centrés ──

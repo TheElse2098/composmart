@@ -14,7 +14,10 @@
  * devinant leur nom, on ne peut pas les demander directement.
  *
  * Routes :
- *   /admin                                  → tableau de bord
+ *   /admin                                  → accueil : une tuile par espace
+ *                                             (panel, cours, jeux, événements)
+ *   /admin/panel                            → tableau de bord (signalements,
+ *                                             ajouts, messages, comptes, journal)
  *   /admin/themes                           → thèmes + organisation des cours
  *   /admin/themes/<theme>/nouveau           → création d'un cours
  *   /admin/themes/<theme>/<cours>           → édition d'un cours existant
@@ -85,8 +88,13 @@ function rendre($vue, $vars = []) {
     exit;
 }
 
-// /admin
-if (count($seg) === 0) rendre('tableau-de-bord.html');
+// /admin — accueil. Les espaces servis par d'autres services (/jeux-admin,
+// /evenements-admin) n'y figurent que comme liens : chacun garde son contrôleur
+// et sa propre vérification des droits.
+if (count($seg) === 0) rendre('accueil.html');
+
+// /admin/panel
+if ($seg[0] === 'panel' && count($seg) === 1) rendre('tableau-de-bord.html');
 
 // /admin/themes...
 if ($seg[0] !== 'themes') introuvable();

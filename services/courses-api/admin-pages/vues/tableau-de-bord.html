@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/assets/css/fonts.css">
-  <title>CompoSmart – Admin</title>
+  <title>CompoSmart – Admin panel</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
@@ -342,14 +342,11 @@
 
   <div class="hero">
     <div class="hero-badge">🔧 Administration</div>
-    <h1>Tableau de bord</h1>
-    <!-- L'édition des cours est une page à part et non un onglet : elle a ses
-         propres URL (/admin/themes/<theme>/<cours>), donc un état partageable
-         et rechargeable, ce qu'un onglet du tableau de bord ne permet pas. -->
-    <a href="/admin/themes" class="hero-lien">📚 Thèmes et cours →</a>
-    <!-- Événements est un module à part entière (autre service, autre base),
-         pas un onglet de ce tableau de bord : même raison que les cours. -->
-    <a href="/evenements-admin" class="hero-lien" style="margin-left:8px">🎟️ Événements →</a>
+    <h1>Admin panel</h1>
+    <!-- Cours, jeux et événements ne sont pas des onglets de ce tableau de bord
+         mais des espaces à part, avec leurs propres URL : on y accède depuis
+         l'accueil de l'administration (/admin). -->
+    <a href="/admin" class="hero-lien">← Administration</a>
   </div>
 
   <div id="dashboard" style="display:none">
@@ -1628,6 +1625,6 @@
   <script src="/assets/js/site-footer.js"></script>
   <script src="/assets/js/site-nav.js"></script>
   <script src="/assets/js/theme.js"></script>
-  <script src="/assets/js/admin-badge.js?v=2"></script>
+  <script src="/assets/js/admin-badge.js?v=3"></script>
 </body>
 </html>
