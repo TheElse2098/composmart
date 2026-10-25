@@ -18,10 +18,13 @@ secretName: composmart-secrets
 siteUrl: https://composmart.fr
 
 image:
-  # Images composmart/<service>:<tag>. deploy.sh passe le tag = commit git,
-  # ce qui redémarre automatiquement les pods dont l'image a changé.
+  # Images composmart/<service>:<tag>. deploy.sh calcule un tag PAR SERVICE
+  # (image.tags.<service>) d'après les seuls fichiers copiés dans son image :
+  # un commit qui ne touche que la carte ne reconstruit et ne redémarre que
+  # map-api. `tag` sert de repli si aucun tag propre n'est fourni.
   repository: composmart
   tag: local
+  tags: {}
   pullPolicy: IfNotPresent
 imagePullSecrets: [ghcr-creds]
 

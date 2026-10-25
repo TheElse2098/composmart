@@ -4,8 +4,9 @@
 #
 #   ./helm/deploy.sh
 #
-# 1. construit les images du commit courant (seulement celles qui manquent),
-#    et les importe dans k3s ;
+# 1. reconstruit et importe dans k3s SEULEMENT les images dont les fichiers
+#    ont changé (tag par service, dépendances lues dans les Dockerfile) ;
+#    les services inchangés ne sont pas redémarrés ;
 # 2. copie db/*.sql dans le chart (Helm ne lit pas hors de son dossier) ;
 # 3. helm upgrade --install : met à jour ce qui a changé, applique les
 #    migrations SQL en attente, lance les tâches ponctuelles ;
@@ -35,30 +36,54 @@ if [ -z "${KUBECONFIG:-}" ]; then
   else export KUBECONFIG=/etc/rancher/k3s/k3s.yaml; fi
 fi
 
-# ── Tag des images = commit courant ────────────────────────────────────────
-# Un tag qui change à chaque commit fait redémarrer les pods concernés, et
-# `helm rollback` ramène réellement l'ancienne image. Modifications locales
-# non commitées : suffixe calculé sur le diff (stable tant qu'il ne change pas).
-TAG=$(git rev-parse --short=10 HEAD)
-if ! git diff --quiet HEAD -- services shared content; then
-  TAG="$TAG-local-$(git diff HEAD -- services shared content | sha1sum | cut -c1-8)"
-fi
-echo "▶ Tag des images : $TAG"
-
-# ── 1. Images ──────────────────────────────────────────────────────────────
-image_presente() {
-  if [ -n "${K3D:-}" ]; then docker image inspect "composmart/$1:$TAG" >/dev/null 2>&1
-  else $SUDO k3s ctr images ls -q | grep -qx "docker.io/composmart/$1:$TAG"; fi
+# ── Tag des images : un par service, d'après SES fichiers ─────────────────
+# Entrées d'une image = son Dockerfile + toutes les sources de ses COPY, lues
+# DANS le Dockerfile (jamais une liste tenue à la main, qui finirait par
+# oublier un fichier partagé). Exemple : shared/_guard.php est copié par 5
+# images → le modifier reconstruit ces 5 services, et eux seuls ; content/
+# reconstruit web et courses-api. Les « COPY --from=… » (étapes de build ou
+# images externes) ne sont pas des fichiers du dépôt et sont ignorés.
+entrees() {
+  local df="services/$1/Dockerfile"
+  echo "$df"
+  grep -E '^[[:space:]]*COPY[[:space:]]' "$df" | grep -v -- '--from=' \
+    | awk '{ for (i = 2; i < NF; i++) if ($i !~ /^--/) print $i }' \
+    | sed 's#/$##' | sort -u
 }
+
+# Empreinte git des fichiers d'entrée : identique tant qu'ils ne changent
+# pas, quel que soit le nombre de commits. Un service inchangé garde donc son
+# tag : ni reconstruit, ni redémarré. Modifications non commitées : prises en
+# compte via le diff et les fichiers non suivis.
+tag_service() {
+  local chemins; chemins=$(entrees "$1")
+  {
+    for p in $chemins; do git rev-parse "HEAD:$p"; done
+    if [ -n "$(git status --porcelain -- $chemins)" ]; then
+      git diff HEAD -- $chemins
+      git ls-files --others --exclude-standard -- $chemins | xargs -r cat
+    fi
+  } | sha1sum | cut -c1-12
+}
+
+image_presente() {
+  if [ -n "${K3D:-}" ]; then docker image inspect "composmart/$1:$2" >/dev/null 2>&1
+  else $SUDO k3s ctr images ls -q | grep -qx "docker.io/composmart/$1:$2"; fi
+}
+
+# ── 1. Images (seulement celles dont les fichiers ont changé) ─────────────
+TAGS_HELM=()
 for s in $SERVICES; do
-  if image_presente "$s"; then
-    echo "  ✓ $s : déjà construite"
+  t=$(tag_service "$s")
+  TAGS_HELM+=(--set "image.tags.$s=$t")
+  if image_presente "$s" "$t"; then
+    echo "  ✓ $s : inchangé ($t)"
     continue
   fi
-  echo "  ⚙ $s : construction…"
-  docker build --pull -q -t "composmart/$s:$TAG" -f "services/$s/Dockerfile" . >/dev/null
-  if [ -n "${K3D:-}" ]; then k3d image import -c "$K3D" "composmart/$s:$TAG"
-  else docker save "composmart/$s:$TAG" | $SUDO k3s ctr images import - >/dev/null; fi
+  echo "  ⚙ $s : modifié, construction ($t)…"
+  docker build --pull -q -t "composmart/$s:$t" -f "services/$s/Dockerfile" . >/dev/null
+  if [ -n "${K3D:-}" ]; then k3d image import -c "$K3D" "composmart/$s:$t"
+  else docker save "composmart/$s:$t" | $SUDO k3s ctr images import - >/dev/null; fi
 done
 
 # ── 2. Fichiers SQL embarqués dans le chart ────────────────────────────────
@@ -75,7 +100,7 @@ echo "▶ helm upgrade --install ($VALUES)"
 helm upgrade --install "$RELEASE" "$CHART" \
   -n "$NS" --create-namespace \
   -f "$VALUES" \
-  --set image.tag="$TAG" \
+  "${TAGS_HELM[@]}" \
   --wait --timeout 15m \
   "$@"
 
@@ -88,4 +113,4 @@ if kubectl -n "$NS" get jobs -l composmart.fr/ponctuel=true -o name 2>/dev/null 
   kubectl -n "$NS" logs -l composmart.fr/ponctuel=true --prefix --tail=-1 | sed 's/^/  /'
 fi
 
-echo "✔ Déployé (tag $TAG). Historique : helm -n $NS history $RELEASE — retour arrière : helm -n $NS rollback $RELEASE"
+echo "✔ Déployé. Historique : helm -n $NS history $RELEASE — retour arrière : helm -n $NS rollback $RELEASE"

@@ -1,9 +1,11 @@
 {{/*
-Image d'un service : <repository>/<service>:<tag>.
+Image d'un service : <repository>/<service>:<tag>. Le tag propre au service
+(image.tags.<service>, calculé par deploy.sh d'après ses seuls fichiers) prime
+sur image.tag : un service inchangé garde son tag et n'est pas redémarré.
 Usage : include "composmart.image" (dict "root" $ "nom" "map-api")
 */}}
 {{- define "composmart.image" -}}
-{{ .root.Values.image.repository }}/{{ .nom }}:{{ .root.Values.image.tag }}
+{{ .root.Values.image.repository }}/{{ .nom }}:{{ index (.root.Values.image.tags | default dict) .nom | default .root.Values.image.tag }}
 {{- end }}
 
 {{/* Variable lue dans le Secret. Usage : include "composmart.secretEnv" (dict "root" $ "cle" "DB_NAME" "optionnel" false) */}}

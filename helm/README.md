@@ -15,8 +15,12 @@ bash helm/deploy.sh
 
 C'est tout. Le script :
 
-1. construit les images du commit courant (seulement celles qui manquent) et
-   les importe dans k3s ;
+1. reconstruit **seulement les services dont les fichiers ont changé** et les
+   importe dans k3s. Chaque image a un tag calculé sur ses propres fichiers,
+   lus dans les `COPY` de son Dockerfile : modifier `shared/_guard.php`
+   reconstruit les 5 API qui le copient, modifier `content/` reconstruit web et
+   courses-api, modifier la carte ne touche que map-api. Les services
+   inchangés gardent leur tag et ne redémarrent pas ;
 2. applique les migrations SQL pas encore passées (avant de démarrer le
    nouveau code ; si une migration échoue, rien n'est changé) ;
 3. met à jour les services dont l'image ou la configuration a changé ;
