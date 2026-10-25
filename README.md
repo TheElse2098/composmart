@@ -4,6 +4,36 @@ Site de sensibilisation au compostage — **https://composmart.fr** :
 carte interactive des composteurs, cours avec quiz, mini-jeux, classements et
 ateliers animés en présentiel (code ou QR code, équipes, suivi en direct).
 
+Conçu, développé et exploité par **Eliott Seuret**. Dépôt public à titre de
+portfolio, tous droits réservés (voir [LICENSE](LICENSE)).
+
+> **In English** — Composmart is a production web platform promoting home
+> composting: an interactive map of ~6,000 composting sites across France,
+> courses with quizzes, mini-games with leaderboards, and live workshops
+> joined by QR code. It runs as six PHP microservices with four MariaDB
+> databases and Redis on a self-managed k3s cluster, deployed with a custom
+> Helm chart. Built and operated end-to-end by Eliott Seuret.
+
+## Points notables
+
+- **Microservices** : six services indépendants, une base par domaine,
+  communication interne authentifiée ; une panne ou une charge sur la carte
+  n'affecte pas les cours ni les ateliers.
+- **Kubernetes en production** (k3s sur VPS), chart Helm écrit pour le
+  projet : déploiement en une commande, reconstruction des seuls services
+  modifiés (dépendances lues dans les Dockerfile), migrations SQL appliquées
+  automatiquement et une seule fois, retour arrière avec `helm rollback`.
+- **Carte de ~6 000 composteurs** : import nocturne OpenStreetMap et open
+  data de collectivités, chargement par zone visible, cache Redis.
+- **Ateliers en direct** : participation par code ou QR code, équipes,
+  parcours de questions synchronisé par l'animateur.
+- **Sécurité** : CSRF, limitation des abus, sessions côté serveur,
+  requêtes préparées, journal d'audit, pages d'administration invisibles
+  pour un non-admin.
+- **RGPD** : aucun bandeau cookies nécessaire (aucun traceur ni service tiers
+  sans action de l'utilisateur), durées de conservation appliquées par des
+  tâches nocturnes, export et suppression des données en libre-service.
+
 ## Architecture
 
 Six services PHP indépendants, chacun avec sa propre base, derrière un Ingress
@@ -113,3 +143,13 @@ cours existant. Un quiz est validé à partir de 50 % de bonnes réponses.
   changer d'email, supprimer son compte (purge de toutes les bases).
 - Le registre des traitements et la procédure en cas de violation de données
   sont tenus **hors du dépôt** (documents internes).
+
+## Licence
+
+© 2026 Eliott Seuret — **tous droits réservés**. Le code et les contenus sont
+consultables ici à titre de présentation ; toute réutilisation demande une
+autorisation écrite ([LICENSE](LICENSE)). Les bibliothèques, polices et
+données de tiers gardent leur propre licence
+([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
+
+Contact : contact@composmart.fr
