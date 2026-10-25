@@ -66,9 +66,16 @@ tag_service() {
   } | sha1sum | cut -c1-12
 }
 
+# Liste des images k3s lue UNE fois. Surtout pas « ctr images ls | grep -q » :
+# grep -q quitte au premier résultat, ctr reçoit SIGPIPE et sort en erreur,
+# que pipefail transforme en « image absente » → reconstruction inutile,
+# au hasard selon la place de l'image dans la liste.
+IMAGES_K3S=""
+[ -z "${K3D:-}" ] && IMAGES_K3S=$($SUDO k3s ctr images ls -q)
+
 image_presente() {
   if [ -n "${K3D:-}" ]; then docker image inspect "composmart/$1:$2" >/dev/null 2>&1
-  else $SUDO k3s ctr images ls -q | grep -qx "docker.io/composmart/$1:$2"; fi
+  else grep -qx "docker.io/composmart/$1:$2" <<< "$IMAGES_K3S"; fi
 }
 
 # ── 1. Images (seulement celles dont les fichiers ont changé) ─────────────
@@ -81,6 +88,11 @@ for s in $SERVICES; do
     continue
   fi
   echo "  ⚙ $s : modifié, construction ($t)…"
+  local_modifs=$(git status --porcelain -- $(entrees "$s"))
+  if [ -n "$local_modifs" ]; then
+    echo "    ↳ dont des fichiers modifiés sur cette machine, non commités :"
+    echo "$local_modifs" | sed 's/^/      /'
+  fi
   docker build --pull -q -t "composmart/$s:$t" -f "services/$s/Dockerfile" . >/dev/null
   if [ -n "${K3D:-}" ]; then k3d image import -c "$K3D" "composmart/$s:$t"
   else docker save "composmart/$s:$t" | $SUDO k3s ctr images import - >/dev/null; fi
