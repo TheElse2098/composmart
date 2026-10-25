@@ -67,14 +67,41 @@
     /* Conteneur de l'aperçu : la carte de slide (.sl) s'y pose, centrée.
        En projection il occupe l'écran pour que la carte soit lisible de loin. */
     .apercu { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 6px 0; }
-    .apercu > .sl { flex: none; }
+    .apercu > .sl { flex: none; max-width: 100%; }
     .apercu-type { font-size: 0.72rem; font-weight: 900; color: #7aaa8a; text-transform: uppercase; letter-spacing: 1px; }
     .apercu-titre { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #1a3a25; margin-top: 6px; }
     .apercu-q { font-size: 1.02rem; font-weight: 800; color: #1a3a25; margin-top: 8px; line-height: 1.45; }
     .apercu-corps { font-size: 0.94rem; color: #2c4a34; margin-top: 8px; line-height: 1.55; white-space: pre-wrap; text-align: left; }
-    .apercu-opt { text-align: left; background: #f7fbf8; border-radius: 10px; padding: 8px 12px; margin-top: 6px; font-size: 0.9rem; font-weight: 700; color: #2c4a34; display: flex; justify-content: space-between; gap: 10px; }
-    .apercu-opt.juste { background: #e8f5e9; color: #1b5e20; }
-    .apercu-opt .nb { color: #b26a00; font-weight: 800; }
+
+    /* Résultats d'un quiz, vrai/faux ou sondage : une barre par option, dont le
+       fond se remplit à proportion des voix. Le nombre seul obligeait à faire
+       le calcul de tête en pleine animation. */
+    .res-total { font-size: 0.8rem; font-weight: 800; color: #4a7a5a; margin-bottom: 4px; }
+    .res-opt {
+      position: relative; overflow: hidden; margin-top: 6px;
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 10px; background: #f3f8f4;
+      font-size: 0.9rem; font-weight: 700; color: #2c4a34;
+    }
+    .res-opt::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--pct, 0%);
+      background: #d3eadb; border-radius: inherit;
+    }
+    .res-opt > span { position: relative; }
+    .res-opt.juste { color: #1b5e20; box-shadow: inset 0 0 0 2px #2e7d32; }
+    .res-opt.juste::before { background: #b5dfbd; }
+    .res-opt.tete::before { background: #ffe2a8; }
+    .res-nb { flex: none; color: #b26a00; font-weight: 800; white-space: nowrap; }
+    .res-nb small { font-weight: 700; opacity: 0.8; }
+
+    /* Grande largeur : aperçu et résultats côte à côte. La page s'élargit
+       pour l'occasion, mais seulement sur l'onglet Animation. */
+    @media (min-width: 1100px) {
+      .page-content:has(#ongletAnimation.actif) { max-width: 1240px; }
+      .console-grille { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 0.8fr); gap: 14px; align-items: start; }
+      .console-grille > .card { margin-bottom: 0; }
+    }
+    body.projection .console-grille { display: block; }
 
     .liste { list-style: none; }
     .liste li { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: #f7fbf8; margin-bottom: 6px; font-size: 0.9rem; }
@@ -124,9 +151,15 @@
     html.dark nav { background: #14301f; }
     html.dark .join-card, html.dark .card, html.dark .empty-msg, html.dark .tab { background: #16211a; }
     html.dark .join-titre, html.dark .section-titre, html.dark .apercu-titre, html.dark .apercu-q, html.dark .liste .nom { color: #e8f5ee; }
-    html.dark .apercu-corps, html.dark .apercu-opt { color: #c8e6d4; }
-    html.dark .join-link, html.dark .liste li, html.dark .apercu-opt { background: #1e2d22; color: #c8e6d4; }
-    html.dark .apercu-opt.juste { background: #16291c; color: #7fc99a; }
+    html.dark .apercu-corps { color: #c8e6d4; }
+    html.dark .join-link, html.dark .liste li { background: #1e2d22; color: #c8e6d4; }
+    html.dark .res-total { color: #7ab88e; }
+    html.dark .res-opt { background: #1e2d22; color: #c8e6d4; }
+    html.dark .res-opt::before { background: #2a4532; }
+    html.dark .res-opt.juste { color: #7fc99a; box-shadow: inset 0 0 0 2px #43a047; }
+    html.dark .res-opt.juste::before { background: #24502f; }
+    html.dark .res-opt.tete::before { background: #4a3a14; }
+    html.dark .res-nb { color: #e8b931; }
     html.dark .tab { color: #7ab88e; }
     html.dark .tab.active { background: #2d9959; color: #fff; border-color: #2d9959; }
     html.dark .join-statut.prevu { background: #2e2410; color: #e8b931; }
@@ -147,7 +180,7 @@
   <link rel="stylesheet" href="/assets/css/site-nav.css">
   <link rel="stylesheet" href="/assets/css/desktop.css">
   <!-- Charte des cartes de slide, partagée avec l'écran participant -->
-  <link rel="stylesheet" href="/assets/css/slides.css">
+  <link rel="stylesheet" href="/assets/css/slides.css?v=2">
 </head>
 <body>
 
@@ -218,6 +251,9 @@
       </div>
 
       <div id="zoneConsole" style="display:none">
+       <!-- Sur grand écran : la slide à gauche, ses résultats à droite, à
+            hauteur d'yeux — sous l'aperçu, il fallait défiler pour les voir. -->
+       <div class="console-grille">
         <div class="card">
           <div class="console-barre">
             <span class="console-pos" id="consolePos">—</span>
@@ -234,6 +270,7 @@
           </div>
         </div>
 
+        <div class="console-cote">
         <div class="card" id="zoneResultats" style="display:none">
           <div class="section-titre">📊 Réponses reçues</div>
           <div id="resultats"></div>
@@ -243,6 +280,8 @@
           <div class="section-titre">🧭 Aller à une slide</div>
           <div id="sommaire"></div>
         </div>
+        </div>
+       </div>
       </div>
     </div>
 
@@ -781,7 +820,10 @@
       // même sans réponse : un défi ne se répond pas depuis le téléphone, donc
       // attendre des réponses masquerait à jamais l'interface de notation.
       const notationManuelle = d.slide && ['defi', 'question_ouverte'].includes(d.slide.type);
-      if (d.slide && (d.nb_reponses > 0 || notationManuelle)) {
+      // Idem pour les barres de résultats : visibles dès l'affichage de la
+      // question, à zéro, puis elles se remplissent au fil des réponses.
+      const aBarres = d.slide && ['quiz', 'sondage', 'vrai_faux'].includes(d.slide.type);
+      if (d.slide && (d.nb_reponses > 0 || notationManuelle || aBarres)) {
         document.getElementById('zoneResultats').style.display = 'block';
         chargerResultats(d.slide.id);
       } else {
@@ -832,14 +874,28 @@
 
           if (['quiz', 'sondage', 'vrai_faux'].includes(d.type)) {
             const opts = d.type === 'vrai_faux' ? ['Faux', 'Vrai'] : (d.contenu.options || []);
+            // Les clés de répartition sont normalisées en '0'/'1' côté serveur.
+            const nbs = opts.map((o, i) => d.repartition[String(i)] || 0);
+            // Pourcentage des RÉPONDANTS, pas des voix : en quiz à plusieurs
+            // bonnes réponses une personne coche plusieurs cases, et la somme
+            // des barres dépasse alors 100 %, ce qui est le chiffre utile
+            // (« 80 % ont coché les épluchures »).
+            const nbRep = (d.reponses || []).length;
+            const multi = Array.isArray(d.contenu.correct);
+            const max = Math.max(0, ...nbs);
+            h += '<div class="res-total">' + nbRep + ' répondant' + (nbRep > 1 ? 's' : '')
+              + (multi ? ' · plusieurs choix possibles' : '') + '</div>';
             opts.forEach((o, i) => {
-              // Les clés de répartition sont normalisées en '0'/'1' côté serveur.
-              const nb = d.repartition[String(i)] || 0;
+              const nb = nbs[i];
+              const pct = nbRep ? Math.round(nb / nbRep * 100) : 0;
               const juste = d.type === 'vrai_faux' ? (Boolean(d.contenu.correct) === (i === 1))
-                : Array.isArray(d.contenu.correct) ? d.contenu.correct.includes(i)
+                : multi ? d.contenu.correct.includes(i)
                 : (d.contenu.correct === i);
-              h += '<div class="apercu-opt' + (juste && d.type !== 'sondage' ? ' juste' : '') + '">'
-                 + '<span>' + echap(o) + '</span><span class="nb">' + nb + '</span></div>';
+              // Sondage : pas de bonne réponse, on distingue l'option en tête.
+              const cls = d.type === 'sondage' ? (nb > 0 && nb === max ? ' tete' : '') : (juste ? ' juste' : '');
+              h += '<div class="res-opt' + cls + '" style="--pct:' + pct + '%">'
+                 + '<span>' + echap(o) + '</span>'
+                 + '<span class="res-nb">' + pct + ' % <small>(' + nb + ')</small></span></div>';
             });
           }
 
@@ -1075,7 +1131,7 @@
   </script>
   <script src="/assets/js/confirmer.js"></script>
   <script src="/assets/js/media-embed.js"></script>
-  <script src="/assets/js/slide-render.js"></script>
+  <script src="/assets/js/slide-render.js?v=2"></script>
   <script src="/assets/js/site-nav.js"></script>
   <script src="/assets/js/admin-badge.js?v=3"></script>
   <script src="/assets/js/theme.js"></script>

@@ -410,22 +410,57 @@ if ($action === 'equipes') {
 }
 
 // ── CLASSEMENT (vu par un participant) ─────────────────────────────────────
+// Le téléphone n'affiche que la tête du classement et la ligne du participant :
+// la liste entière ne tient pas dans une carte, et chacun cherche d'abord sa
+// propre place. Le reste ne quitte donc pas le serveur.
+const CLASSEMENT_TETE_JOUEURS = 5;
+const CLASSEMENT_TETE_EQUIPES = 3;
+
+/**
+ * Rang « sportif » : deux scores égaux partagent le rang, le suivant saute
+ * d'autant (1, 2, 2, 4). La liste doit être triée par points décroissants.
+ */
+function avec_rangs($liste) {
+    $prec = null; $rang = 0;
+    foreach ($liste as $i => &$x) {
+        if ($x['points'] !== $prec) { $rang = $i + 1; $prec = $x['points']; }
+        $x['rang'] = $rang;
+    }
+    unset($x);
+    return $liste;
+}
+
 if ($action === 'classement') {
     $p = participant_ou_403($conn);
+    $moi_id = (int)$p['id'];
+    $mon_equipe_id = $p['equipe_id'] !== null ? (int)$p['equipe_id'] : 0;
 
     $stmt = mysqli_prepare($conn,
-        'SELECT p.nom_affiche, COALESCE(SUM(r.points), 0) AS points
+        'SELECT p.id, p.nom_affiche, COALESCE(SUM(r.points), 0) AS points
          FROM participants p LEFT JOIN reponses r ON r.participant_id = p.id
          WHERE p.evenement_id = ?
-         GROUP BY p.id, p.nom_affiche ORDER BY points DESC, p.rejoint_at ASC LIMIT 20');
+         GROUP BY p.id, p.nom_affiche ORDER BY points DESC, p.rejoint_at ASC');
     $stmt->bind_param('i', $p['evenement_id']);
     $stmt->execute();
     $res = $stmt->get_result();
-    $joueurs = [];
-    while ($row = $res->fetch_assoc()) $joueurs[] = ['nom' => $row['nom_affiche'], 'points' => (int)$row['points']];
+    $tous = [];
+    while ($row = $res->fetch_assoc()) {
+        $tous[] = ['id' => (int)$row['id'], 'nom' => $row['nom_affiche'], 'points' => (int)$row['points']];
+    }
+    $tous = avec_rangs($tous);
+
+    // Le participant est repéré par son identifiant, jamais par son pseudo :
+    // deux homonymes étaient auparavant surlignés ensemble. L'identifiant, lui,
+    // ne part pas vers le navigateur — seul un drapeau « moi » l'accompagne.
+    $joueurs = []; $moi = null;
+    foreach ($tous as $i => $j) {
+        $ligne = ['nom' => $j['nom'], 'points' => $j['points'], 'rang' => $j['rang'], 'moi' => $j['id'] === $moi_id];
+        if ($i < CLASSEMENT_TETE_JOUEURS) $joueurs[] = $ligne;
+        if ($ligne['moi']) $moi = $ligne;
+    }
 
     $stmt = mysqli_prepare($conn,
-        'SELECT e.nom, e.couleur, COALESCE(SUM(r.points), 0) AS points
+        'SELECT e.id, e.nom, e.couleur, COALESCE(SUM(r.points), 0) AS points
          FROM equipes e
          LEFT JOIN participants p ON p.equipe_id = e.id
          LEFT JOIN reponses r ON r.participant_id = p.id
@@ -434,10 +469,28 @@ if ($action === 'classement') {
     $stmt->bind_param('i', $p['evenement_id']);
     $stmt->execute();
     $res = $stmt->get_result();
-    $equipes = [];
-    while ($row = $res->fetch_assoc()) $equipes[] = ['nom' => $row['nom'], 'couleur' => $row['couleur'], 'points' => (int)$row['points']];
+    $toutes = [];
+    while ($row = $res->fetch_assoc()) {
+        $toutes[] = ['id' => (int)$row['id'], 'nom' => $row['nom'], 'couleur' => $row['couleur'], 'points' => (int)$row['points']];
+    }
+    $toutes = avec_rangs($toutes);
 
-    echo json_encode(['joueurs' => $joueurs, 'equipes' => $equipes], JSON_UNESCAPED_UNICODE);
+    $equipes = []; $mon_equipe = null;
+    foreach ($toutes as $i => $e) {
+        $ligne = ['nom' => $e['nom'], 'couleur' => $e['couleur'], 'points' => $e['points'], 'rang' => $e['rang'],
+                  'moi' => $e['id'] === $mon_equipe_id];
+        if ($i < CLASSEMENT_TETE_EQUIPES) $equipes[] = $ligne;
+        if ($ligne['moi']) $mon_equipe = $ligne;
+    }
+
+    echo json_encode([
+        'joueurs'       => $joueurs,
+        'moi'           => $moi,
+        'nb_joueurs'    => count($tous),
+        'equipes'       => $equipes,
+        'mon_equipe'    => $mon_equipe,
+        'nb_equipes'    => count($toutes),
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 

@@ -14,8 +14,9 @@
        maReponse  : { reponse, points, correct } | null
        correction : true  → montrer les bonnes réponses (écran animateur)
        position   : { index, total } | null
-       classement : { joueurs:[], equipes:[] } | null
-       moi        : nom du participant, pour se repérer dans le classement
+       classement : { joueurs:[], equipes:[], moi?, mon_equipe?, nb_joueurs?,
+                      nb_equipes? } | null — entrées { nom, points, rang?, moi? }
+       moiPoints  : score du participant (slide d'encouragement)
      }
    ============================================================================ */
 (function () {
@@ -26,6 +27,14 @@
   }
 
   var LETTRES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+  /** Bouton d'action (Valider, Envoyer). Il n'est PAS posé dans le corps de la
+      carte : celui-ci défile, et un bouton rangé tout au fond disparaissait
+      hors champ dès qu'une slide débordait. La carte le place dans son pied
+      fixe .sl__actions, où la page participant ajoute aussi « Suivant ». */
+  function boutonAction(libelle) {
+    return '<button type="button" class="sl__action" id="slValider">' + e(libelle) + '</button>';
+  }
 
   /** Kicker + filet, la ligne d'en-tête récurrente des gabarits. */
   function ligne(kicker, droite) {
@@ -41,24 +50,65 @@
       + '<span class="sl__num">' + e(num) + '</span></div>';
   }
 
+  /* ── Classement ──────────────────────────────────────────────────────────
+     Une carte ne montre que la tête du classement : au-delà, la liste sortait
+     du cadre, et personne ne lit trente lignes sur un téléphone. Le
+     participant classé plus loin voit sa propre ligne, séparée par « … ».
+     Il est repéré par le drapeau `moi` posé par le serveur, jamais par son
+     pseudo : deux homonymes étaient auparavant surlignés ensemble. */
+  var TETE_JOUEURS = 5, TETE_EQUIPES = 3;
+
+  /** Rang « sportif » (1, 2, 2, 4) quand le serveur ne l'a pas fourni —
+      c'est le cas sur l'écran de l'animateur, qui reçoit la liste entière. */
+  function avecRangs(liste) {
+    var prec = null, rang = 0;
+    return liste.map(function (x, i) {
+      if (x.points !== prec) { rang = i + 1; prec = x.points; }
+      return Object.assign({ rang: rang }, x);
+    });
+  }
+
+  function ligneClst(x) {
+    return '<li' + (x.moi ? ' class="moi"' : '') + '><span class="rang">' + e(x.rang) + '</span>'
+      + '<span class="nom">' + e(x.nom) + (x.moi ? ' <span class="sl__clst-toi">· toi</span>' : '') + '</span>'
+      + '<span class="pts">' + e(x.points) + '</span></li>';
+  }
+
+  /** Tête de liste + ligne personnelle + nombre de lignes non montrées. */
+  function listeClst(liste, tete, moi, total, autre) {
+    var vus = avecRangs(liste || []).slice(0, tete);
+    var dedans = vus.some(function (x) { return x.moi; });
+    var h = vus.map(ligneClst).join('');
+    var montres = vus.length;
+    if (moi && !dedans) {
+      h += '<li class="sl__clst-ecart" aria-hidden="true">…</li>' + ligneClst(Object.assign({}, moi, { moi: true }));
+      montres++;
+    }
+    var reste = (total || (liste || []).length) - montres;
+    return '<ul class="sl__clst">' + h + '</ul>'
+      + (reste > 0 ? '<p class="sl__clst-reste">+ ' + reste + ' ' + autre[reste > 1 ? 1 : 0] + '</p>' : '');
+  }
+
   function classement(o, portee) {
     var c = o.classement;
     if (!c) return '';
+    var avecJoueurs = portee !== 'equipe' && (c.joueurs || []).length;
+    var avecEquipes = portee !== 'individuel' && (c.equipes || []).length;
+    // Les deux listes à la fois : chacune son intitulé, sinon rien ne dit
+    // que la seconde liste est celle des équipes.
+    var titres = avecJoueurs && avecEquipes;
     var h = '';
-    if (portee !== 'equipe' && (c.joueurs || []).length) {
-      h += '<ul class="sl__clst">' + c.joueurs.slice(0, 8).map(function (j, i) {
-        var moi = o.moi && j.nom === o.moi ? ' class="moi"' : '';
-        return '<li' + moi + '><span class="rang">' + (i + 1) + '</span>'
-          + '<span class="nom">' + e(j.nom) + '</span><span class="pts">' + e(j.points) + '</span></li>';
-      }).join('') + '</ul>';
+    if (avecJoueurs) {
+      h += '<div class="sl__clst-bloc">' + (titres ? '<p class="sl__kicker">Participants</p>' : '')
+        + listeClst(c.joueurs, TETE_JOUEURS, c.moi, c.nb_joueurs, ['autre participant', 'autres participants']) + '</div>';
     }
-    if (portee !== 'individuel' && (c.equipes || []).length) {
-      h += '<ul class="sl__clst" style="margin-top:2cqw">' + c.equipes.map(function (q, i) {
-        return '<li><span class="rang">' + (i + 1) + '</span>'
-          + '<span class="nom">' + e(q.nom) + '</span><span class="pts">' + e(q.points) + '</span></li>';
-      }).join('') + '</ul>';
+    if (avecEquipes) {
+      h += '<div class="sl__clst-bloc">' + (titres ? '<p class="sl__kicker">Équipes</p>' : '')
+        + listeClst(c.equipes, TETE_EQUIPES, c.mon_equipe, c.nb_equipes, ['autre équipe', 'autres équipes']) + '</div>';
     }
-    return h || '<p class="sl__texte">Le classement s\'affichera dès les premières réponses.</p>';
+    // Conteneur commun : en paysage, les deux listes se placent côte à côte.
+    return h ? '<div class="sl__clst-blocs">' + h + '</div>'
+      : '<p class="sl__texte">Le classement s\'affichera dès les premières réponses.</p>';
   }
 
   /** Bloc de réponses pour quiz / vrai-faux / sondage. */
@@ -104,11 +154,7 @@
         + '<span>' + e(lib) + '</span></button>';
     }).join('');
 
-    var validerMulti = (multi && o.interactif && !rep)
-      ? '<button type="button" class="sl__rep" id="slValider" style="justify-content:center;font-family:\'Baloo 2\',cursive;font-weight:900">Valider</button>'
-      : '';
-
-    return '<div class="sl__reps">' + boutons + '</div>' + validerMulti;
+    return '<div class="sl__reps">' + boutons + '</div>';
   }
 
   function verdict(s, c, o) {
@@ -151,14 +197,15 @@
     o = o || {};
     var c = s.contenu || {};
     var cls = 'sl' + (o.fixe ? ' sl--fixe' : '');
-    var corps = '', entete = '', plein = false;
+    var corps = '', entete = '', plein = false, actions = '';
+    var attendSaisie = o.interactif && !o.maReponse;
     var badgePts = s.points ? '<span class="sl__badge-pts">' + e(s.points) + ' pts</span>' : '';
 
     switch (s.type) {
       case 'titre':
         plein = true;
         corps = ligne(o.position ? 'Étape ' + String(o.position.index + 1).padStart(2, '0') : 'Partie')
-          + '<div class="sl__corps" style="gap:4cqw"><div class="sl__barre"></div>'
+          + '<div class="sl__corps" style="gap:calc(var(--u) * 4)"><div class="sl__barre"></div>'
           + '<h2 class="sl__titre sl__titre--geant">' + e(s.titre) + '</h2>'
           + (c.sous_titre ? '<p class="sl__sous">' + e(c.sous_titre) + '</p>' : '') + '</div>'
           + pied('', o);
@@ -167,7 +214,7 @@
       case 'fin':
         plein = true;
         corps = ligne('Merci')
-          + '<div class="sl__corps" style="gap:4cqw"><div class="sl__barre"></div>'
+          + '<div class="sl__corps" style="gap:calc(var(--u) * 4)"><div class="sl__barre"></div>'
           + '<h2 class="sl__titre sl__titre--geant">' + e(s.titre || 'Merci !') + '</h2>'
           + '<p class="sl__sous">' + e(c.message) + '</p></div>'
           + (c.afficher_classement ? '<div style="position:relative">' + classement(o, 'les_deux') + '</div>' : pied('', o));
@@ -183,7 +230,7 @@
       case 'anecdote':
         corps = '<div class="sl__bandeau"></div><div class="sl__corps">'
           + '<div class="sl__ligne"><span class="sl__pastille">Le saviez-vous ?</span><span class="sl__filet"></span></div>'
-          + '<div style="font-size:clamp(34px,9cqw,58px);line-height:1">' + e(c.emoji || '💡') + '</div>'
+          + '<div style="font-size:clamp(34px,calc(var(--u) * 9),58px);line-height:1">' + e(c.emoji || '💡') + '</div>'
           + (s.titre ? '<h2 class="sl__titre">' + e(s.titre) + '</h2>' : '')
           + '<p class="sl__texte">' + e(c.corps) + '</p>' + pied('', o) + '</div>';
         break;
@@ -350,7 +397,7 @@
       case 'defi':
         entete = ligne('Défi', badgePts) + '<h2 class="sl__titre">' + e(s.titre || 'À vous de jouer') + '</h2>';
         corps = '<div class="sl__corps">'
-          + '<div style="font-size:clamp(34px,9cqw,58px);line-height:1;text-align:center">🎯</div>'
+          + '<div style="font-size:clamp(34px,calc(var(--u) * 9),58px);line-height:1;text-align:center">🎯</div>'
           + '<p class="sl__texte">' + e(c.consigne) + '</p>'
           + '<p class="sl__texte" style="margin-top:auto;opacity:.7">L\'animateur attribuera les points.</p>' + '</div>';
         break;
@@ -361,6 +408,8 @@
         entete = ligne(s.type === 'sondage' ? 'Sondage' : (s.type === 'vrai_faux' ? 'Vrai ou faux' : 'Question'), badgePts)
           + '<h2 class="sl__titre">' + e(c.question) + '</h2>';
         corps = '<div class="sl__corps">' + reponses(s, c, o) + verdict(s, c, o) + '</div>';
+        // Quiz à plusieurs bonnes réponses : un clic coche, « Valider » envoie.
+        if (s.type === 'quiz' && c.multiple && attendSaisie) actions = boutonAction('Valider');
         break;
 
       case 'estimation':
@@ -370,11 +419,11 @@
              : (o.interactif
                 ? '<input type="number" step="any" id="slEstim" class="sl__rep" style="cursor:text" placeholder="Ta réponse'
                   + (c.unite ? ' (' + e(c.unite) + ')' : '') + '">'
-                  + '<button type="button" class="sl__rep" id="slValider" style="justify-content:center;font-family:\'Baloo 2\',cursive;font-weight:900">Valider</button>'
                 : '<p class="sl__texte">' + (o.correction && c.valeur !== undefined
                     ? 'Réponse attendue : <b>' + e(c.valeur) + ' ' + e(c.unite || '') + '</b> (tolérance ± ' + e(c.tolerance) + ')'
                     : 'Les participants saisissent une valeur.') + '</p>'))
           + verdict(s, c, o) + '</div>';
+        if (attendSaisie) actions = boutonAction('Valider');
         break;
 
       case 'question_ouverte':
@@ -382,10 +431,10 @@
         corps = '<div class="sl__corps">'
           + (o.maReponse ? '<p class="sl__texte">Ta réponse : <b>' + e(o.maReponse.reponse) + '</b></p>'
              : (o.interactif
-                ? '<textarea id="slOuverte" class="sl__rep" style="cursor:text;min-height:22cqw" maxlength="' + (c.max_car || 300) + '"></textarea>'
-                  + '<button type="button" class="sl__rep" id="slValider" style="justify-content:center;font-family:\'Baloo 2\',cursive;font-weight:900">Envoyer</button>'
+                ? '<textarea id="slOuverte" class="sl__rep" style="cursor:text;min-height:calc(var(--u) * 22)" maxlength="' + (c.max_car || 300) + '"></textarea>'
                 : '<p class="sl__texte">Les participants répondent librement.</p>'))
           + verdict(s, c, o) + '</div>';
+        if (attendSaisie) actions = boutonAction('Envoyer');
         break;
 
       case 'jeu': {
@@ -459,9 +508,8 @@
             return '<div class="' + cls + '" style="cursor:default;flex-wrap:wrap"><span class="sl__rep-marque">' + e(it.emoji || '•') + '</span>'
               + '<span style="flex:1">' + e(it.nom) + '</span>' + champ + '</div>';
           }).join('')
-          + (o.interactif && !o.maReponse
-             ? '<button type="button" class="sl__rep" id="slValider" style="justify-content:center;font-family:\'Baloo 2\',cursive;font-weight:900">Valider</button>' : '')
           + verdict(s, c, o) + '</div>';
+        if (attendSaisie) actions = boutonAction('Valider');
         break;
       }
 
@@ -470,6 +518,9 @@
     }
 
     if (plein) cls += ' sl--plein';
+    // Carte à en-tête (les questions) : en paysage, elle passe sur deux
+    // colonnes — consigne à gauche, réponses à droite (cf. slides.css).
+    if (entete) cls += ' sl--q';
     var deco = plein || entete
       ? '<div class="sl__grain"></div><div class="sl__deco sl__deco--haut"></div>' : '';
 
@@ -490,6 +541,8 @@
       + (entete ? '<div class="sl__entete"><div class="sl__deco sl__deco--bas"></div>'
                   + '<div style="position:relative">' + entete + '</div></div>' : '')
       + (plein ? deco : '')
-      + corps + illu + '</div>';
+      + corps
+      + (actions ? '<div class="sl__actions">' + actions + '</div>' : '')
+      + illu + '</div>';
   };
 })();

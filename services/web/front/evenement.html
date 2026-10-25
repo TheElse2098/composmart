@@ -102,32 +102,20 @@
        bouton se partageaient la largeur, d'où une carte comprimée de moitié et
        un bouton géant à côté. */
     body.en-parcours #zoneLive { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; gap: 10px; }
-    body.en-parcours #zoneLive > .sl { flex: 1; min-height: 0; }
+    /* La carte de slide se dimensionne sur #zoneLive, qui est un .sl-cadre
+       (slides.css) : elle tient entière dans la zone, en largeur comme en
+       hauteur. Le plafond de 560 px du formulaire ne vaut donc plus ici — il
+       laissait sur PC une bande étroite au milieu de l'écran. */
+    body.en-parcours .carte { max-width: none; width: auto; align-self: stretch; }
 
-    /* Barre « Suivant » du mode individuel : fixée en bas de l'ÉCRAN (pas de la
-       carte), pour rester visible sur tous les formats de téléphone même quand
-       une carte haute déborde et pousserait un bouton en flux normal hors
-       champ. Quitte à recouvrir un peu de la slide — mieux vaut ça qu'un
-       bouton invisible qui bloque la progression. pointer-events: none sur la
-       barre laisse les clics traverser la zone transparente du dégradé
-       jusqu'à la slide en dessous ; seul le bouton lui-même les intercepte. */
-    .barre-suivant {
-      position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
-      display: flex; justify-content: center; pointer-events: none;
-      padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
-      background: linear-gradient(to top, rgba(238,244,236,0.98) 55%, rgba(238,244,236,0) 100%);
-    }
-    .suivant-ind {
-      pointer-events: auto;
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      min-width: 168px; background: #1e6e3e; color: #fff; border: none; border-radius: 50px;
-      padding: 10px 24px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.95rem;
-      cursor: pointer; transition: opacity .15s;
-      box-shadow: 0 6px 18px rgba(20,50,30,0.3);
-    }
-    .suivant-ind:hover:not(:disabled) { opacity: 0.9; }
-    .suivant-ind:disabled { opacity: 0.45; cursor: default; }
-    html.dark .barre-suivant { background: linear-gradient(to top, rgba(16,26,19,0.98) 55%, rgba(16,26,19,0) 100%); }
+    /* « Suivant » (mode individuel), comme « Valider », vit dans le pied
+       .sl__actions de la carte (slides.css) : hors de la zone qui défile, donc
+       toujours à l'écran, sans recouvrir la slide comme le faisait l'ancienne
+       barre fixée au bas de la fenêtre. Encore faut-il que le bas de la carte
+       soit lui-même à l'écran : c'est le rôle de la hauteur ci-dessus, et de
+       --h-ecran pour les navigateurs qui ignorent dvh (cf. hauteurEcran()). */
+    body.en-parcours.h-js { height: var(--h-ecran); }
+    body.en-parcours .carte { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
     /* Liseré coloré en haut de carte, teinté selon le type de slide : repère
        visuel qui change à chaque étape et rythme le parcours. */
@@ -260,7 +248,9 @@
   </style>
   <link rel="stylesheet" href="/assets/css/desktop.css">
   <!-- Charte des cartes de slide, partagée avec la console d'animation -->
-  <link rel="stylesheet" href="/assets/css/slides.css">
+  <!-- ?v= : slides.css et slide-render.js évoluent ensemble ; bumper les deux,
+       ici et dans suivi.html, sinon un cache mélange l'ancien et le nouveau. -->
+  <link rel="stylesheet" href="/assets/css/slides.css?v=2">
 </head>
 <body>
 
@@ -305,7 +295,7 @@
     </div>
 
     <!-- Étape 3 : runtime -->
-    <div id="zoneLive" style="display:none"></div>
+    <div id="zoneLive" class="sl-cadre" style="display:none"></div>
   </div>
 
   <!-- Footer partagé (injecté par site-footer.js) -->
@@ -762,7 +752,6 @@
           maReponse:  d.ma_reponse,
           position:   (d.index !== undefined && d.total !== undefined) ? { index: d.index, total: d.total } : null,
           classement: cl,
-          moi:        d.participant ? d.participant.nom : '',
           moiPoints:  d.participant ? d.participant.points : undefined,
         });
         cablerSlide(z, d);
@@ -802,13 +791,24 @@
       if (ticSuivant) { clearInterval(ticSuivant); ticSuivant = null; }
       if (!d.evenement || d.evenement.mode !== 'individuel') return;
 
-      const barre = document.createElement('div');
-      barre.className = 'barre-suivant';
+      const carteSl = z.querySelector('.sl');
+      if (!carteSl) return;
+      // Une slide à saisie porte déjà son « Valider » : un « Suivant » inerte à
+      // côté ne dirait rien de plus. Il apparaîtra au rendu suivant, une fois
+      // la réponse envoyée (le Valider aura alors disparu).
+      if (carteSl.querySelector('#slValider')) return;
+
+      let pied = carteSl.querySelector('.sl__actions');
+      if (!pied) {
+        pied = document.createElement('div');
+        pied.className = 'sl__actions';
+        // Avant l'illustration éventuelle, comme le pose rendreSlideHtml.
+        carteSl.insertBefore(pied, carteSl.querySelector('.sl__illu'));
+      }
       const b = document.createElement('button');
       b.type = 'button';
-      b.className = 'suivant-ind';
-      barre.appendChild(b);
-      z.appendChild(barre);
+      b.className = 'sl__action';
+      pied.appendChild(b);
 
       const bloquer = (motif) => { b.disabled = true; b.textContent = motif; };
       const ouvrir = () => { b.disabled = false; b.textContent = 'Suivant →'; };
@@ -957,11 +957,29 @@
         .catch(() => { afficher('Erreur réseau.', false); rendu = ''; chargerEtat(); });
     }
 
-    /** Renvoie les données de classement (et non un rendu) : la carte s'en charge. */
+    /** Renvoie les données de classement (et non un rendu) : la carte s'en
+        charge. Le serveur n'envoie que la tête de liste, plus la ligne du
+        participant (moi) et celle de son équipe (mon_equipe). */
     function chargerClassement() {
       return fetch(API + '/live.php?action=classement&token=' + encodeURIComponent(token))
         .then(r => r.json())
-        .then(d => ({ joueurs: d.joueurs || [], equipes: d.equipes || [] }));
+        .then(d => ({
+          joueurs: d.joueurs || [], moi: d.moi || null, nb_joueurs: d.nb_joueurs,
+          equipes: d.equipes || [], mon_equipe: d.mon_equipe || null, nb_equipes: d.nb_equipes,
+        }));
+    }
+
+    // ══════════ HAUTEUR D'ÉCRAN ══════════
+    // Le parcours occupe exactement l'écran (100dvh). Un navigateur qui ignore
+    // dvh retombe sur 100vh, qui inclut la barre d'adresse rétractable : le bas
+    // de la carte, et avec lui ses boutons, passe alors sous le bord visible.
+    // innerHeight, lui, donne la zone réellement affichée.
+    if (!(window.CSS && CSS.supports && CSS.supports('height', '100dvh'))) {
+      const hauteurEcran = () => document.body.style.setProperty('--h-ecran', window.innerHeight + 'px');
+      document.body.classList.add('h-js');
+      hauteurEcran();
+      window.addEventListener('resize', hauteurEcran);
+      window.addEventListener('orientationchange', hauteurEcran);
     }
 
     // ══════════ REPRISE DE SESSION ══════════
@@ -972,7 +990,7 @@
   </script>
   <script src="/assets/js/confirmer.js"></script>
   <script src="/assets/js/media-embed.js"></script>
-  <script src="/assets/js/slide-render.js"></script>
+  <script src="/assets/js/slide-render.js?v=2"></script>
   <script src="/assets/js/site-footer.js"></script>
   <script src="/assets/js/site-nav.js"></script>
   <script src="/assets/js/theme.js"></script>

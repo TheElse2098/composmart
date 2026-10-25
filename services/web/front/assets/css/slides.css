@@ -10,10 +10,16 @@
    (evenements-api) : les deux doivent se ressembler, et dupliquer 400 lignes
    de CSS garantissait qu'elles finiraient par diverger.
 
-   Le dimensionnement repose sur des unités de conteneur (cqw) : la même carte
-   rend en grand sur un vidéoprojecteur et en petit sur un téléphone, sans
-   classe de variante ni media query. Bornes via clamp() pour éviter les
-   extrêmes.
+   Le dimensionnement repose sur une unité de carte, --u, posée sur .sl : la
+   même carte rend en grand sur un vidéoprojecteur et en petit sur un
+   téléphone, sans classe de variante ni media query. Bornes via clamp() pour
+   éviter les extrêmes.
+
+   --u vaut 1cqw (1 % de la largeur de la carte) tant que seule la largeur de
+   la carte est connue. Quand la carte a une hauteur imposée (.sl--fixe, ou
+   posée dans un .sl-cadre), elle vaut min(1cqw, 1.25cqh) : une carte plus
+   large que haute — PC, téléphone couché — dimensionne alors son contenu sur
+   sa HAUTEUR, au lieu de grossir un texte qui finissait hors du cadre.
    ============================================================================ */
 
 :root {
@@ -77,7 +83,8 @@ html.dark {
 
 /* ── La carte ───────────────────────────────────────────────────────────── */
 .sl {
-  container-type: inline-size;          /* socle des unités cqw ci-dessous */
+  container-type: inline-size;          /* socle de l'unité --u ci-dessous */
+  --u: 1cqw;
   position: relative;
   overflow: hidden;
   border-radius: var(--sl-rad);
@@ -93,12 +100,63 @@ html.dark {
    scène plus grande. Sur téléphone la carte suit la hauteur disponible. */
 .sl--fixe { aspect-ratio: 4 / 5; width: min(560px, 92vw); }
 
+/* Hauteur connue d'avance (ratio imposé, ou cadre qui fixe les deux
+   dimensions) : la carte peut contenir sa taille dans les deux axes, et --u
+   tient compte de la hauteur. Jamais par défaut : une carte dont la hauteur
+   dépendrait de son contenu s'effondrerait à zéro sous size. */
+.sl--fixe,
+.sl-cadre > .sl { container-type: size; --u: min(1cqw, 1.25cqh); }
+
+/* ── Le cadre : la zone d'écran où la carte doit tenir ────────────────────
+   Il connaît ses deux dimensions (container: size) ; la carte s'y loge
+   entière, centrée. En portrait elle prend tout. En paysage elle s'élargit
+   mais reste bornée par la hauteur : une question passe alors sur deux
+   colonnes (ci-dessous), les autres slides gardent une ligne de texte
+   raisonnable. La première déclaration de largeur sert de repli aux
+   navigateurs qui ignorent les unités de conteneur. */
+.sl-cadre { container: sl-cadre / size; }
+.sl-cadre > .sl {
+  flex: none; align-self: center; height: 100%;
+  width: 100%;
+  width: min(100%, 140cqh, 880px);
+  /* Plafond de --u : sur un grand écran, les textes butent déjà sur le
+     maximum de leur clamp(), mais les marges et les pastilles, elles, n'en
+     ont pas et grossissaient sans fin. 6,5 px ≈ une carte de 650 px de large. */
+  --u: min(1cqw, 1.25cqh, 6.5px);
+}
+.sl-cadre > .sl--q,
+.sl-cadre > .sl[data-type="media"] { width: min(100%, 200cqh, 1180px); }
+
+/* Question en paysage : en-tête (consigne) à gauche, réponses à droite,
+   bouton d'action sous les réponses. La hauteur d'un écran couché ne suffit
+   pas à empiler les deux — c'était le défilement assuré. */
+@container sl-cadre (orientation: landscape) and (min-width: 520px) {
+  .sl--q {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .sl--q > .sl__entete {
+    grid-column: 1; grid-row: 1 / span 2;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .sl--q > .sl__corps    { grid-column: 2; grid-row: 1; }
+  .sl--q > .sl__actions  { grid-column: 2; grid-row: 2; }
+  /* Centrage vertical des réponses par marges automatiques : contrairement à
+     justify-content:center, elles retombent à zéro quand le contenu déborde,
+     et le haut de la liste reste atteignable au défilement. */
+  .sl--q > .sl__corps > :first-child { margin-top: auto; }
+  .sl--q > .sl__corps > :last-child  { margin-bottom: auto; }
+  /* L'illustration passe à droite : à gauche elle couvrirait l'en-tête. */
+  [data-theme-slide="simpliste"] .sl--q .sl__illu { left: auto; right: calc(var(--u) * 4); object-position: right bottom; }
+}
+
 /* Variante « fond plein » : carte de titre, texte en blanc sur le vert. */
 .sl--plein {
   background: linear-gradient(155deg, var(--sl-fond1), var(--sl-fond2));
   color: #fff;
   justify-content: space-between;
-  padding: 8cqw 7cqw;
+  padding: calc(var(--u) * 8) calc(var(--u) * 7);
 }
 .sl--plein .sl__titre { color: #fff; }
 .sl--plein .sl__texte,
@@ -121,83 +179,83 @@ html.dark {
 }
 
 /* ── Ossature interne ───────────────────────────────────────────────────── */
-.sl__bandeau { height: 1.4cqw; min-height: 6px; background: linear-gradient(90deg, var(--sl-accent), var(--sl-fond2)); flex: none; }
+.sl__bandeau { height: calc(var(--u) * 1.4); min-height: 6px; background: linear-gradient(90deg, var(--sl-accent), var(--sl-fond2)); flex: none; }
 
 .sl__entete {
   position: relative; overflow: hidden; flex: none;
-  padding: 6cqw 7cqw 5.5cqw;
+  padding: calc(var(--u) * 6) calc(var(--u) * 7) calc(var(--u) * 5.5);
   background: linear-gradient(150deg, var(--sl-fond1), var(--sl-fond2));
   color: #fff;
 }
 .sl__entete .sl__titre  { color: #fff; }
 .sl__entete .sl__kicker { color: rgba(255, 255, 255, 0.62); }
 
-.sl__corps { flex: 1; min-height: 0; overflow-y: auto; padding: 5cqw 7cqw 6cqw; display: flex; flex-direction: column; gap: 3.4cqw; }
+.sl__corps { flex: 1; min-height: 0; overflow-y: auto; padding: calc(var(--u) * 5) calc(var(--u) * 7) calc(var(--u) * 6); display: flex; flex-direction: column; gap: calc(var(--u) * 3.4); }
 .sl--plein .sl__corps { padding: 0; overflow: visible; }
 
 /* ── Éléments de texte ──────────────────────────────────────────────────── */
 .sl__kicker {
-  font-size: clamp(10px, 2.1cqw, 13px); letter-spacing: 0.24em; text-transform: uppercase;
+  font-size: clamp(10px, calc(var(--u) * 2.1), 13px); letter-spacing: 0.24em; text-transform: uppercase;
   color: var(--sl-doux); font-weight: 700;
 }
-.sl__ligne  { display: flex; align-items: center; gap: 2.2cqw; }
+.sl__ligne  { display: flex; align-items: center; gap: calc(var(--u) * 2.2); }
 .sl__filet  { flex: 1; height: 1px; background: var(--sl-trait); }
 
-.sl__barre  { width: 10cqw; max-width: 56px; height: 4px; border-radius: 2px; background: var(--sl-accent); flex: none; }
+.sl__barre  { width: calc(var(--u) * 10); max-width: 56px; height: 4px; border-radius: 2px; background: var(--sl-accent); flex: none; }
 
 .sl__titre {
   margin: 0; font-family: 'Baloo 2', cursive; font-weight: 900; line-height: 1.1;
-  font-size: clamp(21px, 6.4cqw, 46px); text-wrap: pretty; color: var(--sl-encre);
+  font-size: clamp(21px, calc(var(--u) * 6.4), 46px); text-wrap: pretty; color: var(--sl-encre);
 }
-.sl__titre--geant { font-size: clamp(26px, 10.4cqw, 62px); line-height: 1.02; }
-.sl__sous  { margin: 0; font-size: clamp(15px, 3.6cqw, 21px); line-height: 1.5; color: var(--sl-doux); font-weight: 600; }
-.sl__texte { margin: 0; font-size: clamp(14px, 3.3cqw, 19px); line-height: 1.62; color: var(--sl-doux); text-wrap: pretty; white-space: pre-wrap; }
+.sl__titre--geant { font-size: clamp(26px, calc(var(--u) * 10.4), 62px); line-height: 1.02; }
+.sl__sous  { margin: 0; font-size: clamp(15px, calc(var(--u) * 3.6), 21px); line-height: 1.5; color: var(--sl-doux); font-weight: 600; }
+.sl__texte { margin: 0; font-size: clamp(14px, calc(var(--u) * 3.3), 19px); line-height: 1.62; color: var(--sl-doux); text-wrap: pretty; white-space: pre-wrap; }
 
 .sl__pastille {
-  padding: 1.1cqw 2.6cqw; border-radius: 999px; background: var(--sl-tendre); color: var(--sl-encre);
+  padding: calc(var(--u) * 1.1) calc(var(--u) * 2.6); border-radius: 999px; background: var(--sl-tendre); color: var(--sl-encre);
   font-family: 'Baloo 2', cursive; font-weight: 900;
-  font-size: clamp(10px, 2.1cqw, 12px); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap;
+  font-size: clamp(10px, calc(var(--u) * 2.1), 12px); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap;
 }
 .sl__badge-pts {
-  padding: 0.9cqw 2.2cqw; border-radius: 999px; background: rgba(255, 255, 255, 0.16); color: #fff;
-  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(10px, 2.1cqw, 13px); white-space: nowrap;
+  padding: calc(var(--u) * 0.9) calc(var(--u) * 2.2); border-radius: 999px; background: rgba(255, 255, 255, 0.16); color: #fff;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(10px, calc(var(--u) * 2.1), 13px); white-space: nowrap;
 }
 
 .sl__pied {
-  display: flex; align-items: center; justify-content: space-between; gap: 2cqw;
-  font-size: clamp(11px, 2.4cqw, 14px); color: var(--sl-doux);
-  padding-top: 2cqw; border-top: 1px solid var(--sl-trait);
+  display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 2);
+  font-size: clamp(11px, calc(var(--u) * 2.4), 14px); color: var(--sl-doux);
+  padding-top: calc(var(--u) * 2); border-top: 1px solid var(--sl-trait);
 }
 .sl--plein .sl__pied { border-top: none; color: rgba(255, 255, 255, 0.55); }
 .sl__num { font-family: 'Baloo 2', cursive; font-weight: 900; }
 .sl--plein .sl__num { color: rgba(255, 255, 255, 0.82); }
 
 /* ── Liste numérotée ────────────────────────────────────────────────────── */
-.sl__liste { list-style: none; display: flex; flex-direction: column; gap: 2.4cqw; margin: 0; padding: 0; }
-.sl__liste li { display: flex; gap: 2.6cqw; align-items: flex-start; font-size: clamp(13px, 3cqw, 17px); line-height: 1.5; color: var(--sl-encre); }
+.sl__liste { list-style: none; display: flex; flex-direction: column; gap: calc(var(--u) * 2.4); margin: 0; padding: 0; }
+.sl__liste li { display: flex; gap: calc(var(--u) * 2.6); align-items: flex-start; font-size: clamp(13px, calc(var(--u) * 3), 17px); line-height: 1.5; color: var(--sl-encre); }
 .sl__puce {
-  flex: none; width: 4.8cqw; min-width: 24px; aspect-ratio: 1; border-radius: 50%;
+  flex: none; width: calc(var(--u) * 4.8); min-width: 24px; aspect-ratio: 1; border-radius: 50%;
   background: var(--sl-tendre); color: var(--sl-encre);
-  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(11px, 2.4cqw, 13px);
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(11px, calc(var(--u) * 2.4), 13px);
   display: flex; align-items: center; justify-content: center;
 }
 
 /* ── Boutons de réponse ─────────────────────────────────────────────────── */
-.sl__reps { display: flex; flex-direction: column; gap: 2.2cqw; }
+.sl__reps { display: flex; flex-direction: column; gap: calc(var(--u) * 2.2); }
 .sl__rep {
   appearance: none; text-align: left; cursor: pointer; width: 100%;
-  display: flex; align-items: center; gap: 2.8cqw;
-  padding: 3.2cqw 4cqw; border-radius: 18px;
-  font-family: 'Nunito', Arial, sans-serif; font-size: clamp(14px, 3.4cqw, 19px); font-weight: 600;
+  display: flex; align-items: center; gap: calc(var(--u) * 2.8);
+  padding: calc(var(--u) * 3.2) calc(var(--u) * 4); border-radius: 18px;
+  font-family: 'Nunito', Arial, sans-serif; font-size: clamp(14px, calc(var(--u) * 3.4), 19px); font-weight: 600;
   background: var(--sl-carte); border: 2px solid var(--sl-trait); color: var(--sl-encre);
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 .sl__rep:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 22px -12px rgba(26, 58, 37, 0.45); border-color: var(--sl-fond2); }
 .sl__rep:disabled { cursor: default; }
 .sl__rep-marque {
-  flex: none; width: 6cqw; min-width: 30px; aspect-ratio: 1; border-radius: 11px;
+  flex: none; width: calc(var(--u) * 6); min-width: 30px; aspect-ratio: 1; border-radius: 11px;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(12px, 2.8cqw, 16px);
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(12px, calc(var(--u) * 2.8), 16px);
   background: var(--sl-tendre); color: var(--sl-encre);
 }
 .sl__rep--choisie { border-color: var(--sl-fond2); background: var(--sl-tendre); }
@@ -208,17 +266,44 @@ html.dark {
 html.dark .sl__rep--juste  { background: #16291c; color: #7fc99a; border-color: #43a047; }
 html.dark .sl__rep--fausse { background: #3d1a1a; color: #ef9a9a; border-color: #e53935; }
 
+/* ── Pied d'action (Valider, Envoyer, Suivant) ──────────────────────────
+   Hors de .sl__corps, qui défile : le bouton reste à l'écran quelle que soit
+   la longueur de la slide, sans pour autant flotter par-dessus comme le
+   faisait l'ancienne barre fixée au bas de la fenêtre. Les couleurs passent
+   par deux jetons pour que chaque fond de carte (clair, plein, fête) n'ait
+   qu'eux à redéfinir. */
+.sl__actions {
+  flex: none; display: flex; justify-content: center; gap: calc(var(--u) * 2.4); flex-wrap: wrap;
+  padding: calc(var(--u) * 3) calc(var(--u) * 7) calc(var(--u) * 5);
+  position: relative; z-index: 1;
+}
+.sl--plein .sl__actions { padding: calc(var(--u) * 4) 0 0; }
+.sl__action {
+  appearance: none; cursor: pointer; border: none;
+  min-width: min(100%, calc(var(--u) * 46), 280px); padding: calc(var(--u) * 2.6) calc(var(--u) * 6); border-radius: 999px;
+  background: var(--sl-act-fond, var(--sl-fond2)); color: var(--sl-act-encre, #fff);
+  font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 900;
+  font-size: clamp(14px, calc(var(--u) * 3.6), 19px); line-height: 1.2;
+  box-shadow: 0 8px 18px -10px rgba(26, 58, 37, 0.55);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.sl__action:hover:not(:disabled) { transform: translateY(-2px); }
+.sl__action:focus-visible { outline: 3px solid var(--sl-accent); outline-offset: 2px; }
+.sl__action:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+/* Carte pleine (fond vert) : bouton clair, sinon vert sur vert. */
+.sl--plein { --sl-act-fond: #fff; --sl-act-encre: var(--sl-fond1); }
+
 /* ── Mot-mystère (extrait de jeu) : mêmes cases + tuiles que jeu-mot-mystere.html,
    redimensionnées en cqw pour vivre dans la carte de slide. ── */
-.sl__mm { display: flex; flex-direction: column; gap: 2.4cqw; padding: 3.2cqw 4cqw; border-radius: 18px; background: var(--sl-carte); border: 2px solid var(--sl-trait); }
-.sl__mm-indice { display: flex; align-items: center; gap: 2.8cqw; font-size: clamp(13px, 3.2cqw, 17px); font-weight: 700; color: var(--sl-doux); }
-.sl__mm-slots, .sl__mm-tiles { display: flex; flex-wrap: wrap; gap: 1.6cqw; }
+.sl__mm { display: flex; flex-direction: column; gap: calc(var(--u) * 2.4); padding: calc(var(--u) * 3.2) calc(var(--u) * 4); border-radius: 18px; background: var(--sl-carte); border: 2px solid var(--sl-trait); }
+.sl__mm-indice { display: flex; align-items: center; gap: calc(var(--u) * 2.8); font-size: clamp(13px, calc(var(--u) * 3.2), 17px); font-weight: 700; color: var(--sl-doux); }
+.sl__mm-slots, .sl__mm-tiles { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 1.6); }
 .sl__mm-slots { justify-content: center; }
 .sl__mm-slot {
-  width: 9cqw; height: 10cqw; min-width: 30px; min-height: 34px; max-width: 42px; max-height: 48px;
+  width: calc(var(--u) * 9); height: calc(var(--u) * 10); min-width: 30px; min-height: 34px; max-width: 42px; max-height: 48px;
   border-radius: 9px; border: 2px dashed var(--sl-trait); background: var(--sl-tendre);
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(14px, 3.6cqw, 20px); color: var(--sl-encre);
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(14px, calc(var(--u) * 3.6), 20px); color: var(--sl-encre);
   cursor: pointer; transition: border-color 0.15s, background 0.15s;
 }
 .sl__mm-slot.filled { border-style: solid; border-color: var(--sl-fond2); }
@@ -228,9 +313,9 @@ html.dark .sl__rep--fausse { background: #3d1a1a; color: #ef9a9a; border-color: 
 .sl__mm-tiles { justify-content: center; }
 .sl__mm-tile {
   appearance: none; cursor: pointer; border: none; border-radius: 9px;
-  width: 9cqw; height: 10.5cqw; min-width: 30px; min-height: 36px; max-width: 42px; max-height: 48px;
+  width: calc(var(--u) * 9); height: calc(var(--u) * 10.5); min-width: 30px; min-height: 36px; max-width: 42px; max-height: 48px;
   background: var(--sl-fond2); color: #fff;
-  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(14px, 3.6cqw, 20px);
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(14px, calc(var(--u) * 3.6), 20px);
   box-shadow: 0 3px 0 var(--sl-fond1); transition: opacity 0.15s, transform 0.15s;
 }
 .sl__mm-tile:hover:not(:disabled) { transform: translateY(-2px); }
@@ -239,19 +324,19 @@ html.dark .sl__rep--fausse { background: #3d1a1a; color: #ef9a9a; border-color: 
 /* ── Encart de verdict ──────────────────────────────────────────────────── */
 @keyframes sl-monte { from { transform: translateY(6px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
 .sl__verdict {
-  margin-top: auto; padding: 3.6cqw 4cqw; border-radius: 20px;
+  margin-top: auto; padding: calc(var(--u) * 3.6) calc(var(--u) * 4); border-radius: 20px;
   background: var(--sl-tendre); border: 1px dashed var(--sl-trait);
-  display: flex; flex-direction: column; gap: 1.4cqw; animation: sl-monte 0.3s ease both;
+  display: flex; flex-direction: column; gap: calc(var(--u) * 1.4); animation: sl-monte 0.3s ease both;
 }
-.sl__verdict-tete { display: flex; align-items: center; gap: 2.2cqw; flex-wrap: wrap; }
-.sl__verdict-titre { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(16px, 4cqw, 22px); }
+.sl__verdict-tete { display: flex; align-items: center; gap: calc(var(--u) * 2.2); flex-wrap: wrap; }
+.sl__verdict-titre { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(16px, calc(var(--u) * 4), 22px); }
 .sl__verdict--bon .sl__verdict-titre     { color: #1b5e20; }
 .sl__verdict--rate .sl__verdict-titre    { color: #922b21; }
 .sl__verdict--neutre .sl__verdict-titre  { color: var(--sl-encre); }
 html.dark .sl__verdict--bon .sl__verdict-titre  { color: #7fc99a; }
 html.dark .sl__verdict--rate .sl__verdict-titre { color: #ef9a9a; }
-.sl__verdict-pts { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(12px, 2.8cqw, 15px); color: var(--sl-accent); }
-.sl__verdict-txt { margin: 0; font-size: clamp(13px, 3cqw, 16px); line-height: 1.55; color: var(--sl-doux); }
+.sl__verdict-pts { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(12px, calc(var(--u) * 2.8), 15px); color: var(--sl-accent); }
+.sl__verdict-txt { margin: 0; font-size: clamp(13px, calc(var(--u) * 3), 16px); line-height: 1.55; color: var(--sl-doux); }
 
 /* ── Média plein cadre ──────────────────────────────────────────────────── */
 /* Le cadre reçoit ses proportions réelles par JS (ajusterMedias) ; en
@@ -269,42 +354,42 @@ html.dark .sl__verdict--rate .sl__verdict-titre { color: #ef9a9a; }
 .sl__media iframe { width: 100%; height: 100%; border: 0; display: block; }
 .sl__media .slide-embed { width: 100%; padding-bottom: 0; height: 100%; margin: 0; border-radius: 0; }
 .sl__media-etiq {
-  position: absolute; top: 4cqw; left: 4cqw; padding: 1.3cqw 2.6cqw; border-radius: 999px;
+  position: absolute; top: calc(var(--u) * 4); left: calc(var(--u) * 4); padding: calc(var(--u) * 1.3) calc(var(--u) * 2.6); border-radius: 999px;
   background: rgba(12, 47, 33, 0.78); color: #fff;
   font-family: 'Baloo 2', cursive; font-weight: 900;
-  font-size: clamp(10px, 2.1cqw, 12px); letter-spacing: 0.1em; text-transform: uppercase;
+  font-size: clamp(10px, calc(var(--u) * 2.1), 12px); letter-spacing: 0.1em; text-transform: uppercase;
 }
 
 /* ── Lecteur audio ──────────────────────────────────────────────────────── */
 .sl__lecteur {
-  padding: 5cqw 5cqw; border-radius: 24px;
+  padding: calc(var(--u) * 5) calc(var(--u) * 5); border-radius: 24px;
   background: linear-gradient(150deg, var(--sl-fond1), var(--sl-fond2));
-  display: flex; align-items: center; gap: 4cqw;
+  display: flex; align-items: center; gap: calc(var(--u) * 4);
 }
 .sl__play {
   appearance: none; border: none; cursor: pointer; flex: none;
-  width: 12cqw; min-width: 52px; aspect-ratio: 1; border-radius: 50%;
+  width: calc(var(--u) * 12); min-width: 52px; aspect-ratio: 1; border-radius: 50%;
   background: var(--sl-accent); color: #fff;
-  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(16px, 4cqw, 22px);
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(16px, calc(var(--u) * 4), 22px);
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.6);
 }
-.sl__ondes { flex: 1; display: flex; align-items: center; gap: 3px; height: 9cqw; max-height: 52px; }
+.sl__ondes { flex: 1; display: flex; align-items: center; gap: 3px; height: calc(var(--u) * 9); max-height: 52px; }
 .sl__onde  { flex: 1; border-radius: 2px; background: rgba(255, 255, 255, 0.55); }
 
 /* ── Chips de proposition ───────────────────────────────────────────────── */
-.sl__chips { display: flex; gap: 2.2cqw; flex-wrap: wrap; }
+.sl__chips { display: flex; gap: calc(var(--u) * 2.2); flex-wrap: wrap; }
 .sl__chip {
-  padding: 2.2cqw 3.6cqw; border-radius: 14px; border: 2px solid var(--sl-trait);
-  font-family: 'Baloo 2', cursive; font-weight: 700; font-size: clamp(13px, 3cqw, 16px); color: var(--sl-encre);
+  padding: calc(var(--u) * 2.2) calc(var(--u) * 3.6); border-radius: 14px; border: 2px solid var(--sl-trait);
+  font-family: 'Baloo 2', cursive; font-weight: 700; font-size: clamp(13px, calc(var(--u) * 3), 16px); color: var(--sl-encre);
 }
 
 /* ── Sommaire (parties passées / en cours / à venir) ────────────────────── */
-.sl__somm { list-style: none; display: flex; flex-direction: column; gap: 1.8cqw; margin: 0; padding: 0; }
+.sl__somm { list-style: none; display: flex; flex-direction: column; gap: calc(var(--u) * 1.8); margin: 0; padding: 0; }
 .sl__somm li {
-  display: flex; align-items: center; gap: 2.6cqw;
-  padding: 2.6cqw 3.4cqw; border-left: 4px solid var(--sl-trait); border-radius: 0 12px 12px 0;
-  background: var(--sl-tendre); font-weight: 700; font-size: clamp(13px, 3cqw, 17px); color: var(--sl-encre);
+  display: flex; align-items: center; gap: calc(var(--u) * 2.6);
+  padding: calc(var(--u) * 2.6) calc(var(--u) * 3.4); border-left: 4px solid var(--sl-trait); border-radius: 0 12px 12px 0;
+  background: var(--sl-tendre); font-weight: 700; font-size: clamp(13px, calc(var(--u) * 3), 17px); color: var(--sl-encre);
   transition: all 0.2s;
 }
 .sl__somm li.passee   { opacity: 0.42; }
@@ -314,16 +399,33 @@ html.dark .sl__verdict--rate .sl__verdict-titre { color: #ef9a9a; }
 .sl__somm li.courante .sl__somm-puce { opacity: 1; }
 
 /* ── Classement ─────────────────────────────────────────────────────────── */
-.sl__clst { list-style: none; display: flex; flex-direction: column; gap: 1.6cqw; margin: 0; padding: 0; }
+.sl__clst { list-style: none; display: flex; flex-direction: column; gap: calc(var(--u) * 1.6); margin: 0; padding: 0; }
 .sl__clst li {
-  display: flex; align-items: center; gap: 2.6cqw;
-  padding: 2.4cqw 3.2cqw; border-radius: 12px; background: var(--sl-tendre);
-  font-size: clamp(13px, 3cqw, 17px); color: var(--sl-encre);
+  display: flex; align-items: center; gap: calc(var(--u) * 2.6);
+  padding: calc(var(--u) * 2.4) calc(var(--u) * 3.2); border-radius: 12px; background: var(--sl-tendre);
+  font-size: clamp(13px, calc(var(--u) * 3), 17px); color: var(--sl-encre);
 }
-.sl__clst .rang { font-family: 'Baloo 2', cursive; font-weight: 900; color: var(--sl-doux); min-width: 5cqw; }
+.sl__clst .rang { font-family: 'Baloo 2', cursive; font-weight: 900; color: var(--sl-doux); min-width: calc(var(--u) * 5); }
 .sl__clst .nom  { flex: 1; font-weight: 700; }
 .sl__clst .pts  { font-family: 'Baloo 2', cursive; font-weight: 900; color: var(--sl-accent); }
 .sl__clst li.moi { outline: 2px solid var(--sl-fond2); }
+.sl__clst-toi { font-weight: 600; color: var(--sl-doux); }
+.sl__clst-blocs { display: flex; flex-direction: column; gap: calc(var(--u) * 3); }
+.sl__clst-bloc  { display: flex; flex-direction: column; gap: calc(var(--u) * 1.6); min-width: 0; }
+/* Séparateur entre la tête du classement et la ligne du participant. Le .sl
+   en tête de sélecteur l'emporte sur les fonds de ligne propres aux thèmes. */
+.sl .sl__clst li.sl__clst-ecart {
+  background: none; justify-content: center; padding: 0;
+  color: var(--sl-doux); font-weight: 900; letter-spacing: 0.3em; line-height: 1;
+}
+.sl__clst-reste { margin: calc(var(--u) * 1.4) 0 0; text-align: center; font-size: clamp(11px, calc(var(--u) * 2.4), 14px); color: var(--sl-doux); font-weight: 700; }
+.sl--plein .sl__clst-reste,
+.sl.sl--plein .sl__clst li.sl__clst-ecart { color: rgba(255, 255, 255, 0.7); }
+/* Écran couché : participants et équipes côte à côte, plutôt qu'empilés
+   au-delà du bas de la carte. */
+@container sl-cadre (orientation: landscape) and (min-width: 520px) {
+  .sl__clst-blocs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: start; gap: calc(var(--u) * 5); }
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    THÈME « PAPIER » (variante B)
@@ -429,6 +531,13 @@ html.dark [data-theme-slide="papier"] .sl { box-shadow: 14px 14px 0 rgba(0, 0, 0
 [data-theme-slide="papier"] .sl__lecteur { border-radius: 10px; background: var(--sl-fond1); }
 [data-theme-slide="papier"] .sl__play { border-radius: 8px; }
 [data-theme-slide="papier"] .sl__media-etiq { border-radius: 6px; background: var(--sl-accent); }
+[data-theme-slide="papier"] .sl__action {
+  border-radius: 10px; border: 3px solid var(--sl-fond1);
+  box-shadow: 4px 4px 0 rgba(20, 82, 40, 0.22);
+}
+[data-theme-slide="papier"] .sl__action:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(20, 82, 40, 0.22); }
+/* La carte pleine du papier est crème : le bouton reprend le vert. */
+[data-theme-slide="papier"] .sl--plein { --sl-act-fond: var(--sl-fond2); --sl-act-encre: #fff; }
 
 /* ══════════════════════════════════════════════════════════════════════════
    THÈME « SIMPLISTE » — cadre vert Composmart, carte blanche
@@ -486,7 +595,7 @@ html.dark [data-theme-slide="simpliste"] {
 /* Le cadre vert. Le rayon intérieur découle de la bordure, aucun élément
    supplémentaire n'est nécessaire. */
 [data-theme-slide="simpliste"] .sl {
-  border: clamp(9px, 2.9cqw, 16px) solid var(--sl-fond3);
+  border: clamp(9px, calc(var(--u) * 2.9), 16px) solid var(--sl-fond3);
   box-shadow: 0 18px 40px -22px rgba(29, 44, 34, 0.4);
 }
 html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.6); }
@@ -516,6 +625,8 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
   letter-spacing: 0.2em; text-transform: uppercase;
 }
 [data-theme-slide="simpliste"] .sl__kicker { color: var(--sl-fond2); letter-spacing: 0.2em; }
+/* Sauf sur l'en-tête vert foncé des questions, où ce vert devenait illisible. */
+[data-theme-slide="simpliste"] .sl__entete .sl__kicker { color: rgba(255, 255, 255, 0.72); }
 [data-theme-slide="simpliste"] .sl__ligne { justify-content: space-between; }
 [data-theme-slide="simpliste"] .sl__badge-pts { background: var(--sl-tendre); color: var(--sl-fond2); }
 
@@ -547,6 +658,12 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
   border-color: var(--sl-fond3); background: var(--sl-tendre); color: var(--sl-encre);
 }
 [data-theme-slide="simpliste"] .sl__rep--juste .sl__rep-marque { background: var(--sl-fond3); color: #fff; }
+[data-theme-slide="simpliste"] .sl__action {
+  font-family: 'Nunito', Arial, sans-serif; font-weight: 800; letter-spacing: -0.02em;
+  box-shadow: none;
+}
+/* Carte pleine blanche en simpliste : bouton vert comme ailleurs. */
+[data-theme-slide="simpliste"] .sl--plein { --sl-act-fond: var(--sl-fond2); --sl-act-encre: #fff; }
 
 /* Verdict, puces, sommaire, classement : même gélule verte tendre partout. */
 [data-theme-slide="simpliste"] .sl__verdict {
@@ -565,17 +682,20 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
    object-fit:contain plutôt que cover : la banque accueille aussi bien des
    photos que des pictogrammes détourés, et rogner un pictogramme le mutile. */
 [data-theme-slide="simpliste"] .sl__illu {
-  position: absolute; left: 7cqw; bottom: 4cqw;
-  width: 22cqw; max-width: 118px; height: 22cqw; max-height: 118px;
+  position: absolute; left: calc(var(--u) * 7); bottom: calc(var(--u) * 4);
+  width: calc(var(--u) * 22); max-width: 118px; height: calc(var(--u) * 22); max-height: 118px;
   object-fit: contain; object-position: left bottom;
   pointer-events: none; user-select: none;
 }
 /* La place réservée en bas du corps, pour que le texte ne passe pas dessous. */
-[data-theme-slide="simpliste"] .sl--illu .sl__corps { padding-bottom: 28cqw; }
-[data-theme-slide="simpliste"] .sl--illu.sl--plein { padding-bottom: 28cqw; }
+[data-theme-slide="simpliste"] .sl--illu .sl__corps { padding-bottom: calc(var(--u) * 28); }
+[data-theme-slide="simpliste"] .sl--illu.sl--plein { padding-bottom: calc(var(--u) * 28); }
+/* Le pied d'action partage le bas de carte avec l'illustration : le bouton
+   se range à droite, l'image garde son coin gauche. */
+[data-theme-slide="simpliste"] .sl--illu:not(.sl--plein) .sl__actions { justify-content: flex-end; padding-left: calc(var(--u) * 32); }
 /* Sur la carte de gerbe, fond sombre : l'illustration passe à droite pour ne
    pas se superposer au bandeau de score. */
-[data-theme-slide="simpliste"] .sl--fete .sl__illu { left: auto; right: 7cqw; object-position: right bottom; }
+[data-theme-slide="simpliste"] .sl--fete .sl__illu { left: auto; right: calc(var(--u) * 7); object-position: right bottom; }
 
 /* Les autres thèmes n'affichent pas d'illustration — le serveur n'en pose pas,
    cette règle n'est qu'un garde-fou si un contenu en gardait une trace. */
@@ -611,10 +731,10 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
 /* Bouton de relance, dans la ligne d'en-tête de la carte. */
 .sl__rejouer {
   flex: none; appearance: none; cursor: pointer;
-  padding: 1.1cqw 2.6cqw; border-radius: 999px;
+  padding: calc(var(--u) * 1.1) calc(var(--u) * 2.6); border-radius: 999px;
   background: transparent; border: 1.5px solid var(--sl-trait);
   font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 800;
-  font-size: clamp(10px, 2.1cqw, 12px); letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: clamp(10px, calc(var(--u) * 2.1), 12px); letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--sl-encre); transition: border-color 0.15s, background 0.15s;
 }
 .sl__rejouer:hover { border-color: var(--sl-encre); }
@@ -626,7 +746,7 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
 
 /* ── La pousse ─────────────────────────────────────────────────────────── */
 .sl__pousse {
-  position: relative; flex: 1; min-height: 42cqw;
+  position: relative; flex: 1; min-height: calc(var(--u) * 42);
   display: flex; align-items: flex-end; justify-content: center;
   animation: sl-cycle var(--sl-dur, 6.4s) linear infinite;
 }
@@ -634,7 +754,7 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
 
 /* Halo chaud derrière la plante (thème forêt) — devient une onde au sol en papier. */
 .sl__halo {
-  position: absolute; bottom: 14%; width: 44cqw; aspect-ratio: 1; border-radius: 50%;
+  position: absolute; bottom: 14%; width: calc(var(--u) * 44); aspect-ratio: 1; border-radius: 50%;
   background: radial-gradient(circle, rgba(178, 106, 0, 0.22), transparent 68%);
   animation: sl-halo var(--sl-dur, 6.4s) ease-out infinite backwards;
 }
@@ -650,7 +770,7 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
 }
 
 .sl__plante {
-  position: relative; display: block; width: 62cqw; max-width: 330px; height: auto; overflow: visible;
+  position: relative; display: block; width: calc(var(--u) * 62); max-width: 330px; height: auto; overflow: visible;
   transform-origin: 50% 100%;
   animation: sl-sway 4.4s ease-in-out infinite alternate;
 }
@@ -710,14 +830,14 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
 
 /* Mot d'ambiance, posé dans le coin de la scène. */
 .sl__mot {
-  position: absolute; bottom: 3cqw; left: 4cqw;
+  position: absolute; bottom: calc(var(--u) * 3); left: calc(var(--u) * 4);
   animation: sl-mot var(--sl-dur, 6.4s) ease-out infinite backwards;
 }
 .sl__mot span {
-  display: inline-block; padding: 2cqw 3.4cqw; border-radius: 18px;
+  display: inline-block; padding: calc(var(--u) * 2) calc(var(--u) * 3.4); border-radius: 18px;
   background: var(--sl-tendre); color: var(--sl-encre);
   font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 800;
-  font-size: clamp(15px, 5.2cqw, 30px); line-height: 1.1;
+  font-size: clamp(15px, calc(var(--u) * 5.2), 30px); line-height: 1.1;
 }
 @keyframes sl-mot {
   0%, 46% { transform: translateY(12px); opacity: 0 }
@@ -727,10 +847,10 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
 }
 
 /* ── La gerbe de confettis ─────────────────────────────────────────────── */
-.sl__fete { position: relative; flex: 1; min-height: 44cqw; pointer-events: none; }
+.sl__fete { position: relative; flex: 1; min-height: calc(var(--u) * 44); pointer-events: none; }
 .sl__anneau {
   position: absolute; left: var(--x); top: var(--y);
-  width: 28cqw; aspect-ratio: 1; margin: -14cqw 0 0 -14cqw;
+  width: calc(var(--u) * 28); aspect-ratio: 1; margin: calc(var(--u) * -14) 0 0 calc(var(--u) * -14);
   border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.4);
   animation: sl-anneau var(--sl-burst, 3.4s) ease-out infinite;
 }
@@ -764,7 +884,7 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
 .sl__bravo {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 900; letter-spacing: -.01em;
-  font-size: clamp(38px, 13.6cqw, 76px); color: #fff;
+  font-size: clamp(38px, calc(var(--u) * 13.6), 76px); color: #fff;
   animation: sl-bravo var(--sl-burst, 3.4s) cubic-bezier(.2,.8,.3,1) infinite;
 }
 @keyframes sl-bravo {
@@ -783,7 +903,7 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
   animation: sl-jauge 1.25s cubic-bezier(.25,.9,.3,1) both;
 }
 @keyframes sl-jauge { from { width: 0 } }
-.sl__jauge-txt { font-size: clamp(11px, 2.4cqw, 14px); color: var(--sl-doux); font-weight: 700; text-align: center; }
+.sl__jauge-txt { font-size: clamp(11px, calc(var(--u) * 2.4), 14px); color: var(--sl-doux); font-weight: 700; text-align: center; }
 
 /* Sur carte inversée (gerbe), la jauge doit rester lisible sur fond sombre. */
 .sl--plein .sl__jauge { background: rgba(255, 255, 255, 0.16); }
@@ -821,6 +941,7 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
   border-color: rgba(253, 250, 241, 0.4); background: rgba(253, 250, 241, 0.14);
 }
 [data-theme-slide="papier"] .sl--fete .sl__jauge-txt { color: rgba(253, 250, 241, 0.72); }
+[data-theme-slide="papier"] .sl--fete { --sl-act-fond: #fdfaf1; --sl-act-encre: var(--sl-fond1); }
 
 /* ── Encouragement, thème simpliste ────────────────────────────────────────
    La plante reprend le vert foncé pour la tige et les feuilles, le vert vif
@@ -846,6 +967,7 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
 [data-theme-slide="simpliste"] .sl--fete .sl__pastille { color: rgba(255, 255, 255, 0.72); }
 [data-theme-slide="simpliste"] .sl--fete .sl__anneau--accent { border-color: var(--sl-fond3); }
 [data-theme-slide="simpliste"] .sl--fete .sl__jauge-txt { color: rgba(255, 255, 255, 0.72); }
+[data-theme-slide="simpliste"] .sl--fete { --sl-act-fond: #fff; --sl-act-encre: var(--sl-fond1); }
 
 /* Accessibilité — la slide d'encouragement est un cas à part.
 
@@ -865,4 +987,12 @@ html.dark [data-theme-slide="simpliste"] .sl { box-shadow: 0 18px 40px -22px rgb
 @media (prefers-reduced-motion: reduce) {
   .sl:not([data-anime]) .sl__plante { animation: none; }
   .sl:not([data-anime]) .sl__jauge > span { animation-duration: 0.01ms !important; }
+}
+
+/* Repli des navigateurs sans unités de conteneur (Safari < 16, Chrome < 105) :
+   --u n'y a aucun sens et chaque taille qui l'emploie tomberait à sa valeur
+   initiale. Le pour-cent de largeur d'écran en tient lieu — sur téléphone la
+   carte occupe presque toute la largeur, l'écart est minime. */
+@supports not (container-type: inline-size) {
+  .sl, .sl--fixe, .sl-cadre > .sl { --u: min(1vw, 5.6px); }
 }
