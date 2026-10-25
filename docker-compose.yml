@@ -79,6 +79,10 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      # Suppression d'un compte par un admin : mêmes purges que auth-api.
+      GAMES_PURGE_URL: http://games-api/api/jeux/purge.php
+      MAP_PURGE_URL: http://map-api/api/carte/purge.php
+      AUDIT_SECRET: ${AUDIT_SECRET}
       # SMTP (notification mail du formulaire contact) — vide = envoi désactivé.
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
@@ -104,6 +108,9 @@ services:
       REDIS_PORT: 6379
       # Secret partagé pour recevoir les événements d'audit de map-api.
       AUDIT_SECRET: ${AUDIT_SECRET}
+      # Suppression de compte : purge/anonymisation des scores et signalements.
+      GAMES_PURGE_URL: http://games-api/api/jeux/purge.php
+      MAP_PURGE_URL: http://map-api/api/carte/purge.php
     depends_on:
       db-core: { condition: service_healthy }
       redis: { condition: service_started }
@@ -271,6 +278,68 @@ services:
       - ./shared/seeds:/docker-seeds
     depends_on:
       db-map: { condition: service_healthy }
+    networks: [composmart]
+    restart: unless-stopped
+
+  # Purges RGPD nocturnes (équivalent des CronJobs k8s purge-rgpd-*), 4h00 puis 4h10.
+  purge-cron-core:
+    build:
+      context: .
+      dockerfile: services/auth-api/Dockerfile
+    environment:
+      DB_HOST: db-core
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      GAMES_PURGE_URL: http://games-api/api/jeux/purge.php
+      MAP_PURGE_URL: http://map-api/api/carte/purge.php
+      AUDIT_SECRET: ${AUDIT_SECRET}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          now=$$(date +%s)
+          next=$$(date -d 'tomorrow 04:00' +%s)
+          today=$$(date -d 'today 04:00' +%s)
+          [ "$$today" -gt "$$now" ] && next=$$today
+          sleep $$(( next - now ))
+          php /var/www/cron/purge_rgpd.php || echo "[purge-rgpd] échec, prochain essai demain"
+        done
+    depends_on:
+      db-core: { condition: service_healthy }
+    networks: [composmart]
+    restart: unless-stopped
+
+  purge-cron-evenements:
+    build:
+      context: .
+      dockerfile: services/evenements-api/Dockerfile
+    environment:
+      DB_HOST: db-evenements
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          now=$$(date +%s)
+          next=$$(date -d 'tomorrow 04:10' +%s)
+          today=$$(date -d 'today 04:10' +%s)
+          [ "$$today" -gt "$$now" ] && next=$$today
+          sleep $$(( next - now ))
+          php /var/www/cron/purge_rgpd.php || echo "[purge-rgpd] échec, prochain essai demain"
+        done
+    depends_on:
+      db-evenements: { condition: service_healthy }
     networks: [composmart]
     restart: unless-stopped
 

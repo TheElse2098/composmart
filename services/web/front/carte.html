@@ -6,16 +6,16 @@
     <link rel="stylesheet" href="/assets/css/dark.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+    <link rel="stylesheet" href="/assets/vendor/leaflet-1.9.4/leaflet.css"/>
+    <link rel="stylesheet" href="/assets/vendor/markercluster-1.4.1/MarkerCluster.css"/>
+    <link rel="stylesheet" href="/assets/vendor/markercluster-1.4.1/MarkerCluster.Default.css"/>
+    <script src="/assets/vendor/leaflet-1.9.4/leaflet.js"></script>
+    <script src="/assets/vendor/markercluster-1.4.1/leaflet.markercluster.js"></script>
     <link rel="stylesheet" href="/assets/libs/fullscreen/Control.FullScreen.css"/>
     <script src="/assets/libs/fullscreen/Control.FullScreen.js"></script>
     <script src="/assets/libs/shp/dist/shp.js"></script>
     <script src="/assets/libs/leaflet-shpfile/leaflet.shpfile.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+    <link href="/assets/vendor/bootstrap-5.3.7/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous"/>
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -455,6 +455,10 @@
             background: #fffdf5; color: #1a3a25; outline: none;
         }
         .signal-zone textarea { resize: vertical; min-height: 52px; }
+        .rgpd-info { font-size: 0.7rem; color: #7aaa8a; line-height: 1.4; margin: 0; }
+        .rgpd-info a { color: #1e6e3e; font-weight: 700; }
+        html.dark .rgpd-info { color: #5a8a6a; }
+        html.dark .rgpd-info a { color: #52b788; }
         .signal-zone button {
             background: #b26a00 !important; color: #fff !important;
             border: none; border-radius: 20px; padding: 7px 14px;
@@ -597,6 +601,7 @@
                         <option value="autre">💬 Autre</option>
                     </select>
                     <textarea id="signal_comment" maxlength="500" placeholder="Précisions (optionnel)..."></textarea>
+                    <p class="rgpd-info">Ton signalement est lu par l'équipe Composmart, avec ton pseudo si tu es connecté. N'écris pas d'informations personnelles. <a href="/confidentialite#traitements" target="_blank" rel="noopener">En savoir plus</a></p>
                     <button type="button" id="signal_envoyer">Envoyer le signalement</button>
                     <div id="signal_msg" class="signal-msg"></div>
                 </div>
@@ -1044,7 +1049,9 @@
                 hote.querySelector('input').value = (valeur && valeur !== 'Pas de données') ? valeur : '';
             };
             champ(document.getElementById("gestion"), 'gestion', 'Gestionnaire (mairie, association…)', gestion);
-            champ(document.getElementById("infos_gestion"), 'info_gestion', 'Téléphone ou lien', info_gestion);
+            // Champ publié sur la carte publique : on oriente vers un contact
+            // institutionnel, pas un numéro personnel (RGPD).
+            champ(document.getElementById("infos_gestion"), 'info_gestion', 'Contact public du gestionnaire (site, tél. mairie…)', info_gestion);
 
             // Nouveau point : il part en validation admin au lieu d'être enregistré
             // directement. On masque « Signaler » au passage — on ne signale pas un

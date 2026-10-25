@@ -6,9 +6,7 @@
   <link rel="stylesheet" href="/assets/css/dark.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <link rel="stylesheet" href="/assets/css/fonts.css">
   <title>CompoSmart – Suivi événement</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,7 +19,7 @@
     .join-titre { font-family: 'Baloo 2', cursive; font-size: 1.5rem; font-weight: 900; color: #1a3a25; }
     .join-meta { font-size: 0.9rem; color: #4a7a5a; font-weight: 700; margin-top: 6px; }
     .join-code { font-family: 'Baloo 2', cursive; font-size: 2.6rem; font-weight: 900; letter-spacing: 10px; color: #1e6e3e; margin: 14px 0 4px; }
-    .join-qr { margin: 8px auto; border-radius: 12px; }
+    .join-qr { margin: 8px auto; border-radius: 12px; image-rendering: pixelated; }
     .join-link { font-size: 0.8rem; color: #4a7a5a; word-break: break-all; background: #f7fbf8; border-radius: 10px; padding: 7px 11px; display: inline-block; }
     .join-statut { display: inline-block; font-size: 0.7rem; font-weight: 900; padding: 4px 12px; border-radius: 12px; text-transform: uppercase; margin-top: 12px; }
     .join-statut.prevu { background: #fff3e0; color: #b26a00; }
@@ -167,10 +165,8 @@
       <div class="join-titre" id="evtTitre"></div>
       <div class="join-meta" id="evtMeta"></div>
       <div class="join-code" id="evtCode"></div>
-      <!-- QR généré via un service tiers (api.qrserver.com) : l'URL de
-           l'événement (donc son code d'accès) lui est transmise à chaque
-           affichage. À remplacer par une génération locale si la
-           confidentialité du code doit être renforcée. -->
+      <!-- QR généré localement (qrcode-generator, assets/vendor) : ni l'URL de
+           l'événement ni son code d'accès ne sortent du navigateur. -->
       <img class="join-qr" id="evtQr" width="180" height="180" alt="QR code de l'événement">
       <br>
       <span class="join-link" id="evtLink"></span>
@@ -358,6 +354,7 @@
   <div class="bottom-leaf"></div>
 
   <script src="/assets/js/tag-picker.js"></script>
+  <script src="/assets/vendor/qrcode-generator-1.4.4/qrcode.js"></script>
   <script>
     /*__ROUTE__*/
     function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
@@ -497,12 +494,17 @@
 
       const lien = window.location.origin + '/evenement?code=' + evt.code;
       document.getElementById('evtLink').textContent = lien;
-      // Le QR n'est (re)chargé que si le lien change : cette page se rafraîchit
-      // toutes les 3 s, et réaffecter `src` à chaque tour relancerait un appel
-      // au service tiers de génération d'image.
+      // Le QR n'est (re)généré que si le lien change : cette page se rafraîchit
+      // toutes les 3 s. Génération locale (pas de service tiers) ; niveau de
+      // correction M, taille auto (type 0) selon la longueur du lien.
       const qr = document.getElementById('evtQr');
-      const srcQr = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(lien);
-      if (qr.getAttribute('src') !== srcQr) qr.src = srcQr;
+      if (qr.dataset.lien !== lien && typeof qrcode === 'function') {
+        const q = qrcode(0, 'M');
+        q.addData(lien);
+        q.make();
+        qr.src = q.createDataURL(6, 4);
+        qr.dataset.lien = lien;
+      }
 
       const badge = document.getElementById('evtStatutBadge');
       badge.className = 'join-statut ' + evt.statut;

@@ -11,9 +11,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16.png">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <link rel="stylesheet" href="/assets/css/fonts.css">
   <title>CompoSmart – Événement</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -157,6 +155,9 @@
     .field input, .field textarea { display: block; width: 100%; padding: 11px 14px; border: 1.5px solid #c8dfc8; border-radius: 10px; font-size: 0.95rem; color: #1a3a25; background: #f7fbf8; outline: none; font-family: inherit; }
     .field textarea { min-height: 100px; resize: vertical; }
     .field input:focus, .field textarea:focus { border-color: #1e6e3e; background: #fff; }
+    .field-aide { font-size: 0.75rem; color: #7aaa8a; font-weight: 600; margin-top: 5px; line-height: 1.4; }
+    .rgpd-info { font-size: 0.75rem; color: #7aaa8a; line-height: 1.45; margin-top: 12px; text-align: center; }
+    .rgpd-info a { color: #1e6e3e; font-weight: 700; }
     .code-input { text-align: center; font-family: 'Baloo 2', cursive; font-size: 1.6rem; font-weight: 900; letter-spacing: 6px; text-transform: uppercase; }
 
     .msg { border-radius: 10px; padding: 11px 14px; font-size: 0.87rem; font-weight: 700; margin-bottom: 14px; display: none; }
@@ -241,6 +242,8 @@
     html.dark .somm li.courante { background: #16291c; border-left-color: #52b788; color: #7fc99a; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
     html.dark .carte::after { background-image: url('/assets/img/motif-branchage-dark.svg'); opacity: 0.09; }
     html.dark .field label { color: #7ab88e; }
+    html.dark .field-aide, html.dark .rgpd-info { color: #5a8a6a; }
+    html.dark .rgpd-info a { color: #52b788; }
     html.dark .field input, html.dark .field textarea { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
     html.dark .opt, html.dark .jeu-item, html.dark .clst li { background: #1e2d22; border-color: #2d4030; color: #e8f5ee; }
     html.dark .opt.juste { background: #16291c; border-color: #43a047; color: #7fc99a; }
@@ -292,10 +295,12 @@
       </div>
       <form id="formNom">
         <div class="field">
-          <label>Ton nom</label>
-          <input type="text" id="nomAffiche" maxlength="100" placeholder="Prénom Nom" autocomplete="off" required>
+          <label>Ton pseudo pour l'atelier</label>
+          <input type="text" id="nomAffiche" maxlength="100" placeholder="ex : Ver de terre masqué" autocomplete="off" required>
+          <div class="field-aide">Il sera visible des autres participants. Prénom ou surnom, comme tu préfères : pas besoin de ton nom complet.</div>
         </div>
         <button type="submit" class="btn" id="btnRejoindre">Je participe</button>
+        <p class="rgpd-info">Ton pseudo, ton équipe et tes réponses servent au déroulé de l'atelier et sont anonymisés 6 mois après. <a href="/confidentialite#traitements" target="_blank" rel="noopener">En savoir plus</a></p>
       </form>
     </div>
 

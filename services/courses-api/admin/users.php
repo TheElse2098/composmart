@@ -107,17 +107,14 @@ if ($action === 'delete') {
     if ($user_id === $me) { echo json_encode(['error' => 'Tu ne peux pas supprimer ton propre compte ici.']); exit; }
     if ($target_is_admin && $nb_admins <= 1) { echo json_encode(['error' => 'Impossible : il doit rester au moins un administrateur.']); exit; }
 
-    // user_progress / scores ont ON DELETE CASCADE ; signalements.user_id → SET NULL
-    $stmt = mysqli_prepare($c, 'DELETE FROM users WHERE id = ?');
-    $stmt->bind_param('i', $user_id);
-    $stmt->execute();
-
-    audit_log($c, 'user_supprime', 'id=' . $user_id, [
-        'target_type' => 'user',
-        'target_id'   => $user_id,
-        'snapshot'    => ['username' => $target['username'], 'etait_admin' => $target_is_admin],
+    // Même effacement que la suppression par la personne elle-même (scores,
+    // signalements, messages, audit sans pseudo) : cf. supprimer_compte().
+    $res = supprimer_compte($c, $user_id, $target['username'], [
+        'id'       => $me,
+        'username' => $_SESSION['username'] ?? '',
     ]);
-    echo json_encode(['ok' => true]);
+    if (!$res['ok']) { echo json_encode(['error' => 'La suppression a échoué.']); exit; }
+    echo json_encode(['ok' => true, 'purges' => $res['purges']]);
     exit;
 }
 

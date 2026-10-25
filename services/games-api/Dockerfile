@@ -2,7 +2,7 @@
 # Sources : services/games-api/jeux/ + garde partagé shared/_guard.php.
 # Build depuis la racine du repo :
 #   docker build -f services/games-api/Dockerfile -t composmart/games-api .
-FROM php:8.3-apache
+FROM php:8.3.36-apache
 
 # curl : l'extension PHP sert à créditer l'XP des jeux via auth-api (xp.php).
 # libcurl4-openssl-dev est requise pour compiler l'extension.

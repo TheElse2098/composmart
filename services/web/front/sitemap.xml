@@ -68,6 +68,21 @@
     <priority>0.4</priority>
   </url>
   <url>
+    <loc>https://composmart.fr/mentions-legales</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://composmart.fr/confidentialite</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://composmart.fr/cgu</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
     <loc>https://composmart.fr/login</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

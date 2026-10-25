@@ -3,12 +3,15 @@
 # Embarque aussi les seeds (le Job seed-core lance php /docker-seeds/seed_core.php).
 # Build depuis la racine du repo :
 #   docker build -f services/courses-api/Dockerfile -t composmart/courses-api .
-FROM php:8.3-apache
+FROM php:8.3.36-apache
 
+# curl : la suppression d'un compte par un admin appelle les endpoints de purge
+# des autres services (supprimer_compte() dans _guard.php). libcurl-dev requis
+# AVANT docker-php-ext-install curl.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends unzip \
+    && apt-get install -y --no-install-recommends unzip libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/* \
-    && docker-php-ext-install mysqli \
+    && docker-php-ext-install mysqli curl \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && a2enmod rewrite \

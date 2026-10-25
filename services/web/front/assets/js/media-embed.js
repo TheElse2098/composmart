@@ -19,7 +19,50 @@
    * faut passer par l'iframe d'intégration de la plateforme. On reconnaît les
    * formes courtes (youtu.be), les Shorts et les lives en plus du /watch
    * classique — un lien copié depuis un téléphone est presque toujours court.
+   *
+   * RGPD : l'iframe n'est PAS chargée d'office. On affiche une façade neutre
+   * (aucune requête vers la plateforme, pas même la miniature) et l'iframe
+   * n'est créée qu'au clic — youtube-nocookie pour YouTube, dnt=1 pour Vimeo.
+   * Sans ça, chaque affichage de la page transmettrait l'IP du visiteur et
+   * déposerait des cookies de suivi sans consentement (cf. /confidentialite).
+   *
+   * Renvoie le HTML de la façade, ou null si l'URL n'est ni YouTube ni Vimeo.
    */
+  window.videoEmbedHtml = function (url) {
+    url = url || '';
+    var src, plateforme;
+    var yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|live\/|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+    var vi = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (yt) {
+      plateforme = 'YouTube';
+      src = 'https://www.youtube-nocookie.com/embed/' + yt[1] + '?autoplay=1';
+    } else if (vi) {
+      plateforme = 'Vimeo';
+      src = 'https://player.vimeo.com/video/' + vi[1] + '?dnt=1&autoplay=1';
+    } else {
+      return null;
+    }
+    return '<div class="video-facade" data-src="' + echapper(src) + '">'
+      + '<button type="button" class="video-facade-btn" aria-label="Lire la vidéo">▶</button>'
+      + '<p class="video-facade-txt">Vidéo hébergée par ' + plateforme + '. En cliquant, elle est chargée depuis '
+      + plateforme + ', qui applique ses propres règles de confidentialité. '
+      + '<a href="/confidentialite#tiers" target="_blank" rel="noopener">En savoir plus</a></p>'
+      + '</div>';
+  };
+
+  // Clic sur une façade → remplacement par la vraie iframe (délégation : les
+  // façades sont insérées dynamiquement par les pages).
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('.video-facade-btn');
+    if (!btn) return;
+    var facade = btn.closest('.video-facade');
+    var iframe = document.createElement('iframe');
+    iframe.src = facade.getAttribute('data-src');
+    iframe.allowFullscreen = true;
+    iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen');
+    facade.replaceWith(iframe);
+  });
+
   window.rendreMediaHtml = function (c) {
     c = c || {};
     var url = c.url || '';
@@ -32,16 +75,8 @@
       return '<audio style="width:100%" controls src="' + echapper(url) + '"></audio>';
     }
 
-    var yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|live\/|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-    if (yt) {
-      return '<div class="slide-embed"><iframe src="https://www.youtube.com/embed/' + echapper(yt[1])
-        + '" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>';
-    }
-    var vi = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-    if (vi) {
-      return '<div class="slide-embed"><iframe src="https://player.vimeo.com/video/' + echapper(vi[1])
-        + '" allowfullscreen></iframe></div>';
-    }
+    var facade = window.videoEmbedHtml(url);
+    if (facade) return '<div class="slide-embed">' + facade + '</div>';
     return '<video class="slide-media" controls src="' + echapper(url) + '"></video>';
   };
 
@@ -72,7 +107,7 @@
 
       // Vidéo intégrée : les dimensions sont inaccessibles (autre origine),
       // mais YouTube et Vimeo servent du 16/9 dans l'immense majorité des cas.
-      if (box.querySelector('iframe')) { appliquerRatio(box, 16 / 9); return; }
+      if (box.querySelector('iframe, .video-facade')) { appliquerRatio(box, 16 / 9); return; }
 
       var img = box.querySelector('img');
       if (img) {
@@ -101,7 +136,13 @@
     var s = document.createElement('style');
     s.textContent = '.slide-embed{position:relative;width:100%;padding-bottom:56.25%;border-radius:14px;overflow:hidden;margin:8px 0;background:#000}'
       + '.slide-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}'
-      + '.slide-media{width:100%;border-radius:14px;margin:8px 0;display:block}';
+      + '.slide-media{width:100%;border-radius:14px;margin:8px 0;display:block}'
+      // Façade vidéo : remplit son conteneur 16/9 (.slide-embed, .video-wrapper).
+      + '.video-facade{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;background:#123d20;color:#e8f5ee;text-align:center}'
+      + '.video-facade-btn{width:68px;height:68px;border-radius:50%;border:0;background:#52b788;color:#fff;font-size:1.7rem;cursor:pointer;padding-left:5px}'
+      + '.video-facade-btn:hover{background:#40a072}'
+      + '.video-facade-txt{max-width:46ch;font-size:.8rem;line-height:1.4;opacity:.85;margin:0}'
+      + '.video-facade-txt a{color:#a8e6bf}';
     document.head.appendChild(s);
   };
   window.injecterStylesMedia();

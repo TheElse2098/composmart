@@ -16,9 +16,15 @@ CREATE TABLE `users` (
   `xp`            int          NOT NULL DEFAULT 0,
   `niveau`        int          NOT NULL DEFAULT 1,
   `isAdmin`       tinyint(1)   NOT NULL DEFAULT 0,
+  -- Inactivité (RGPD) : un compte sans connexion depuis 3 ans est supprimé par
+  -- la purge nocturne, 30 jours après un email de prévenance. La table logins
+  -- étant purgée à 12 mois, elle ne suffit pas : on garde la date ici.
+  `derniere_connexion`    datetime DEFAULT NULL,
+  `prevenu_inactivite_at` datetime DEFAULT NULL,  -- remis à NULL à chaque connexion
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
-  UNIQUE KEY `username` (`username`)
+  UNIQUE KEY `username` (`username`),
+  KEY `inactivite` (`derniere_connexion`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ── JETONS À USAGE UNIQUE (vérification d'email, réinitialisation de mot de passe) ──

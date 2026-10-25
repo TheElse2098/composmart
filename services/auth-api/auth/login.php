@@ -54,4 +54,12 @@ $uid = (int)$row['id'];
 $stmt2 = mysqli_prepare($conn, 'INSERT INTO logins (user_id) VALUES (?)');
 if ($stmt2) { $stmt2->bind_param('i', $uid); $stmt2->execute(); }
 
+// Inactivité (RGPD) : repousse l'échéance de suppression et annule une
+// prévenance en cours. try : colonnes absentes tant que la migration
+// 2026-10-rgpd n'est pas passée — la connexion ne doit pas en dépendre.
+try {
+    $stmt3 = mysqli_prepare($conn, 'UPDATE users SET derniere_connexion = NOW(), prevenu_inactivite_at = NULL WHERE id = ?');
+    if ($stmt3) { $stmt3->bind_param('i', $uid); $stmt3->execute(); }
+} catch (\Throwable $e) {}
+
 echo json_encode(['ok' => true, 'username' => $row['username']]);

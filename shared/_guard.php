@@ -335,3 +335,116 @@ function rate_limit($action, $max, $window_sec) {
     @file_put_contents($file, implode(',', $times), LOCK_EX);
     return true;
 }
+
+/**
+ * Appel interne de purge vers un autre service (secret partagé AUDIT_SECRET).
+ * Renvoie true si le service a confirmé (HTTP 200).
+ */
+function purger_service($url, $payload) {
+    if (!$url || !function_exists('curl_init')) return false;
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($payload),
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'X-Audit-Secret: ' . (getenv('AUDIT_SECRET') ?: '')],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 5,
+    ]);
+    $rep = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return $code === 200 && $rep !== false;
+}
+
+/**
+ * Suppression définitive d'un compte (droit à l'effacement, art. 17 RGPD).
+ * Point d'entrée UNIQUE : appelé par auth/delete_account.php (la personne
+ * elle-même) et par admin/users.php (un administrateur). Nécessite une
+ * connexion à db-core et les variables GAMES_PURGE_URL / MAP_PURGE_URL.
+ *
+ * Déroulé, dans cet ordre :
+ *   1. l'activité est agrégée PAR JOUR dans stats_anonymes, sans identifiant ;
+ *   2. les traces des autres bases sont purgées (scores supprimés, signalements
+ *      et composteurs détachés de leur auteur) — best-effort : un service
+ *      indisponible n'empêche pas l'effacement, l'échec est journalisé ;
+ *   3. les messages de contact sont détachés (message gardé, pseudo retiré) ;
+ *   4. une ligne d'audit SANS le pseudo supprimé est écrite ;
+ *   5. la ligne users est supprimée — la cascade emporte logins, xp_log,
+ *      user_progress et user_tokens.
+ *
+ * L'agrégation vient AVANT la suppression : les tables sources sont en
+ * ON DELETE CASCADE, une fois la ligne users partie il n'y a plus rien à lire.
+ *
+ * $par_admin : null si la personne supprime son propre compte, sinon
+ * ['id' => ..., 'username' => ...] de l'administrateur (tracé dans l'audit).
+ * $motif_purge : texte non null quand la suppression vient de la purge
+ * automatique (auth-api/cron/purge_rgpd.php) — compte non vérifié, inactif…
+ * Renvoie ['ok' => bool, 'purges' => [...]].
+ */
+function supprimer_compte($c, $uid, $username, $par_admin = null, $motif_purge = null) {
+    // Une table absente sur une base pas encore migrée (stats_anonymes, xp_log,
+    // ticket_messages) ne doit pas interrompre la suppression : mode "valeur de
+    // retour" plutôt qu'exceptions (défaut PHP 8.1+).
+    mysqli_report(MYSQLI_REPORT_OFF);
+    $uid = (int)$uid;
+
+    // ── 1. Agrégation anonyme ──────────────────────────────────────────────
+    // Un seul jour + un seul type par ligne, les totaux s'additionnent : rien ne
+    // permet de savoir combien de personnes ont contribué à un total, ni lesquelles.
+    mysqli_query($c, "INSERT INTO stats_anonymes (jour, type, total, somme)
+        SELECT DATE(created_at), 'inscription', 1, 0 FROM users WHERE id = $uid
+        ON DUPLICATE KEY UPDATE total = total + 1");
+
+    mysqli_query($c, "INSERT INTO stats_anonymes (jour, type, total, somme)
+        SELECT DATE(logged_at), 'connexion', COUNT(*), 0 FROM logins WHERE user_id = $uid
+        GROUP BY DATE(logged_at)
+        ON DUPLICATE KEY UPDATE total = total + VALUES(total)");
+
+    mysqli_query($c, "INSERT INTO stats_anonymes (jour, type, total, somme)
+        SELECT DATE(completed_at), 'cours_termine', COUNT(*), 0 FROM user_progress WHERE user_id = $uid
+        GROUP BY DATE(completed_at)
+        ON DUPLICATE KEY UPDATE total = total + VALUES(total)");
+
+    $r = mysqli_query($c, "SHOW TABLES LIKE 'xp_log'");
+    if ($r && mysqli_num_rows($r) > 0) {
+        mysqli_query($c, "INSERT INTO stats_anonymes (jour, type, total, somme)
+            SELECT DATE(created_at), 'xp', COUNT(*), COALESCE(SUM(delta), 0) FROM xp_log WHERE user_id = $uid
+            GROUP BY DATE(created_at)
+            ON DUPLICATE KEY UPDATE total = total + VALUES(total), somme = somme + VALUES(somme)");
+    }
+
+    // ── 2. Purge des autres bases (best-effort) ────────────────────────────
+    $purges = [
+        'jeux'  => purger_service(getenv('GAMES_PURGE_URL') ?: '', ['uid' => $uid]),
+        'carte' => purger_service(getenv('MAP_PURGE_URL') ?: '', ['uid' => $uid, 'username' => $username]),
+    ];
+
+    // ── 3. Messages de contact : contenu gardé, auteur détaché ─────────────
+    // Les messages du fil de tickets suivent la même règle que le ticket lui-même,
+    // y compris ceux écrits comme admin : le pseudo disparaît partout, l'affichage
+    // retombe sur « Admin ».
+    mysqli_query($c, "UPDATE ticket_messages SET user_id = NULL, auteur = NULL WHERE user_id = $uid");
+    mysqli_query($c, "UPDATE contact_messages SET user_id = NULL, username = NULL WHERE user_id = $uid");
+
+    // ── 4. Journal d'audit SANS le pseudo supprimé ─────────────────────────
+    // Écrire le pseudo ici reviendrait à le conserver après l'avoir effacé
+    // partout ailleurs. Seul l'administrateur auteur de l'action est tracé.
+    if ($motif_purge !== null) {
+        audit_log_write($c, null, null, 'compte_purge',
+            $motif_purge, 'user', null,
+            json_encode(['purges' => $purges]));
+    } elseif ($par_admin) {
+        audit_log_write($c, (int)$par_admin['id'], $par_admin['username'], 'user_supprime',
+            'un compte a été supprimé par un administrateur', 'user', null,
+            json_encode(['purges' => $purges]));
+    } else {
+        audit_log_write($c, null, null, 'compte_supprime',
+            'un compte a été supprimé par son propriétaire', 'user', null,
+            json_encode(['purges' => $purges]));
+    }
+
+    // ── 5. Suppression ─────────────────────────────────────────────────────
+    $stmt = mysqli_prepare($c, 'DELETE FROM users WHERE id = ?');
+    $stmt->bind_param('i', $uid);
+    return ['ok' => (bool)$stmt->execute(), 'purges' => $purges];
+}

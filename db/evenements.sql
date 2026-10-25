@@ -21,7 +21,8 @@ CREATE TABLE `evenements` (
   -- Suppression douce, indépendante du statut de cycle de vie ci-dessus : un
   -- événement supprimé garde son statut inchangé mais est masqué de la vue
   -- par défaut. Jamais de DELETE SQL, les données (dont les participants) ne
-  -- sont jamais effacées.
+  -- sont jamais effacées — mais les participants sont ANONYMISÉS 6 mois après
+  -- la fin de l'atelier (RGPD, evenements-api/cron/purge_rgpd.php).
   `supprime`      tinyint(1)   NOT NULL DEFAULT 0,
   -- Parcours source, à titre informatif : les slides sont COPIÉES dans
   -- evenement_slides à l'affectation (cf. commentaire de cette table).

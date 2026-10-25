@@ -5,7 +5,7 @@
 #
 # Build depuis la racine du repo :
 #   docker build -f services/web/Dockerfile -t composmart/web .
-FROM php:8.3-apache
+FROM php:8.3.36-apache
 
 RUN a2enmod rewrite proxy proxy_http \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf

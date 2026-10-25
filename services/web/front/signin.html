@@ -33,6 +33,14 @@
     .pass-wrap input { padding-right: 44px; }
     .toggle-pass { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1rem; color: #7aaa8a; line-height: 1; padding: 2px; }
 
+    .cgu-check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.85rem; color: #2c4a34; line-height: 1.45; margin: 4px 0 14px; cursor: pointer; }
+    .cgu-check input { margin-top: 3px; width: 17px; height: 17px; flex-shrink: 0; accent-color: #1e6e3e; }
+    .cgu-check a, .rgpd-info a { color: #1e6e3e; font-weight: 700; }
+    .rgpd-info { font-size: 0.75rem; color: #7aaa8a; line-height: 1.45; margin-top: 14px; text-align: center; }
+    html.dark .cgu-check { color: #c8e6d4; }
+    html.dark .cgu-check a, html.dark .rgpd-info a { color: #52b788; }
+    html.dark .rgpd-info { color: #5a8a6a; }
+
     .error-msg { background: #fdecea; color: #c0392b; border-radius: 10px; padding: 10px 14px; font-size: 0.85rem; font-weight: 600; margin-bottom: 16px; display: none; }
     .btn-submit { display: block; width: 100%; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 13px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; margin-top: 8px; }
     .btn-submit:hover { opacity: 0.85; }
@@ -68,6 +76,7 @@
         <div class="field">
           <label for="username">Nom d'utilisateur</label>
           <input type="text" id="username" name="username" placeholder="ex : composteur42" autocomplete="username" required />
+          <div class="field-aide">Visible de tous dans les classements : évite ton vrai nom.</div>
         </div>
         <div class="field">
           <label for="email">Adresse email</label>
@@ -88,7 +97,12 @@
             <button type="button" class="toggle-pass" data-target="password2">👁</button>
           </div>
         </div>
+        <label class="cgu-check">
+          <input type="checkbox" id="cgu" required />
+          <span>J'accepte les <a href="/cgu" target="_blank" rel="noopener">conditions d'utilisation</a>. Si j'ai moins de 15 ans, un parent est d'accord.</span>
+        </label>
         <button type="submit" class="btn-submit" id="submitBtn">Créer mon compte</button>
+        <p class="rgpd-info">Ton email sert uniquement à confirmer ton compte et à réinitialiser ton mot de passe : jamais de publicité, jamais de revente. Tu peux supprimer ton compte à tout moment. <a href="/confidentialite" target="_blank" rel="noopener">Tes données et tes droits</a></p>
       </form>
 
       <div class="auth-footer">
@@ -125,7 +139,8 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Création…';
 
-      const body = new URLSearchParams({ username, email, password });
+      const cgu = document.getElementById('cgu').checked ? '1' : '';
+      const body = new URLSearchParams({ username, email, password, cgu });
       fetch('/api/auth/register.php', { method: 'POST', body })
         .then(r => r.json())
         .then(data => {

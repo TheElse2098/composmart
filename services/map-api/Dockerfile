@@ -5,7 +5,7 @@
 #
 # Build depuis la racine du repo :
 #   docker build -f services/map-api/Dockerfile -t composmart/map-api .
-FROM php:8.3-apache
+FROM php:8.3.36-apache
 
 # curl : l'extension PHP (curl_init) sert à envoyer l'audit à auth-api.
 # libcurl4-openssl-dev est requise pour compiler l'extension.

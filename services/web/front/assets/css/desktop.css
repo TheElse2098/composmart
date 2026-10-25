@@ -74,6 +74,9 @@
 #site-footer .footer-col h5 { color: #fff; font-size: 0.95rem; font-weight: 800; margin-bottom: 10px; }
 #site-footer .footer-col a { display: block; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.9rem; padding: 4px 0; }
 #site-footer .footer-col a:hover { color: #a8e6bf; }
+#site-footer .footer-legal { max-width: 1000px; margin: 28px auto 0; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.12); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; }
+#site-footer .footer-legal a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.85rem; }
+#site-footer .footer-legal a:hover { color: #a8e6bf; text-decoration: underline; }
 #site-footer .footer-bottom { text-align: center; color: rgba(255,255,255,0.5); font-size: 0.82rem; margin-top: 28px; }
 
 html.dark #site-footer footer { background: #0a2413; }

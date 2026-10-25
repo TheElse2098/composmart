@@ -4,7 +4,7 @@
 # même principe : gabarits hors racine web, 404 indiscernable pour un non-admin).
 # Build depuis la racine du repo :
 #   docker build -f services/evenements-api/Dockerfile -t composmart/evenements-api .
-FROM php:8.3-apache
+FROM php:8.3.36-apache
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libcurl4-openssl-dev \
@@ -28,6 +28,8 @@ RUN printf 'upload_max_filesize=12M\npost_max_size=14M\nmemory_limit=192M\n' \
 
 COPY shared/_guard.php                   /var/www/html/api/_guard.php
 COPY services/evenements-api/evenements/ /var/www/html/api/evenements/
+# Purge nocturne RGPD (CronJob purge-rgpd-evenements) : hors racine web.
+COPY services/evenements-api/cron/       /var/www/cron/
 
 # Pools de données des jeux, servis à l'éditeur de parcours (action=pools).
 # Déposés hors de la racine web : ils ne sont lus que par parcours.php.

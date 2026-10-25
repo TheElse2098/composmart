@@ -11,19 +11,17 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16.png">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="/assets/vendor/marked-15.0.12/marked.min.js"></script>
   <!-- Assainissement du HTML des cours : chargé AVANT markdown-sur.js, qui le
        consomme. Sans lui, ce dernier retombe sur un rendu en texte brut. -->
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script src="/assets/vendor/dompurify-3.1.6/purify.min.js"></script>
   <!-- Rendu partagé avec l'aperçu de l'éditeur d'admin : même moteur des deux
        côtés, sinon l'aperçu mentirait sur le résultat. -->
   <script src="/assets/js/markdown-sur.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.js" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;900&family=Nunito:wght@400;600;700;900&display=swap">
+  <link rel="stylesheet" href="/assets/vendor/katex-0.18.1/katex.min.css" crossorigin="anonymous">
+  <script src="/assets/vendor/katex-0.18.1/katex.min.js" crossorigin="anonymous"></script>
+  <script src="/assets/vendor/katex-0.18.1/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="/assets/css/fonts.css">
   <title>CompoSmart – Cours</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1076,16 +1074,14 @@
 
     /* ── Helpers ── */
     function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    // YouTube/Vimeo : façade chargée au clic (RGPD), cf. media-embed.js.
     function buildVideoPlayer(url) {
-      var yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
-      var vi = url.match(/vimeo\.com\/(\d+)/);
-      if (yt) return '<iframe src="https://www.youtube.com/embed/' + yt[1] + '" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>';
-      if (vi) return '<iframe src="https://player.vimeo.com/video/' + vi[1] + '" allowfullscreen></iframe>';
-      return '<video controls src="' + esc(url) + '"></video>';
+      return window.videoEmbedHtml(url) || '<video controls src="' + esc(url) + '"></video>';
     }
 
     /* ── Drawer ── */
   </script>
+  <script src="/assets/js/media-embed.js"></script>
   <script src="/assets/js/site-footer.js"></script>
   <script src="/assets/js/site-nav.js"></script>
   <script src="/assets/js/theme.js"></script>

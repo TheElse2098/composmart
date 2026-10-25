@@ -21,6 +21,9 @@ $email    = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
 
 if (!$username || !$password || !$email) { echo json_encode(['error' => 'Champs manquants']); exit; }
+// Acceptation des CGU (case obligatoire de signin.html) : vérifiée ici aussi,
+// la case seule se contourne en appelant l'API directement.
+if (($_POST['cgu'] ?? '') !== '1') { echo json_encode(['error' => "Merci d'accepter les conditions d'utilisation."]); exit; }
 if (strlen($username) < 3 || strlen($username) > 30) { echo json_encode(['error' => "Nom d'utilisateur : 3 à 30 caractères"]); exit; }
 if (!preg_match('/^[a-zA-Z0-9_\-\.]+$/', $username)) { echo json_encode(['error' => "Nom d'utilisateur : lettres, chiffres, _ - . uniquement"]); exit; }
 if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 255) {
