@@ -209,8 +209,12 @@
         var cours = t.cours.map(function (c) {
           var puce = c.statut === 'publie' ? ''
             : '<span class="puce ' + esc(c.statut) + '">' + esc(c.statut) + '</span>';
+          // Terminé : comptes + visiteurs sans compte (ces derniers ne sont
+          // qu'un compteur, sans aucune donnée sur la personne).
+          var termine = c.termine_par + (c.termine_anonyme || 0);
           var meta = c.xp + ' XP · ' + c.nb_questions + ' question' + (c.nb_questions > 1 ? 's' : '')
-                   + (c.termine_par > 0 ? ' · ' + c.termine_par + ' l\'ont terminé' : '');
+                   + (termine > 0 ? ' · terminé ' + termine + ' fois'
+                       + (c.termine_anonyme > 0 ? ' (dont ' + c.termine_anonyme + ' sans compte)' : '') : '');
           return '<div class="cours" draggable="true" data-cours-id="' + c.id + '">'
             + '<span class="cours-poignee">⋮⋮</span>'
             + '<span class="cours-emoji">' + esc(c.emoji || '📖') + '</span>'

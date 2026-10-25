@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
     $res = mysqli_query($c,
         'SELECT c.id, c.slug, c.theme_id, c.titre, c.emoji, c.niveau, c.xp_reward,
-                c.statut, c.nb_questions, c.has_text, c.ordre,
+                c.statut, c.nb_questions, c.has_text, c.ordre, c.termine_anonyme,
                 (SELECT COUNT(*) FROM user_progress up WHERE up.cours_id = c.slug) AS termine_par
          FROM cours c ORDER BY c.theme_id, c.ordre, c.id');
     while ($res && ($r = mysqli_fetch_assoc($res))) {
@@ -42,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             'statut'       => $r['statut'],
             'nb_questions' => (int)$r['nb_questions'],
             'has_text'     => (int)$r['has_text'],
-            'termine_par'  => (int)$r['termine_par'],
+            'termine_par'  => (int)$r['termine_par'],       // comptes (user_progress)
+            'termine_anonyme' => (int)$r['termine_anonyme'], // visiteurs sans compte (simple compteur)
         ];
     }
 

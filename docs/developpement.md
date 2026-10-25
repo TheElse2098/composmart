@@ -25,6 +25,17 @@ projet. Pour le déploiement, voir [helm/README.md](../helm/README.md).
 - **Interface** : mobile d'abord ; sur ordinateur (`assets/css/desktop.css`),
   utiliser la largeur plutôt qu'une colonne étroite centrée.
 
+## Accès libre
+
+Tous les cours publiés et tous les jeux se suivent sans compte. Le compte ne
+sert qu'à sauvegarder : progression et XP des cours (`user_progress`,
+`xp_log`), scores des jeux (`scores`). Quand un visiteur sans compte termine un
+cours, `cours/complete.php` ne garde que le fait qu'il a été terminé, sans
+aucune donnée sur la personne : `cours.termine_anonyme` (affiché dans
+`/admin/themes`) et le total du jour dans `stats_anonymes` (tableau de bord).
+La confirmation de l'email ne conditionne plus l'accès : un compte jamais
+confirmé est supprimé au bout de 30 jours (purge RGPD).
+
 ## Cours
 
 Les cours s'éditent depuis `/admin` et vivent en base (db-core). Le dossier

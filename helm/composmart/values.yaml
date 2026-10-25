@@ -207,22 +207,13 @@ seeds:
 # applique ceux qui ne figurent pas encore dans la table `schema_migrations`
 # de leur base, une seule fois chacun, dans l'ordre alphabétique.
 # La base visée est lue dans l'en-tête du fichier : « MIGRATION db-core », etc.
-# `baseline` : fichiers considérés comme déjà appliqués (jamais exécutés),
-# parce qu'ils l'ont été à la main avant l'arrivée de Helm ou parce que le
-# schéma initial (db/*.sql) les contient déjà.
+# `baseline` : fichiers considérés comme déjà appliqués (jamais exécutés), pour
+# une migration passée à la main ou déjà contenue dans le schéma initial
+# (db/*.sql). Vide depuis octobre 2026 : les migrations d'août, ainsi
+# enregistrées, ont été supprimées du dépôt (leur contenu est dans db/*.sql).
 migrations:
   activer: true
-  baseline:
-    - migration-2026-08.sql
-    - migration-2026-08-anecdotes-mots-cles.sql
-    - migration-2026-08-banque-images.sql
-    - migration-2026-08-equipes-autonomes.sql
-    - migration-2026-08-evenements-anecdotes.sql
-    - migration-2026-08-evenements-animation.sql
-    - migration-2026-08-evenements-deroule.sql
-    - migration-2026-08-evenements-statuts.sql
-    - migration-2026-08-evenements-theme-simpliste.sql
-    - migration-2026-08-evenements-theme.sql
+  baseline: []
 
 # ── Tâches ponctuelles ────────────────────────────────────────────────────
 # Lancées une fois à la fin du prochain `deploy.sh` ; leurs journaux

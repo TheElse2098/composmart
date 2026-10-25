@@ -481,9 +481,9 @@
       chargerTickets();
 
       // ── Colonne d'appoint : identité, badges, records ──
-      // L'adresse email conditionne l'accès aux cours et la récupération du mot
-      // de passe : elle doit être consultable, pas seulement dans le bandeau
-      // d'avertissement qui disparaît une fois le compte vérifié.
+      // L'adresse email sert à récupérer le compte (mot de passe oublié) : elle
+      // doit être consultable, pas seulement dans le bandeau d'avertissement
+      // qui disparaît une fois le compte vérifié.
       document.getElementById('colSide').innerHTML = `
         <section class="panel">
           <div class="panel-head">👤 Mon compte</div>
@@ -523,7 +523,7 @@
             <input type="email" id="emailNouveau" autocomplete="email" required>
             <label for="emailMdp">Ton mot de passe actuel</label>
             <input type="password" id="emailMdp" autocomplete="current-password" required>
-            <p class="email-aide">Un lien de confirmation sera envoyé à la nouvelle adresse ; l'ancienne sera prévenue. En attendant la confirmation, l'accès aux cours est suspendu.</p>
+            <p class="email-aide">Un lien de confirmation sera envoyé à la nouvelle adresse ; l'ancienne sera prévenue. Pense à la confirmer : c'est elle qui servira à récupérer ton compte.</p>
             <button type="submit" class="info-btn" id="btnEmailGo">Changer mon adresse</button>
             <div class="info-msg" id="emailMsg" hidden></div>
           </form>

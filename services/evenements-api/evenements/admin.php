@@ -337,8 +337,8 @@ if ($action === 'reglages') {
     if (!$apres || $apres['theme_slides'] !== $th) {
         echo json_encode(['error' =>
             "Le thème « $th » n'a pas pu être enregistré : la colonne theme_slides ne connaît pas "
-            . "encore cette valeur. Applique db/migration-2026-08-evenements-theme-simpliste.sql "
-            . "sur db-evenements, puis réessaie."], JSON_UNESCAPED_UNICODE);
+            . "encore cette valeur : le schéma de db-evenements n'est pas à jour (cf. db/evenements.sql)."],
+            JSON_UNESCAPED_UNICODE);
         exit;
     }
 

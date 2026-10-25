@@ -240,20 +240,6 @@
     .btn-secondary { width: 100%; background: #fff; color: #1e6e3e; border: 2.5px solid #a8e6bf; border-radius: 16px; padding: 13px; font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 900; cursor: pointer; margin-top: 9px; transition: background 0.15s; }
     .btn-secondary:hover { background: #eef4ec; }
 
-    /* ── Blocage « email non confirmé » ── */
-    .bloc-verif { background: #fff; border-radius: 22px; padding: 34px 24px 30px; margin-top: 14px; text-align: center; box-shadow: 0 4px 18px rgba(30,110,62,0.09); }
-    .bloc-verif-icone { font-size: 3rem; line-height: 1; margin-bottom: 12px; }
-    .bloc-verif-titre { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #1a3a25; margin-bottom: 10px; }
-    .bloc-verif-texte { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; line-height: 1.6; max-width: 30rem; margin: 0 auto; }
-    .bloc-verif-avis { font-size: 0.85rem; font-weight: 700; margin-top: 14px; }
-    .bloc-verif-avis.ok { color: #1e6e3e; }
-    .bloc-verif-avis.ko { color: #c0392b; }
-    html.dark .bloc-verif { background: #1a2b1e; box-shadow: 0 4px 18px rgba(0,0,0,0.35); }
-    html.dark .bloc-verif-titre { color: #c8e6d4; }
-    html.dark .bloc-verif-texte { color: #7ab88e; }
-    html.dark .bloc-verif-avis.ok { color: #52b788; }
-    html.dark .bloc-verif-avis.ko { color: #ef9a9a; }
-
     /* ── CONFETTI ── */
     .confetti-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; overflow: hidden; }
     .conf { position: absolute; width: 10px; height: 10px; border-radius: 2px; animation: confFall linear forwards; }
@@ -405,18 +391,6 @@
   <div class="bottom-leaf"></div>
   <div class="confetti-container" id="confettiContainer"></div>
 
-  <!-- Modal cours verrouillé -->
-  <div id="lockedModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:600;align-items:center;justify-content:center;padding:20px">
-    <div style="background:#fff;border-radius:24px;padding:30px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.25)">
-      <div style="font-size:2.6rem;margin-bottom:12px">🔒</div>
-      <div style="font-family:'Baloo 2',cursive;font-size:1.15rem;font-weight:900;color:#1a3a25;margin-bottom:8px">Cours réservé aux membres</div>
-      <div style="font-size:0.83rem;color:#4a7a5a;font-weight:600;margin-bottom:20px;line-height:1.5">Crée un compte gratuit pour accéder à tous les cours, suivre ta progression et gagner des badges.</div>
-      <a href="/signin" style="display:block;background:linear-gradient(135deg,#1e6e3e,#2d9959);color:#fff;font-family:'Baloo 2',cursive;font-weight:900;font-size:0.92rem;padding:12px;border-radius:14px;text-decoration:none;margin-bottom:8px;box-shadow:0 3px 10px rgba(30,110,62,0.3)">Créer un compte gratuitement</a>
-      <a href="/login" style="display:block;background:#fff;color:#1e6e3e;border:2px solid #a8e6bf;font-family:'Baloo 2',cursive;font-weight:900;font-size:0.88rem;padding:10px;border-radius:14px;text-decoration:none;margin-bottom:14px">Se connecter</a>
-      <a href="/cours" style="color:#9e9e9e;font-size:0.78rem;font-family:'Nunito',sans-serif;font-weight:700;text-decoration:none">← Retour aux cours</a>
-    </div>
-  </div>
-
   <script>
     /**
      * Finalise un fragment de markdown déjà inséré dans le DOM : formules KaTeX
@@ -446,20 +420,11 @@
     var userXpBase = 0;
     var userLoggedIn = false;
 
-    function showLockedModal() {
-      var m = document.getElementById('lockedModal');
-      if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-    }
-
     // Charger XP + cours simultanément
     Promise.all([
       fetch('/api/auth/me.php').then(function(r) { return r.json(); }).catch(function() { return {}; }),
+      // Cours en accès libre : get.php sert tout cours publié, compte ou pas.
       fetch('/api/cours/get.php?slug=' + encodeURIComponent(slug)).then(function(r) {
-        // 403 « email_non_verifie » : ce n'est pas une erreur de chargement mais
-        // un refus délibéré, il mérite son propre écran plutôt que « introuvable ».
-        if (r.status === 403) {
-          return r.json().then(function (d) { throw { emailNonVerifie: d.error === 'email_non_verifie' }; });
-        }
         if (!r.ok) throw new Error(r.status);
         return r.json();
       })
@@ -472,11 +437,6 @@
       // #navXp n'existe que si la page affiche un compteur d'XP (nav partagé : absent).
       var navXpEl = document.getElementById('navXp');
       if (navXpEl) navXpEl.textContent = userLoggedIn ? ('⭐ ' + userXpBase + ' XP') : '⭐ –';
-
-      if (!userLoggedIn && (data.meta.ordre || 0) !== 1) {
-        showLockedModal();
-        return;
-      }
 
     // (suite du chargement du cours)
         var meta = data.meta || {};
@@ -537,40 +497,9 @@
         buildLessonSlides();
         if (hasQuiz) buildQuizSlides();
     }).catch(function(e) {
-      if (e && e.emailNonVerifie) { afficherBlocageEmail(); return; }
       document.getElementById('lessonSlides').innerHTML =
         '<div style="padding:40px;text-align:center;color:#c0392b"><h2>Cours introuvable</h2><a href="/cours">← Retour aux cours</a></div>';
     });
-
-    /** Compte connecté mais adresse non confirmée : le contenu est refusé côté serveur. */
-    function afficherBlocageEmail() {
-      document.getElementById('courseHeader').style.display = 'none';
-      document.querySelector('.tabs-wrap').style.display = 'none';
-      document.getElementById('panelCours').innerHTML =
-        '<div class="bloc-verif">'
-        + '<div class="bloc-verif-icone">✉️</div>'
-        + '<div class="bloc-verif-titre">Confirme ton adresse email</div>'
-        + '<p class="bloc-verif-texte">Les cours sont réservés aux comptes dont l\'adresse est confirmée. '
-        + 'Ouvre le lien que nous t\'avons envoyé par email — pense à regarder dans les indésirables.</p>'
-        + '<button type="button" class="btn-next" id="blocRenvoi" style="margin-top:18px">Renvoyer le lien</button>'
-        + '<div class="bloc-verif-avis" id="blocAvis"></div>'
-        + '</div>';
-
-      document.getElementById('blocRenvoi').addEventListener('click', function () {
-        var b = this;
-        b.disabled = true; b.textContent = 'Envoi…';
-        fetch('/api/auth/resend.php', { method: 'POST' })
-          .then(function (r) { return r.json(); })
-          .then(function (d) {
-            var avis = document.getElementById('blocAvis');
-            avis.textContent = d.ok ? 'Email envoyé ! Vérifie ta boîte de réception.'
-                                    : (d.error || 'Envoi impossible.');
-            avis.className = 'bloc-verif-avis ' + (d.ok ? 'ok' : 'ko');
-            if (d.ok) { b.textContent = 'Lien renvoyé'; } else { b.disabled = false; b.textContent = 'Renvoyer le lien'; }
-          })
-          .catch(function () { b.disabled = false; b.textContent = 'Renvoyer le lien'; });
-      });
-    }
 
     /* ── Tabs ── */
     var TAB_NAMES = ['Cours', 'Video', 'Podcast', 'Quiz'];
@@ -678,11 +607,8 @@
 
       var lastSlide = document.getElementById('ls-' + (lessonSlides.length - 1));
 
-      if (!userLoggedIn) {
-        appendLoginPromptInline(lastSlide);
-        return;
-      }
-
+      // Visiteur sans compte : le serveur ne garde qu'un compteur anonyme du
+      // cours ; rien n'est sauvegardé à son nom, on l'invite à se connecter.
       fetch('/api/cours/complete.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -690,6 +616,7 @@
       })
       .then(function(r) { return r.json(); })
       .then(function(d) {
+        if (!userLoggedIn) { appendLoginPromptInline(lastSlide); return; }
         if (d.xp_earned > 0) {
           var newTotal = d.xp_total || (userXpBase + d.xp_earned);
           appendInlineXpBar(lastSlide, d.xp_earned, userXpBase, newTotal, d.niveau);
@@ -698,7 +625,7 @@
           appendInlineXpBar(lastSlide, 0, userXpBase, userXpBase, Math.floor(userXpBase/100)+1);
         }
       })
-      .catch(function() {});
+      .catch(function() { if (!userLoggedIn) appendLoginPromptInline(lastSlide); });
     }
 
     function appendInlineXpBar(container, earned, oldXp, newXp, newNiveau) {

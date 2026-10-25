@@ -31,22 +31,15 @@ $c = mysqli_connect(
 if (!$c) { http_response_code(500); echo json_encode(['error' => 'DB error']); exit; }
 
 // ── Qui demande ? ──────────────────────────────────────────────────────────
+// Les cours publiés sont en accès libre, compte ou pas : seule la sauvegarde
+// de la progression demande d'être connecté (cf. complete.php). La session ne
+// sert ici qu'à laisser un admin relire ses brouillons.
 $est_admin = false;
 if (!empty($_SESSION['user_id'])) {
-    $stmt = mysqli_prepare($c, 'SELECT email_verifie, isAdmin FROM users WHERE id = ?');
+    $stmt = mysqli_prepare($c, 'SELECT isAdmin FROM users WHERE id = ?');
     $stmt->bind_param('i', $_SESSION['user_id']);
     $stmt->execute();
     $u = $stmt->get_result()->fetch_assoc();
-    // Contenu réservé aux comptes dont l'adresse est confirmée. Le contrôle est
-    // ici et pas seulement dans la page : sinon le texte resterait récupérable
-    // en appelant l'API directement. Un visiteur non connecté garde le régime
-    // existant (1er cours ouvert, arbitré côté page) : c'est le compte NON
-    // VÉRIFIÉ qui est visé.
-    if ($u && (int)$u['email_verifie'] !== 1 && (int)$u['isAdmin'] !== 1) {
-        http_response_code(403);
-        echo json_encode(['error' => 'email_non_verifie']);
-        exit;
-    }
     $est_admin = $u && (int)$u['isAdmin'] === 1;
 }
 

@@ -105,6 +105,20 @@ if ($user_id > 0) {
         $response['xp_total']   = $new_xp;
         $response['niveau']     = $new_niveau;
     }
+} else {
+    // Visiteur sans compte : les cours sont en accès libre, mais rien n'est
+    // sauvegardé à son nom. On garde seulement LE FAIT que le cours a été
+    // terminé, sans aucune donnée sur la personne : +1 au compteur du cours
+    // (affiché dans /admin/themes) et au total du jour (stats_anonymes, déjà lu
+    // par le tableau de bord et ses courbes).
+    // Une fois par cours et par session, et borné par IP : sans ça, recharger
+    // la page gonflerait le compteur à volonté.
+    if (empty($_SESSION['cours_anonymes'][$slug]) && rate_limit('cours_anonyme', 30, 3600)) {
+        $_SESSION['cours_anonymes'][$slug] = true;
+        mysqli_query($c, "UPDATE cours SET termine_anonyme = termine_anonyme + 1 WHERE slug = '$s'");
+        mysqli_query($c, "INSERT INTO stats_anonymes (jour, type, total, somme) VALUES (CURDATE(), 'cours_termine', 1, 0)
+                          ON DUPLICATE KEY UPDATE total = total + 1");
+    }
 }
 
 mysqli_close($c);

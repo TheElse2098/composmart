@@ -72,17 +72,9 @@
     .cours-card .c-title { font-family: 'Baloo 2', cursive; font-size: 0.88rem; font-weight: 900; color: #fff; text-align: center; line-height: 1.25; }
     .cours-card .c-level { font-size: 0.68rem; color: rgba(255,255,255,0.8); font-weight: 700; margin-top: 5px; text-align: center; }
     .cours-card .c-stars { font-size: 0.7rem; margin-top: 4px; }
-    .cours-card .c-locked { position: absolute; top: 8px; right: 8px; font-size: 0.8rem; }
     /* Visible des seuls admins : les autres ne reçoivent pas ces cours. */
     .cours-card .c-brouillon { position: absolute; top: 7px; left: 7px; background: #fdf1d8; color: #8a6100; font-size: 0.6rem; font-weight: 900; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px; }
     .c-done { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.9); color: #1e6e3e; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.5px; }
-
-    /* Cadenas recouvrant toute la tuile pour un cours inaccessible */
-    .cours-card-locked .c-emoji, .cours-card-locked .c-title, .cours-card-locked .c-level { filter: blur(1.5px); opacity: 0.55; }
-    .c-locked-overlay {
-      position: absolute; inset: 0; border-radius: 18px; display: flex; align-items: center; justify-content: center;
-      background: rgba(20, 30, 24, 0.45); font-size: 1.8rem; backdrop-filter: blur(1px);
-    }
 
     /* Stats connecté */
     .stats-box { background: #fff; border-radius: 18px; padding: 16px 18px; display: flex; gap: 0; margin-bottom: 10px; box-shadow: 0 2px 12px rgba(30,110,62,0.1); }
@@ -110,25 +102,6 @@
     .cc-2d { background: linear-gradient(135deg, #283593, #3f51b5); box-shadow: 0 4px 14px rgba(40,53,147,0.3); }
     .cc-2e { background: linear-gradient(135deg, #004d40, #00897b); box-shadow: 0 4px 14px rgba(0,77,64,0.3); }
 
-    /* Locked style */
-    .cc-locked { background: linear-gradient(135deg, #9e9e9e, #bdbdbd) !important; box-shadow: 0 4px 14px rgba(0,0,0,0.12) !important; filter: grayscale(0.3); }
-
-    /* Auth modal */
-    .auth-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-    .auth-backdrop.show { opacity: 1; pointer-events: all; }
-    .auth-box { background: #fff; border-radius: 24px; padding: 28px 22px; max-width: 310px; width: 100%; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.22); transform: translateY(16px); transition: transform 0.2s; }
-    .auth-backdrop.show .auth-box { transform: translateY(0); }
-    .auth-box-icon { font-size: 2.4rem; margin-bottom: 10px; }
-    .auth-box-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; margin-bottom: 6px; }
-    .auth-box-sub { font-size: 0.82rem; color: #4a7a5a; font-weight: 600; margin-bottom: 18px; line-height: 1.5; }
-    .auth-btn-primary { display: block; background: linear-gradient(135deg,#1e6e3e,#2d9959); color: #fff; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.92rem; padding: 12px; border-radius: 14px; text-decoration: none; margin-bottom: 8px; box-shadow: 0 3px 10px rgba(30,110,62,0.3); }
-    .auth-btn-secondary { display: block; background: #fff; color: #1e6e3e; border: 2px solid #a8e6bf; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.88rem; padding: 10px; border-radius: 14px; text-decoration: none; margin-bottom: 12px; }
-    .auth-btn-later { background: none; border: none; color: #9e9e9e; font-size: 0.78rem; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 700; }
-    html.dark .auth-box { background: #1a2b1e; }
-    html.dark .auth-box-title { color: #c8e6d4; }
-    html.dark .auth-box-sub { color: #7ab88e; }
-    html.dark .auth-btn-secondary { background: #1a2b1e; color: #52b788; border-color: #2d4030; }
-    html.dark .auth-btn-later { color: #5a8a6a; }
     html.dark .stats-box { background: #1a2b1e; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
     html.dark .stats-val { color: inherit; }
     html.dark .stats-label { color: #4a7a5a; }
@@ -183,29 +156,6 @@
 
   <div class="bottom-leaf"></div>
 
-  <!-- Auth modal (non connecté) -->
-  <div class="auth-backdrop" id="authModal" onclick="if(event.target===this)closeAuthModal()">
-    <div class="auth-box">
-      <div class="auth-box-icon">🔒</div>
-      <div class="auth-box-title">Accès membres</div>
-      <div class="auth-box-sub">Crée un compte gratuit pour accéder à tous les cours, suivre ta progression et gagner des badges.</div>
-      <a href="/signin" class="auth-btn-primary">Créer un compte gratuitement</a>
-      <a href="/login" class="auth-btn-secondary">Se connecter</a>
-      <button class="auth-btn-later" onclick="closeAuthModal()">Plus tard</button>
-    </div>
-  </div>
-
-  <!-- Locked modal (connecté, catégorie pas encore débloquée) -->
-  <div class="auth-backdrop" id="lockedModal" onclick="if(event.target===this)closeLockedModal()">
-    <div class="auth-box">
-      <div class="auth-box-icon">🔒</div>
-      <div class="auth-box-title">Cours verrouillé</div>
-      <div class="auth-box-sub" id="lockedModalText">Termine le premier cours de cette catégorie pour débloquer la suite !</div>
-      <a href="/cours" class="auth-btn-primary" id="lockedModalLink">Voir le premier cours</a>
-      <button class="auth-btn-later" onclick="closeLockedModal()">Plus tard</button>
-    </div>
-  </div>
-
   <script>
     var NIVEAUX = { debutant: 'Débutant', intermediaire: 'Intermédiaire', expert: 'Expert' };
 
@@ -235,29 +185,9 @@
       return 'linear-gradient(' + angle + ',' + darkenHex(c1, factor) + ',' + darkenHex(c2, factor) + ')';
     }
 
-    var isLoggedIn = false;
-    var firstSlug = null;
-
-    function showAuthModal() { document.getElementById('authModal').classList.add('show'); document.body.style.overflow = 'hidden'; }
-    function closeAuthModal() { document.getElementById('authModal').classList.remove('show'); document.body.style.overflow = ''; }
-
-    function showLockedModal(catName, catFirstSlug) {
-      document.getElementById('lockedModalText').textContent =
-        'Termine le premier cours de "' + catName + '" pour débloquer la suite de cette catégorie !';
-      document.getElementById('lockedModalLink').setAttribute('href', '/cours/' + catFirstSlug);
-      document.getElementById('lockedModal').classList.add('show');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeLockedModal() { document.getElementById('lockedModal').classList.remove('show'); document.body.style.overflow = ''; }
-
     function renderPage(data) {
       var themes = data.themes || data; // compat si ancien format
       var user = data.user || null;
-
-      isLoggedIn = !!user;
-      if (themes.length > 0 && themes[0].cours && themes[0].cours.length > 0) {
-        firstSlug = themes[0].cours[0].slug;
-      }
 
       // ── Cours ──
       var container = document.getElementById('cours-container');
@@ -265,8 +195,6 @@
         container.innerHTML = '<div style="text-align:center;padding:40px;color:#7ab88e;">Aucun cours disponible.</div>';
       } else {
         container.innerHTML = themes.map(function(theme, ti) {
-          // Accès à la catégorie : son 1er cours doit être terminé pour débloquer les suivants.
-          var catUnlocked = theme.cours.length > 0 && theme.cours[0].completed;
           var cards = theme.cours.map(function(c, ci) {
             var grad = courseGradient(theme.couleur, ci);
             var niveau = NIVEAUX[c.niveau] || c.niveau;
@@ -277,21 +205,9 @@
             // croirait avoir publié ce qui dort encore en brouillon.
             var brouillon = (c.statut && c.statut !== 'publie')
               ? '<div class="c-brouillon">' + c.statut + '</div>' : '';
-            // Verrouillage :
-            //  - non connecté : tout sauf le tout premier cours du site
-            //  - connecté     : tout cours qui n'est pas le 1er de sa catégorie ET dont
-            //                   le 1er cours de la catégorie n'est pas encore terminé
-            var isFirstOfCat = ci === 0;
-            var locked = isLoggedIn
-              ? (!isFirstOfCat && !catUnlocked)
-              : (c.slug !== firstSlug);
-            var lockIcon = locked ? '<div class="c-locked-overlay">🔒</div>' : '';
-            var lockedClass = locked ? ' cours-card-locked' : '';
-            var catFirstSlug = theme.cours[0] ? theme.cours[0].slug : '';
-            return '<a href="/cours/' + c.slug + '" class="cours-card' + lockedClass + '" data-slug="' + c.slug + '" data-locked="' + (locked ? '1' : '0') + '" data-cat-first-slug="' + catFirstSlug + '" data-cat-name="' + theme.nom.replace(/"/g, '&quot;') + '" style="background:' + grad + ';box-shadow:0 4px 14px rgba(0,0,0,0.2)">'
+            return '<a href="/cours/' + c.slug + '" class="cours-card" data-slug="' + c.slug + '" style="background:' + grad + ';box-shadow:0 4px 14px rgba(0,0,0,0.2)">'
               + doneBadge
               + brouillon
-              + lockIcon
               + '<div class="c-emoji">' + (c.emoji || '📖') + '</div>'
               + '<div class="c-title">' + c.titre + '</div>'
               + '<div class="c-level">' + niveau + qs + '</div>'
@@ -346,7 +262,7 @@
           + '<div style="font-size:2rem">🏆</div>'
           + '<div class="login-invite-text">'
           + '<div class="login-invite-title">Suis ta progression !</div>'
-          + '<div class="login-invite-sub">Connecte-toi pour gagner de l\'XP et débloquer des niveaux.</div>'
+          + '<div class="login-invite-sub">Tous les cours sont en accès libre. Connecte-toi pour sauvegarder ta progression et gagner de l\'XP.</div>'
           + '</div>'
           + '<a href="/login" class="login-invite-btn">Se connecter</a>'
           + '</div>';
@@ -361,16 +277,6 @@
           '<div style="text-align:center;padding:40px;color:#c0392b;">Erreur de chargement des cours.</div>';
       });
 
-    document.getElementById('cours-container').addEventListener('click', function(e) {
-      var card = e.target.closest('.cours-card');
-      if (!card || card.dataset.locked !== '1') return;
-      e.preventDefault();
-      if (isLoggedIn) {
-        showLockedModal(card.dataset.catName, card.dataset.catFirstSlug);
-      } else {
-        showAuthModal();
-      }
-    });
   </script>
   <script src="/assets/js/site-footer.js"></script>
   <script src="/assets/js/site-nav.js"></script>

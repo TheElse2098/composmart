@@ -76,22 +76,6 @@ curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 |
 helm version
 ```
 
-### 2. Confier le cluster existant à Helm
-
-Le cluster actuel a été monté avec `kubectl apply`. Helm refuse de modifier des
-ressources qu'il n'a pas créées : ce script les lui confie, **sans rien
-recréer ni redémarrer, sans toucher aux données**.
-
-```bash
-bash helm/adopter.sh
-bash helm/deploy.sh
-```
-
-Ce premier déploiement redémarre les services (nouvelles images) mais pas les
-bases, et applique la migration `migration-2026-10-rgpd.sql`. Les migrations
-d'août 2026, déjà passées à la main, sont seulement enregistrées comme faites
-(liste `migrations.baseline` de `values.yaml`).
-
 ### Installation sur un serveur neuf
 
 1. Installer k3s et Helm, cloner le dépôt.
@@ -131,7 +115,6 @@ Site sur http://localhost:8080.
 | `values-prod.yaml` | Surcharges du VPS (tâches ponctuelles, seeds) |
 | `values-local.yaml` | Surcharges k3d (pas de HTTPS) |
 | `deploy.sh` | Build + import des images, puis `helm upgrade --install` |
-| `adopter.sh` | Reprise du cluster existant par Helm (une seule fois) |
 
 `composmart/files/` est généré par `deploy.sh` (copie de `db/*.sql`) et ignoré
 par git : la source reste `db/`.

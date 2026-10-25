@@ -35,7 +35,7 @@
     barre.innerHTML =
       '<span>✉️</span>'
       + '<span class="verif-bandeau-txt">Confirme ton adresse <strong>'
-      + (me.email || '').replace(/[<>&]/g, '') + '</strong> pour débloquer les cours.</span>'
+      + (me.email || '').replace(/[<>&]/g, '') + '</strong> : c\'est elle qui te permettra de récupérer ton compte.</span>'
       + '<button type="button" id="verifRenvoi">Renvoyer le lien</button>'
       + '<a href="/verifier">En savoir plus</a>';
 

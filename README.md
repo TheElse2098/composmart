@@ -19,8 +19,9 @@ fonctionnalités, architecture, infrastructure, sécurité et conformité RGPD.
 - **Carte interactive** de ~6 000 composteurs en France, alimentée chaque nuit
   par OpenStreetMap et par l'open data de collectivités ; les utilisateurs
   proposent des ajouts et signalent des erreurs, validés par un administrateur.
-- **Cours et quiz** sur le compostage, avec progression, points d'expérience et
-  niveaux ; contenu éditable depuis un back-office.
+- **Cours et quiz** sur le compostage, en accès libre ; progression, points
+  d'expérience et niveaux sauvegardés pour les inscrits ; contenu éditable depuis
+  un back-office.
 - **Mini-jeux** et classements ; contenu et règles de chaque jeu éditables
   depuis le back-office, avec historique des versions.
 - **Ateliers en présentiel** : les participants rejoignent une session par code

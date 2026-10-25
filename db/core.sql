@@ -70,6 +70,10 @@ CREATE TABLE `cours` (
   `has_video`    tinyint(1)   NOT NULL DEFAULT 0,
   `has_podcast`  tinyint(1)   NOT NULL DEFAULT 0,
   `nb_questions` int          NOT NULL DEFAULT 0,
+  -- Terminé sans compte : un simple compteur, aucune donnée sur la personne
+  -- (les cours sont en accès libre, seule la progression des connectés est
+  -- sauvegardée dans user_progress).
+  `termine_anonyme` int       NOT NULL DEFAULT 0,
   -- Un cours en brouillon n'apparaît ni au catalogue ni en lecture : il permet
   -- d'écrire sur plusieurs jours sans exposer un texte inachevé.
   `statut`       enum('brouillon','publie','archive') NOT NULL DEFAULT 'publie',
@@ -170,12 +174,14 @@ CREATE TABLE `xp_log` (
   CONSTRAINT `xp_log_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- ── STATISTIQUES ANONYMES (comptes supprimés) ───────────────────────────────
+-- ── STATISTIQUES ANONYMES (comptes supprimés, visiteurs sans compte) ────────
 -- Quand un compte est supprimé, ses lignes personnelles disparaissent (cascade)
 -- mais son activité est d'abord reversée ici, agrégée PAR JOUR et sans aucun
 -- identifiant. Deux événements de la même personne ne sont donc plus reliables
 -- entre eux : c'est ce qui distingue cette table d'une simple pseudonymisation.
--- Les graphes de l'admin additionnent ces totaux aux données encore vivantes.
+-- Un cours terminé par un visiteur sans compte y est compté directement
+-- (cours/complete.php). Les graphes de l'admin additionnent ces totaux aux
+-- données encore vivantes.
 CREATE TABLE `stats_anonymes` (
   `jour`  date NOT NULL,
   `type`  enum('inscription','connexion','cours_termine','xp') NOT NULL,
