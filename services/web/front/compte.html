@@ -193,6 +193,15 @@
     .info-btn:disabled { opacity: 0.6; cursor: default; }
     .info-msg { margin-top: 8px; font-size: 0.78rem; font-weight: 700; color: #8a6100; text-align: center; }
     .info-msg[hidden] { display: none; }
+    .info-links { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+    button.info-link { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; }
+    .email-form { margin-top: 14px; padding-top: 14px; border-top: 1px solid #e3efe5; }
+    .email-form[hidden] { display: none; }
+    .email-form label { display: block; font-size: 0.74rem; font-weight: 800; color: #7aaa8a; text-transform: uppercase; letter-spacing: 0.4px; margin: 8px 0 4px; }
+    .email-form input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px solid #c8dfc8; background: #f7fbf8; font-family: inherit; font-size: 0.88rem; color: #1a3a25; }
+    .email-form input:focus { outline: none; border-color: #1e6e3e; background: #fff; }
+    .email-aide { font-size: 0.74rem; font-weight: 600; color: #7aaa8a; line-height: 1.45; margin-top: 10px; }
+    .email-aide a { color: #1e6e3e; font-weight: 800; }
 
     /* Déconnexion : action rare, en lien discret plutôt qu'en gros bouton rouge */
     .logout-wrap { max-width: 1120px; margin: 0 auto; padding: 26px 20px 48px; text-align: center; }
@@ -308,6 +317,11 @@
     html.dark .info-link { color: #52b788; }
     html.dark .info-btn { background: #2e2410; border-color: #4a3a15; color: #e0b95f; }
     html.dark .info-btn:hover { background: #3b2f14; }
+    html.dark .email-form { border-color: #243328; }
+    html.dark .email-form label, html.dark .email-aide { color: #5a8a6a; }
+    html.dark .email-form input { background: #16211a; border-color: #2d4030; color: #e8f5ee; }
+    html.dark .email-form input:focus { border-color: #52b788; }
+    html.dark .email-aide a { color: #52b788; }
     html.dark .info-msg { color: #e0b95f; }
 
     html.dark .btn-logout { color: #e57373; }
@@ -498,7 +512,22 @@
           ${u.email_verifie ? '' : `
             <button class="info-btn" id="btnRenvoi">Renvoyer le lien de confirmation</button>
             <div class="info-msg" id="renvoiMsg" hidden></div>`}
-          <a href="/mot-de-passe-oublie" class="info-link">Réinitialiser mon mot de passe</a>
+          <div class="info-links">
+            <a href="/mot-de-passe-oublie" class="info-link">Réinitialiser mon mot de passe</a>
+            <button type="button" class="info-link" id="btnEmailOpen">Changer d'adresse email</button>
+            <button type="button" class="info-link" id="btnExport">Télécharger mes données</button>
+          </div>
+          <div class="info-msg" id="exportMsg" hidden></div>
+          <form class="email-form" id="emailForm" hidden>
+            <label for="emailNouveau">Nouvelle adresse</label>
+            <input type="email" id="emailNouveau" autocomplete="email" required>
+            <label for="emailMdp">Ton mot de passe actuel</label>
+            <input type="password" id="emailMdp" autocomplete="current-password" required>
+            <p class="email-aide">Un lien de confirmation sera envoyé à la nouvelle adresse ; l'ancienne sera prévenue. En attendant la confirmation, l'accès aux cours est suspendu.</p>
+            <button type="submit" class="info-btn" id="btnEmailGo">Changer mon adresse</button>
+            <div class="info-msg" id="emailMsg" hidden></div>
+          </form>
+          <p class="email-aide">Pour changer de pseudo, <a href="/contact">écris-nous</a>.</p>
         </section>
         <section class="panel">
           <div class="panel-head">🎖️ Badges <span class="panel-count">${badgesOk} / ${u.badges.length}</span></div>
@@ -552,6 +581,66 @@
             });
         });
       }
+
+      // ── Changement d'adresse email (mot de passe exigé côté serveur) ──
+      const emailForm = document.getElementById('emailForm');
+      document.getElementById('btnEmailOpen').addEventListener('click', () => {
+        emailForm.hidden = !emailForm.hidden;
+        if (!emailForm.hidden) document.getElementById('emailNouveau').focus();
+      });
+      emailForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const m = document.getElementById('emailMsg');
+        const btn = document.getElementById('btnEmailGo');
+        btn.disabled = true;
+        fetch('/api/auth/change_email.php', {
+          method: 'POST',
+          body: new URLSearchParams({
+            email: document.getElementById('emailNouveau').value.trim(),
+            password: document.getElementById('emailMdp').value,
+          }),
+        })
+          .then(r => r.json().catch(() => ({})))
+          .then(d => {
+            if (d.ok) {
+              m.textContent = d.mail_envoye
+                ? 'Adresse changée. Ouvre le lien reçu sur la nouvelle adresse pour la confirmer.'
+                : "Adresse changée, mais le mail de confirmation n'est pas parti : utilise « Renvoyer le lien ».";
+              m.hidden = false;
+              setTimeout(() => location.reload(), 2500);
+            } else {
+              m.textContent = d.error || 'La modification a échoué.';
+              m.hidden = false;
+              btn.disabled = false;
+            }
+          })
+          .catch(() => { m.textContent = 'Connexion au serveur impossible.'; m.hidden = false; btn.disabled = false; });
+      });
+
+      // ── Export des données (droit d'accès / portabilité) ──
+      // fetch + Blob plutôt qu'un lien direct : une erreur (429, session
+      // expirée) s'affiche ici au lieu de télécharger un fichier d'erreur.
+      document.getElementById('btnExport').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        const m = document.getElementById('exportMsg');
+        btn.disabled = true;
+        m.hidden = true;
+        fetch('/api/auth/export.php')
+          .then(async r => {
+            if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Le téléchargement a échoué.');
+            const nom = (r.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/);
+            const blob = await r.blob();
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = nom ? nom[1] : 'composmart-mes-donnees.json';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+          })
+          .catch(err => { m.textContent = err.message; m.hidden = false; })
+          .finally(() => { btn.disabled = false; });
+      });
 
       // ── Déconnexion + suppression de compte ──
       const wrap = document.getElementById('logoutWrap');

@@ -357,6 +357,46 @@ function purger_service($url, $payload) {
 }
 
 /**
+ * Appel interne vers un autre service (secret partagé AUDIT_SECRET) dont on
+ * veut la réponse : renvoie le JSON décodé, ou null en cas d'échec.
+ * Utilisé par l'export des données personnelles (auth/export.php).
+ */
+function appel_interne($url, $payload) {
+    if (!$url || !function_exists('curl_init')) return null;
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($payload),
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'X-Audit-Secret: ' . (getenv('AUDIT_SECRET') ?: '')],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 5,
+    ]);
+    $rep = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($code !== 200 || $rep === false) return null;
+    $json = json_decode($rep, true);
+    return is_array($json) ? $json : null;
+}
+
+/**
+ * Garde des endpoints internes (purge, export…) : POST + secret partagé, sinon
+ * 405/403 et fin du script. Renvoie le corps JSON décodé de la requête.
+ */
+function endpoint_interne() {
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+        http_response_code(405); echo json_encode(['error' => 'method']); exit;
+    }
+    $expected = getenv('AUDIT_SECRET') ?: '';
+    $got = $_SERVER['HTTP_X_AUDIT_SECRET'] ?? '';
+    if ($expected === '' || !hash_equals($expected, $got)) {
+        http_response_code(403); echo json_encode(['error' => 'forbidden']); exit;
+    }
+    $body = json_decode(file_get_contents('php://input'), true);
+    return is_array($body) ? $body : [];
+}
+
+/**
  * Suppression définitive d'un compte (droit à l'effacement, art. 17 RGPD).
  * Point d'entrée UNIQUE : appelé par auth/delete_account.php (la personne
  * elle-même) et par admin/users.php (un administrateur). Nécessite une

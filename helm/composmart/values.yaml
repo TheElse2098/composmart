@@ -143,6 +143,10 @@ services:
       # Suppression de compte : purge/anonymisation des scores et signalements.
       GAMES_PURGE_URL: http://games-api/api/jeux/purge.php
       MAP_PURGE_URL: http://map-api/api/carte/purge.php
+      # « Télécharger mes données » (auth/export.php) : sections des autres bases.
+      GAMES_EXPORT_URL: http://games-api/api/jeux/export.php
+      MAP_EXPORT_URL: http://map-api/api/carte/export.php
+      EVENEMENTS_EXPORT_URL: http://evenements-api/api/evenements/export.php
     health: /api/auth/health.php
     resources:
       requests: { cpu: "50m", memory: "96Mi" }
