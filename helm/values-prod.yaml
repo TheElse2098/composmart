@@ -1,0 +1,15 @@
+# ============================================================================
+# Valeurs de PRODUCTION (VPS OVH, k3s). Surcharge helm/composmart/values.yaml.
+# Utilisé par défaut par ./helm/deploy.sh. Aucun secret ici (cf. values.yaml).
+# ============================================================================
+
+# Bases déjà remplies : ne pas rejouer les seeds à l'adoption par Helm.
+seeds:
+  lancer: false
+
+# Tâches ponctuelles : ajouter une entrée, lancer ./helm/deploy.sh, lire les
+# journaux affichés à la fin, puis retirer l'entrée.
+ponctuels: {}
+  # purge-essai:
+  #   service: auth-api
+  #   command: ["php", "/var/www/cron/purge_rgpd.php", "--dry"]

@@ -1,0 +1,94 @@
+{{- /*
+Migrations SQL : appliquées automatiquement, une seule fois chacune.
+
+- Avant chaque upgrade (pre-upgrade) : le nouveau code ne démarre qu'une fois
+  le schéma à jour ; si une migration échoue, l'upgrade est annulé.
+- Après la première installation (post-install) : bases neuves ou reprises
+  d'un cluster existant.
+
+Chaque base tient sa table `schema_migrations` (fichier, date). La base visée
+par un fichier est lue dans son en-tête : « MIGRATION db-core », etc.
+*/ -}}
+{{- if .Values.migrations.activer }}
+{{- $fichiers := .Files.Glob "files/db/migration-*.sql" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: composmart-migrations
+  annotations:
+    "helm.sh/hook": post-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+{{- if $fichiers }}
+{{ ($fichiers).AsConfig | indent 2 }}
+{{- else }}
+  aucune.txt: "aucune migration embarquée"
+{{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrations
+  annotations:
+    "helm.sh/hook": post-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrations
+          image: mariadb:11
+          env:
+            - { name: BASELINE, value: {{ join " " .Values.migrations.baseline | quote }} }
+            - { name: DB_NAME,          valueFrom: { secretKeyRef: { name: {{ .Values.secretName }}, key: DB_NAME } } }
+            - { name: DB_ROOT_PASSWORD, valueFrom: { secretKeyRef: { name: {{ .Values.secretName }}, key: DB_ROOT_PASSWORD } } }
+          command: ["bash", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              sql() { mariadb -h "$1" -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME" "${@:2}"; }
+
+              # Bases neuves : l'initialisation peut prendre une minute.
+              attendre() {
+                for i in $(seq 1 60); do sql "$1" -e "SELECT 1" >/dev/null 2>&1 && return 0; sleep 5; done
+                echo "[migrations] $1 injoignable après 5 minutes"; exit 1
+              }
+
+              declare -A pretes
+              for f in $(ls /migrations/*.sql 2>/dev/null | sort); do
+                nom=$(basename "$f")
+                base=$(grep -m1 -oE 'MIGRATION db-[a-z]+' "$f" | cut -d' ' -f2 || true)
+                if [ -z "$base" ]; then
+                  echo "[migrations] $nom : en-tête « MIGRATION db-xxx » manquant, base inconnue"; exit 1
+                fi
+                if [ -z "${pretes[$base]:-}" ]; then
+                  attendre "$base"
+                  sql "$base" -e "CREATE TABLE IF NOT EXISTS schema_migrations (
+                    fichier varchar(190) NOT NULL PRIMARY KEY,
+                    applique_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+                  pretes[$base]=1
+                fi
+                if [ "$(sql "$base" -N -e "SELECT COUNT(*) FROM schema_migrations WHERE fichier = '$nom'")" != "0" ]; then
+                  continue
+                fi
+                if [[ " $BASELINE " == *" $nom "* ]]; then
+                  sql "$base" -e "INSERT INTO schema_migrations (fichier) VALUES ('$nom')"
+                  echo "[migrations] $nom → $base : déjà appliquée (baseline), enregistrée"
+                  continue
+                fi
+                echo "[migrations] $nom → $base : application…"
+                sql "$base" < "$f"
+                sql "$base" -e "INSERT INTO schema_migrations (fichier) VALUES ('$nom')"
+                echo "[migrations] $nom → $base : ok"
+              done
+              echo "[migrations] terminé"
+          volumeMounts:
+            - { name: migrations, mountPath: /migrations }
+      volumes:
+        - name: migrations
+          configMap: { name: composmart-migrations }
+{{- end }}

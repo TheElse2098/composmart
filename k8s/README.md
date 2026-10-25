@@ -1,5 +1,11 @@
 # Déploiement Kubernetes — Composmart
 
+> ⚠️ **Depuis octobre 2026, le déploiement passe par Helm : voir
+> [`helm/README.md`](../helm/README.md)** (`bash helm/deploy.sh`). Ce document
+> et `composmart.yaml` sont conservés comme référence historique ; les
+> commandes `kubectl apply` / `create configmap` / `rollout restart` ci-dessous
+> ne doivent plus être utilisées sur le cluster de production.
+
 Manifest unique : **`composmart.yaml`** (variante B, 3 bases séparées), aligné sur
 `docker-compose.yml`. Conçu pour tester en local sur **k3d** (k3s dans Docker,
 même moteur que le VPS) avant tout déploiement réel.

@@ -1,0 +1,56 @@
+{{- /*
+Une base MariaDB par domaine. Le schéma initial (db/<schema>) est monté depuis
+une ConfigMap et joué par l'entrypoint MariaDB à la création du volume
+uniquement. Les fichiers SQL sont copiés dans files/db/ par deploy.sh (Helm
+ne lit pas en dehors du dossier du chart).
+*/ -}}
+{{- range $nom, $b := .Values.bases }}
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: {{ $b.configMap }} }
+data:
+  schema.sql: |-
+{{ $.Files.Get (printf "files/db/%s" $b.schema) | required (printf "files/db/%s introuvable : lancer helm/deploy.sh (il copie db/ dans le chart)" $b.schema) | indent 4 }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: { name: {{ $nom }} }
+spec:
+  serviceName: {{ $nom }}
+  replicas: 1
+  selector: { matchLabels: { app: {{ $nom }} } }
+  template:
+    metadata: { labels: { app: {{ $nom }} } }
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:11
+          env:
+            - { name: MARIADB_ROOT_PASSWORD, valueFrom: { secretKeyRef: { name: {{ $.Values.secretName }}, key: DB_ROOT_PASSWORD } } }
+            - { name: MARIADB_DATABASE,      valueFrom: { secretKeyRef: { name: {{ $.Values.secretName }}, key: DB_NAME } } }
+            - { name: MARIADB_USER,          valueFrom: { secretKeyRef: { name: {{ $.Values.secretName }}, key: DB_USER } } }
+            - { name: MARIADB_PASSWORD,      valueFrom: { secretKeyRef: { name: {{ $.Values.secretName }}, key: DB_PASSWORD } } }
+          ports: [{ containerPort: 3306 }]
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/mysql }
+            - { name: init, mountPath: /docker-entrypoint-initdb.d }
+          resources: {{- toYaml $b.resources | nindent 12 }}
+          readinessProbe:
+            exec: { command: ["healthcheck.sh", "--connect", "--innodb_initialized"] }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: init
+          configMap: { name: {{ $b.configMap }} }
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec: { accessModes: ["ReadWriteOnce"], resources: { requests: { storage: {{ $b.storage }} } } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: {{ $nom }} }
+spec:
+  selector: { app: {{ $nom }} }
+  ports: [{ port: 3306, targetPort: 3306 }]
+---
+{{- end }}

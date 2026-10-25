@@ -1,0 +1,20 @@
+{{- range $nom, $c := .Values.cronjobs }}
+apiVersion: batch/v1
+kind: CronJob
+metadata: { name: {{ $nom }} }
+spec:
+  schedule: {{ $c.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          {{- include "composmart.pullSecrets" $ | nindent 10 }}
+          containers:
+            {{- include "composmart.conteneurTache" (dict "root" $ "nom" $nom "service" $c.service "command" $c.command) | nindent 12 }}
+---
+{{- end }}

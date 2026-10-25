@@ -1,0 +1,6 @@
+apiVersion: v2
+name: composmart
+description: Composmart — carte des composteurs, cours, jeux et ateliers (6 services PHP, 4 MariaDB, Redis).
+type: application
+version: 1.0.0
+appVersion: "2026.10"

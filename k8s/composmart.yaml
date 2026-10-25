@@ -1,4 +1,8 @@
 # ============================================================================
+# ⚠️ REMPLACÉ PAR LE CHART HELM (helm/composmart, cf. helm/README.md).
+# Conservé comme référence historique : NE PLUS L'ÉDITER NI L'APPLIQUER, les
+# modifications se font dans helm/composmart/values.yaml et ses templates.
+# ============================================================================
 # Composmart — manifest k8s complet (variante B : 3 bases séparées).
 # Conçu pour un cluster k3d/k3s local. Aligné sur docker-compose.yml.
 #

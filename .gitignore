@@ -21,3 +21,6 @@ front/api/
 
 # manifest de prod genere par sed sur le VPS (contient la config reelle du cluster)
 k8s/composmart.prod.yaml
+
+# copie de db/*.sql faite par helm/deploy.sh (source de vérité : db/)
+helm/composmart/files/

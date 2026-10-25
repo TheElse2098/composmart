@@ -1,0 +1,14 @@
+# ============================================================================
+# Valeurs pour un cluster de TEST local (k3d), site sur http://localhost:8080.
+#   VALUES=helm/values-local.yaml ./helm/deploy.sh
+# (deploy.sh importe alors les images avec « k3d image import », cf. README.)
+# ============================================================================
+siteUrl: http://localhost:8080
+
+ingress:
+  clusterIssuer: ""
+  tls:
+    enabled: false
+
+seeds:
+  lancer: true

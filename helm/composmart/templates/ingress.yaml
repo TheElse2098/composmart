@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: composmart
+  {{- with .Values.ingress.clusterIssuer }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ . }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts: {{ toJson .Values.ingress.tls.hosts }}
+      secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - {{- with .Values.ingress.host }}
+      host: {{ . }}
+      {{- end }}
+      http:
+        paths:
+          {{- range .Values.ingress.routes }}
+          - { path: {{ .path }}, pathType: Prefix, backend: { service: { name: {{ .service }}, port: { number: 80 } } } }
+          {{- end }}

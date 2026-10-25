@@ -1,0 +1,245 @@
+# ============================================================================
+# Composmart — valeurs par défaut du chart.
+#
+# Production (VPS) : helm/values-prod.yaml surcharge ces valeurs.
+# Local (k3d)      : helm/values-local.yaml.
+# Déploiement      : ./helm/deploy.sh (build des images + helm upgrade --install).
+#
+# Les secrets (mots de passe DB, SMTP, AUDIT_SECRET) ne sont PAS ici : ils
+# vivent dans le Secret Kubernetes `composmart-secrets`, créé une fois à la
+# main sur le serveur (cf. helm/README.md) et jamais commité.
+# ============================================================================
+
+# Secret existant contenant DB_NAME, DB_USER, DB_PASSWORD, DB_ROOT_PASSWORD,
+# AUDIT_SECRET et (optionnel) SMTP_HOST/PORT/SECURE/USER/PASSWORD, MAIL_FROM.
+secretName: composmart-secrets
+
+# Adresse publique : liens des emails (vérification, mot de passe, inactivité).
+siteUrl: https://composmart.fr
+
+image:
+  # Images composmart/<service>:<tag>. deploy.sh passe le tag = commit git,
+  # ce qui redémarre automatiquement les pods dont l'image a changé.
+  repository: composmart
+  tag: local
+  pullPolicy: IfNotPresent
+imagePullSecrets: [ghcr-creds]
+
+# ── Redis (sessions, rate-limit, cache carte) ─────────────────────────────
+redis:
+  image: redis:7-alpine
+  resources:
+    requests: { cpu: "25m", memory: "32Mi" }
+    limits:   { cpu: "200m", memory: "160Mi" }
+
+# ── Bases MariaDB (une par domaine) ───────────────────────────────────────
+# `schema` : fichier de db/ joué UNIQUEMENT à la création du volume (initdb).
+# Les évolutions passent par les migrations (section `migrations`).
+# ⚠️ Ne pas changer `storage` ni `configMap` sur un cluster existant : ces
+# champs du StatefulSet sont immuables (ou redémarrent la base).
+bases:
+  db-map:
+    schema: map.sql
+    configMap: map-schema
+    storage: 5Gi
+    resources:
+      requests: { cpu: "100m", memory: "256Mi" }
+      limits:   { cpu: "1000m", memory: "1Gi" }
+  db-games:
+    schema: games.sql
+    configMap: games-schema
+    storage: 2Gi
+    resources:
+      requests: { cpu: "50m", memory: "192Mi" }
+      limits:   { cpu: "500m", memory: "512Mi" }
+  db-core:
+    schema: core.sql
+    configMap: core-schema
+    storage: 3Gi
+    resources:
+      requests: { cpu: "100m", memory: "256Mi" }
+      limits:   { cpu: "1000m", memory: "1Gi" }
+  db-evenements:
+    schema: evenements.sql
+    configMap: evenements-schema
+    storage: 1Gi
+    resources:
+      requests: { cpu: "50m", memory: "192Mi" }
+      limits:   { cpu: "500m", memory: "512Mi" }
+
+# ── Services applicatifs ──────────────────────────────────────────────────
+# db       : base utilisée (variable DB_HOST) ; absent = pas de base (web).
+# redis    : variables REDIS_HOST/PORT.
+# audit    : variable AUDIT_SECRET (appels internes entre services).
+# smtp     : variables SMTP_* et MAIL_FROM (optionnelles dans le Secret).
+# siteUrl  : variable SITE_URL.
+# env      : variables en clair supplémentaires.
+services:
+  web:
+    replicas: 2
+    health: /healthz
+    healthDelay: 3
+    resources:
+      requests: { cpu: "10m", memory: "32Mi" }
+      limits:   { cpu: "300m", memory: "160Mi" }
+
+  map-api:
+    replicas: 2
+    db: db-map
+    redis: true
+    audit: true
+    smtp: true
+    env:
+      AUDIT_REMOTE_URL: http://auth-api/api/auth/audit.php
+      # Ouvre un ticket dans courses-api quand un ajout de composteur est proposé.
+      MAP_TICKET_URL: http://courses-api/api/admin/ticket_interne.php
+    health: /api/carte/health.php
+    resources:
+      requests: { cpu: "100m", memory: "128Mi" }
+      limits:   { cpu: "1000m", memory: "512Mi" }
+    hpa: { min: 2, max: 8, cpu: 65 }
+
+  games-api:
+    replicas: 1
+    db: db-games
+    redis: true
+    audit: true
+    env:
+      # Crédit d'XP des jeux vers db-core via l'endpoint interne d'auth-api.
+      XP_REMOTE_URL: http://auth-api/api/auth/xp.php
+    health: /api/jeux/health.php
+    resources:
+      requests: { cpu: "50m", memory: "96Mi" }
+      limits:   { cpu: "500m", memory: "256Mi" }
+    hpa: { min: 1, max: 3, cpu: 70 }
+
+  courses-api:
+    replicas: 1
+    db: db-core
+    redis: true
+    audit: true
+    smtp: true
+    env:
+      # Suppression d'un compte par un admin : mêmes purges que auth-api.
+      GAMES_PURGE_URL: http://games-api/api/jeux/purge.php
+      MAP_PURGE_URL: http://map-api/api/carte/purge.php
+    health: /api/cours/health.php
+    resources:
+      requests: { cpu: "50m", memory: "128Mi" }
+      limits:   { cpu: "500m", memory: "384Mi" }
+    hpa: { min: 1, max: 3, cpu: 70 }
+
+  auth-api:
+    replicas: 2
+    db: db-core
+    redis: true
+    audit: true
+    smtp: true
+    siteUrl: true
+    env:
+      # Suppression de compte : purge/anonymisation des scores et signalements.
+      GAMES_PURGE_URL: http://games-api/api/jeux/purge.php
+      MAP_PURGE_URL: http://map-api/api/carte/purge.php
+    health: /api/auth/health.php
+    resources:
+      requests: { cpu: "50m", memory: "96Mi" }
+      limits:   { cpu: "500m", memory: "256Mi" }
+    hpa: { min: 2, max: 4, cpu: 70 }
+
+  evenements-api:
+    replicas: 1
+    db: db-evenements
+    redis: true
+    audit: true
+    env:
+      AUDIT_REMOTE_URL: http://auth-api/api/auth/audit.php
+      # Vérification isAdmin des pages /evenements-admin (users vit dans db-core).
+      AUTH_ADMIN_CHECK_URL: http://auth-api/api/auth/est_admin.php
+    health: /api/evenements/health.php
+    resources:
+      requests: { cpu: "50m", memory: "96Mi" }
+      limits:   { cpu: "500m", memory: "256Mi" }
+    hpa: { min: 1, max: 3, cpu: 70 }
+
+# ── Tâches planifiées ─────────────────────────────────────────────────────
+# `service` : image et variables d'environnement reprises de ce service.
+cronjobs:
+  # Rafraîchissement OSM (import dédupliqué, abandonne proprement si Overpass est down).
+  osm-refresh:
+    schedule: "15 3 * * *"
+    service: map-api
+    command: ["php", "/docker-seeds/import_osm.php"]
+  # Purges RGPD (durées annoncées dans /confidentialite).
+  purge-rgpd-core:
+    schedule: "0 4 * * *"
+    service: auth-api
+    command: ["php", "/var/www/cron/purge_rgpd.php"]
+  purge-rgpd-evenements:
+    schedule: "10 4 * * *"
+    service: evenements-api
+    command: ["php", "/var/www/cron/purge_rgpd.php"]
+
+# ── Seeds (remplissage initial des bases) ─────────────────────────────────
+# Lancés après la PREMIÈRE installation. `relancer: true` les rejoue aussi au
+# prochain upgrade (seed-core n'écrase jamais un cours existant).
+seeds:
+  lancer: true
+  relancer: false
+  jobs:
+    seed-map:  { service: map-api,     command: ["php", "/docker-seeds/seed_map.php"] }
+    seed-core: { service: courses-api, command: ["php", "/docker-seeds/seed_core.php"] }
+
+# ── Migrations SQL ────────────────────────────────────────────────────────
+# Tous les fichiers db/migration-*.sql sont embarqués. À chaque upgrade, un Job
+# applique ceux qui ne figurent pas encore dans la table `schema_migrations`
+# de leur base, une seule fois chacun, dans l'ordre alphabétique.
+# La base visée est lue dans l'en-tête du fichier : « MIGRATION db-core », etc.
+# `baseline` : fichiers considérés comme déjà appliqués (jamais exécutés),
+# parce qu'ils l'ont été à la main avant l'arrivée de Helm ou parce que le
+# schéma initial (db/*.sql) les contient déjà.
+migrations:
+  activer: true
+  baseline:
+    - migration-2026-08.sql
+    - migration-2026-08-anecdotes-mots-cles.sql
+    - migration-2026-08-banque-images.sql
+    - migration-2026-08-equipes-autonomes.sql
+    - migration-2026-08-evenements-anecdotes.sql
+    - migration-2026-08-evenements-animation.sql
+    - migration-2026-08-evenements-deroule.sql
+    - migration-2026-08-evenements-statuts.sql
+    - migration-2026-08-evenements-theme-simpliste.sql
+    - migration-2026-08-evenements-theme.sql
+
+# ── Tâches ponctuelles ────────────────────────────────────────────────────
+# Lancées une fois à la fin du prochain `deploy.sh` ; leurs journaux
+# s'affichent à la fin du déploiement. Les retirer de la liste ensuite.
+# Exemple — simulation de la purge RGPD sans rien effacer :
+#   ponctuels:
+#     purge-essai:
+#       service: auth-api
+#       command: ["php", "/var/www/cron/purge_rgpd.php", "--dry"]
+ponctuels: {}
+
+# ── Ingress (Traefik + cert-manager) ──────────────────────────────────────
+ingress:
+  host: ""                 # vide = toutes les adresses (accès par IP possible)
+  clusterIssuer: letsencrypt-prod
+  tls:
+    enabled: true
+    hosts: [composmart.fr]
+    secretName: composmart-tls
+  # Ordre important : du plus spécifique au catch-all « / ».
+  routes:
+    - { path: /api/carte,       service: map-api }
+    - { path: /api/jeux,        service: games-api }
+    - { path: /api/cours,       service: courses-api }
+    - { path: /api/contact,     service: courses-api }
+    - { path: /api/admin,       service: courses-api }
+    # Pages d'administration servies (et contrôlées) par courses-api, pas par web.
+    - { path: /admin,           service: courses-api }
+    - { path: /api/auth,        service: auth-api }
+    - { path: /api/evenements,  service: evenements-api }
+    # Pages d'administration des événements, même principe que /admin.
+    - { path: /evenements-admin, service: evenements-api }
+    - { path: /,                service: web }

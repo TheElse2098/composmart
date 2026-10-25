@@ -1,0 +1,29 @@
+{{- /*
+Seeds : Jobs « hook » Helm. Lancés après la première installation (et à
+chaque upgrade si seeds.relancer). before-hook-creation : l'ancien Job est
+supprimé juste avant d'en recréer un — plus besoin de « kubectl delete job ».
+Les scripts viennent de l'image (/docker-seeds, COPY shared/seeds/).
+*/ -}}
+{{- if .Values.seeds.lancer }}
+{{- range $nom, $j := .Values.seeds.jobs }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $nom }}
+  annotations:
+    "helm.sh/hook": post-install{{ if $.Values.seeds.relancer }},post-upgrade{{ end }}
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  # Les seeds démarrent parfois avant que leur base soit prête : ils échouent
+  # puis réessaient (OnFailure) jusqu'à ce qu'elle réponde.
+  backoffLimit: 4
+  template:
+    spec:
+      restartPolicy: OnFailure
+      {{- include "composmart.pullSecrets" $ | nindent 6 }}
+      containers:
+        {{- include "composmart.conteneurTache" (dict "root" $ "nom" $nom "service" $j.service "command" $j.command) | nindent 8 }}
+---
+{{- end }}
+{{- end }}

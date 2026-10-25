@@ -1,0 +1,3 @@
+# Scripts exécutés sur le VPS Linux : toujours en LF, même extraits sous
+# Windows (un CRLF casse bash : « $'\r': command not found »).
+*.sh text eol=lf

@@ -1,0 +1,27 @@
+{{- /*
+Tâches ponctuelles (values `ponctuels`) : lancées une fois à la fin du
+déploiement, après les seeds. Le Job reste en place après exécution pour que
+deploy.sh affiche ses journaux ; il est remplacé au déploiement suivant.
+*/ -}}
+{{- range $nom, $p := .Values.ponctuels }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ponctuel-{{ $nom }}
+  labels: { composmart.fr/ponctuel: "true" }
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels: { composmart.fr/ponctuel: "true" }
+    spec:
+      restartPolicy: Never
+      {{- include "composmart.pullSecrets" $ | nindent 6 }}
+      containers:
+        {{- include "composmart.conteneurTache" (dict "root" $ "nom" $nom "service" $p.service "command" $p.command) | nindent 8 }}
+---
+{{- end }}
