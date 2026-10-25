@@ -241,7 +241,7 @@ function is_admin_session() {
 function secure_session_start() {
     if (session_status() === PHP_SESSION_ACTIVE) return;
 
-    // Sessions partagées entre pods via Redis (cf. MIGRATION-K8S.md §4).
+    // Sessions partagées entre pods via Redis.
     // Si Redis n'est pas configuré/dispo, on retombe sur les sessions fichier
     // (mode monolithe / dev) sans rien casser.
     $host = redis_target();
@@ -290,7 +290,7 @@ function csrf_check() {
 
 /**
  * Renvoie false si l'IP a dépassé $max appels pour $action dans la fenêtre.
- * Compteur partagé entre pods via Redis (cf. MIGRATION-K8S.md §4) ; repli sur
+ * Compteur partagé entre pods via Redis ; repli sur
  * stockage fichier /tmp si Redis indisponible (monolithe / dev). Dans les deux
  * cas, suffisant pour casser le brute force et le spam.
  */

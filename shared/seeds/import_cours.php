@@ -7,7 +7,7 @@
  * Depuis que les cours s'éditent depuis /admin/themes, la base fait autorité et
  * les fichiers content/ ne sont plus qu'une graine pour une base vierge. Un
  * `ON DUPLICATE KEY UPDATE` réécrirait ici le travail des administrateurs avec
- * la version figée dans l'image, à chaque `kubectl apply` de routine — et sans
+ * la version figée dans l'image, à chaque déploiement de routine — et sans
  * le moindre message d'erreur. Le seul cas où les fichiers gagnent est celui où
  * le cours n'existe pas encore en base.
  */

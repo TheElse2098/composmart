@@ -26,7 +26,9 @@ image:
   tag: local
   tags: {}
   pullPolicy: IfNotPresent
-imagePullSecrets: [ghcr-creds]
+# Images construites sur le serveur et importées dans k3s par deploy.sh :
+# aucun registre, donc aucun secret de téléchargement.
+imagePullSecrets: []
 
 # ── Redis (sessions, rate-limit, cache carte) ─────────────────────────────
 redis:

@@ -2,8 +2,8 @@
 
 Le chart `helm/composmart/` décrit tout le cluster : Redis, les 4 bases, les
 6 services, les tâches planifiées, l'Ingress, les migrations SQL et les tâches
-ponctuelles. **Il remplace `k8s/composmart.yaml` et les commandes `kubectl`
-du `k8s/README.md`.**
+ponctuelles. C'est la seule façon de déployer Composmart (l'ancien manifeste
+`k8s/` et le `docker-compose.yml` ont été supprimés, cf. historique git).
 
 ## Au quotidien
 

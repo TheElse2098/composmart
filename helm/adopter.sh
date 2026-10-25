@@ -2,7 +2,8 @@
 # ============================================================================
 # À LANCER UNE SEULE FOIS, sur le VPS, avant le premier ./helm/deploy.sh.
 #
-# Le cluster a été monté avec « kubectl apply -f k8s/composmart.yaml ». Helm
+# Le cluster a été monté avec « kubectl apply » de l'ancien manifeste
+# k8s/composmart.yaml (supprimé depuis, cf. historique git). Helm
 # refuse de toucher à des ressources qu'il n'a pas créées : ce script les lui
 # confie (annotations meta.helm.sh/*), sans rien recréer ni redémarrer.
 # Les bases et leurs volumes restent en place, aucune donnée n'est touchée.
