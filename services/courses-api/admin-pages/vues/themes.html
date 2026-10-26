@@ -453,22 +453,26 @@
     $('btnSupprimerTheme').addEventListener('click', function () {
       var t = DONNEES.themes.filter(function (x) { return x.id === ficheId; })[0];
       if (!t) return;
-      if (!confirm('Supprimer le thème « ' + t.nom + ' » ?')) return;
-      fetch('/api/admin/themes_manage.php', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', id: ficheId })
-      })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (d.error) { erreurFiche(d.error); return; }
-          fermerFiche();
-          charger();
-        })
-        .catch(function () { erreurFiche('Suppression impossible.'); });
+      confirmer({ titre: 'Supprimer le thème « ' + t.nom + ' » ?', valider: 'Supprimer', danger: true })
+        .then(function (ok) {
+          if (!ok) return;
+          fetch('/api/admin/themes_manage.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete', id: ficheId })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (d.error) { erreurFiche(d.error); return; }
+              fermerFiche();
+              charger();
+            })
+            .catch(function () { erreurFiche('Suppression impossible.'); });
+        });
     });
 
     charger();
   </script>
+  <script src="/assets/js/confirmer.js?v=2"></script>
   <script src="/assets/js/theme.js"></script>
 </body>
 </html>

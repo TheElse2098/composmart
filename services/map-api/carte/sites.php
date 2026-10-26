@@ -4,6 +4,7 @@ error_reporting(0);
 ini_set('display_errors', 0);
 require_once __DIR__ . '/../_guard.php';
 require_once __DIR__ . '/_notif.php';
+require_once __DIR__ . '/_compost.php';
 secure_session_start();
 header('Content-Type: application/json');
 ob_clean();
@@ -408,6 +409,7 @@ elseif (isset($_POST['type'])) {
         }
         $id = (int)$connexion->insert_id;
     } else {
+        $avant = compost_champs_modifiables(compost_etat($connexion, $id));
         $stmt = mysqli_prepare($connexion, "UPDATE composts SET type=?, publique=?, gestion=?, info_gestion=? WHERE id=$id");
         $stmt->bind_param("ssss", $type, $acces, $gestion, $info_gest);
         $stmt->execute();
@@ -445,10 +447,13 @@ elseif (isset($_POST['type'])) {
         ouvrir_ticket_compost($id, $lat, $lon, $snapshot);
         $response = $id;
     } else {
+        // Après relu en base (et non repris du formulaire) : c'est ce qui a
+        // vraiment été enregistré, règles comprises.
         audit_log($connexion, 'compost_modifie', "id=$id", [
             'target_type' => 'compost',
             'target_id'   => $id,
-            'snapshot'    => $snapshot,
+            'snapshot'    => ['changements' => audit_changements(
+                $avant, compost_champs_modifiables(compost_etat($connexion, $id)))],
         ]);
         // Le type est servi dans la liste France mise en cache : un changement
         // doit l'invalider, sinon la carte garde l'ancienne icône jusqu'au TTL.
@@ -502,17 +507,9 @@ if (isset($_POST['supprimer'])) {
     }
     $id = intval($_POST['supprimer']);
 
-    // Instantané du composteur avant suppression
-    $snap = ['id' => $id];
-    $statut_avant = null;
-    $resSnap = mysqli_query($connexion, "SELECT statut, type, publique, latitude, longitude FROM composts WHERE id=$id");
-    if ($rowSnap = mysqli_fetch_assoc($resSnap)) {
-        $statut_avant  = $rowSnap['statut'];
-        $snap['type']  = $rowSnap['type'];
-        $snap['acces'] = $rowSnap['publique'];
-        $snap['lat']   = (double)$rowSnap['latitude'];
-        $snap['lon']   = (double)$rowSnap['longitude'];
-    }
+    // État complet avant suppression (règles comprises) : de quoi le recréer.
+    $etat = compost_etat($connexion, $id);
+    $statut_avant = $etat['statut'] ?? null;
 
     mysqli_query($connexion, "DELETE FROM regles WHERE id_compost=$id");
     mysqli_query($connexion, "DELETE FROM composts WHERE id=$id");
@@ -525,7 +522,7 @@ if (isset($_POST['supprimer'])) {
         audit_log($connexion, 'compost_supprime', "id=$id", [
             'target_type' => 'compost',
             'target_id'   => $id,
-            'snapshot'    => $snap,
+            'snapshot'    => ['etat' => $etat],
         ]);
     }
     $response = "Compost supprimé.";

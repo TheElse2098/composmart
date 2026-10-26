@@ -39,6 +39,19 @@ function lire_slides($conn, $parcours_id) {
     return $slides;
 }
 
+/** Une slide de parcours telle que le journal la garde. */
+function slide_lire($conn, $sid) {
+    $stmt = mysqli_prepare($conn, 'SELECT s.parcours_id, s.ordre, s.type, s.titre, s.contenu, s.points, p.nom AS parcours
+                                   FROM parcours_slides s JOIN parcours p ON p.id = s.parcours_id WHERE s.id = ?');
+    $stmt->bind_param('i', $sid);
+    $stmt->execute();
+    $s = $stmt->get_result()->fetch_assoc();
+    if (!$s) return null;
+    $s['contenu'] = json_decode($s['contenu'] ?? '', true) ?: [];
+    $s['points'] = (int)$s['points'];
+    return $s;
+}
+
 /** Prochain `ordre` disponible dans un parcours. */
 function ordre_suivant($conn, $parcours_id) {
     $stmt = mysqli_prepare($conn, 'SELECT COALESCE(MAX(ordre), -1) + 1 AS n FROM parcours_slides WHERE parcours_id = ?');
@@ -114,11 +127,20 @@ if ($action === 'modifier') {
     if ($id <= 0 || $nom === '' || mb_strlen($nom) > 150) { echo json_encode(['error' => 'Données invalides.']); exit; }
     $desc = mb_substr(trim($_POST['description'] ?? ''), 0, 300);
 
+    $stmt = mysqli_prepare($conn, 'SELECT nom, description FROM parcours WHERE id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $avant = $stmt->get_result()->fetch_assoc();
+    if (!$avant) { echo json_encode(['error' => 'Parcours introuvable.']); exit; }
+
     $stmt = mysqli_prepare($conn, 'UPDATE parcours SET nom = ?, description = ? WHERE id = ?');
     $stmt->bind_param('ssi', $nom, $desc, $id);
     $stmt->execute();
 
-    audit_log($conn, 'parcours_modifie', $nom, ['target_type' => 'parcours', 'target_id' => $id]);
+    audit_log($conn, 'parcours_modifie', $nom, [
+        'target_type' => 'parcours', 'target_id' => $id,
+        'snapshot'    => ['changements' => audit_changements($avant, ['nom' => $nom, 'description' => $desc])],
+    ]);
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -159,18 +181,22 @@ if ($action === 'supprimer') {
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['error' => 'Parcours invalide.']); exit; }
 
-    // Nom lu avant suppression : c'est lui qui rend la ligne du journal lisible.
-    $stmt = mysqli_prepare($conn, 'SELECT nom FROM parcours WHERE id = ?');
+    // État complet, slides comprises, lu avant que la cascade ne les emporte :
+    // le journal le garde pour pouvoir recréer le parcours.
+    $stmt = mysqli_prepare($conn, 'SELECT nom, description, cree_par FROM parcours WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $p = $stmt->get_result()->fetch_assoc();
+    if ($p) $p['slides'] = lire_slides($conn, $id);
 
     $stmt = mysqli_prepare($conn, 'DELETE FROM parcours WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Parcours introuvable.']); exit; }
 
-    audit_log($conn, 'parcours_supprime', $p['nom'] ?? "parcours #$id", ['target_type' => 'parcours', 'target_id' => $id]);
+    audit_log($conn, 'parcours_supprime', $p['nom'] ?? "parcours #$id", [
+        'target_type' => 'parcours', 'target_id' => $id, 'snapshot' => ['etat' => $p],
+    ]);
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -229,9 +255,19 @@ if ($action === 'slide_modifier') {
     if ($reg[$s['type']]['note'] === false) $points = 0;
     $json = json_encode($v['contenu'], JSON_UNESCAPED_UNICODE);
 
+    $avant = slide_lire($conn, $id);
     $stmt = mysqli_prepare($conn, 'UPDATE parcours_slides SET titre = ?, contenu = ?, points = ? WHERE id = ?');
     $stmt->bind_param('ssii', $titre, $json, $points, $id);
     $stmt->execute();
+
+    $champs = fn($x) => ['titre' => $x['titre'], 'points' => $x['points'], 'contenu' => $x['contenu']];
+    $changements = audit_changements($champs($avant), $champs(slide_lire($conn, $id)));
+    if ($changements) {
+        audit_log($conn, 'parcours_slide_modifiee', $avant['parcours'] . ' : ' . ($titre !== '' ? $titre : $s['type']), [
+            'target_type' => 'parcours', 'target_id' => (int)$s['parcours_id'],
+            'snapshot'    => ['type' => $s['type'], 'changements' => $changements],
+        ]);
+    }
 
     mysqli_query($conn, 'UPDATE parcours SET maj_at = NOW() WHERE id = ' . (int)$s['parcours_id']);
     echo json_encode(['ok' => true]);
@@ -243,10 +279,15 @@ if ($action === 'slide_supprimer') {
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['error' => 'Slide invalide.']); exit; }
 
+    $etat = slide_lire($conn, $id);
     $stmt = mysqli_prepare($conn, 'DELETE FROM parcours_slides WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Slide introuvable.']); exit; }
+
+    audit_log($conn, 'parcours_slide_supprimee', $etat['parcours'] . ' : ' . ($etat['titre'] ?: $etat['type']), [
+        'target_type' => 'parcours', 'target_id' => (int)$etat['parcours_id'], 'snapshot' => ['etat' => $etat],
+    ]);
 
     echo json_encode(['ok' => true]);
     exit;

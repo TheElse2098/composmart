@@ -55,6 +55,44 @@ function audit_log($conn, $action, $details = '', $extra = []) {
 }
 
 /**
+ * Ce qui a changé entre deux états, au format lu par le détail du journal :
+ * ['champ' => [avant, après], ...], seulement les champs qui diffèrent.
+ * À ranger sous la clé 'changements' du snapshot de audit_log().
+ *
+ * Un sous-tableau associatif est aplati d'un niveau ('regles.nb_items') pour
+ * que le détail montre la règle modifiée plutôt que deux blocs entiers ; une
+ * liste reste une liste (le front en montre les ajouts et retraits).
+ * Les scalaires se comparent en texte : la base rend '50' là où PHP a 50.
+ */
+function audit_changements(array $avant, array $apres) {
+    $aplatir = function (array $t) {
+        $o = [];
+        foreach ($t as $k => $v) {
+            if (is_array($v) && $v && array_keys($v) !== range(0, count($v) - 1)) {
+                foreach ($v as $k2 => $v2) $o["$k.$k2"] = $v2;
+            } else {
+                $o[$k] = $v;
+            }
+        }
+        return $o;
+    };
+    $a = $aplatir($avant);
+    $b = $aplatir($apres);
+    $diff = [];
+    foreach (array_unique(array_merge(array_keys($a), array_keys($b))) as $k) {
+        $va = $a[$k] ?? null;
+        $vb = $b[$k] ?? null;
+        if (is_bool($va)) $va = (int)$va;
+        if (is_bool($vb)) $vb = (int)$vb;
+        $egal = (is_array($va) || is_array($vb))
+            ? json_encode($va, JSON_UNESCAPED_UNICODE) === json_encode($vb, JSON_UNESCAPED_UNICODE)
+            : (string)$va === (string)$vb;
+        if (!$egal) $diff[$k] = [$va, $vb];
+    }
+    return $diff;
+}
+
+/**
  * Envoie un email via SMTP authentifié (PHPMailer). Échec toujours silencieux
  * (ne doit jamais casser l'action utilisateur qui déclenche l'envoi — cf. audit_log()).
  *

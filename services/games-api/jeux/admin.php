@@ -58,24 +58,31 @@ function activite($c) {
     return $out;
 }
 
-/** Copie l'état actuel d'un jeu dans l'historique, puis élague. */
-function archiver($c, $j) {
-    $etat = [
+/** L'état d'un jeu tel qu'archivé dans jeux_versions et comparé par le journal. */
+function etat_jeu($j) {
+    return [
         'nom' => $j['nom'], 'emoji' => $j['emoji'], 'description' => $j['description'],
         'statut' => $j['statut'], 'xp_reserve' => $j['xp_reserve'], 'score_max' => $j['score_max'],
         'regles' => $j['regles'], 'messages' => $j['messages'], 'items' => $j['items'],
     ];
-    $json = json_encode($etat, JSON_UNESCAPED_UNICODE);
+}
+
+/** Copie l'état actuel d'un jeu dans l'historique, puis élague.
+ *  Renvoie l'id de la version (repris par le journal d'audit). */
+function archiver($c, $j) {
+    $json = json_encode(etat_jeu($j), JSON_UNESCAPED_UNICODE);
     $auteur = $_SESSION['username'] ?? '';
     $stmt = mysqli_prepare($c, 'INSERT INTO jeux_versions (slug, contenu, auteur) VALUES (?, ?, ?)');
     $stmt->bind_param('sss', $j['slug'], $json, $auteur);
     $stmt->execute();
+    $version_id = (int)$stmt->insert_id;
 
     $stmt = mysqli_prepare($c,
         'DELETE FROM jeux_versions WHERE slug = ? AND id NOT IN (
            SELECT id FROM (SELECT id FROM jeux_versions WHERE slug = ? ORDER BY id DESC LIMIT ' . VERSIONS_MAX . ') AS gardees)');
     $stmt->bind_param('ss', $j['slug'], $j['slug']);
     $stmt->execute();
+    return $version_id;
 }
 
 /**
@@ -188,25 +195,44 @@ if ($action === 'sauver') {
 
     // Version précédente archivée AVANT écrasement : c'est le seul filet en cas
     // de mauvaise manipulation dans l'éditeur (cf. cours_versions).
-    archiver($c, $avant);
+    $version_id = archiver($c, $avant);
     if (!ecrire($c, $slug, $etat)) sortir(['error' => 'L\'enregistrement a échoué.'], 500);
 
     $details = $etat['nom'] . ' (' . $etat['statut'] . ', ' . count($etat['items']) . ' éléments';
     if ($etat['score_max'] !== $avant['score_max']) $details .= ', score max ' . $avant['score_max'] . ' → ' . $etat['score_max'];
-    audit_log($c, 'jeu_modifie', $details . ')', ['target_type' => 'jeu']);
+    $apres = jeux_charger($c, $slug);
+    audit_log($c, 'jeu_modifie', $details . ')', ['target_type' => 'jeu', 'snapshot' => [
+        'slug' => $slug, 'version_id' => $version_id,
+        'changements' => audit_changements(etat_jeu($avant), etat_jeu($apres)),
+    ]]);
 
-    sortir(['ok' => true, 'jeu' => jeux_charger($c, $slug)]);
+    sortir(['ok' => true, 'jeu' => $apres]);
 }
 
 // ── ORDRE ──────────────────────────────────────────────────────────────────
 if ($action === 'ordre') {
     $slugs = array_values(array_filter((array)($d['slugs'] ?? []), 'jeux_slug_valide'));
+    $ordre_jeux = function () use ($c) {
+        $o = [];
+        $res = mysqli_query($c, 'SELECT slug, nom FROM jeux ORDER BY ordre, slug');
+        while ($res && ($r = mysqli_fetch_assoc($res))) $o[$r['slug']] = $r['nom'];
+        return $o;
+    };
+    $avant = $ordre_jeux();
     $stmt = mysqli_prepare($c, 'UPDATE jeux SET ordre = ? WHERE slug = ?');
     foreach ($slugs as $i => $s) {
         $stmt->bind_param('is', $i, $s);
         $stmt->execute();
     }
-    audit_log($c, 'jeux_ordre', implode(', ', $slugs), ['target_type' => 'jeu']);
+    // Noms plutôt que slugs à l'écran ; les slugs d'avant restent au snapshot
+    // pour pouvoir rétablir l'ordre.
+    $apres = $ordre_jeux();
+    if (array_keys($avant) !== array_keys($apres)) {
+        audit_log($c, 'jeux_ordre', implode(', ', $apres), ['target_type' => 'jeu', 'snapshot' => [
+            'changements' => ['ordre' => [array_values($avant), array_values($apres)]],
+            'avant_slugs' => array_keys($avant),
+        ]]);
+    }
     sortir(['ok' => true]);
 }
 
@@ -230,11 +256,15 @@ if ($action === 'restaurer') {
     [$etat, $err] = valider_etat($slug, json_decode($v['contenu'], true) ?: []);
     if ($err) sortir(['error' => 'Cette version ne peut plus être restaurée : ' . $err], 422);
 
-    archiver($c, $avant);
+    $version_id = archiver($c, $avant);
     if (!ecrire($c, $slug, $etat)) sortir(['error' => 'La restauration a échoué.'], 500);
-    audit_log($c, 'jeu_restaure', $etat['nom'] . ' (version du ' . $v['created_at'] . ')', ['target_type' => 'jeu']);
+    $apres = jeux_charger($c, $slug);
+    audit_log($c, 'jeu_restaure', $etat['nom'] . ' (version du ' . $v['created_at'] . ')', ['target_type' => 'jeu', 'snapshot' => [
+        'slug' => $slug, 'version_id' => $version_id, 'restaure_depuis' => $v['created_at'],
+        'changements' => audit_changements(etat_jeu($avant), etat_jeu($apres)),
+    ]]);
 
-    sortir(['ok' => true, 'jeu' => jeux_charger($c, $slug)]);
+    sortir(['ok' => true, 'jeu' => $apres]);
 }
 
 sortir(['error' => 'Action inconnue'], 400);

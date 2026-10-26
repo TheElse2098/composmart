@@ -132,7 +132,7 @@ if ($action === 'traiter') {
     // Instantané du signalement avant traitement (auteur, contenu)
     $snap = ['id' => $id];
     $qs = mysqli_prepare($conn,
-        'SELECT s.compost_id, s.motif, s.commentaire, s.reporter_username AS reporter
+        'SELECT s.compost_id, s.motif, s.commentaire, s.reporter_username AS reporter, s.statut
          FROM signalements s WHERE s.id = ?');
     $qs->bind_param('i', $id);
     $qs->execute();
@@ -141,6 +141,7 @@ if ($action === 'traiter') {
         $snap['motif']       = $rs['motif'];
         $snap['commentaire'] = $rs['commentaire'];
         $snap['compost_id']  = (int)$rs['compost_id'];
+        $snap['changements'] = audit_changements(['statut' => $rs['statut']], ['statut' => $statut]);
     }
 
     $stmt = mysqli_prepare($conn, 'UPDATE signalements SET statut = ? WHERE id = ?');

@@ -55,6 +55,26 @@ protégé par son propre service.
 | Édition des jeux | `/jeux-admin` | games-api |
 | Event panel | `/evenements-admin` | evenements-api |
 
+### Journal d'activité
+
+Toute action d'administration passe par `audit_log($conn, $action, $details,
+$extra)` (`shared/_guard.php`) ; les services sans db-core l'envoient à
+auth-api. Le journal se lit dans l'onglet 📜 de `/admin/panel`, une fenêtre de
+détail par entrée.
+
+- **Nom de l'action** : `<préfixe>_<verbe>` ; le préfixe range l'action dans
+  une catégorie du filtre (`AUDIT_CATEGORIES` dans `tableau-de-bord.html`).
+  Ajouter son libellé et son emoji dans `AUDIT_LABELS`, sinon elle s'affiche
+  avec ❔ et son code brut.
+- **`$details`** : ce qui rend la ligne lisible sans l'ouvrir (titre, nom).
+- **Snapshot** (`$extra['snapshot']`) :
+  - `changements` : ce qui a changé, via `audit_changements($avant, $apres)`.
+    L'état d'avant est lu avant l'écriture, celui d'après relu en base ;
+  - `etat` : l'élément entier, à la création et surtout à la suppression (il
+    servira à le recréer) ;
+  - contenu lourd (texte d'un cours, état complet d'un jeu) : pas dans le
+    journal, mais un `version_id` vers `cours_versions` / `jeux_versions`.
+
 La case rouge « Admin » du bandeau (`partials/site-nav.html`) est révélée par
 `assets/js/admin-badge.js` pour les administrateurs ; ce script est inclus en
 `?v=N` : incrémenter N dans toutes les pages à chaque modification.

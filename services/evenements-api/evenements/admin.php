@@ -87,6 +87,45 @@ function evt_titre($conn, $id) {
     return $r ? $r['titre'] : "événement #$id";
 }
 
+/** Une slide du déroulé telle que le journal la garde (avant/après, supprimée). */
+function evt_slide_lire($conn, $sid) {
+    $stmt = mysqli_prepare($conn, 'SELECT evenement_id, ordre, type, titre, contenu, points FROM evenement_slides WHERE id = ?');
+    $stmt->bind_param('i', $sid);
+    $stmt->execute();
+    $s = $stmt->get_result()->fetch_assoc();
+    if (!$s) return null;
+    $s['contenu'] = json_decode($s['contenu'] ?? '', true) ?: [];
+    $s['points'] = (int)$s['points'];
+    return $s;
+}
+
+/** Ce que compare l'avant/après d'une slide (le reste ne se modifie pas). */
+function evt_slide_champs($s) {
+    return $s ? ['titre' => $s['titre'], 'points' => $s['points'], 'contenu' => $s['contenu']] : [];
+}
+
+/** Parcours qui composent le déroulé d'un événement, dans l'ordre. */
+function evt_deroule_noms($conn, $id) {
+    $stmt = mysqli_prepare($conn, 'SELECT nom, nb_slides FROM evenement_parcours WHERE evenement_id = ? ORDER BY ordre');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $noms = [];
+    while ($r = $res->fetch_assoc()) $noms[] = $r['nom'] . ' (' . (int)$r['nb_slides'] . ' slides)';
+    return $noms;
+}
+
+/** Noms des équipes d'un événement, dans l'ordre. */
+function evt_equipes_noms($conn, $id) {
+    $stmt = mysqli_prepare($conn, 'SELECT nom FROM equipes WHERE evenement_id = ? ORDER BY ordre, id');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $noms = [];
+    while ($r = $res->fetch_assoc()) $noms[] = $r['nom'];
+    return $noms;
+}
+
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // ── CRÉER UN ÉVÉNEMENT ──────────────────────────────────────────────────────
@@ -133,13 +172,21 @@ if (isset($STATUTS_ACTION[$action])) {
     if ($id <= 0) { echo json_encode(['error' => 'Événement invalide.']); exit; }
 
     $nouveau_statut = $STATUTS_ACTION[$action];
+    $stmt = mysqli_prepare($conn, 'SELECT statut FROM evenements WHERE id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $statut_avant = $stmt->get_result()->fetch_assoc()['statut'] ?? null;
+
     $stmt = mysqli_prepare($conn, 'UPDATE evenements SET statut = ? WHERE id = ? AND supprime = 0');
     $stmt->bind_param('si', $nouveau_statut, $id);
     $stmt->execute();
 
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Événement introuvable ou supprimé.']); exit; }
 
-    audit_log($conn, 'evenement_' . $nouveau_statut, evt_titre($conn, $id), ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_' . $nouveau_statut, evt_titre($conn, $id), [
+        'target_type' => 'evenement', 'target_id' => $id,
+        'snapshot'    => ['changements' => audit_changements(['statut' => $statut_avant], ['statut' => $nouveau_statut])],
+    ]);
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -267,6 +314,9 @@ if ($action === 'affecter_parcours') {
     $verrou = evt_deroule_verrou($conn, $id);
     if ($verrou) { echo json_encode(['error' => $verrou], JSON_UNESCAPED_UNICODE); exit; }
 
+    // Déroulé remplacé en entier : le journal garde ce qu'il y avait avant.
+    $deroule_avant = evt_deroule_noms($conn, $id);
+
     $stmt = mysqli_prepare($conn, 'DELETE FROM evenement_slides WHERE evenement_id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
@@ -281,8 +331,10 @@ if ($action === 'affecter_parcours') {
     $stmt->bind_param('ii', $parcours_id, $id);
     $stmt->execute();
 
-    audit_log($conn, 'evenement_parcours_affecte', evt_titre($conn, $id) . ' ← ' . $nom . ' (' . $copiees . ' slides)',
-              ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_parcours_affecte', evt_titre($conn, $id) . ' ← ' . $nom . ' (' . $copiees . ' slides)', [
+        'target_type' => 'evenement', 'target_id' => $id,
+        'snapshot'    => ['changements' => audit_changements(['deroule' => $deroule_avant], ['deroule' => evt_deroule_noms($conn, $id)])],
+    ]);
     echo json_encode(['ok' => true, 'slides' => $copiees]);
     exit;
 }
@@ -300,8 +352,10 @@ if ($action === 'ajouter_parcours') {
     if ($nom === null) { echo json_encode(['error' => 'Parcours introuvable.']); exit; }
     if ($copiees === 0) { echo json_encode(['error' => 'Ce parcours ne contient aucune slide.']); exit; }
 
-    audit_log($conn, 'evenement_parcours_ajoute', evt_titre($conn, $id) . ' ← ' . $nom . ' (' . $copiees . ' slides)',
-              ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_parcours_ajoute', evt_titre($conn, $id) . ' ← ' . $nom . ' (' . $copiees . ' slides)', [
+        'target_type' => 'evenement', 'target_id' => $id,
+        'snapshot'    => ['deroule' => evt_deroule_noms($conn, $id)],
+    ]);
     echo json_encode(['ok' => true, 'slides' => $copiees, 'nom' => $nom], JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -498,9 +552,18 @@ if ($action === 'slide_modifier') {
     if ($reg[$s['type']]['note'] === false) $points = 0;
     $json = json_encode($v['contenu'], JSON_UNESCAPED_UNICODE);
 
+    $avant = evt_slide_lire($conn, $sid);
     $stmt = mysqli_prepare($conn, 'UPDATE evenement_slides SET titre = ?, contenu = ?, points = ? WHERE id = ?');
     $stmt->bind_param('ssii', $titre, $json, $points, $sid);
     $stmt->execute();
+
+    $changements = audit_changements(evt_slide_champs($avant), evt_slide_champs(evt_slide_lire($conn, $sid)));
+    if ($changements) {
+        audit_log($conn, 'evenement_slide_modifiee', evt_titre($conn, $proprio) . ' : ' . ($titre !== '' ? $titre : $s['type']), [
+            'target_type' => 'evenement', 'target_id' => $proprio,
+            'snapshot'    => ['type' => $s['type'], 'changements' => $changements],
+        ]);
+    }
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -540,10 +603,15 @@ if ($action === 'slide_supprimer') {
     $verrou = evt_deroule_verrou($conn, $proprio);
     if ($verrou) { echo json_encode(['error' => $verrou], JSON_UNESCAPED_UNICODE); exit; }
 
+    $etat = evt_slide_lire($conn, $sid);
     $stmt = mysqli_prepare($conn, 'DELETE FROM evenement_slides WHERE id = ?');
     $stmt->bind_param('i', $sid);
     $stmt->execute();
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Slide introuvable.']); exit; }
+
+    audit_log($conn, 'evenement_slide_supprimee', evt_titre($conn, $proprio) . ' : ' . ($etat['titre'] ?: $etat['type']), [
+        'target_type' => 'evenement', 'target_id' => $proprio, 'snapshot' => ['etat' => $etat],
+    ]);
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -580,6 +648,8 @@ if ($action === 'equipes_definir') {
         exit;
     }
 
+    $equipes_avant = evt_equipes_noms($conn, $id);
+
     $stmt = mysqli_prepare($conn, 'DELETE FROM equipes WHERE evenement_id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
@@ -594,7 +664,10 @@ if ($action === 'equipes_definir') {
         $stmt->execute();
     }
 
-    audit_log($conn, 'evenement_equipes', evt_titre($conn, $id) . ' : ' . count($noms) . ' équipes', ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_equipes', evt_titre($conn, $id) . ' : ' . count($noms) . ' équipes', [
+        'target_type' => 'evenement', 'target_id' => $id,
+        'snapshot'    => ['changements' => audit_changements(['equipes' => $equipes_avant], ['equipes' => $noms])],
+    ]);
     echo json_encode(['ok' => true, 'equipes' => count($noms)]);
     exit;
 }

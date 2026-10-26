@@ -24,7 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $d  = corps_json();
 $id = (int)($d['id'] ?? 0);
 
-$stmt = mysqli_prepare($c, 'SELECT slug, titre FROM cours WHERE id = ?');
+$stmt = mysqli_prepare($c,
+    'SELECT slug, theme_id, titre, description, emoji, niveau, xp_reward, statut, ordre FROM cours WHERE id = ?');
 $stmt->bind_param('i', $id);
 $stmt->execute();
 $cours = $stmt->get_result()->fetch_assoc();
@@ -36,6 +37,11 @@ if (trim((string)($d['confirmation'] ?? '')) !== $cours['slug']) {
     echo json_encode(['error' => "Saisis l'adresse « " . $cours['slug'] . " » pour confirmer."]);
     exit;
 }
+
+// Dernier état archivé (contenu + métadonnées) avant que la cascade n'emporte
+// cours_contenu : c'est de cette version que le cours peut être recréé.
+$version_id = cours_archiver($c, $id, $cours);
+$etat = cours_meta_lisible($c, $cours);
 
 $stmt = mysqli_prepare($c, 'DELETE FROM user_progress WHERE cours_id = ?');
 $stmt->bind_param('s', $cours['slug']);
@@ -64,7 +70,10 @@ if ($stmt) {
 
 audit_log($c, 'cours_supprime', $cours['titre'], [
     'target_type' => 'cours', 'target_id' => $id,
-    'snapshot'    => ['slug' => $cours['slug'], 'progressions_effacees' => $progressions],
+    'snapshot'    => [
+        'slug' => $cours['slug'], 'progressions_effacees' => $progressions,
+        'version_id' => $version_id, 'etat' => $etat,
+    ],
 ]);
 
 echo json_encode(['ok' => true, 'progressions_effacees' => $progressions]);

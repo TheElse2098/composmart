@@ -152,21 +152,23 @@ if ($id === 0) {
     $stmt = mysqli_prepare($c, 'DELETE FROM cours_supprimes WHERE slug = ?');
     if ($stmt) { $stmt->bind_param('s', $slug); @$stmt->execute(); }
 } else {
-    $stmt = mysqli_prepare($c, 'SELECT slug FROM cours WHERE id = ?');
+    $stmt = mysqli_prepare($c,
+        'SELECT slug, theme_id, titre, description, emoji, niveau, xp_reward, statut, ordre FROM cours WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $ex = $stmt->get_result()->fetch_assoc();
     if (!$ex) { http_response_code(404); echo json_encode(['error' => 'Cours introuvable.']); exit; }
     $slug = $ex['slug'];
 
-    // Version précédente archivée AVANT écrasement : c'est le seul filet en cas
-    // de mauvaise manipulation dans l'éditeur.
-    $stmt = mysqli_prepare($c,
-        'INSERT INTO cours_versions (cours_id, texte, quiz, auteur)
-         SELECT cours_id, texte, quiz, ? FROM cours_contenu WHERE cours_id = ?');
-    $auteur = $_SESSION['username'] ?? '';
-    $stmt->bind_param('si', $auteur, $id);
-    @$stmt->execute();
+    $stmt = mysqli_prepare($c, 'SELECT texte, quiz, video, podcast FROM cours_contenu WHERE cours_id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $contenu_avant = $stmt->get_result()->fetch_assoc();
+
+    // Version précédente archivée AVANT écrasement, contenu ET métadonnées :
+    // c'est le seul filet en cas de mauvaise manipulation dans l'éditeur, et
+    // ce que relit le détail du journal pour montrer le texte d'avant.
+    $version_id = cours_archiver($c, $id, $ex);
 
     $stmt = mysqli_prepare($c,
         'UPDATE cours SET theme_id = ?, titre = ?, description = ?, emoji = ?,
@@ -216,8 +218,30 @@ if ($statut === 'publie') {
     }
 }
 
+// ── Journal ────────────────────────────────────────────────────────────────
+// Métadonnées en clair (nom du thème plutôt que son id) ; le texte et le quiz,
+// trop lourds pour le journal, se relisent dans cours_versions via version_id.
+$apres_lisible = cours_meta_lisible($c, [
+    'theme_id' => $theme_id, 'titre' => $titre, 'description' => $description, 'emoji' => $emoji,
+    'niveau' => $niveau, 'xp_reward' => $xp, 'statut' => $statut,
+]);
+if ($action === 'cours_cree') {
+    $snapshot = ['slug' => $slug, 'etat' => $apres_lisible];
+} else {
+    $contenu_modifie = [];
+    $neuf = ['texte' => $texte, 'quiz' => $quiz_json, 'video' => $video_json, 'podcast' => $podcast_json];
+    foreach ($neuf as $k => $v) {
+        if ((string)($contenu_avant[$k] ?? '') !== (string)$v) $contenu_modifie[] = $k;
+    }
+    $snapshot = [
+        'slug'            => $slug,
+        'version_id'      => $version_id,
+        'changements'     => audit_changements(cours_meta_lisible($c, $ex), $apres_lisible),
+        'contenu_modifie' => $contenu_modifie,
+    ];
+}
 audit_log($c, $action, mb_substr($titre, 0, 120) . ' (' . $statut . ')', [
-    'target_type' => 'cours', 'target_id' => $id,
+    'target_type' => 'cours', 'target_id' => $id, 'snapshot' => $snapshot,
 ]);
 
 echo json_encode(['ok' => true, 'id' => $id, 'slug' => $slug, 'statut' => $statut], JSON_UNESCAPED_UNICODE);

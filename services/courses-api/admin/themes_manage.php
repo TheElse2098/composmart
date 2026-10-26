@@ -59,6 +59,14 @@ csrf_check();
 $d = corps_json();
 $action = $d['action'] ?? '';
 
+/** Un thème tel que le journal le garde (avant/après, état supprimé). */
+function theme_lire($c, $id) {
+    $stmt = mysqli_prepare($c, 'SELECT slug, nom, emoji, couleur, description FROM themes WHERE id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc() ?: null;
+}
+
 // ── Suppression ────────────────────────────────────────────────────────────
 if ($action === 'delete') {
     $id = (int)($d['id'] ?? 0);
@@ -71,10 +79,15 @@ if ($action === 'delete') {
         echo json_encode(['error' => "Ce thème contient encore $n cours. Déplace-les avant de le supprimer."]);
         exit;
     }
+    // État complet gardé au journal : un thème vide se recrée à l'identique.
+    $etat = theme_lire($c, $id);
+    if (!$etat) { echo json_encode(['error' => 'Thème introuvable.']); exit; }
     $stmt = mysqli_prepare($c, 'DELETE FROM themes WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
-    audit_log($c, 'theme_supprime', "thème #$id", ['target_type' => 'theme', 'target_id' => $id]);
+    audit_log($c, 'theme_supprime', $etat['nom'], [
+        'target_type' => 'theme', 'target_id' => $id, 'snapshot' => ['etat' => $etat],
+    ]);
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -93,12 +106,17 @@ $description = mb_substr(trim((string)($d['description'] ?? '')), 0, 200);
 if ($description === '') $description = null;
 
 if ($id > 0) {
+    $avant = theme_lire($c, $id);
+    if (!$avant) { echo json_encode(['error' => 'Thème introuvable.']); exit; }
     // Le slug d'un thème n'est pas modifiable : il sert d'adresse aux pages
     // d'édition (/admin/themes/<theme>/<cours>) et de clé au seed.
     $stmt = mysqli_prepare($c, 'UPDATE themes SET nom = ?, emoji = ?, couleur = ?, description = ? WHERE id = ?');
     $stmt->bind_param('ssssi', $nom, $emoji, $couleur, $description, $id);
     if (!$stmt->execute()) { echo json_encode(['error' => "L'enregistrement a échoué."]); exit; }
-    audit_log($c, 'theme_modifie', $nom, ['target_type' => 'theme', 'target_id' => $id]);
+    audit_log($c, 'theme_modifie', $nom, [
+        'target_type' => 'theme', 'target_id' => $id,
+        'snapshot'    => ['changements' => audit_changements($avant, theme_lire($c, $id))],
+    ]);
     echo json_encode(['ok' => true, 'id' => $id]);
     exit;
 }
@@ -123,5 +141,7 @@ $stmt->bind_param('sssssi', $slug, $nom, $emoji, $couleur, $description, $ordre)
 if (!$stmt->execute()) { echo json_encode(['error' => 'La création a échoué.']); exit; }
 
 $id = (int)mysqli_insert_id($c);
-audit_log($c, 'theme_cree', $nom, ['target_type' => 'theme', 'target_id' => $id]);
+audit_log($c, 'theme_cree', $nom, [
+    'target_type' => 'theme', 'target_id' => $id, 'snapshot' => ['etat' => theme_lire($c, $id)],
+]);
 echo json_encode(['ok' => true, 'id' => $id, 'slug' => $slug], JSON_UNESCAPED_UNICODE);

@@ -224,8 +224,9 @@ if ($action === 'supprimer') {
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['error' => 'Image invalide.']); exit; }
 
-    // Nom lu avant suppression : le journal afficherait sinon un simple numéro.
-    $stmt = mysqli_prepare($conn, 'SELECT nom FROM images WHERE id = ?');
+    // Fiche lue avant suppression : le journal afficherait sinon un simple
+    // numéro. Le fichier, lui, n'est pas gardé : une image supprimée est perdue.
+    $stmt = mysqli_prepare($conn, 'SELECT nom, mime, taille, largeur, hauteur, cree_par, created_at FROM images WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $img = $stmt->get_result()->fetch_assoc();
@@ -235,7 +236,9 @@ if ($action === 'supprimer') {
     $stmt->execute();
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Image introuvable.']); exit; }
 
-    audit_log($conn, 'evenement_image_supprimee', $img['nom'] ?? "image #$id", ['target_type' => 'image', 'target_id' => $id]);
+    audit_log($conn, 'evenement_image_supprimee', $img['nom'] ?? "image #$id", [
+        'target_type' => 'image', 'target_id' => $id, 'snapshot' => ['etat' => $img],
+    ]);
     echo json_encode(['ok' => true]);
     exit;
 }

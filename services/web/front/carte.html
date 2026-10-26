@@ -990,7 +990,8 @@
                         nouv = 0;
                         document.getElementById("tableau").style.display = "none";
                         if (currentMarker_click !== null) { map.removeLayer(currentMarker_click); currentMarker_click = null; }
-                        alert("Merci ! Ta demande a été envoyée.\nLe composteur apparaîtra sur la carte une fois validé par un administrateur.");
+                        informer({ titre: 'Merci ! Ta demande a été envoyée.',
+                                   texte: 'Le composteur apparaîtra sur la carte une fois validé par un administrateur.' });
                         return;
                     }
                     if (newType && markerMap.has(compost_id) && composteursLayer && conteneursLayer) {
@@ -1154,7 +1155,7 @@
                     btn.disabled = false;
                     btn.textContent = texteInitial;
                     if (!d || d.error || typeof d.lat !== 'number') {
-                        alert((d && d.error) || "Recherche impossible pour l'instant.");
+                        informer({ titre: 'Recherche impossible', texte: (d && d.error) || "Réessaie dans un instant." });
                         return;
                     }
                     nettoyerRecherecheProche();
@@ -1193,7 +1194,7 @@
                 .catch(function () {
                     btn.disabled = false;
                     btn.textContent = texteInitial;
-                    alert('Erreur réseau, réessaie.');
+                    informer({ titre: 'Erreur réseau', texte: 'Réessaie dans un instant.' });
                 });
         }
         document.getElementById('btnPlusProcheClic').addEventListener('click', chercherPlusProcheDuClic);
@@ -1380,16 +1381,25 @@
             supprimer.style.visibility = "visible";
             supprimer.innerHTML = "Êtes-vous sûr de vouloir supprimer ce compost ? <button id='oui'>Oui</button><button id='non'>Non</button>";
             document.getElementById("non").addEventListener('click', () => location.reload());
+            // On attend la réponse avant de recharger : recharger tout de suite
+            // pouvait couper la requête, et annonçait la suppression même en cas
+            // de refus. La carte rechargée sans le point suffit comme confirmation.
             document.getElementById("oui").addEventListener('click', () => {
                 fetch("/api/carte/sites.php", { method: "POST", body: new URLSearchParams({supprimer: current_compost_id}) })
-                .then((response) => response.text()).then((data) => { console.log(data); });
-                alert("Le compost a bien été supprimé !");
-                location.reload();
+                .then((response) => response.json().then((d) => {
+                    if (!response.ok || (d && d.error)) {
+                        informer({ titre: 'Suppression impossible', texte: (d && d.error) || ('Erreur ' + response.status) });
+                        return;
+                    }
+                    location.reload();
+                }))
+                .catch(() => informer({ titre: 'Erreur réseau', texte: "Le composteur n'a pas été supprimé, réessaie." }));
             });
         });
     </script>
       <!-- Pas de footer sur la carte : plein écran, pas d'espace perdu. -->
 
+  <script src="/assets/js/confirmer.js?v=2"></script>
   <script src="/assets/js/site-nav.js"></script>
   <script src="/assets/js/theme.js"></script>
   <script src="/assets/js/verif-banner.js"></script>

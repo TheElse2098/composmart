@@ -5,6 +5,9 @@
  *  `actions` absent = toutes ; c'est le front qui traduit une catégorie
  *  (Carte, Cours…) en liste d'actions, pour que le catalogue des actions
  *  ne vive qu'à un seul endroit.
+ *  La liste ne porte pas le snapshot (état complet d'un jeu, slides d'un
+ *  parcours… : trop lourd ×30) ; il est servi entrée par entrée :
+ *  GET ?id=N → {entry} complète, pour la fenêtre de détail.
  */
 ob_start();
 error_reporting(0);
@@ -50,6 +53,37 @@ if (!table_exists($c, 'audit_log')) {
     exit;
 }
 
+// ── Détail d'une entrée ─────────────────────────────────────────────────────
+if (isset($_GET['id'])) {
+    $id = (int)$_GET['id'];
+    $stmt = mysqli_prepare($c,
+        'SELECT id, username, action, details, target_type, target_id, snapshot, created_at, annule_at, annule_par
+         FROM audit_log WHERE id = ?');
+    if (!$stmt) {
+        // Seule cause attendue : colonnes annule_* absentes, migration pas passée.
+        http_response_code(500);
+        echo json_encode(['error' => 'Journal pas à jour : migration-2026-10-journal-detail.sql non appliquée.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    if (!$row) { http_response_code(404); echo json_encode(['error' => 'Entrée introuvable.'], JSON_UNESCAPED_UNICODE); exit; }
+    echo json_encode(['entry' => [
+        'id'          => (int)$row['id'],
+        'username'    => $row['username'] ?: 'inconnu',
+        'action'      => $row['action'],
+        'details'     => $row['details'],
+        'target_type' => $row['target_type'],
+        'target_id'   => $row['target_id'] !== null ? (int)$row['target_id'] : null,
+        'snapshot'    => $row['snapshot'] ? json_decode($row['snapshot'], true) : null,
+        'date'        => $row['created_at'],
+        'annule_at'   => $row['annule_at'],
+        'annule_par'  => $row['annule_par'],
+    ]], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // Types d'action réellement présents en base : alimente le sélecteur de filtre
 // côté front sans avoir à maintenir une liste statique en double.
 $types = [];
@@ -87,8 +121,13 @@ $page  = min($page, $pages);
 $offset = ($page - 1) * PAR_PAGE;
 
 $res = mysqli_query($c,
-    "SELECT id, username, action, details, target_type, target_id, snapshot, created_at
+    "SELECT id, username, action, details, target_type, target_id, created_at, annule_at
      FROM audit_log $where ORDER BY id DESC LIMIT " . PAR_PAGE . " OFFSET $offset");
+if (!$res) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Journal pas à jour : migration-2026-10-journal-detail.sql non appliquée.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 $entries = [];
 while ($row = mysqli_fetch_assoc($res)) {
     $entries[] = [
@@ -98,8 +137,8 @@ while ($row = mysqli_fetch_assoc($res)) {
         'details'     => $row['details'],
         'target_type' => $row['target_type'],
         'target_id'   => $row['target_id'] !== null ? (int)$row['target_id'] : null,
-        'snapshot'    => $row['snapshot'] ? json_decode($row['snapshot'], true) : null,
         'date'        => $row['created_at'],
+        'annule'      => $row['annule_at'] !== null,
     ];
 }
 mysqli_close($c);

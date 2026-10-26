@@ -109,8 +109,11 @@ CREATE TABLE `cours_contenu` (
 CREATE TABLE `cours_versions` (
   `id`         int      NOT NULL AUTO_INCREMENT,
   `cours_id`   int      NOT NULL,
+  `meta`       text     DEFAULT NULL,   -- JSON : titre, thème, statut… (cf. cours_save.php)
   `texte`      longtext DEFAULT NULL,
   `quiz`       longtext DEFAULT NULL,
+  `video`      text     DEFAULT NULL,
+  `podcast`    text     DEFAULT NULL,
   `auteur`     varchar(100) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -199,8 +202,12 @@ CREATE TABLE `audit_log` (
   `details`     varchar(255) DEFAULT NULL,
   `target_type` varchar(30)  DEFAULT NULL,
   `target_id`   int          DEFAULT NULL,
-  `snapshot`    text         DEFAULT NULL,
+  -- JSON : état avant/après (« changements »), état complet d'un élément
+  -- supprimé (« etat »)… — lu par le détail du journal et par l'annulation.
+  `snapshot`    mediumtext   DEFAULT NULL,
   `created_at`  datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `annule_at`   datetime     DEFAULT NULL,   -- action annulée depuis le journal
+  `annule_par`  varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `created` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

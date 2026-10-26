@@ -93,6 +93,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
         audit_log($c, 'ticket_repondu', 'réponse sur « ' . mb_substr($t['sujet'], 0, 80) . ' »', [
             'target_type' => 'ticket', 'target_id' => $id,
+            'snapshot'    => ['sujet' => $t['sujet'], 'message' => $corps],
         ]);
         echo json_encode(['ok' => true, 'mail_envoye' => $mail_envoye]);
         exit;
@@ -124,7 +125,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         }
         audit_log($c, 'ticket_' . ($vers === 'ouvert' ? 'rouvert' : ($vers === 'clos' ? 'clos' : 'ferme_definitif')),
             $libelle . ' de « ' . mb_substr($t['sujet'], 0, 80) . ' »',
-            ['target_type' => 'ticket', 'target_id' => $id]);
+            ['target_type' => 'ticket', 'target_id' => $id, 'snapshot' => [
+                'sujet'       => $t['sujet'],
+                'changements' => audit_changements(['statut' => $t['statut']], ['statut' => $vers]),
+            ]]);
         echo json_encode(['ok' => true, 'statut' => $vers]);
         exit;
     }

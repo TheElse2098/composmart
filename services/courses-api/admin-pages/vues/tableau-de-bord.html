@@ -219,9 +219,6 @@
     .audit-meta { color: #888; font-size: 0.7rem; }
     .audit-date { color: #999; font-size: 0.68rem; white-space: nowrap; flex-shrink: 0; }
     .audit-chevron { color: #bbb; font-size: 0.8rem; flex-shrink: 0; transition: transform 0.18s; }
-    .audit-item.open .audit-chevron { transform: rotate(90deg); }
-    .audit-detail { display: none; padding: 0 13px 12px 36px; font-size: 0.8rem; color: #1a3a25; }
-    .audit-item.open .audit-detail { display: block; }
     .audit-row { display: flex; gap: 8px; padding: 3px 0; border-top: 1px solid #f0f4f0; }
     .audit-row:first-child { border-top: none; }
     .audit-key { color: #4a7a5a; font-weight: 800; min-width: 110px; flex-shrink: 0; }
@@ -229,6 +226,53 @@
     .audit-val.empty { color: #aaa; font-style: italic; }
     .audit-chip { display: inline-block; background: #eef4ec; color: #2d6a4f; border-radius: 8px; padding: 1px 7px; font-size: 0.72rem; font-weight: 700; margin: 1px 2px 1px 0; }
     .audit-chip.nok { background: #fdecea; color: #c0392b; }
+    .audit-chip.ajout { background: #c8ecd2; color: #1b5e20; }
+    .audit-chip.retrait { background: #f8d4cf; color: #b71c1c; text-decoration: line-through; }
+    .audit-badge-annule { display: inline-block; background: #eceff1; color: #607d8b; border-radius: 8px; padding: 1px 7px; font-size: 0.68rem; font-weight: 800; margin-left: 6px; vertical-align: 1px; }
+
+    /* Fenêtre de détail du journal : large sur ordinateur, un diff a besoin de place */
+    .audit-modal-box { max-width: 820px; padding: 0; display: flex; flex-direction: column; }
+    .audit-modal-head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 20px 12px; border-bottom: 1px solid #edf3ee; }
+    .audit-modal-icon { font-size: 1.6rem; line-height: 1; }
+    .audit-modal-head .modal-title { margin-bottom: 2px; }
+    .audit-modal-close { margin-left: auto; background: none; border: none; font-size: 1.1rem; color: #888; cursor: pointer; padding: 2px 6px; border-radius: 8px; }
+    .audit-modal-close:hover { background: #eef4ec; color: #1e6e3e; }
+    .audit-modal-body { padding: 4px 20px 6px; overflow-y: auto; }
+    .audit-modal-box .modal-actions { padding: 12px 20px 18px; margin-top: 0; }
+    .audit-annule-banniere { background: #eceff1; color: #455a64; border-radius: 10px; padding: 8px 12px; font-size: 0.8rem; font-weight: 700; margin-top: 12px; }
+    .audit-note { color: #888; font-size: 0.78rem; font-style: italic; margin: 10px 0; }
+    .audit-sec { margin-top: 14px; }
+    .audit-sec > .modal-label { margin-top: 0; }
+    .audit-chg { display: grid; grid-template-columns: minmax(110px, 0.6fr) 1fr 1fr; gap: 6px 10px; align-items: start; font-size: 0.8rem; }
+    .audit-chg-entete { font-size: 0.68rem; font-weight: 800; color: #999; text-transform: uppercase; letter-spacing: 0.4px; }
+    .audit-chg-cle { color: #4a7a5a; font-weight: 800; padding-top: 4px; word-break: break-word; }
+    .audit-chg-large { grid-column: 1 / -1; }
+    .val-avant, .val-apres { border-radius: 8px; padding: 4px 8px; white-space: pre-wrap; word-break: break-word; min-height: 1.6em; }
+    .val-avant { background: #fdf0ee; color: #6d2a22; }
+    .val-apres { background: #ebf7ee; color: #1b4d2c; }
+    .audit-vide { color: #aaa; font-style: italic; }
+    .audit-obj { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; }
+    .audit-obj > .k { color: #4a7a5a; font-weight: 700; }
+    /* Diff ligne à ligne (texte de cours, anecdotes, descriptions longues) */
+    .diff-bloc { border: 1px solid #e3ece5; border-radius: 10px; overflow: hidden; font-size: 0.78rem; line-height: 1.5; margin-top: 4px; }
+    .dl { padding: 2px 10px 2px 22px; white-space: pre-wrap; word-break: break-word; position: relative; }
+    .dl::before { position: absolute; left: 8px; color: #999; }
+    .dl-del { background: #fdf0ee; color: #6d2a22; }
+    .dl-del::before { content: '−'; color: #c0392b; }
+    .dl-add { background: #ebf7ee; color: #1b4d2c; }
+    .dl-add::before { content: '+'; color: #1e6e3e; }
+    .dl-eq { color: #667; }
+    .dl-saut { color: #999; font-style: italic; background: #f6f8f6; text-align: center; padding-left: 10px; }
+    del.dw { background: #f5b7b1; text-decoration: line-through; border-radius: 3px; }
+    ins.dw { background: #a9dfbf; text-decoration: none; border-radius: 3px; }
+    .diff-panneau { margin-top: 10px; }
+    .diff-panneau-titre { font-weight: 800; font-size: 0.8rem; color: #1a3a25; }
+    @media (max-width: 640px) {
+      .audit-chg { grid-template-columns: 1fr 1fr; }
+      .audit-chg-entete:first-child { display: none; }
+      .audit-chg-cle { grid-column: 1 / -1; }
+      .audit-chg-cle { padding-top: 8px; }
+    }
 
     /* Demandes d'ajout de composteurs */
     .bulk-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #fff; border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
@@ -302,10 +346,24 @@
     html.dark .audit-item { background: #16211a; }
     html.dark .audit-head { color: #e8f5ee; }
     html.dark .audit-head:hover { background: #1e2d22; }
-    html.dark .audit-detail, html.dark .audit-val { color: #e8f5ee; }
+    html.dark .audit-val { color: #e8f5ee; }
     html.dark .audit-row { border-top-color: #243a2c; }
     html.dark .audit-chip { background: #1e2d22; color: #7fc99a; }
     html.dark .audit-chip.nok { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .audit-chip.ajout { background: #1d4029; color: #a5dcb6; }
+    html.dark .audit-chip.retrait { background: #4a1f1c; color: #f1aaa2; }
+    html.dark .audit-badge-annule, html.dark .audit-annule-banniere { background: #263238; color: #b0bec5; }
+    html.dark .audit-modal-head { border-bottom-color: #243a2c; }
+    html.dark .audit-modal-close:hover { background: #243328; color: #7fc99a; }
+    html.dark .audit-chg-cle, html.dark .audit-obj > .k { color: #7ab88e; }
+    html.dark .val-avant, html.dark .dl-del { background: #3a1d1a; color: #f3c4bd; }
+    html.dark .val-apres, html.dark .dl-add { background: #183323; color: #bfe8cc; }
+    html.dark .diff-bloc { border-color: #243a2c; }
+    html.dark .dl-eq { color: #9fb0a5; }
+    html.dark .dl-saut { background: #1b261e; }
+    html.dark del.dw { background: #7a2e27; }
+    html.dark ins.dw { background: #2f6b45; }
+    html.dark .diff-panneau-titre { color: #e8f5ee; }
     html.dark .act-promote { background: #16291c; color: #7fc99a; }
     html.dark .act-demote { background: #2e2410; color: #e8b931; }
     html.dark .act-delete { background: #3d1a1a; color: #ef9a9a; }
@@ -444,6 +502,24 @@
   <div class="bottom-leaf"></div>
 
   <!-- Modale : corriger une demande avant de la valider -->
+  <!-- Détail d'une entrée du journal -->
+  <div class="modal-back" id="auditModal">
+    <div class="modal-box audit-modal-box" role="dialog" aria-modal="true" aria-labelledby="auditModalTitle">
+      <div class="audit-modal-head">
+        <span class="audit-modal-icon" id="auditModalIcon"></span>
+        <div>
+          <div class="modal-title" id="auditModalTitle"></div>
+          <div class="audit-meta" id="auditModalSub"></div>
+        </div>
+        <button type="button" class="audit-modal-close" id="auditModalClose" aria-label="Fermer">✕</button>
+      </div>
+      <div class="audit-modal-body" id="auditModalBody"></div>
+      <div class="modal-actions" id="auditModalActions">
+        <button type="button" class="modal-cancel" id="auditModalOk">Fermer</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-back" id="editModal">
     <div class="modal-box">
       <div class="modal-title" id="editModalTitle">Modifier la demande</div>
@@ -947,6 +1023,12 @@
       parcours_modifie:        { icon: '✏️', txt: 'Parcours modifié' },
       parcours_duplique:       { icon: '📑', txt: 'Parcours dupliqué' },
       parcours_supprime:       { icon: '🗑️', txt: 'Parcours supprimé' },
+      parcours_slide_modifiee: { icon: '📝', txt: 'Slide de parcours modifiée' },
+      parcours_slide_supprimee: { icon: '🗑️', txt: 'Slide de parcours supprimée' },
+      evenement_slide_modifiee: { icon: '📝', txt: "Slide d'atelier modifiée" },
+      evenement_slide_supprimee: { icon: '🗑️', txt: "Slide d'atelier supprimée" },
+      anecdote_modifiee:       { icon: '💡', txt: 'Anecdote modifiée' },
+      anecdote_supprimee:      { icon: '🗑️', txt: 'Anecdote supprimée' },
       jeu_modifie:             { icon: '🕹️', txt: 'Jeu modifié' },
       jeu_restaure:            { icon: '⏪', txt: 'Version de jeu restaurée' },
       jeux_ordre:              { icon: '🔀', txt: 'Jeux réordonnés' }
@@ -960,7 +1042,7 @@
       { id: 'carte',    icon: '🗺️', txt: 'Carte',    prefixes: ['compost_', 'signalement_'] },
       { id: 'cours',    icon: '📚', txt: 'Cours',    prefixes: ['cours_', 'theme_', 'media_'] },
       { id: 'jeux',     icon: '🎮', txt: 'Jeux',     prefixes: ['jeu_', 'jeux_'] },
-      { id: 'ateliers', icon: '🎉', txt: 'Ateliers', prefixes: ['evenement_', 'parcours_'] },
+      { id: 'ateliers', icon: '🎉', txt: 'Ateliers', prefixes: ['evenement_', 'parcours_', 'anecdote_'] },
       { id: 'comptes',  icon: '👤', txt: 'Comptes',  prefixes: ['user_', 'compte_', 'mdp_', 'email_'] },
       { id: 'support',  icon: '💬', txt: 'Support',  prefixes: ['ticket_'] },
       { id: 'emails',   icon: '📧', txt: 'Emails',   prefixes: ['mail_'] },
@@ -986,12 +1068,13 @@
       return arr.map(x => '<span class="audit-chip' + (cls ? ' ' + cls : '') + '">' + echap(x) + '</span>').join('');
     }
 
+    /** Lignes propres à certains types (signalement, mail…), en tête du détail.
+     *  Qui et quand sont dans l'en-tête de la fenêtre ; l'avant/après et
+     *  l'état supprimé, communs à tous, viennent après (cf. ouvrirDetailAudit). */
     function auditDetailHtml(a) {
       const s = a.snapshot || {};
       let rows = '';
-      // Toujours : qui a fait l'action (l'admin) et quand
-      rows += row('Traité par', '<b>' + echap(a.username) + '</b>');
-      rows += row('Date', (a.date || '').replace('T', ' ').slice(0, 19));
+      if (a.details) rows += row('Objet', echap(a.details));
 
       if (a.target_type === 'signalement') {
         rows += row('Signalé par', echap(s.reporter || 'Anonyme'));
@@ -1018,8 +1101,7 @@
         // Suppressions et purges : ni pseudo ni id, volontairement (RGPD).
         rows += row('Utilisateur', s.username ? echap(s.username)
           : (a.target_id != null ? '#' + a.target_id : 'compte effacé'), !s.username && a.target_id == null);
-        if (a.action === 'compte_purge' && a.details) rows += row('Motif', echap(a.details));
-        if (s.admin !== undefined) rows += row('Nouveau rôle', s.admin ? 'Administrateur' : 'Utilisateur');
+        if (s.admin !== undefined && !s.changements) rows += row('Nouveau rôle', s.admin ? 'Administrateur' : 'Utilisateur');
         if (s.etait_admin !== undefined) rows += row('Était admin', s.etait_admin ? 'oui' : 'non');
       } else if (a.target_type === 'mail') {
         rows += row('Destinataire', echap(s.to || '—'));
@@ -1027,10 +1109,383 @@
         rows += row('Statut', s.ok ? '✅ Envoyé' : '❌ Échec d\'envoi');
         if (s.erreur) rows += row('Raison', echap(s.erreur));
         if (s.nb) rows += row('Éléments groupés', s.nb);
-      } else if (a.details) {
-        rows += row('Détails', echap(a.details));
       }
       return rows;
+    }
+
+    // ── Détail d'une entrée : avant/après, élément supprimé, diff de texte ──
+    // Format écrit par le serveur (cf. audit_changements() dans _guard.php) :
+    //   snapshot.changements = { champ: [avant, après] }  — seulement ce qui change
+    //   snapshot.etat        = l'élément entier, créé ou supprimé
+    //   snapshot.version_id  = cours : texte et quiz relus dans cours_versions
+    const CHAMP_LABELS = {
+      titre: 'Titre', theme: 'Thème', emoji: 'Emoji', description: 'Description', niveau: 'Niveau',
+      xp: 'XP', xp_reserve: "Réserve d'XP", score_max: 'Score max', statut: 'Statut', nom: 'Nom',
+      couleur: 'Couleur', slug: 'Adresse', type: 'Type', acces: 'Accès', gestion: 'Gestionnaire',
+      info_gestion: 'Contact du gestionnaire', mettre: 'Autorisé', pas_mettre: 'Interdit',
+      admin: 'Administrateur', deroule: 'Déroulé', equipes: 'Équipes', ordre: 'Ordre', points: 'Points',
+      texte: 'Texte', mots: 'Mots-clés', items: 'Contenu du jeu', regles: 'Règles', messages: 'Messages',
+      lat: 'Latitude', lon: 'Longitude', propose_par: 'Proposé par', created_at: 'Créé le',
+      cree_par: 'Créé par', mime: 'Format', taille: 'Taille (octets)', largeur: 'Largeur', hauteur: 'Hauteur',
+      video: 'Vidéo', podcast: 'Podcast', quiz: 'Quiz', slides: 'Slides', parcours: 'Parcours',
+      contenu: 'Contenu', url: 'Adresse', auteur: 'Auteur', duree: 'Durée', question: 'Question',
+      options: 'Réponses proposées', evenement_id: 'Atelier', parcours_id: 'Parcours'
+    };
+    const VALEUR_LABELS = {
+      prevu: 'Prévu', ouvert: 'Ouvert', en_cours: 'En cours', termine: 'Terminé', annule: 'Annulé',
+      brouillon: 'Brouillon', publie: 'Publié', archive: 'Archivé', clos: 'Clos',
+      clos_definitif: 'Fermé définitivement', resolu: 'Résolu', rejete: 'Rejeté', valide: 'Validé',
+      refuse: 'Refusé', en_attente: 'En attente', debutant: 'Débutant', intermediaire: 'Intermédiaire',
+      expert: 'Expert'
+    };
+    // Actions dont une entrée récente porte un avant/après : sans lui, c'est
+    // une entrée écrite avant que le journal ne le conserve.
+    const ACTIONS_AVANT_APRES = /^(cours_modifie|cours_reorganises|theme_modifie|compost_modifie|signalement_resolu|signalement_rejete|user_promu|user_retrograde|ticket_clos|ticket_rouvert|ticket_ferme_definitif|jeu_modifie|jeu_restaure|jeux_ordre|parcours_modifie|evenement_(ouvert|prevu|en_cours|termine|annule|equipes|parcours_affecte))$/;
+
+    function dateAudit(d) { return (d || '').replace('T', ' ').slice(0, 16); }
+
+    function libelleChamp(k) {
+      k = String(k);
+      const i = k.indexOf('.');
+      if (i < 0) return CHAMP_LABELS[k] || k.replace(/_/g, ' ');
+      const base = k.slice(0, i), sous = k.slice(i + 1);
+      return (CHAMP_LABELS[base] || base) + ' › ' + (CHAMP_LABELS[sous] || sous.replace(/_/g, ' '));
+    }
+
+    /** Un élément de liste (déchet d'un jeu, slide…) résumé en une ligne. */
+    function resumeElement(x) {
+      if (x === null || typeof x !== 'object') return String(x);
+      const vals = Object.keys(x)
+        .filter(k => k !== 'emoji' && k !== 'id' && x[k] !== '' && x[k] !== null && typeof x[k] !== 'object')
+        .map(k => String(x[k]));
+      const t = (x.emoji ? x.emoji + ' ' : '') + vals.join(' · ');
+      return t.length > 140 ? t.slice(0, 140) + '…' : t;
+    }
+
+    function fmtVal(v, cle, prof) {
+      prof = prof || 0;
+      if (v === null || v === undefined || v === '') return '<span class="audit-vide">—</span>';
+      const der = String(cle || '').split('.').pop();
+      if (typeof v === 'boolean' || (der === 'admin' && (v === 0 || v === 1))) return v ? 'oui' : 'non';
+      if (Array.isArray(v)) {
+        if (!v.length) return '<span class="audit-vide">(vide)</span>';
+        return v.map(x => '<span class="audit-chip">' + echap(resumeElement(x)) + '</span>').join('');
+      }
+      if (typeof v === 'object') {
+        if (prof >= 2) return echap(JSON.stringify(v).slice(0, 300));
+        const cles = Object.keys(v);
+        if (!cles.length) return '<span class="audit-vide">(vide)</span>';
+        return '<div class="audit-obj">' + cles.map(k =>
+          '<span class="k">' + echap(libelleChamp(k)) + '</span><span>' + fmtVal(v[k], k, prof + 1) + '</span>').join('') + '</div>';
+      }
+      if ((der === 'statut' || der === 'niveau') && VALEUR_LABELS[v]) return echap(VALEUR_LABELS[v]);
+      return echap(v);
+    }
+
+    /** Plus longue sous-suite commune : opérations ['=', x] / ['-', x] / ['+', x].
+     *  Préfixe et suffixe communs retirés d'abord (le cas courant : une retouche
+     *  au milieu d'un long texte) ; au-delà de 2,5 M de cases, on renonce à
+     *  l'alignement plutôt que de figer l'onglet. */
+    function diffSeq(a, b) {
+      const n = a.length, m = b.length;
+      let p = 0;
+      while (p < n && p < m && a[p] === b[p]) p++;
+      let s = 0;
+      while (s < n - p && s < m - p && a[n - 1 - s] === b[m - 1 - s]) s++;
+      const A = a.slice(p, n - s), B = b.slice(p, m - s);
+      const ops = [];
+      for (let i = 0; i < p; i++) ops.push(['=', a[i]]);
+      if (A.length * B.length > 2500000) {
+        A.forEach(x => ops.push(['-', x]));
+        B.forEach(x => ops.push(['+', x]));
+      } else {
+        const N = A.length, M = B.length;
+        const L = [];
+        for (let i = 0; i <= N; i++) L.push(new Uint32Array(M + 1));
+        for (let i = N - 1; i >= 0; i--) {
+          for (let j = M - 1; j >= 0; j--) {
+            L[i][j] = A[i] === B[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+          }
+        }
+        let i = 0, j = 0;
+        while (i < N && j < M) {
+          if (A[i] === B[j]) { ops.push(['=', A[i]]); i++; j++; }
+          else if (L[i + 1][j] >= L[i][j + 1]) { ops.push(['-', A[i]]); i++; }
+          else { ops.push(['+', B[j]]); j++; }
+        }
+        while (i < N) ops.push(['-', A[i++]]);
+        while (j < M) ops.push(['+', B[j++]]);
+      }
+      for (let i = n - s; i < n; i++) ops.push(['=', a[i]]);
+      return ops;
+    }
+
+    /** Deux versions d'une même ligne, mots changés surlignés. */
+    function diffMotsHtml(a, b) {
+      const ops = diffSeq(a.split(/(\s+)/), b.split(/(\s+)/));
+      let h1 = '', h2 = '';
+      ops.forEach(([t, x]) => {
+        if (t === '=') { h1 += echap(x); h2 += echap(x); }
+        else if (t === '-') h1 += '<del class="dw">' + echap(x) + '</del>';
+        else h2 += '<ins class="dw">' + echap(x) + '</ins>';
+      });
+      return [h1, h2];
+    }
+
+    function lignesDe(t) { return (t === null || t === undefined || t === '') ? [] : String(t).split('\n'); }
+
+    /** Diff ligne à ligne ; les lignes inchangées sont repliées, une ligne de
+     *  contexte gardée de part et d'autre de chaque changement. Une ligne
+     *  retirée suivie d'une ligne ajoutée est vue comme une retouche : mot à mot. */
+    function diffTexteHtml(avant, apres) {
+      const ops = diffSeq(lignesDe(avant), lignesDe(apres));
+      if (!ops.some(o => o[0] !== '=')) return '<div class="audit-note">Texte identique.</div>';
+      const ligne = (cls, html) => '<div class="dl ' + cls + '">' + (html === '' ? '&nbsp;' : html) + '</div>';
+      const out = [];
+      let k = 0;
+      while (k < ops.length) {
+        let f = k;
+        if (ops[k][0] === '=') {
+          while (f < ops.length && ops[f][0] === '=') f++;
+          const run = ops.slice(k, f);
+          const tete = k === 0 ? 0 : 1, queue = f === ops.length ? 0 : 1;
+          if (run.length > tete + queue + 1) {
+            run.slice(0, tete).forEach(o => out.push(ligne('dl-eq', echap(o[1]))));
+            const n = run.length - tete - queue;
+            out.push('<div class="dl dl-saut">… ' + n + ' ligne' + (n > 1 ? 's' : '') + ' inchangée' + (n > 1 ? 's' : '') + ' …</div>');
+            run.slice(run.length - queue).forEach(o => out.push(ligne('dl-eq', echap(o[1]))));
+          } else {
+            run.forEach(o => out.push(ligne('dl-eq', echap(o[1]))));
+          }
+        } else {
+          const del = [], add = [];
+          while (f < ops.length && ops[f][0] !== '=') { (ops[f][0] === '-' ? del : add).push(ops[f][1]); f++; }
+          const paires = Math.min(del.length, add.length);
+          for (let i = 0; i < paires; i++) {
+            const [h1, h2] = diffMotsHtml(del[i], add[i]);
+            out.push(ligne('dl-del', h1), ligne('dl-add', h2));
+          }
+          del.slice(paires).forEach(x => out.push(ligne('dl-del', echap(x))));
+          add.slice(paires).forEach(x => out.push(ligne('dl-add', echap(x))));
+        }
+        k = f;
+      }
+      return '<div class="diff-bloc">' + out.join('') + '</div>';
+    }
+
+    /** Liste avant/après : éléments retirés barrés, ajoutés en vert. Une longue
+     *  liste (contenu d'un jeu) ne montre que ce qui bouge. */
+    function diffListeHtml(av, ap) {
+      av = Array.isArray(av) ? av : [];
+      ap = Array.isArray(ap) ? ap : [];
+      const cle = x => JSON.stringify(x);
+      const kAv = new Set(av.map(cle)), kAp = new Set(ap.map(cle));
+      const chip = (x, cls) => '<span class="audit-chip' + (cls ? ' ' + cls : '') + '">' + echap(resumeElement(x)) + '</span>';
+      const vide = '<span class="audit-vide">(vide)</span>';
+      if (av.length + ap.length > 30) {
+        const retires = av.filter(x => !kAp.has(cle(x)));
+        const ajoutes = ap.filter(x => !kAv.has(cle(x)));
+        const n = ap.length - ajoutes.length;
+        return '<div class="audit-chg-large">'
+          + (retires.length ? '<div><b>Retirés (' + retires.length + ')</b> ' + retires.map(x => chip(x, 'retrait')).join('') + '</div>' : '')
+          + (ajoutes.length ? '<div><b>Ajoutés (' + ajoutes.length + ')</b> ' + ajoutes.map(x => chip(x, 'ajout')).join('') + '</div>' : '')
+          + (!retires.length && !ajoutes.length ? '<div class="audit-note">Mêmes éléments, ordre changé.</div>' : '')
+          + '<div class="audit-note">' + n + ' élément' + (n > 1 ? 's' : '') + ' inchangé' + (n > 1 ? 's' : '') + '.</div></div>';
+      }
+      return '<div class="val-avant">' + (av.length ? av.map(x => chip(x, kAp.has(cle(x)) ? '' : 'retrait')).join('') : vide) + '</div>'
+        + '<div class="val-apres">' + (ap.length ? ap.map(x => chip(x, kAv.has(cle(x)) ? '' : 'ajout')).join('') : vide) + '</div>';
+    }
+
+    function estLong(v) { return typeof v === 'string' && (v.length > 90 || v.indexOf('\n') >= 0); }
+
+    /** Tableau Champ | Avant | Après. */
+    function changementsHtml(ch) {
+      const cles = Object.keys(ch || {});
+      if (!cles.length) return '<div class="audit-note">Enregistré sans aucune différence.</div>';
+      let h = '<div class="audit-chg"><span class="audit-chg-entete"></span>'
+        + '<span class="audit-chg-entete">Avant</span><span class="audit-chg-entete">Après</span>';
+      cles.forEach(k => {
+        const av = ch[k][0], ap = ch[k][1];
+        h += '<span class="audit-chg-cle">' + echap(libelleChamp(k)) + '</span>';
+        if (Array.isArray(av) || Array.isArray(ap)) h += diffListeHtml(av, ap);
+        else if (estLong(av) || estLong(ap)) h += '<div class="audit-chg-large">' + diffTexteHtml(av, ap) + '</div>';
+        else h += '<div class="val-avant">' + fmtVal(av, k) + '</div><div class="val-apres">' + fmtVal(ap, k) + '</div>';
+      });
+      return h + '</div>';
+    }
+
+    function diffObjetHtml(av, ap) {
+      const a = av || {}, b = ap || {}, ch = {};
+      new Set(Object.keys(a).concat(Object.keys(b))).forEach(k => {
+        const x = a[k] === undefined ? null : a[k], y = b[k] === undefined ? null : b[k];
+        if (JSON.stringify(x) !== JSON.stringify(y)) ch[k] = [x, y];
+      });
+      return changementsHtml(ch);
+    }
+
+    function blocDiff(etiquette, titre, corps) {
+      return '<div class="diff-panneau"><div class="diff-panneau-titre">' + etiquette + ' — « ' + echap(titre) + ' »</div>' + corps + '</div>';
+    }
+
+    /** Panneaux d'un cours : le texte est découpé sur les titres « ## »
+     *  (même règle que la page de lecture ; « ### Sources » reste dans le corps). */
+    function panneauxCours(md) {
+      const res = [];
+      let cur = { titre: '', lignes: [] };
+      String(md || '').split('\n').forEach(l => {
+        const m = /^##\s+(.*)$/.exec(l);
+        if (m) {
+          if (cur.titre || cur.lignes.join('').trim()) res.push(cur);
+          cur = { titre: m[1].trim(), lignes: [] };
+        } else {
+          cur.lignes.push(l);
+        }
+      });
+      if (cur.titre || cur.lignes.join('').trim()) res.push(cur);
+      return res.map(p => ({ titre: p.titre || 'introduction', corps: p.lignes.join('\n').trim() }));
+    }
+
+    function diffCoursTexteHtml(av, ap) {
+      const A = panneauxCours(av), B = panneauxCours(ap);
+      const pris = new Set();
+      let h = '', inchanges = 0;
+      B.forEach(p => {
+        const i = A.findIndex((q, k) => !pris.has(k) && q.titre === p.titre);
+        if (i < 0) { h += blocDiff('➕ Panneau ajouté', p.titre, diffTexteHtml('', p.corps)); return; }
+        pris.add(i);
+        if (A[i].corps === p.corps) { inchanges++; return; }
+        h += blocDiff('✏️ Panneau modifié', p.titre, diffTexteHtml(A[i].corps, p.corps));
+      });
+      A.forEach((q, k) => { if (!pris.has(k)) h += blocDiff('🗑️ Panneau supprimé', q.titre, diffTexteHtml(q.corps, '')); });
+      const communs = (X, Y) => X.map(p => p.titre).filter(t => Y.some(q => q.titre === t));
+      if (JSON.stringify(communs(A, B)) !== JSON.stringify(communs(B, A))) {
+        h += '<div class="audit-note">L\'ordre des panneaux a changé.</div>';
+      }
+      if (inchanges) h += '<div class="audit-note">' + inchanges + ' panneau' + (inchanges > 1 ? 'x' : '') + ' inchangé' + (inchanges > 1 ? 's' : '') + '.</div>';
+      return h || '<div class="audit-note">Texte identique.</div>';
+    }
+
+    function diffQuizHtml(av, ap) {
+      av = Array.isArray(av) ? av : [];
+      ap = Array.isArray(ap) ? ap : [];
+      const bonnes = q => (Array.isArray(q.correct) ? q.correct : [q.correct])
+        .map(i => (q.options || [])[i]).filter(x => x != null);
+      const fiche = q => changementsHtml({ options: [null, q.options || []], 'Bonne(s) réponse(s)': [null, bonnes(q)] });
+      const pris = new Set();
+      let h = '', inchanges = 0;
+      ap.forEach(q => {
+        const i = av.findIndex((x, k) => !pris.has(k) && x.question === q.question);
+        if (i < 0) { h += blocDiff('➕ Question ajoutée', q.question, fiche(q)); return; }
+        pris.add(i);
+        const ch = {};
+        if (JSON.stringify(av[i].options) !== JSON.stringify(q.options)) ch.options = [av[i].options, q.options];
+        if (JSON.stringify(bonnes(av[i])) !== JSON.stringify(bonnes(q))) ch['Bonne(s) réponse(s)'] = [bonnes(av[i]), bonnes(q)];
+        if (!Object.keys(ch).length) { inchanges++; return; }
+        h += blocDiff('✏️ Question modifiée', q.question, changementsHtml(ch));
+      });
+      av.forEach((q, k) => { if (!pris.has(k)) h += blocDiff('🗑️ Question supprimée', q.question, ''); });
+      if (inchanges) h += '<div class="audit-note">' + inchanges + ' question' + (inchanges > 1 ? 's' : '') + ' inchangée' + (inchanges > 1 ? 's' : '') + '.</div>';
+      return h || '<div class="audit-note">Quiz identique.</div>';
+    }
+
+    /** Texte, quiz, vidéo, podcast d'un cours : trop lourds pour le journal,
+     *  relus dans l'historique des versions au moment d'ouvrir le détail. */
+    function chargerContenuCours(s, box) {
+      box.innerHTML = '<div class="audit-note">Chargement du contenu…</div>';
+      fetch('/api/admin/cours_versions.php?id=' + encodeURIComponent(s.version_id))
+        .then(r => r.json())
+        .then(d => {
+          if (!d || d.error || !d.avant) { box.innerHTML = '<div class="audit-note">' + echap((d && d.error) || 'Contenu indisponible.') + '</div>'; return; }
+          if (!d.apres) { box.innerHTML = '<div class="audit-note">Le contenu d\'après n\'est plus disponible.</div>'; return; }
+          const parts = s.contenu_modifie;
+          let h = '';
+          if (parts.includes('texte'))   h += '<div class="modal-label">Texte</div>' + diffCoursTexteHtml(d.avant.texte, d.apres.texte);
+          if (parts.includes('quiz'))    h += '<div class="modal-label">Quiz</div>' + diffQuizHtml(d.avant.quiz, d.apres.quiz);
+          if (parts.includes('video'))   h += '<div class="modal-label">Vidéo</div>' + diffObjetHtml(d.avant.video, d.apres.video);
+          if (parts.includes('podcast')) h += '<div class="modal-label">Podcast</div>' + diffObjetHtml(d.avant.podcast, d.apres.podcast);
+          box.innerHTML = h;
+        })
+        .catch(() => { box.innerHTML = '<div class="audit-note">Contenu indisponible (erreur réseau).</div>'; });
+    }
+
+    function etatHtml(e) {
+      if (!e || typeof e !== 'object') return '<div class="audit-note">—</div>';
+      return Object.keys(e).map(k => row(echap(libelleChamp(k)), fmtVal(e[k], k))).join('');
+    }
+
+    function remplirDetailAudit(a, body) {
+      const s = a.snapshot || {};
+      let h = '';
+      if (a.annule_at) {
+        h += '<div class="audit-annule-banniere">↩️ Annulée le ' + echap(dateAudit(a.annule_at))
+          + (a.annule_par ? ' par ' + echap(a.annule_par) : '') + '</div>';
+      }
+      let infos = auditDetailHtml(a);
+      if (a.target_type === 'ticket' && s.sujet) infos += row('Ticket', '« ' + echap(s.sujet) + ' »');
+      if (s.restaure_depuis) infos += row('Version restaurée', echap(dateAudit(s.restaure_depuis)));
+      if (s.progressions_effacees != null) infos += row('Progressions effacées', echap(s.progressions_effacees));
+      if (Array.isArray(s.deroule) && !s.changements) infos += row('Déroulé', fmtVal(s.deroule));
+      if (s.type && a.action.indexOf('slide_') >= 0) infos += row('Type de slide', echap(s.type));
+      if (infos) h += '<div class="audit-sec">' + infos + '</div>';
+
+      if (s.message) {
+        h += '<div class="audit-sec"><div class="modal-label">Message envoyé</div><div class="val-apres">' + echap(s.message) + '</div></div>';
+      }
+      if (s.changements) {
+        h += '<div class="audit-sec"><div class="modal-label">Modifications</div>' + changementsHtml(s.changements) + '</div>';
+      } else if (ACTIONS_AVANT_APRES.test(a.action)) {
+        h += '<div class="audit-note">Avant / après non disponible : entrée écrite avant le 26/10/2026, quand le journal ne le conservait pas encore.</div>';
+      }
+      if (s.etat) {
+        const titre = /_(cree|demande)$/.test(a.action) ? 'Élément créé' : 'Élément tel qu\'il était avant suppression';
+        h += '<div class="audit-sec"><div class="modal-label">' + titre + '</div>' + etatHtml(s.etat) + '</div>';
+      }
+      body.innerHTML = h || '<div class="audit-note">Aucun détail enregistré pour cette action.</div>';
+
+      if (s.version_id && Array.isArray(s.contenu_modifie) && s.contenu_modifie.length) {
+        const sec = document.createElement('div');
+        sec.className = 'audit-sec';
+        sec.innerHTML = '<div class="modal-label">Contenu du cours</div>';
+        const box = document.createElement('div');
+        sec.appendChild(box);
+        body.appendChild(sec);
+        chargerContenuCours(s, box);
+      }
+    }
+
+    const auditModal = document.getElementById('auditModal');
+    let auditDetailId = null;   // entrée affichée : une réponse en retard pour une autre est ignorée
+
+    function fermerDetailAudit() { auditModal.classList.remove('show'); auditDetailId = null; }
+    document.getElementById('auditModalClose').addEventListener('click', fermerDetailAudit);
+    document.getElementById('auditModalOk').addEventListener('click', fermerDetailAudit);
+    auditModal.addEventListener('click', e => { if (e.target === auditModal) fermerDetailAudit(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && auditModal.classList.contains('show')) fermerDetailAudit();
+    });
+
+    function ouvrirDetailAudit(resume) {
+      const meta = libelleAudit(resume.action);
+      document.getElementById('auditModalIcon').textContent = meta.icon;
+      document.getElementById('auditModalTitle').textContent = meta.txt;
+      document.getElementById('auditModalSub').textContent = 'par ' + resume.username + ' · ' + dateAudit(resume.date);
+      const body = document.getElementById('auditModalBody');
+      body.innerHTML = '<div class="audit-note">Chargement…</div>';
+      auditModal.classList.add('show');
+      auditDetailId = resume.id;
+      fetch('/api/admin/audit.php?id=' + encodeURIComponent(resume.id))
+        .then(r => r.json())
+        .then(d => {
+          if (auditDetailId !== resume.id) return;
+          if (!d || !d.entry) {
+            body.innerHTML = '<div class="audit-note">' + echap((d && d.error) || 'Détail indisponible.') + '</div>';
+            return;
+          }
+          remplirDetailAudit(d.entry, body);
+        })
+        .catch(() => {
+          if (auditDetailId === resume.id) body.innerHTML = '<div class="audit-note">Détail indisponible (erreur réseau).</div>';
+        });
     }
 
     // ── Journal d'audit (filtre catégorie → action, dates, pagination) ──
@@ -1153,16 +1608,18 @@
         const item = document.createElement('div');
         item.className = 'audit-item';
         const summary = a.details ? ' <span class="audit-meta">(' + echap(a.details) + ')</span>' : '';
+        const badge = a.annule ? '<span class="audit-badge-annule">↩️ annulée</span>' : '';
         item.innerHTML =
-          '<div class="audit-head">'
+          '<div class="audit-head" role="button" tabindex="0">'
           + '<div class="audit-icon">' + meta.icon + '</div>'
-          + '<div class="audit-main"><span class="audit-action">' + echap(meta.txt) + '</span>' + summary
+          + '<div class="audit-main"><span class="audit-action">' + echap(meta.txt) + '</span>' + badge + summary
           + '<div class="audit-meta">par ' + echap(a.username) + '</div></div>'
-          + '<div class="audit-date">' + (a.date || '').replace('T', ' ').slice(0, 16) + '</div>'
-          + '<div class="audit-chevron">▶</div>'
-          + '</div>'
-          + '<div class="audit-detail">' + auditDetailHtml(a) + '</div>';
-        item.querySelector('.audit-head').addEventListener('click', () => item.classList.toggle('open'));
+          + '<div class="audit-date">' + dateAudit(a.date) + '</div>'
+          + '<div class="audit-chevron">›</div>'
+          + '</div>';
+        const tete = item.querySelector('.audit-head');
+        tete.addEventListener('click', () => ouvrirDetailAudit(a));
+        tete.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ouvrirDetailAudit(a); } });
         box.appendChild(item);
       });
 

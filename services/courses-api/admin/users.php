@@ -96,7 +96,10 @@ if ($action === 'set_admin') {
     audit_log($c, $value === 1 ? 'user_promu' : 'user_retrograde', 'id=' . $user_id, [
         'target_type' => 'user',
         'target_id'   => $user_id,
-        'snapshot'    => ['username' => $target['username'], 'admin' => (bool)$value],
+        'snapshot'    => [
+            'username' => $target['username'], 'admin' => (bool)$value,
+            'changements' => audit_changements(['admin' => $target_is_admin], ['admin' => (bool)$value]),
+        ],
     ]);
     echo json_encode(['ok' => true]);
     exit;

@@ -25,6 +25,30 @@ $d = corps_json();
 $themes = $d['themes'] ?? null;
 if (!is_array($themes)) { echo json_encode(['error' => 'Organisation manquante.']); exit; }
 
+/** Organisation actuelle, au même format que le corps reçu, + noms pour le journal. */
+function organisation($c) {
+    $themes = []; $noms_themes = []; $titres = []; $place = [];
+    $res = mysqli_query($c, 'SELECT id, nom FROM themes ORDER BY ordre, id');
+    while ($res && ($t = mysqli_fetch_assoc($res))) {
+        $themes[(int)$t['id']] = ['id' => (int)$t['id'], 'cours' => []];
+        $noms_themes[(int)$t['id']] = $t['nom'];
+    }
+    $res = mysqli_query($c, 'SELECT id, theme_id, titre FROM cours ORDER BY theme_id, ordre, id');
+    while ($res && ($r = mysqli_fetch_assoc($res))) {
+        $tid = (int)$r['theme_id'];
+        if (!isset($themes[$tid])) continue;
+        $themes[$tid]['cours'][] = (int)$r['id'];
+        $titres[(int)$r['id']] = $r['titre'];
+        $place[(int)$r['id']] = $noms_themes[$tid] . ' · n°' . count($themes[$tid]['cours']);
+    }
+    return ['themes' => array_values($themes), 'titres' => $titres, 'place' => $place,
+            'noms_themes' => array_values($noms_themes)];
+}
+
+// L'organisation d'avant va au journal : elle permet de défaire un
+// glisser-déposer malheureux.
+$avant = organisation($c);
+
 // Toutes les écritures dans une transaction : un rangement à moitié appliqué
 // laisserait le catalogue dans un ordre incohérent.
 mysqli_begin_transaction($c);
@@ -54,5 +78,23 @@ foreach (array_values($themes) as $rang_theme => $t) {
 }
 
 mysqli_commit($c);
-audit_log($c, 'cours_reorganises', "$deplaces cours replacés", ['target_type' => 'cours']);
+
+// Seuls les cours qui ont vraiment bougé figurent au journal, avec leur place
+// avant/après (« Thème · n°2 ») : le client renvoie tout le catalogue à chaque
+// dépôt, et « 23 cours replacés » ne disait pas lequel avait changé.
+$apres = organisation($c);
+$changements = [];
+foreach ($apres['place'] as $cid => $place) {
+    $ancienne = $avant['place'][$cid] ?? null;
+    if ($ancienne !== $place) $changements[$apres['titres'][$cid]] = [$ancienne, $place];
+}
+if ($avant['noms_themes'] !== $apres['noms_themes']) {
+    $changements['Ordre des thèmes'] = [$avant['noms_themes'], $apres['noms_themes']];
+}
+if ($changements) {
+    audit_log($c, 'cours_reorganises', count($changements) . ' changement' . (count($changements) > 1 ? 's' : ''), [
+        'target_type' => 'cours',
+        'snapshot'    => ['changements' => $changements, 'avant' => $avant['themes']],
+    ]);
+}
 echo json_encode(['ok' => true, 'cours' => $deplaces]);

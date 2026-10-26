@@ -73,6 +73,23 @@ function anec_mots_lire($conn, array $ids) {
     return $par_id;
 }
 
+/** Une anecdote telle que le journal la garde (avant/après, supprimée). */
+function anec_lire($conn, $id) {
+    $stmt = mysqli_prepare($conn, 'SELECT texte, emoji, theme FROM anecdotes WHERE id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $a = $stmt->get_result()->fetch_assoc();
+    if (!$a) return null;
+    $a['mots'] = anec_mots_lire($conn, [$id])[$id] ?? [];
+    return $a;
+}
+
+/** Début du texte, pour la ligne du journal. */
+function anec_extrait($texte) {
+    $t = trim(preg_replace('/\s+/u', ' ', (string)$texte));
+    return mb_strlen($t) > 70 ? mb_substr($t, 0, 70) . '…' : $t;
+}
+
 // ── LISTE (avec les thèmes existants, pour les filtres) ────────────────────
 if ($action === 'liste') {
     $theme = trim((string)($_GET['theme'] ?? ''));
@@ -150,6 +167,9 @@ if ($action === 'modifier') {
     $emoji = mb_substr(trim($_POST['emoji'] ?? ''), 0, 8);
     $theme = mb_substr(trim($_POST['theme'] ?? ''), 0, 60);
 
+    $avant = anec_lire($conn, $id);
+    if (!$avant) { echo json_encode(['error' => 'Anecdote introuvable.']); exit; }
+
     $stmt = mysqli_prepare($conn, 'UPDATE anecdotes SET texte = ?, emoji = ?, theme = ? WHERE id = ?');
     $stmt->bind_param('sssi', $texte, $emoji, $theme, $id);
     $stmt->execute();
@@ -157,6 +177,13 @@ if ($action === 'modifier') {
     // Remplacement en bloc : le formulaire renvoie toujours la liste complete,
     // un mot retire de la saisie doit donc disparaitre de la base.
     anec_mots_ecrire($conn, $id, anec_mots_parser($_POST['mots'] ?? ''));
+
+    $changements = audit_changements($avant, anec_lire($conn, $id));
+    if ($changements) {
+        audit_log($conn, 'anecdote_modifiee', anec_extrait($texte), [
+            'target_type' => 'anecdote', 'target_id' => $id, 'snapshot' => ['changements' => $changements],
+        ]);
+    }
 
     echo json_encode(['ok' => true]);
     exit;
@@ -167,10 +194,15 @@ if ($action === 'supprimer') {
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['error' => 'Anecdote invalide.']); exit; }
 
+    $etat = anec_lire($conn, $id);
     $stmt = mysqli_prepare($conn, 'DELETE FROM anecdotes WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Anecdote introuvable.']); exit; }
+
+    audit_log($conn, 'anecdote_supprimee', anec_extrait($etat['texte'] ?? ''), [
+        'target_type' => 'anecdote', 'target_id' => $id, 'snapshot' => ['etat' => $etat],
+    ]);
 
     echo json_encode(['ok' => true]);
     exit;

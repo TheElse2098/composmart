@@ -14,6 +14,7 @@ ob_start();
 error_reporting(0);
 ini_set('display_errors', 0);
 require_once __DIR__ . '/../_guard.php';
+require_once __DIR__ . '/_compost.php';
 secure_session_start();
 header('Content-Type: application/json; charset=utf-8');
 ob_clean();
@@ -114,6 +115,9 @@ if ($action === 'modifier') {
         }
     }
 
+    $avant = compost_champs_modifiables(compost_etat($conn, $id));
+    if (!$avant) { echo json_encode(['error' => 'Composteur introuvable.']); exit; }
+
     $stmt = mysqli_prepare($conn, 'UPDATE composts SET type=?, publique=?, gestion=?, info_gestion=? WHERE id=?');
     $stmt->bind_param('ssssi', $type, $acces, $gestion, $info_gest, $id);
     $stmt->execute();
@@ -126,10 +130,8 @@ if ($action === 'modifier') {
     audit_log($conn, 'compost_modifie', "id=$id", [
         'target_type' => 'compost',
         'target_id'   => $id,
-        'snapshot'    => [
-            'type' => $type, 'acces' => $acces,
-            'mettre' => array_values($mettre), 'pas_mettre' => array_values($pas_mettre),
-        ],
+        'snapshot'    => ['changements' => audit_changements(
+            $avant, compost_champs_modifiables(compost_etat($conn, $id)))],
     ]);
     echo json_encode(['ok' => true]);
     exit;

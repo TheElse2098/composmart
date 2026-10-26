@@ -15,6 +15,7 @@
   <script src="/assets/vendor/katex-0.18.1/contrib/auto-render.min.js" crossorigin="anonymous"></script>
   <!-- Même moteur de rendu que la page de lecture : c'est ce qui rend l'aperçu fiable. -->
   <script src="/assets/js/markdown-sur.js"></script>
+  <script src="/assets/js/confirmer.js?v=2"></script>
   <title>Éditeur de cours – Administration</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -555,10 +556,14 @@
       document.querySelectorAll('[data-supprimer]').forEach(function (el) {
         el.addEventListener('click', function () {
           var i = +el.dataset.supprimer;
-          if (!confirm('Supprimer le panneau « ' + (panneaux[i].titre || 'sans titre') + ' » ?')) return;
-          panneaux.splice(i, 1);
-          if (!panneaux.length) panneaux.push({ titre: '', corps: '', sources: [] });
-          toucher(); dessinerPanneaux();
+          confirmer({ titre: 'Supprimer le panneau « ' + (panneaux[i].titre || 'sans titre') + ' » ?',
+                      texte: "Il ne disparaît du cours qu'à l'enregistrement.", valider: 'Supprimer', danger: true })
+            .then(function (ok) {
+              if (!ok) return;
+              panneaux.splice(i, 1);
+              if (!panneaux.length) panneaux.push({ titre: '', corps: '', sources: [] });
+              toucher(); dessinerPanneaux();
+            });
         });
       });
       document.querySelectorAll('[data-ins]').forEach(function (el) {
@@ -729,8 +734,11 @@
       });
       document.querySelectorAll('[data-q-sup]').forEach(function (el) {
         el.addEventListener('click', function () {
-          if (!confirm('Supprimer cette question ?')) return;
-          questions.splice(+el.dataset.qSup, 1); toucher(); dessinerQuestions();
+          confirmer({ titre: 'Supprimer cette question ?', valider: 'Supprimer', danger: true })
+            .then(function (ok) {
+              if (!ok) return;
+              questions.splice(+el.dataset.qSup, 1); toucher(); dessinerQuestions();
+            });
         });
       });
       document.querySelectorAll('[data-q-monter]').forEach(function (el) {
