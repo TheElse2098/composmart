@@ -65,31 +65,152 @@ function audit_log($conn, $action, $details = '', $extra = []) {
  * Les scalaires se comparent en texte : la base rend '50' là où PHP a 50.
  */
 function audit_changements(array $avant, array $apres) {
-    $aplatir = function (array $t) {
-        $o = [];
-        foreach ($t as $k => $v) {
-            if (is_array($v) && $v && array_keys($v) !== range(0, count($v) - 1)) {
-                foreach ($v as $k2 => $v2) $o["$k.$k2"] = $v2;
-            } else {
-                $o[$k] = $v;
-            }
-        }
-        return $o;
-    };
-    $a = $aplatir($avant);
-    $b = $aplatir($apres);
+    $a = audit_aplatir($avant);
+    $b = audit_aplatir($apres);
     $diff = [];
     foreach (array_unique(array_merge(array_keys($a), array_keys($b))) as $k) {
         $va = $a[$k] ?? null;
         $vb = $b[$k] ?? null;
         if (is_bool($va)) $va = (int)$va;
         if (is_bool($vb)) $vb = (int)$vb;
-        $egal = (is_array($va) || is_array($vb))
-            ? json_encode($va, JSON_UNESCAPED_UNICODE) === json_encode($vb, JSON_UNESCAPED_UNICODE)
-            : (string)$va === (string)$vb;
-        if (!$egal) $diff[$k] = [$va, $vb];
+        if (!audit_egal($va, $vb)) $diff[$k] = [$va, $vb];
     }
     return $diff;
+}
+
+/** Aplatit d'un niveau les sous-tableaux associatifs (cf. audit_changements). */
+function audit_aplatir(array $t) {
+    $o = [];
+    foreach ($t as $k => $v) {
+        if (is_array($v) && $v && array_keys($v) !== range(0, count($v) - 1)) {
+            foreach ($v as $k2 => $v2) $o["$k.$k2"] = $v2;
+        } else {
+            $o[$k] = $v;
+        }
+    }
+    return $o;
+}
+
+/** Égalité au sens du journal : texte pour les scalaires, JSON pour le reste. */
+function audit_egal($a, $b) {
+    if (is_bool($a)) $a = (int)$a;
+    if (is_bool($b)) $b = (int)$b;
+    return (is_array($a) || is_array($b))
+        ? json_encode($a, JSON_UNESCAPED_UNICODE) === json_encode($b, JSON_UNESCAPED_UNICODE)
+        : (string)$a === (string)$b;
+}
+
+/**
+ * Annulation d'une modification : remet sur $actuel les valeurs « avant » des
+ * champs listés dans $changements, à condition qu'ils aient encore leur
+ * valeur « après ». Sinon l'élément a été retouché depuis : on refuse plutôt
+ * que d'écraser la modification la plus récente.
+ * $actuel est au même format (non aplati) que ce qu'avait reçu audit_changements().
+ * Renvoie [etat_a_ecrire, null] ou [null, message].
+ */
+function audit_revenir(array $actuel, array $changements) {
+    $plat = audit_aplatir($actuel);
+    $conflits = [];
+    foreach ($changements as $k => $av_ap) {
+        if (!audit_egal($plat[$k] ?? null, $av_ap[1])) $conflits[] = $k;
+    }
+    if ($conflits) {
+        return [null, 'Modifié depuis cette action (' . implode(', ', $conflits) . ') : '
+            . "l'annulation écraserait une modification plus récente."];
+    }
+    foreach ($changements as $k => $av_ap) {
+        $i = strpos($k, '.');
+        if ($i === false) { $actuel[$k] = $av_ap[0]; continue; }
+        $base = substr($k, 0, $i); $sous = substr($k, $i + 1);
+        if ($av_ap[0] === null) unset($actuel[$base][$sous]);
+        else $actuel[$base][$sous] = $av_ap[0];
+    }
+    return [$actuel, null];
+}
+
+/**
+ * Une entrée du journal, lue côté serveur : l'annulation part toujours de la
+ * source de vérité, jamais d'un snapshot renvoyé par le navigateur.
+ * Services sur db-core : lecture directe. Les autres passent par l'endpoint
+ * interne d'auth-api (AUDIT_ENTREE_URL), qui sert aussi à réserver l'entrée.
+ */
+function audit_entree_appel($conn, array $demande) {
+    $url = getenv('AUDIT_ENTREE_URL') ?: '';
+    if ($url !== '') return appel_interne($url, $demande);
+    return audit_entree_local($conn, $demande);
+}
+
+/** Traitement local d'une demande {id} / {id, reserver: pseudo} / {id, liberer: 1}
+ *  (auth-api/auth/audit_entree.php et courses-api l'appellent sur db-core). */
+function audit_entree_local($conn, array $d) {
+    $id = (int)($d['id'] ?? 0);
+    if (isset($d['reserver'])) {
+        // Atomique : de deux annulations simultanées, une seule passe.
+        $stmt = mysqli_prepare($conn, 'UPDATE audit_log SET annule_at = NOW(), annule_par = ? WHERE id = ? AND annule_at IS NULL');
+        if (!$stmt) return ['ok' => false];
+        $par = mb_substr((string)$d['reserver'], 0, 100);
+        $stmt->bind_param('si', $par, $id);
+        $stmt->execute();
+        return ['ok' => $stmt->affected_rows === 1];
+    }
+    if (isset($d['liberer'])) {
+        $stmt = mysqli_prepare($conn, 'UPDATE audit_log SET annule_at = NULL, annule_par = NULL WHERE id = ?');
+        if (!$stmt) return ['ok' => false];
+        $stmt->bind_param('i', $id);
+        return ['ok' => $stmt->execute()];
+    }
+    $stmt = mysqli_prepare($conn, 'SELECT id, action, target_type, target_id, snapshot, annule_at FROM audit_log WHERE id = ?');
+    if (!$stmt) return null;
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $r = $stmt->get_result()->fetch_assoc();
+    if (!$r) return ['entree' => null];
+    $r['id'] = (int)$r['id'];
+    $r['target_id'] = $r['target_id'] !== null ? (int)$r['target_id'] : null;
+    $r['snapshot'] = $r['snapshot'] ? (json_decode($r['snapshot'], true) ?: []) : [];
+    return ['entree' => $r];
+}
+
+/**
+ * Début d'une annulation depuis le journal : lit l'entrée, vérifie que son
+ * action est annulable par cet endpoint, puis la RÉSERVE (marquée annulée
+ * avant d'agir) pour qu'un second clic ou un second admin ne la rejoue pas.
+ * Sort en JSON avec l'erreur si quelque chose cloche ; sinon renvoie l'entrée.
+ * Après la réservation, toute sortie en échec passe par audit_annulation_echec().
+ */
+function audit_annulation_debut($conn, $audit_id, array $actions) {
+    $rep = audit_entree_appel($conn, ['id' => (int)$audit_id]);
+    $e = is_array($rep) ? ($rep['entree'] ?? null) : null;
+    if (!$e) {
+        echo json_encode(['error' => is_array($rep) ? 'Entrée du journal introuvable.' : 'Journal injoignable, réessaie.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    if (!in_array($e['action'], $actions, true)) {
+        echo json_encode(['error' => "Cette action ne s'annule pas ici."], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    if ($e['annule_at'] !== null) {
+        echo json_encode(['error' => 'Cette action a déjà été annulée.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    $r = audit_entree_appel($conn, ['id' => $e['id'], 'reserver' => $_SESSION['username'] ?? 'admin']);
+    if (!is_array($r) || empty($r['ok'])) {
+        echo json_encode(['error' => 'Cette action vient déjà d\'être annulée.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    return $e;
+}
+
+/** Échec après réservation : on lève la marque « annulée », puis on sort. */
+function audit_annulation_echec($conn, $audit_id, $message) {
+    audit_entree_appel($conn, ['id' => (int)$audit_id, 'liberer' => 1]);
+    echo json_encode(['error' => $message], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+/** Identifiant d'entrée envoyé par le bouton « Annuler » du journal. */
+function audit_id_demande() {
+    return (int)($_POST['audit_id'] ?? $_GET['audit_id'] ?? 0);
 }
 
 /**

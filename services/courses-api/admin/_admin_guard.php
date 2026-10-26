@@ -79,6 +79,100 @@ function cours_archiver($c, $cours_id, array $meta) {
     return ($stmt->execute() && $stmt->affected_rows === 1) ? (int)$stmt->insert_id : null;
 }
 
+/**
+ * Rattrapage des admins à la publication d'un cours. Les admins ont tous les
+ * cours validés d'office (cf. launchpad.php et import_cours.php) : sans ça, un
+ * cours publié depuis l'admin resterait « non terminé » pour eux, leur profil
+ * afficherait 9/10 et le badge « Expert compost » se reverrouillerait.
+ */
+function cours_rattraper_admins($c, $slug, $titre, $xp) {
+    $xp = (int)$xp;
+    $res_admins = mysqli_query($c, 'SELECT id FROM users WHERE isAdmin = 1');
+    $slug_esc = mysqli_real_escape_string($c, $slug);
+    $titre_esc = mysqli_real_escape_string($c, $titre);
+    while ($res_admins && ($a = mysqli_fetch_assoc($res_admins))) {
+        $uid = (int)$a['id'];
+        $deja = mysqli_query($c, "SELECT id FROM user_progress WHERE user_id = $uid AND cours_id = '$slug_esc'");
+        if ($deja && mysqli_num_rows($deja) > 0) continue;
+        mysqli_query($c, "INSERT IGNORE INTO user_progress (user_id, cours_id) VALUES ($uid, '$slug_esc')");
+        mysqli_query($c, "UPDATE users SET xp = xp + $xp WHERE id = $uid");
+        mysqli_query($c, "UPDATE users SET niveau = FLOOR(xp / 100) + 1 WHERE id = $uid");
+        mysqli_query($c, "INSERT INTO xp_log (user_id, delta, source, label) VALUES ($uid, $xp, 'cours', '$titre_esc')");
+    }
+}
+
+/** Un thème tel que le journal le garde (avant/après, état supprimé). */
+function theme_lire($c, $id) {
+    $stmt = mysqli_prepare($c, 'SELECT slug, nom, emoji, couleur, description FROM themes WHERE id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_assoc() ?: null;
+}
+
+/** Organisation du catalogue : thèmes dans l'ordre avec leurs cours (format
+ *  du corps de cours_reorder.php), + titres et places pour le journal. */
+function cours_organisation($c) {
+    $themes = []; $noms_themes = []; $titres = []; $place = [];
+    $res = mysqli_query($c, 'SELECT id, nom FROM themes ORDER BY ordre, id');
+    while ($res && ($t = mysqli_fetch_assoc($res))) {
+        $themes[(int)$t['id']] = ['id' => (int)$t['id'], 'cours' => []];
+        $noms_themes[(int)$t['id']] = $t['nom'];
+    }
+    $res = mysqli_query($c, 'SELECT id, theme_id, titre FROM cours ORDER BY theme_id, ordre, id');
+    while ($res && ($r = mysqli_fetch_assoc($res))) {
+        $tid = (int)$r['theme_id'];
+        if (!isset($themes[$tid])) continue;
+        $themes[$tid]['cours'][] = (int)$r['id'];
+        $titres[(int)$r['id']] = $r['titre'];
+        $place[(int)$r['id']] = $noms_themes[$tid] . ' · n°' . count($themes[$tid]['cours']);
+    }
+    return ['themes' => array_values($themes), 'titres' => $titres, 'place' => $place,
+            'noms_themes' => array_values($noms_themes)];
+}
+
+/**
+ * Applique une organisation complète, dans une transaction : un rangement à
+ * moitié appliqué laisserait le catalogue dans un ordre incohérent. Un thème
+ * ou un cours disparu entre-temps est simplement ignoré (UPDATE sans effet).
+ * Renvoie le nombre de cours replacés, ou false.
+ */
+function cours_appliquer_organisation($c, array $themes) {
+    mysqli_begin_transaction($c);
+    $stmt_cours = mysqli_prepare($c, 'UPDATE cours  SET theme_id = ?, ordre = ? WHERE id = ?');
+    $stmt_theme = mysqli_prepare($c, 'UPDATE themes SET ordre = ? WHERE id = ?');
+    if (!$stmt_cours || !$stmt_theme) { mysqli_rollback($c); return false; }
+    $deplaces = 0;
+    foreach (array_values($themes) as $rang_theme => $t) {
+        $theme_id = (int)($t['id'] ?? 0);
+        if ($theme_id <= 0) continue;
+        $stmt_theme->bind_param('ii', $rang_theme, $theme_id);
+        if (!$stmt_theme->execute()) { mysqli_rollback($c); return false; }
+        foreach (array_values((array)($t['cours'] ?? [])) as $rang => $cours_id) {
+            $cours_id = (int)$cours_id;
+            if ($cours_id <= 0) continue;
+            $stmt_cours->bind_param('iii', $theme_id, $rang, $cours_id);
+            if (!$stmt_cours->execute()) { mysqli_rollback($c); return false; }
+            $deplaces++;
+        }
+    }
+    mysqli_commit($c);
+    return $deplaces;
+}
+
+/** Ce qui a bougé entre deux organisations : seuls les cours déplacés, avec
+ *  leur place avant/après (« Thème · n°2 »), et l'ordre des thèmes s'il change. */
+function cours_changements_organisation($avant, $apres) {
+    $changements = [];
+    foreach ($apres['place'] as $cid => $place) {
+        $ancienne = $avant['place'][$cid] ?? null;
+        if ($ancienne !== $place) $changements[$apres['titres'][$cid]] = [$ancienne, $place];
+    }
+    if ($avant['noms_themes'] !== $apres['noms_themes']) {
+        $changements['Ordre des thèmes'] = [$avant['noms_themes'], $apres['noms_themes']];
+    }
+    return $changements;
+}
+
 /** Métadonnées d'un cours telles qu'affichées dans le journal (thème par son nom). */
 function cours_meta_lisible($c, array $m) {
     $theme = '#' . (int)$m['theme_id'];

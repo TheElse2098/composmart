@@ -198,25 +198,7 @@ $stmt->execute();
 mysqli_query($c, "UPDATE cours_medias SET cours_id = $id
                   WHERE cours_id IS NULL AND created_at > (NOW() - INTERVAL 1 DAY)");
 
-// ── Rattrapage des admins ──────────────────────────────────────────────────
-// Les admins ont tous les cours validés d'office (cf. launchpad.php et
-// import_cours.php). Sans ce bloc, un cours créé ici resterait « non terminé »
-// pour eux : leur profil afficherait 9/10 et le badge « Expert compost » se
-// reverrouillerait. Uniquement à la publication : un brouillon n'existe pas.
-if ($statut === 'publie') {
-    $res_admins = mysqli_query($c, 'SELECT id FROM users WHERE isAdmin = 1');
-    $slug_esc = mysqli_real_escape_string($c, $slug);
-    $titre_esc = mysqli_real_escape_string($c, $titre);
-    while ($res_admins && ($a = mysqli_fetch_assoc($res_admins))) {
-        $uid = (int)$a['id'];
-        $deja = mysqli_query($c, "SELECT id FROM user_progress WHERE user_id = $uid AND cours_id = '$slug_esc'");
-        if ($deja && mysqli_num_rows($deja) > 0) continue;
-        mysqli_query($c, "INSERT IGNORE INTO user_progress (user_id, cours_id) VALUES ($uid, '$slug_esc')");
-        mysqli_query($c, "UPDATE users SET xp = xp + $xp WHERE id = $uid");
-        mysqli_query($c, "UPDATE users SET niveau = FLOOR(xp / 100) + 1 WHERE id = $uid");
-        mysqli_query($c, "INSERT INTO xp_log (user_id, delta, source, label) VALUES ($uid, $xp, 'cours', '$titre_esc')");
-    }
-}
+if ($statut === 'publie') cours_rattraper_admins($c, $slug, $titre, $xp);
 
 // ── Journal ────────────────────────────────────────────────────────────────
 // Métadonnées en clair (nom du thème plutôt que son id) ; le texte et le quiz,

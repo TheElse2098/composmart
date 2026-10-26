@@ -267,4 +267,68 @@ if ($action === 'restaurer') {
     sortir(['ok' => true, 'jeu' => $apres]);
 }
 
+// ── ANNULER depuis le journal ──────────────────────────────────────────────
+// Une modification se défait en restaurant la version archivée juste avant
+// elle — seulement si aucune sauvegarde n'est venue depuis (sinon l'éditeur
+// et son historique sont le bon outil). L'ordre se rétablit s'il n'a pas bougé.
+if ($action === 'annuler') {
+    $aid = audit_id_demande();
+    $e = audit_annulation_debut($c, $aid, ['jeu_modifie', 'jeu_restaure', 'jeux_ordre']);
+    $s = $e['snapshot'];
+    $echec = function ($m) use ($c, $aid) { audit_annulation_echec($c, $aid, $m); };
+
+    if ($e['action'] === 'jeux_ordre') {
+        $avant_slugs = array_values(array_filter((array)($s['avant_slugs'] ?? []), 'jeux_slug_valide'));
+        $attendu = $s['changements']['ordre'][1] ?? null;
+        if (!$avant_slugs || !is_array($attendu)) $echec("L'ordre d'avant n'a pas été conservé.");
+        $actuel = [];
+        $res = mysqli_query($c, 'SELECT slug, nom FROM jeux ORDER BY ordre, slug');
+        while ($res && ($r = mysqli_fetch_assoc($res))) $actuel[$r['slug']] = $r['nom'];
+        if (array_values($actuel) !== $attendu) $echec('Les jeux ont été réordonnés depuis.');
+        $stmt = mysqli_prepare($c, 'UPDATE jeux SET ordre = ? WHERE slug = ?');
+        foreach ($avant_slugs as $i => $slug_o) {
+            $stmt->bind_param('is', $i, $slug_o);
+            $stmt->execute();
+        }
+        $apres = [];
+        $res = mysqli_query($c, 'SELECT slug, nom FROM jeux ORDER BY ordre, slug');
+        while ($res && ($r = mysqli_fetch_assoc($res))) $apres[$r['slug']] = $r['nom'];
+        audit_log($c, 'jeux_ordre', implode(', ', $apres), ['target_type' => 'jeu', 'snapshot' => [
+            'changements' => ['ordre' => [array_values($actuel), array_values($apres)]],
+            'avant_slugs' => array_keys($actuel), 'annule' => $aid,
+        ]]);
+        sortir(['ok' => true]);
+    }
+
+    $slug = (string)($s['slug'] ?? '');
+    $vid  = (int)($s['version_id'] ?? 0);
+    $avant = jeux_slug_valide($slug) ? jeux_charger($c, $slug) : null;
+    if (!$avant || $vid <= 0) $echec('Jeu ou version introuvable.');
+
+    $stmt = mysqli_prepare($c, 'SELECT contenu, created_at FROM jeux_versions WHERE id = ? AND slug = ?');
+    $stmt->bind_param('is', $vid, $slug);
+    $stmt->execute();
+    $v = $stmt->get_result()->fetch_assoc();
+    if (!$v) $echec("La version d'avant n'est plus dans l'historique (40 versions gardées par jeu).");
+
+    $stmt = mysqli_prepare($c, 'SELECT COUNT(*) AS n FROM jeux_versions WHERE slug = ? AND id > ?');
+    $stmt->bind_param('si', $slug, $vid);
+    $stmt->execute();
+    if ((int)$stmt->get_result()->fetch_assoc()['n'] > 0) {
+        $echec("Ce jeu a été modifié depuis : utilise l'historique de l'éditeur pour choisir la version.");
+    }
+
+    [$etat, $err] = valider_etat($slug, json_decode($v['contenu'], true) ?: []);
+    if ($err) $echec('Cette version ne peut plus être restaurée : ' . $err);
+
+    $version_id = archiver($c, $avant);
+    if (!ecrire($c, $slug, $etat)) $echec('La restauration a échoué.');
+    $apres = jeux_charger($c, $slug);
+    audit_log($c, 'jeu_restaure', $etat['nom'] . ' (annulation, version du ' . $v['created_at'] . ')', ['target_type' => 'jeu', 'snapshot' => [
+        'slug' => $slug, 'version_id' => $version_id, 'restaure_depuis' => $v['created_at'], 'annule' => $aid,
+        'changements' => audit_changements(etat_jeu($avant), etat_jeu($apres)),
+    ]]);
+    sortir(['ok' => true]);
+}
+
 sortir(['error' => 'Action inconnue'], 400);

@@ -156,4 +156,33 @@ if ($action === 'traiter') {
     exit;
 }
 
+// ── ANNULER depuis le journal (admin) : résolu / rejeté → ouvert ──────────
+if ($action === 'annuler') {
+    if (!is_admin($conn)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Action réservée aux administrateurs.']);
+        exit;
+    }
+    $aid = audit_id_demande();
+    $e = audit_annulation_debut($conn, $aid, ['signalement_resolu', 'signalement_rejete']);
+    $s = $e['snapshot'];
+    $ch = $s['changements']['statut'] ?? null;
+    if (!$ch) audit_annulation_echec($conn, $aid, "Le statut d'avant n'a pas été conservé.");
+    [$avant, $apres] = $ch;
+    $id = (int)$e['target_id'];
+    $stmt = mysqli_prepare($conn, 'UPDATE signalements SET statut = ? WHERE id = ? AND statut = ?');
+    $stmt->bind_param('sis', $avant, $id, $apres);
+    $stmt->execute();
+    if (mysqli_stmt_affected_rows($stmt) !== 1) {
+        audit_annulation_echec($conn, $aid, 'Ce signalement a changé de statut ou a été supprimé depuis.');
+    }
+    $snap = array_intersect_key($s, array_flip(['reporter', 'motif', 'commentaire', 'compost_id']));
+    audit_log($conn, $avant === 'ouvert' ? 'signalement_rouvert' : 'signalement_' . $avant, "id=$id", [
+        'target_type' => 'signalement', 'target_id' => $id,
+        'snapshot'    => $snap + ['annule' => $aid, 'changements' => audit_changements(['statut' => $apres], ['statut' => $avant])],
+    ]);
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
 echo json_encode(['error' => 'Action inconnue']);

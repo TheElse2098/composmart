@@ -74,6 +74,14 @@ détail par entrée.
     servira à le recréer) ;
   - contenu lourd (texte d'un cours, état complet d'un jeu) : pas dans le
     journal, mais un `version_id` vers `cours_versions` / `jeux_versions`.
+- **Annulation** (bouton de la fenêtre de détail) : action `annuler` de
+  l'endpoint du service propriétaire (`ANNULATION` dans la page). Le service
+  relit l'entrée côté serveur (`audit_annulation_debut()`, via
+  `AUDIT_ENTREE_URL` hors db-core), la marque annulée avant d'agir, remet
+  l'état d'avant avec `audit_revenir()` — refus si l'élément a bougé depuis —
+  puis journalise sa propre action avec `snapshot.annule`. En cas d'échec,
+  `audit_annulation_echec()` lève la marque. Une entrée sans `changements`,
+  `etat` ni `version_id` n'est pas annulable.
 
 La case rouge « Admin » du bandeau (`partials/site-nav.html`) est révélée par
 `assets/js/admin-badge.js` pour les administrateurs ; ce script est inclus en

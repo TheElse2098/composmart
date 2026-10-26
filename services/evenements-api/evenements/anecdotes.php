@@ -208,4 +208,47 @@ if ($action === 'supprimer') {
     exit;
 }
 
+// ── ANNULER depuis le journal ──────────────────────────────────────────────
+// État d'avant relu dans le journal (db-core, via auth-api) ; refus si
+// l'anecdote a été retouchée depuis. Une anecdote supprimée revient sous un
+// nouveau numéro : une slide qui la visait garde son texte de repli.
+if ($action === 'annuler') {
+    $aid = audit_id_demande();
+    $e = audit_annulation_debut($conn, $aid, ['anecdote_modifiee', 'anecdote_supprimee']);
+    $s = $e['snapshot'];
+    $echec = function ($m) use ($conn, $aid) { audit_annulation_echec($conn, $aid, $m); };
+
+    if ($e['action'] === 'anecdote_modifiee') {
+        $id = (int)$e['target_id'];
+        $actuel = anec_lire($conn, $id);
+        if (!$actuel) $echec('Cette anecdote a été supprimée depuis.');
+        [$t, $err] = audit_revenir($actuel, $s['changements'] ?? []);
+        if ($err) $echec($err);
+        $stmt = mysqli_prepare($conn, 'UPDATE anecdotes SET texte = ?, emoji = ?, theme = ? WHERE id = ?');
+        $stmt->bind_param('sssi', $t['texte'], $t['emoji'], $t['theme'], $id);
+        if (!$stmt->execute()) $echec("L'enregistrement a échoué.");
+        anec_mots_ecrire($conn, $id, (array)($t['mots'] ?? []));
+        audit_log($conn, 'anecdote_modifiee', anec_extrait($t['texte']), [
+            'target_type' => 'anecdote', 'target_id' => $id,
+            'snapshot'    => ['changements' => audit_changements($actuel, anec_lire($conn, $id)), 'annule' => $aid],
+        ]);
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    $t = $s['etat'] ?? null;
+    if (!$t || !isset($t['texte'])) $echec("L'anecdote supprimée n'a pas été conservée.");
+    $auteur = $_SESSION['username'] ?? '';
+    $stmt = mysqli_prepare($conn, 'INSERT INTO anecdotes (texte, emoji, theme, cree_par) VALUES (?, ?, ?, ?)');
+    $stmt->bind_param('ssss', $t['texte'], $t['emoji'], $t['theme'], $auteur);
+    if (!$stmt->execute()) $echec('La recréation a échoué.');
+    $id = (int)$stmt->insert_id;
+    anec_mots_ecrire($conn, $id, (array)($t['mots'] ?? []));
+    audit_log($conn, 'anecdote_retablie', anec_extrait($t['texte']), [
+        'target_type' => 'anecdote', 'target_id' => $id, 'snapshot' => ['etat' => anec_lire($conn, $id), 'annule' => $aid],
+    ]);
+    echo json_encode(['ok' => true, 'id' => $id]);
+    exit;
+}
+
 echo json_encode(['error' => 'Action inconnue']);

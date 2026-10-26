@@ -96,6 +96,8 @@ services:
     smtp: true
     env:
       AUDIT_REMOTE_URL: http://auth-api/api/auth/audit.php
+      # Annulation depuis le journal : lecture et réservation d'une entrée d'audit_log.
+      AUDIT_ENTREE_URL: http://auth-api/api/auth/audit_entree.php
       # Ouvre un ticket dans courses-api quand un ajout de composteur est proposé.
       MAP_TICKET_URL: http://courses-api/api/admin/ticket_interne.php
     health: /api/carte/health.php
@@ -114,6 +116,8 @@ services:
       XP_REMOTE_URL: http://auth-api/api/auth/xp.php
       # Journal d'audit des modifications de jeux (table audit_log de db-core).
       AUDIT_REMOTE_URL: http://auth-api/api/auth/audit.php
+      # Annulation depuis le journal : lecture et réservation d'une entrée d'audit_log.
+      AUDIT_ENTREE_URL: http://auth-api/api/auth/audit_entree.php
       # Vérification isAdmin des pages /jeux-admin (users vit dans db-core).
       AUTH_ADMIN_CHECK_URL: http://auth-api/api/auth/est_admin.php
     health: /api/jeux/health.php
@@ -166,6 +170,8 @@ services:
     audit: true
     env:
       AUDIT_REMOTE_URL: http://auth-api/api/auth/audit.php
+      # Annulation depuis le journal : lecture et réservation d'une entrée d'audit_log.
+      AUDIT_ENTREE_URL: http://auth-api/api/auth/audit_entree.php
       # Vérification isAdmin des pages /evenements-admin (users vit dans db-core).
       AUTH_ADMIN_CHECK_URL: http://auth-api/api/auth/est_admin.php
     health: /api/evenements/health.php

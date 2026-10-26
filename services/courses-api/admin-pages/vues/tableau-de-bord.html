@@ -239,6 +239,9 @@
     .audit-modal-close:hover { background: #eef4ec; color: #1e6e3e; }
     .audit-modal-body { padding: 4px 20px 6px; overflow-y: auto; }
     .audit-modal-box .modal-actions { padding: 12px 20px 18px; margin-top: 0; }
+    .modal-annuler-action { background: #fdecea; color: #c0392b; }
+    .modal-annuler-action:hover:not(:disabled) { background: #f9d6d1; }
+    .modal-annuler-action:disabled { opacity: 0.55; cursor: default; }
     .audit-annule-banniere { background: #eceff1; color: #455a64; border-radius: 10px; padding: 8px 12px; font-size: 0.8rem; font-weight: 700; margin-top: 12px; }
     .audit-note { color: #888; font-size: 0.78rem; font-style: italic; margin: 10px 0; }
     .audit-sec { margin-top: 14px; }
@@ -355,6 +358,8 @@
     html.dark .audit-badge-annule, html.dark .audit-annule-banniere { background: #263238; color: #b0bec5; }
     html.dark .audit-modal-head { border-bottom-color: #243a2c; }
     html.dark .audit-modal-close:hover { background: #243328; color: #7fc99a; }
+    html.dark .modal-annuler-action { background: #3d1a1a; color: #ef9a9a; }
+    html.dark .modal-annuler-action:hover:not(:disabled) { background: #4a2020; }
     html.dark .audit-chg-cle, html.dark .audit-obj > .k { color: #7ab88e; }
     html.dark .val-avant, html.dark .dl-del { background: #3a1d1a; color: #f3c4bd; }
     html.dark .val-apres, html.dark .dl-add { background: #183323; color: #bfe8cc; }
@@ -514,9 +519,8 @@
         <button type="button" class="audit-modal-close" id="auditModalClose" aria-label="Fermer">✕</button>
       </div>
       <div class="audit-modal-body" id="auditModalBody"></div>
-      <div class="modal-actions" id="auditModalActions">
-        <button type="button" class="modal-cancel" id="auditModalOk">Fermer</button>
-      </div>
+      <!-- Rempli par boutonsDetailAudit() : Fermer, et Annuler si l'entrée le permet -->
+      <div class="modal-actions" id="auditModalActions"></div>
     </div>
   </div>
 
@@ -1029,6 +1033,17 @@
       evenement_slide_supprimee: { icon: '🗑️', txt: "Slide d'atelier supprimée" },
       anecdote_modifiee:       { icon: '💡', txt: 'Anecdote modifiée' },
       anecdote_supprimee:      { icon: '🗑️', txt: 'Anecdote supprimée' },
+      // Actions écrites par une annulation depuis le journal
+      cours_restaure:          { icon: '⏪', txt: 'Cours remis à une version précédente' },
+      cours_retabli:           { icon: '♻️', txt: 'Cours rétabli' },
+      theme_retabli:           { icon: '♻️', txt: 'Thème rétabli' },
+      compost_remis_en_attente: { icon: '⏳', txt: 'Demande remise en attente' },
+      compost_retabli:         { icon: '♻️', txt: 'Composteur rétabli' },
+      signalement_rouvert:     { icon: '🔁', txt: 'Signalement rouvert' },
+      parcours_retabli:        { icon: '♻️', txt: 'Parcours rétabli' },
+      parcours_slide_retablie: { icon: '♻️', txt: 'Slide de parcours rétablie' },
+      evenement_slide_retablie: { icon: '♻️', txt: "Slide d'atelier rétablie" },
+      anecdote_retablie:       { icon: '♻️', txt: 'Anecdote rétablie' },
       jeu_modifie:             { icon: '🕹️', txt: 'Jeu modifié' },
       jeu_restaure:            { icon: '⏪', txt: 'Version de jeu restaurée' },
       jeux_ordre:              { icon: '🔀', txt: 'Jeux réordonnés' }
@@ -1129,8 +1144,95 @@
       cree_par: 'Créé par', mime: 'Format', taille: 'Taille (octets)', largeur: 'Largeur', hauteur: 'Hauteur',
       video: 'Vidéo', podcast: 'Podcast', quiz: 'Quiz', slides: 'Slides', parcours: 'Parcours',
       contenu: 'Contenu', url: 'Adresse', auteur: 'Auteur', duree: 'Durée', question: 'Question',
-      options: 'Réponses proposées', evenement_id: 'Atelier', parcours_id: 'Parcours'
+      options: 'Réponses proposées', evenement_id: 'Atelier', parcours_id: 'Parcours',
+      supprime: 'Supprimé', slides_non_retablies: 'Slides non rétablies'
     };
+
+    // Annulation : endpoint du service qui possède les données. Le serveur relit
+    // l'entrée et décide de tout ; ce tableau dit seulement où envoyer la
+    // demande et quand proposer le bouton.
+    const ANNULATION = {};
+    [
+      ['/api/admin/annuler.php', ['cours_modifie', 'cours_restaure', 'cours_supprime', 'cours_reorganises',
+        'theme_modifie', 'theme_supprime', 'user_promu', 'user_retrograde', 'ticket_clos', 'ticket_rouvert']],
+      ['/api/carte/pending.php', ['compost_valide', 'compost_refuse', 'compost_modifie', 'compost_supprime']],
+      ['/api/carte/signalement.php', ['signalement_resolu', 'signalement_rejete']],
+      ['/api/jeux/admin.php', ['jeu_modifie', 'jeu_restaure', 'jeux_ordre']],
+      ['/api/evenements/admin.php', ['evenement_ouvert', 'evenement_prevu', 'evenement_en_cours', 'evenement_termine',
+        'evenement_annule', 'evenement_supprime', 'evenement_restaure', 'evenement_slide_modifiee', 'evenement_slide_supprimee']],
+      ['/api/evenements/parcours.php', ['parcours_modifie', 'parcours_supprime', 'parcours_slide_modifiee', 'parcours_slide_supprimee']],
+      ['/api/evenements/anecdotes.php', ['anecdote_modifiee', 'anecdote_supprimee']]
+    ].forEach(([url, actions]) => actions.forEach(a => { ANNULATION[a] = url; }));
+
+    // Ce que la confirmation précise, au-delà de la règle commune.
+    const ANNULATION_PRECISIONS = {
+      cours_supprime: "Le cours revient avec son texte et son quiz. La progression des lecteurs, effacée à la suppression, ne revient pas.",
+      compost_supprime: 'Le composteur revient avec son numéro, sa position et ses règles.',
+      compost_valide: 'Les composteurs repartent en attente et disparaissent de la carte publique.',
+      parcours_supprime: 'Le parcours revient avec ses slides, sous un nouveau numéro.',
+      anecdote_supprimee: 'L\'anecdote revient sous un nouveau numéro : les slides qui la visaient ne la retrouvent pas.',
+      evenement_en_cours: "L'atelier quitte l'état « en cours » : les participants connectés le verront.",
+      evenement_termine: "L'atelier redevient « en cours »."
+    };
+
+    /** Le bouton n'est proposé que si l'entrée porte de quoi revenir en arrière :
+     *  les entrées antérieures au 26/10/2026 ne l'ont pas (choix assumé). */
+    function annulable(a) {
+      const s = a.snapshot || {};
+      return !!ANNULATION[a.action] && !a.annule_at && !!(s.version_id || s.changements || s.etat);
+    }
+
+    function boutonsDetailAudit(a) {
+      const zone = document.getElementById('auditModalActions');
+      zone.innerHTML = '';
+      if (a && annulable(a)) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'modal-annuler-action';
+        b.textContent = '↩️ Annuler cette action';
+        b.addEventListener('click', () => annulerActionAudit(a, b));
+        zone.appendChild(b);
+      }
+      const fermer = document.createElement('button');
+      fermer.type = 'button';
+      fermer.className = 'modal-cancel';
+      fermer.textContent = 'Fermer';
+      fermer.addEventListener('click', fermerDetailAudit);
+      zone.appendChild(fermer);
+    }
+
+    async function annulerActionAudit(a, bouton) {
+      const precision = ANNULATION_PRECISIONS[a.action] ? ANNULATION_PRECISIONS[a.action] + ' ' : '';
+      const ok = await confirmer({
+        titre: 'Annuler « ' + libelleAudit(a.action).txt + ' » ?',
+        texte: precision + "L'état d'avant cette action est remis. Si l'élément a été modifié depuis, l'annulation est refusée.",
+        valider: "Annuler l'action", annuler: 'Garder', danger: true,
+      });
+      if (!ok) return;
+      bouton.disabled = true;
+      fetch(ANNULATION[a.action] + '?action=annuler&audit_id=' + encodeURIComponent(a.id), {
+        method: 'POST',
+        body: new URLSearchParams({ action: 'annuler', audit_id: a.id })
+      })
+        .then(r => r.json().catch(() => ({ error: 'Réponse illisible du serveur (' + r.status + ').' })))
+        .then(d => {
+          if (!d || d.error) {
+            bouton.disabled = false;
+            informer({ titre: 'Annulation impossible', texte: (d && d.error) || '' });
+            return;
+          }
+          if (d.slides_non_retablies && d.slides_non_retablies.length) {
+            informer({ titre: 'Parcours rétabli en partie',
+                       texte: 'Slides qui ne passent plus la validation : ' + d.slides_non_retablies.join(' ; ') });
+          }
+          rafraichirApresAction();
+          ouvrirDetailAudit(a);   // rouvert pour afficher « Annulée le … »
+        })
+        .catch(() => {
+          bouton.disabled = false;
+          informer({ titre: 'Erreur réseau', texte: "L'annulation n'a pas pu être envoyée." });
+        });
+    }
     const VALEUR_LABELS = {
       prevu: 'Prévu', ouvert: 'Ouvert', en_cours: 'En cours', termine: 'Terminé', annule: 'Annulé',
       brouillon: 'Brouillon', publie: 'Publié', archive: 'Archivé', clos: 'Clos',
@@ -1421,6 +1523,7 @@
           + (a.annule_par ? ' par ' + echap(a.annule_par) : '') + '</div>';
       }
       let infos = auditDetailHtml(a);
+      if (s.annule) infos += row('Annule', "l'entrée n°" + echap(s.annule) + ' du journal');
       if (a.target_type === 'ticket' && s.sujet) infos += row('Ticket', '« ' + echap(s.sujet) + ' »');
       if (s.restaure_depuis) infos += row('Version restaurée', echap(dateAudit(s.restaure_depuis)));
       if (s.progressions_effacees != null) infos += row('Progressions effacées', echap(s.progressions_effacees));
@@ -1441,6 +1544,7 @@
         h += '<div class="audit-sec"><div class="modal-label">' + titre + '</div>' + etatHtml(s.etat) + '</div>';
       }
       body.innerHTML = h || '<div class="audit-note">Aucun détail enregistré pour cette action.</div>';
+      boutonsDetailAudit(a);
 
       if (s.version_id && Array.isArray(s.contenu_modifie) && s.contenu_modifie.length) {
         const sec = document.createElement('div');
@@ -1458,7 +1562,6 @@
 
     function fermerDetailAudit() { auditModal.classList.remove('show'); auditDetailId = null; }
     document.getElementById('auditModalClose').addEventListener('click', fermerDetailAudit);
-    document.getElementById('auditModalOk').addEventListener('click', fermerDetailAudit);
     auditModal.addEventListener('click', e => { if (e.target === auditModal) fermerDetailAudit(); });
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && auditModal.classList.contains('show')) fermerDetailAudit();
@@ -1471,6 +1574,7 @@
       document.getElementById('auditModalSub').textContent = 'par ' + resume.username + ' · ' + dateAudit(resume.date);
       const body = document.getElementById('auditModalBody');
       body.innerHTML = '<div class="audit-note">Chargement…</div>';
+      boutonsDetailAudit(null);
       auditModal.classList.add('show');
       auditDetailId = resume.id;
       fetch('/api/admin/audit.php?id=' + encodeURIComponent(resume.id))

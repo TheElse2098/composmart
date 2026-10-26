@@ -202,7 +202,10 @@ if ($action === 'supprimer') {
 
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Événement introuvable ou déjà supprimé.']); exit; }
 
-    audit_log($conn, 'evenement_supprime', evt_titre($conn, $id), ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_supprime', evt_titre($conn, $id), [
+        'target_type' => 'evenement', 'target_id' => $id,
+        'snapshot'    => ['changements' => ['supprime' => [0, 1]]],
+    ]);
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -218,7 +221,10 @@ if ($action === 'restaurer') {
 
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => "Événement introuvable ou pas dans les supprimés."]); exit; }
 
-    audit_log($conn, 'evenement_restaure', evt_titre($conn, $id), ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_restaure', evt_titre($conn, $id), [
+        'target_type' => 'evenement', 'target_id' => $id,
+        'snapshot'    => ['changements' => ['supprime' => [1, 0]]],
+    ]);
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -561,7 +567,7 @@ if ($action === 'slide_modifier') {
     if ($changements) {
         audit_log($conn, 'evenement_slide_modifiee', evt_titre($conn, $proprio) . ' : ' . ($titre !== '' ? $titre : $s['type']), [
             'target_type' => 'evenement', 'target_id' => $proprio,
-            'snapshot'    => ['type' => $s['type'], 'changements' => $changements],
+            'snapshot'    => ['type' => $s['type'], 'slide_id' => $sid, 'changements' => $changements],
         ]);
     }
     echo json_encode(['ok' => true]);
@@ -786,6 +792,98 @@ if ($action === 'suivi') {
 
     echo json_encode(['evenement' => $evt, 'participants' => $participants], JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+// ── ANNULER depuis le journal ──────────────────────────────────────────────
+// État d'avant relu dans le journal (db-core, via auth-api). Refus si
+// l'événement ou la slide a bougé depuis, et toujours sous le verrou du
+// déroulé : on ne touche pas aux slides d'un atelier commencé.
+if ($action === 'annuler') {
+    $aid = audit_id_demande();
+    $e = audit_annulation_debut($conn, $aid, [
+        'evenement_ouvert', 'evenement_prevu', 'evenement_en_cours', 'evenement_termine', 'evenement_annule',
+        'evenement_supprime', 'evenement_restaure', 'evenement_slide_modifiee', 'evenement_slide_supprimee',
+    ]);
+    $s = $e['snapshot'];
+    $id = (int)$e['target_id'];
+    $echec = function ($m) use ($conn, $aid) { audit_annulation_echec($conn, $aid, $m); };
+    $ok = function () { echo json_encode(['ok' => true]); exit; };
+
+    if ($e['action'] === 'evenement_supprime' || $e['action'] === 'evenement_restaure') {
+        $ch = $s['changements']['supprime'] ?? null;
+        if (!$ch) $echec("L'état d'avant n'a pas été conservé.");
+        $vers = (int)$ch[0]; $depuis = (int)$ch[1];
+        $stmt = mysqli_prepare($conn, 'UPDATE evenements SET supprime = ? WHERE id = ? AND supprime = ?');
+        $stmt->bind_param('iii', $vers, $id, $depuis);
+        $stmt->execute();
+        if (mysqli_affected_rows($conn) !== 1) $echec('Cet événement a changé depuis.');
+        audit_log($conn, $vers === 1 ? 'evenement_supprime' : 'evenement_restaure', evt_titre($conn, $id), [
+            'target_type' => 'evenement', 'target_id' => $id,
+            'snapshot'    => ['changements' => ['supprime' => [$depuis, $vers]], 'annule' => $aid],
+        ]);
+        $ok();
+    }
+
+    if ($e['action'] === 'evenement_slide_modifiee') {
+        $sid = (int)($s['slide_id'] ?? 0);
+        $slide = $sid > 0 ? evt_slide_lire($conn, $sid) : null;
+        if (!$slide) $echec('Cette slide a été supprimée depuis.');
+        $verrou = evt_deroule_verrou($conn, (int)$slide['evenement_id']);
+        if ($verrou) $echec($verrou);
+        $actuel = evt_slide_champs($slide);
+        [$t, $err] = audit_revenir($actuel, $s['changements'] ?? []);
+        if ($err) $echec($err);
+        $v = valider_contenu($slide['type'], $t['contenu']);
+        if (!$v['ok']) $echec('La version d\'avant ne passe plus la validation : ' . $v['erreur']);
+        $json = json_encode($v['contenu'], JSON_UNESCAPED_UNICODE);
+        $points = (int)$t['points'];
+        $stmt = mysqli_prepare($conn, 'UPDATE evenement_slides SET titre = ?, contenu = ?, points = ? WHERE id = ?');
+        $stmt->bind_param('ssii', $t['titre'], $json, $points, $sid);
+        if (!$stmt->execute()) $echec("L'enregistrement a échoué.");
+        audit_log($conn, 'evenement_slide_modifiee', evt_titre($conn, (int)$slide['evenement_id']) . ' : ' . ($t['titre'] ?: $slide['type']), [
+            'target_type' => 'evenement', 'target_id' => (int)$slide['evenement_id'], 'snapshot' => [
+                'type' => $slide['type'], 'slide_id' => $sid, 'annule' => $aid,
+                'changements' => audit_changements($actuel, evt_slide_champs(evt_slide_lire($conn, $sid))),
+            ],
+        ]);
+        $ok();
+    }
+
+    if ($e['action'] === 'evenement_slide_supprimee') {
+        $t = $s['etat'] ?? null;
+        if (!$t) $echec("La slide supprimée n'a pas été conservée.");
+        $evt = (int)$t['evenement_id'];
+        $verrou = evt_deroule_verrou($conn, $evt);
+        if ($verrou) $echec($verrou);
+        $v = valider_contenu($t['type'], $t['contenu'] ?? []);
+        if (!$v['ok']) $echec('Cette slide ne passe plus la validation : ' . $v['erreur']);
+        $json = json_encode($v['contenu'], JSON_UNESCAPED_UNICODE);
+        $ordre = (int)$t['ordre']; $points = (int)$t['points'];
+        $stmt = mysqli_prepare($conn,
+            'INSERT INTO evenement_slides (evenement_id, ordre, type, titre, contenu, points) VALUES (?, ?, ?, ?, ?, ?)');
+        $stmt->bind_param('iisssi', $evt, $ordre, $t['type'], $t['titre'], $json, $points);
+        if (!$stmt->execute()) $echec('La recréation a échoué.');
+        $sid = (int)$stmt->insert_id;
+        audit_log($conn, 'evenement_slide_retablie', evt_titre($conn, $evt) . ' : ' . ($t['titre'] ?: $t['type']), [
+            'target_type' => 'evenement', 'target_id' => $evt,
+            'snapshot'    => ['etat' => evt_slide_lire($conn, $sid), 'annule' => $aid],
+        ]);
+        $ok();
+    }
+
+    // Changement de statut : retour au statut d'avant, s'il n'a pas rebougé.
+    $ch = $s['changements']['statut'] ?? null;
+    if (!$ch) $echec("Le statut d'avant n'a pas été conservé.");
+    [$avant, $apres] = $ch;
+    $stmt = mysqli_prepare($conn, 'UPDATE evenements SET statut = ? WHERE id = ? AND statut = ? AND supprime = 0');
+    $stmt->bind_param('sis', $avant, $id, $apres);
+    $stmt->execute();
+    if (mysqli_affected_rows($conn) !== 1) $echec("Le statut de l'événement a changé depuis, ou il a été supprimé.");
+    audit_log($conn, 'evenement_' . $avant, evt_titre($conn, $id), [
+        'target_type' => 'evenement', 'target_id' => $id,
+        'snapshot'    => ['changements' => ['statut' => [$apres, $avant]], 'annule' => $aid],
+    ]);
+    $ok();
 }
 
 echo json_encode(['error' => 'Action inconnue']);

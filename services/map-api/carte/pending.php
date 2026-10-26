@@ -6,6 +6,8 @@
  *  POST action=valider  ids[]  → passe en 'valide' (visible sur la carte).
  *  POST action=refuser  ids[]  → passe en 'refuse' (conservé pour l'audit).
  *  POST action=modifier id ... → corrige les propriétés avant validation.
+ *  POST action=annuler audit_id → annule depuis le journal une validation, un
+ *                                 refus, une modification ou une suppression.
  *
  * valider/refuser acceptent 1..N ids : le traitement unitaire et le traitement
  * en masse passent par la même route.
@@ -87,7 +89,8 @@ if ($action === 'valider' || $action === 'refuser') {
             $touches . ' composteur' . ($touches > 1 ? 's' : ''), [
                 'target_type' => 'compost',
                 'target_id'   => count($ids) === 1 ? $ids[0] : null,
-                'snapshot'    => ['ids' => $ids, 'traites' => $touches],
+                'snapshot'    => ['ids' => $ids, 'traites' => $touches,
+                                  'changements' => ['statut' => ['en_attente', $statut]]],
             ]);
     }
     echo json_encode(['ok' => true, 'traites' => $touches]);
@@ -132,6 +135,82 @@ if ($action === 'modifier') {
         'target_id'   => $id,
         'snapshot'    => ['changements' => audit_changements(
             $avant, compost_champs_modifiables(compost_etat($conn, $id)))],
+    ]);
+    echo json_encode(['ok' => true]);
+    exit;
+}
+
+// ── ANNULER depuis le journal ──────────────────────────────────────────────
+// L'état d'avant est relu dans le journal (db-core, via auth-api) ; refus si
+// le composteur a bougé depuis, plutôt que d'écraser une retouche plus récente.
+if ($action === 'annuler') {
+    $aid = audit_id_demande();
+    $e = audit_annulation_debut($conn, $aid, ['compost_valide', 'compost_refuse', 'compost_modifie', 'compost_supprime']);
+    $s = $e['snapshot'];
+    $echec = function ($m) use ($conn, $aid) { audit_annulation_echec($conn, $aid, $m); };
+
+    if ($e['action'] === 'compost_valide' || $e['action'] === 'compost_refuse') {
+        $ids = array_values(array_filter(array_map('intval', (array)($s['ids'] ?? []))));
+        if (!$ids || empty($s['changements'])) $echec("Les demandes concernées n'ont pas été conservées.");
+        $de = $e['action'] === 'compost_valide' ? 'valide' : 'refuse';
+        // Seules repartent en attente celles qui sont restées dans l'état où l'action les a mises.
+        mysqli_query($conn, "UPDATE composts SET statut = 'en_attente' WHERE id IN (" . implode(',', $ids) . ") AND statut = '$de'");
+        $n = mysqli_affected_rows($conn);
+        if ($n < 1) $echec('Ces demandes ont changé de statut ou ont été supprimées depuis.');
+        flush_cache_france();
+        audit_log($conn, 'compost_remis_en_attente', $n . ' composteur' . ($n > 1 ? 's' : ''), [
+            'target_type' => 'compost', 'target_id' => count($ids) === 1 ? $ids[0] : null,
+            'snapshot'    => ['ids' => $ids, 'traites' => $n, 'annule' => $aid,
+                              'changements' => ['statut' => [$de, 'en_attente']]],
+        ]);
+        echo json_encode(['ok' => true, 'traites' => $n]);
+        exit;
+    }
+
+    if ($e['action'] === 'compost_modifie') {
+        $id = (int)$e['target_id'];
+        $actuel = compost_champs_modifiables(compost_etat($conn, $id));
+        if (!$actuel) $echec('Ce composteur a été supprimé depuis.');
+        [$t, $err] = audit_revenir($actuel, $s['changements'] ?? []);
+        if ($err) $echec($err);
+        if (!compost_ecrire($conn, $id, $t)) $echec("L'enregistrement a échoué.");
+        flush_cache_france();
+        audit_log($conn, 'compost_modifie', "id=$id", [
+            'target_type' => 'compost', 'target_id' => $id, 'snapshot' => [
+                'annule' => $aid,
+                'changements' => audit_changements($actuel, compost_champs_modifiables(compost_etat($conn, $id))),
+            ],
+        ]);
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+
+    // compost_supprime : recréé avec son numéro, sa position et ses règles.
+    $t = $s['etat'] ?? null;
+    $id = (int)$e['target_id'];
+    if (!$t || $id <= 0) $echec("Le composteur supprimé n'a pas été conservé.");
+    if (compost_etat($conn, $id)) $echec('Un composteur porte déjà ce numéro.');
+    // L'import OSM nocturne a pu remettre le même point sous un autre numéro.
+    $stmt = mysqli_prepare($conn,
+        "SELECT id, (6371 * acos(LEAST(1, cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?))
+                 + sin(radians(?)) * sin(radians(latitude))))) AS distance
+         FROM composts WHERE statut <> 'refuse' HAVING distance < 0.005 LIMIT 1");
+    $stmt->bind_param('ddd', $t['lat'], $t['lon'], $t['lat']);
+    $stmt->execute();
+    if ($proche = $stmt->get_result()->fetch_assoc()) {
+        $echec('Un composteur existe déjà à cet endroit (#' . (int)$proche['id'] . ').');
+    }
+    $stmt = mysqli_prepare($conn,
+        'INSERT INTO composts (id, latitude, longitude, type, publique, gestion, info_gestion, statut, propose_par, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt->bind_param('iddsssssss', $id, $t['lat'], $t['lon'], $t['type'], $t['acces'], $t['gestion'],
+                      $t['info_gestion'], $t['statut'], $t['propose_par'], $t['created_at']);
+    if (!$stmt->execute()) $echec('La recréation a échoué.');
+    compost_ecrire($conn, $id, $t);
+    flush_cache_france();
+    audit_log($conn, 'compost_retabli', "id=$id", [
+        'target_type' => 'compost', 'target_id' => $id,
+        'snapshot'    => ['etat' => compost_etat($conn, $id), 'annule' => $aid],
     ]);
     echo json_encode(['ok' => true]);
     exit;

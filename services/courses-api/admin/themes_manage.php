@@ -59,14 +59,6 @@ csrf_check();
 $d = corps_json();
 $action = $d['action'] ?? '';
 
-/** Un thème tel que le journal le garde (avant/après, état supprimé). */
-function theme_lire($c, $id) {
-    $stmt = mysqli_prepare($c, 'SELECT slug, nom, emoji, couleur, description FROM themes WHERE id = ?');
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
-    return $stmt->get_result()->fetch_assoc() ?: null;
-}
-
 // ── Suppression ────────────────────────────────────────────────────────────
 if ($action === 'delete') {
     $id = (int)($d['id'] ?? 0);

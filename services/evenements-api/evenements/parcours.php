@@ -265,7 +265,7 @@ if ($action === 'slide_modifier') {
     if ($changements) {
         audit_log($conn, 'parcours_slide_modifiee', $avant['parcours'] . ' : ' . ($titre !== '' ? $titre : $s['type']), [
             'target_type' => 'parcours', 'target_id' => (int)$s['parcours_id'],
-            'snapshot'    => ['type' => $s['type'], 'changements' => $changements],
+            'snapshot'    => ['type' => $s['type'], 'slide_id' => $id, 'changements' => $changements],
         ]);
     }
 
@@ -310,6 +310,124 @@ if ($action === 'slide_reordonner') {
     mysqli_query($conn, 'UPDATE parcours SET maj_at = NOW() WHERE id = ' . $parcours_id);
     echo json_encode(['ok' => true]);
     exit;
+}
+
+// ── ANNULER depuis le journal ──────────────────────────────────────────────
+// État d'avant relu dans le journal (db-core, via auth-api) ; refus si le
+// parcours ou la slide a été retouché depuis. Un parcours supprimé revient
+// sous un nouveau numéro, avec ses slides revalidées une à une.
+if ($action === 'annuler') {
+    $aid = audit_id_demande();
+    $e = audit_annulation_debut($conn, $aid, [
+        'parcours_modifie', 'parcours_supprime', 'parcours_slide_modifiee', 'parcours_slide_supprimee',
+    ]);
+    $s = $e['snapshot'];
+    $echec = function ($m) use ($conn, $aid) { audit_annulation_echec($conn, $aid, $m); };
+    $ok = function () { echo json_encode(['ok' => true]); exit; };
+    $champs = fn($x) => ['titre' => $x['titre'], 'points' => $x['points'], 'contenu' => $x['contenu']];
+
+    /** Slide revalidée (le registre a pu se durcir depuis) : [titre, json, points] ou message. */
+    $preparer = function ($type, $titre, $contenu, $points) {
+        if (!slide_type_valide($type)) return "type de slide « $type » inconnu";
+        $v = valider_contenu($type, $contenu);
+        if (!$v['ok']) return $v['erreur'];
+        $reg = slides_registre();
+        $points = $reg[$type]['note'] === false ? 0 : max(0, min(1000, (int)$points));
+        return [mb_substr((string)$titre, 0, 200), json_encode($v['contenu'], JSON_UNESCAPED_UNICODE), $points];
+    };
+
+    if ($e['action'] === 'parcours_modifie') {
+        $id = (int)$e['target_id'];
+        $stmt = mysqli_prepare($conn, 'SELECT nom, description FROM parcours WHERE id = ?');
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $actuel = $stmt->get_result()->fetch_assoc();
+        if (!$actuel) $echec('Ce parcours a été supprimé depuis.');
+        [$t, $err] = audit_revenir($actuel, $s['changements'] ?? []);
+        if ($err) $echec($err);
+        $stmt = mysqli_prepare($conn, 'UPDATE parcours SET nom = ?, description = ? WHERE id = ?');
+        $stmt->bind_param('ssi', $t['nom'], $t['description'], $id);
+        if (!$stmt->execute()) $echec("L'enregistrement a échoué.");
+        audit_log($conn, 'parcours_modifie', $t['nom'], [
+            'target_type' => 'parcours', 'target_id' => $id,
+            'snapshot'    => ['changements' => audit_changements($actuel, $t), 'annule' => $aid],
+        ]);
+        $ok();
+    }
+
+    if ($e['action'] === 'parcours_supprime') {
+        $p = $s['etat'] ?? null;
+        if (!$p || !isset($p['nom'])) $echec("Le parcours supprimé n'a pas été conservé.");
+        $auteur = $p['cree_par'] ?? ($_SESSION['username'] ?? '');
+        $stmt = mysqli_prepare($conn, 'INSERT INTO parcours (nom, description, cree_par) VALUES (?, ?, ?)');
+        $stmt->bind_param('sss', $p['nom'], $p['description'], $auteur);
+        if (!$stmt->execute()) $echec('La recréation a échoué.');
+        $id = (int)$stmt->insert_id;
+        $ins = mysqli_prepare($conn,
+            'INSERT INTO parcours_slides (parcours_id, ordre, type, titre, contenu, points) VALUES (?, ?, ?, ?, ?, ?)');
+        $refusees = [];
+        foreach ((array)($p['slides'] ?? []) as $rang => $sl) {
+            $r = $preparer($sl['type'] ?? '', $sl['titre'] ?? '', $sl['contenu'] ?? [], $sl['points'] ?? 0);
+            if (!is_array($r)) { $refusees[] = ($sl['titre'] ?: ($sl['type'] ?? '?')) . ' : ' . $r; continue; }
+            [$titre, $json, $points] = $r;
+            $type = $sl['type'];
+            $ins->bind_param('iisssi', $id, $rang, $type, $titre, $json, $points);
+            $ins->execute();
+        }
+        $etat = ['nom' => $p['nom'], 'description' => $p['description'], 'slides' => lire_slides($conn, $id)];
+        if ($refusees) $etat['slides_non_retablies'] = $refusees;
+        audit_log($conn, 'parcours_retabli', $p['nom'], [
+            'target_type' => 'parcours', 'target_id' => $id, 'snapshot' => ['etat' => $etat, 'annule' => $aid],
+        ]);
+        echo json_encode(['ok' => true, 'id' => $id, 'slides_non_retablies' => $refusees], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if ($e['action'] === 'parcours_slide_modifiee') {
+        $sid = (int)($s['slide_id'] ?? 0);
+        $slide = $sid > 0 ? slide_lire($conn, $sid) : null;
+        if (!$slide) $echec('Cette slide a été supprimée depuis.');
+        $actuel = $champs($slide);
+        [$t, $err] = audit_revenir($actuel, $s['changements'] ?? []);
+        if ($err) $echec($err);
+        $r = $preparer($slide['type'], $t['titre'], $t['contenu'], $t['points']);
+        if (!is_array($r)) $echec('La version d\'avant ne passe plus la validation : ' . $r);
+        [$titre, $json, $points] = $r;
+        $stmt = mysqli_prepare($conn, 'UPDATE parcours_slides SET titre = ?, contenu = ?, points = ? WHERE id = ?');
+        $stmt->bind_param('ssii', $titre, $json, $points, $sid);
+        if (!$stmt->execute()) $echec("L'enregistrement a échoué.");
+        mysqli_query($conn, 'UPDATE parcours SET maj_at = NOW() WHERE id = ' . (int)$slide['parcours_id']);
+        audit_log($conn, 'parcours_slide_modifiee', $slide['parcours'] . ' : ' . ($titre !== '' ? $titre : $slide['type']), [
+            'target_type' => 'parcours', 'target_id' => (int)$slide['parcours_id'], 'snapshot' => [
+                'type' => $slide['type'], 'slide_id' => $sid, 'annule' => $aid,
+                'changements' => audit_changements($actuel, $champs(slide_lire($conn, $sid))),
+            ],
+        ]);
+        $ok();
+    }
+
+    // parcours_slide_supprimee : remise à sa place dans son parcours.
+    $t = $s['etat'] ?? null;
+    if (!$t) $echec("La slide supprimée n'a pas été conservée.");
+    $pid = (int)$t['parcours_id'];
+    $r = mysqli_query($conn, "SELECT nom FROM parcours WHERE id = $pid");
+    $parc = $r ? mysqli_fetch_assoc($r) : null;
+    if (!$parc) $echec('Son parcours a été supprimé depuis.');
+    $prep = $preparer($t['type'], $t['titre'], $t['contenu'] ?? [], $t['points'] ?? 0);
+    if (!is_array($prep)) $echec('Cette slide ne passe plus la validation : ' . $prep);
+    [$titre, $json, $points] = $prep;
+    $ordre = (int)$t['ordre']; $type = $t['type'];
+    $stmt = mysqli_prepare($conn,
+        'INSERT INTO parcours_slides (parcours_id, ordre, type, titre, contenu, points) VALUES (?, ?, ?, ?, ?, ?)');
+    $stmt->bind_param('iisssi', $pid, $ordre, $type, $titre, $json, $points);
+    if (!$stmt->execute()) $echec('La recréation a échoué.');
+    $sid = (int)$stmt->insert_id;
+    mysqli_query($conn, "UPDATE parcours SET maj_at = NOW() WHERE id = $pid");
+    audit_log($conn, 'parcours_slide_retablie', $parc['nom'] . ' : ' . ($titre !== '' ? $titre : $type), [
+        'target_type' => 'parcours', 'target_id' => $pid,
+        'snapshot'    => ['etat' => slide_lire($conn, $sid), 'annule' => $aid],
+    ]);
+    $ok();
 }
 
 echo json_encode(['error' => 'Action inconnue']);
