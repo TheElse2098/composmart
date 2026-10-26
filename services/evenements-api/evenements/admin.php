@@ -77,6 +77,16 @@ function evt_slide_proprietaire($conn, $slide_id) {
     return $r ? (int)$r['evenement_id'] : 0;
 }
 
+/** Titre d'un événement pour le journal d'audit : sans lui, une ligne
+ *  « Événement annulé » ne dit pas lequel. */
+function evt_titre($conn, $id) {
+    $stmt = mysqli_prepare($conn, 'SELECT titre FROM evenements WHERE id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $r = $stmt->get_result()->fetch_assoc();
+    return $r ? $r['titre'] : "événement #$id";
+}
+
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // ── CRÉER UN ÉVÉNEMENT ──────────────────────────────────────────────────────
@@ -129,7 +139,7 @@ if (isset($STATUTS_ACTION[$action])) {
 
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Événement introuvable ou supprimé.']); exit; }
 
-    audit_log($conn, 'evenement_' . $nouveau_statut, '', ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_' . $nouveau_statut, evt_titre($conn, $id), ['target_type' => 'evenement', 'target_id' => $id]);
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -145,7 +155,7 @@ if ($action === 'supprimer') {
 
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Événement introuvable ou déjà supprimé.']); exit; }
 
-    audit_log($conn, 'evenement_supprime', '', ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_supprime', evt_titre($conn, $id), ['target_type' => 'evenement', 'target_id' => $id]);
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -161,7 +171,7 @@ if ($action === 'restaurer') {
 
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => "Événement introuvable ou pas dans les supprimés."]); exit; }
 
-    audit_log($conn, 'evenement_restaure', '', ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_restaure', evt_titre($conn, $id), ['target_type' => 'evenement', 'target_id' => $id]);
     echo json_encode(['ok' => true]);
     exit;
 }
@@ -271,7 +281,8 @@ if ($action === 'affecter_parcours') {
     $stmt->bind_param('ii', $parcours_id, $id);
     $stmt->execute();
 
-    audit_log($conn, 'evenement_parcours_affecte', $copiees . ' slides', ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_parcours_affecte', evt_titre($conn, $id) . ' ← ' . $nom . ' (' . $copiees . ' slides)',
+              ['target_type' => 'evenement', 'target_id' => $id]);
     echo json_encode(['ok' => true, 'slides' => $copiees]);
     exit;
 }
@@ -289,7 +300,7 @@ if ($action === 'ajouter_parcours') {
     if ($nom === null) { echo json_encode(['error' => 'Parcours introuvable.']); exit; }
     if ($copiees === 0) { echo json_encode(['error' => 'Ce parcours ne contient aucune slide.']); exit; }
 
-    audit_log($conn, 'evenement_parcours_ajoute', $nom . ' (' . $copiees . ' slides)',
+    audit_log($conn, 'evenement_parcours_ajoute', evt_titre($conn, $id) . ' ← ' . $nom . ' (' . $copiees . ' slides)',
               ['target_type' => 'evenement', 'target_id' => $id]);
     echo json_encode(['ok' => true, 'slides' => $copiees, 'nom' => $nom], JSON_UNESCAPED_UNICODE);
     exit;
@@ -583,7 +594,7 @@ if ($action === 'equipes_definir') {
         $stmt->execute();
     }
 
-    audit_log($conn, 'evenement_equipes', count($noms) . ' équipes', ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_equipes', evt_titre($conn, $id) . ' : ' . count($noms) . ' équipes', ['target_type' => 'evenement', 'target_id' => $id]);
     echo json_encode(['ok' => true, 'equipes' => count($noms)]);
     exit;
 }
@@ -660,7 +671,7 @@ if ($action === 'repartir_auto') {
         $stmt->execute();
     }
 
-    audit_log($conn, 'evenement_repartition', count($ids) . ' participants', ['target_type' => 'evenement', 'target_id' => $id]);
+    audit_log($conn, 'evenement_repartition', evt_titre($conn, $id) . ' : ' . count($ids) . ' participants', ['target_type' => 'evenement', 'target_id' => $id]);
     echo json_encode(['ok' => true, 'repartis' => count($ids)]);
     exit;
 }

@@ -424,7 +424,8 @@
       <div class="tab-content" id="tab-audit">
         <div class="section-title">📜 Journal d'activité <span id="auditCount" style="font-weight:700;color:#4a7a5a;font-size:0.85rem"></span></div>
         <div class="audit-filters">
-          <select id="auditTypeFilter" class="audit-type-select"><option value="tous">Toutes les actions</option></select>
+          <select id="auditCatFilter" class="audit-type-select"><option value="tous">Toutes les catégories</option></select>
+          <select id="auditTypeFilter" class="audit-type-select" hidden></select>
           <label class="audit-date-lbl">Du <input id="auditDateFrom" class="audit-date-input" type="date"></label>
           <label class="audit-date-lbl">au <input id="auditDateTo" class="audit-date-input" type="date"></label>
           <button type="button" class="audit-date-reset" id="auditDateReset" style="display:none">✕ Effacer les dates</button>
@@ -511,6 +512,8 @@
   </div>
 
   <script src="/assets/js/xp-chart.js"></script>
+  <!-- ?v=2 : ajout d'informer() ; une version en cache sans elle casserait la page. -->
+  <script src="/assets/js/confirmer.js?v=2"></script>
   <script>
     // ── BURGER ──
     function echap(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
@@ -848,17 +851,18 @@
       if (e.target === this) fermerFiche();
     });
 
-    function userAction(d) {
+    async function userAction(d) {
       const name = d.name || 'cet utilisateur';
-      let confirmMsg;
+      let question;
       if (d.act === 'delete') {
-        confirmMsg = 'Supprimer définitivement « ' + name + ' » ?\nSa progression et ses scores seront perdus.';
+        question = { titre: 'Supprimer définitivement « ' + name + ' » ?',
+                     texte: 'Sa progression et ses scores seront perdus.', valider: 'Supprimer', danger: true };
       } else if (d.val === '1') {
-        confirmMsg = 'Promouvoir « ' + name + ' » administrateur ?';
+        question = { titre: 'Promouvoir « ' + name + ' » administrateur ?', valider: 'Promouvoir' };
       } else {
-        confirmMsg = 'Retirer les droits admin à « ' + name + ' » ?';
+        question = { titre: 'Retirer les droits admin à « ' + name + ' » ?', valider: 'Retirer', danger: true };
       }
-      if (!confirm(confirmMsg)) return;
+      if (!await confirmer(question)) return;
 
       const body = { action: d.act, user_id: d.id };
       if (d.act === 'set_admin') body.value = d.val;
@@ -869,10 +873,10 @@
           if (res.ok) {
             reloadDashboard();
           } else {
-            alert(res.error || 'Action impossible.');
+            informer({ titre: 'Action impossible', texte: res.error || '' });
           }
         })
-        .catch(() => alert('Erreur réseau.'));
+        .catch(() => informer({ titre: 'Erreur réseau', texte: "L'action n'a pas pu être envoyée." }));
     }
 
     // ── Recherche d'utilisateurs (côté serveur, débouncée) ──
@@ -893,9 +897,8 @@
 
     // ── Journal d'audit ──
     // Une entrée par valeur d'action possible (cf. tous les appels audit_log()
-    // du backend) : sans ça, le fallback plus bas ({icon:'•', txt: a.action})
-    // affiche le nom brut de la constante PHP — lisible mais terne au milieu
-    // des lignes illustrées, comme ticket_ferme_definitif sans rien pour l'accompagner.
+    // du backend, dans les 5 services) : sans ça, libelleAudit() retombe sur
+    // ❔ + le code brut. Toute nouvelle action journalisée s'ajoute ici.
     const AUDIT_LABELS = {
       compost_cree:            { icon: '📍', txt: 'Composteur ajouté' },
       compost_demande:         { icon: '🌱', txt: "Demande d'ajout" },
@@ -904,12 +907,15 @@
       compost_modifie:         { icon: '✏️', txt: 'Composteur modifié' },
       compost_supprime:        { icon: '🗑️', txt: 'Composteur supprimé' },
       signalement_cree:        { icon: '🚩', txt: 'Signalement créé' },
-      signalement_resolu:      { icon: '✓', txt: 'Signalement résolu' },
-      signalement_rejete:      { icon: '✗', txt: 'Signalement rejeté' },
+      signalement_resolu:      { icon: '✔️', txt: 'Signalement résolu' },
+      signalement_rejete:      { icon: '✖️', txt: 'Signalement rejeté' },
       user_promu:              { icon: '⬆️', txt: 'Utilisateur promu admin' },
       user_retrograde:         { icon: '⬇️', txt: 'Admin rétrogradé' },
       user_supprime:           { icon: '🚫', txt: 'Utilisateur supprimé' },
+      compte_supprime:         { icon: '👋', txt: 'Compte supprimé par son titulaire' },
+      compte_purge:            { icon: '🧹', txt: 'Compte purgé (RGPD)' },
       mdp_reinitialise:        { icon: '🔑', txt: 'Mot de passe réinitialisé' },
+      email_modifie:           { icon: '📮', txt: 'Adresse email changée' },
       mail_envoye:             { icon: '📧', txt: 'Email envoyé' },
       cours_cree:              { icon: '📚', txt: 'Cours créé' },
       cours_modifie:           { icon: '📝', txt: 'Cours modifié' },
@@ -930,8 +936,45 @@
       evenement_termine:       { icon: '🏁', txt: 'Événement terminé' },
       evenement_annule:        { icon: '🚫', txt: 'Événement annulé' },
       evenement_supprime:      { icon: '🗑️', txt: 'Événement supprimé' },
-      evenement_restaure:      { icon: '♻️', txt: 'Événement restauré' }
+      evenement_restaure:      { icon: '♻️', txt: 'Événement restauré' },
+      evenement_parcours_affecte: { icon: '🧭', txt: 'Parcours affecté à un atelier' },
+      evenement_parcours_ajoute:  { icon: '➕', txt: 'Parcours enchaîné dans un atelier' },
+      evenement_equipes:       { icon: '👥', txt: 'Équipes définies' },
+      evenement_repartition:   { icon: '🎲', txt: 'Équipes réparties au hasard' },
+      evenement_image_ajoutee: { icon: '🖼️', txt: 'Image ajoutée à la banque' },
+      evenement_image_supprimee: { icon: '🗑️', txt: 'Image supprimée de la banque' },
+      parcours_cree:           { icon: '🧩', txt: 'Parcours créé' },
+      parcours_modifie:        { icon: '✏️', txt: 'Parcours modifié' },
+      parcours_duplique:       { icon: '📑', txt: 'Parcours dupliqué' },
+      parcours_supprime:       { icon: '🗑️', txt: 'Parcours supprimé' },
+      jeu_modifie:             { icon: '🕹️', txt: 'Jeu modifié' },
+      jeu_restaure:            { icon: '⏪', txt: 'Version de jeu restaurée' },
+      jeux_ordre:              { icon: '🔀', txt: 'Jeux réordonnés' }
     };
+
+    // Catégories du filtre : 8 entrées au lieu d'une par action. Une action est
+    // rangée par son préfixe, ce qui classe aussi d'office une action future
+    // pas encore nommée ci-dessus ; seule une action au préfixe inconnu tombe
+    // dans « Autres » — elle s'y voit, avec son code brut, au lieu de se perdre.
+    const AUDIT_CATEGORIES = [
+      { id: 'carte',    icon: '🗺️', txt: 'Carte',    prefixes: ['compost_', 'signalement_'] },
+      { id: 'cours',    icon: '📚', txt: 'Cours',    prefixes: ['cours_', 'theme_', 'media_'] },
+      { id: 'jeux',     icon: '🎮', txt: 'Jeux',     prefixes: ['jeu_', 'jeux_'] },
+      { id: 'ateliers', icon: '🎉', txt: 'Ateliers', prefixes: ['evenement_', 'parcours_'] },
+      { id: 'comptes',  icon: '👤', txt: 'Comptes',  prefixes: ['user_', 'compte_', 'mdp_', 'email_'] },
+      { id: 'support',  icon: '💬', txt: 'Support',  prefixes: ['ticket_'] },
+      { id: 'emails',   icon: '📧', txt: 'Emails',   prefixes: ['mail_'] },
+      { id: 'autres',   icon: '❔', txt: 'Autres',   prefixes: [] }
+    ];
+
+    function categorieAudit(action) {
+      const cat = AUDIT_CATEGORIES.find(c => c.prefixes.some(p => action.startsWith(p)));
+      return cat ? cat.id : 'autres';
+    }
+
+    function libelleAudit(action) {
+      return AUDIT_LABELS[action] || { icon: '❔', txt: action };
+    }
 
     function row(key, val, isEmpty) {
       return '<div class="audit-row"><span class="audit-key">' + key + '</span>'
@@ -972,7 +1015,10 @@
         if (ok)  rows += row('Autorisé', ok);
         if (nok) rows += row('Interdit', nok);
       } else if (a.target_type === 'user') {
-        rows += row('Utilisateur', echap(s.username || ('#' + a.target_id)));
+        // Suppressions et purges : ni pseudo ni id, volontairement (RGPD).
+        rows += row('Utilisateur', s.username ? echap(s.username)
+          : (a.target_id != null ? '#' + a.target_id : 'compte effacé'), !s.username && a.target_id == null);
+        if (a.action === 'compte_purge' && a.details) rows += row('Motif', echap(a.details));
         if (s.admin !== undefined) rows += row('Nouveau rôle', s.admin ? 'Administrateur' : 'Utilisateur');
         if (s.etait_admin !== undefined) rows += row('Était admin', s.etait_admin ? 'oui' : 'non');
       } else if (a.target_type === 'mail') {
@@ -987,15 +1033,29 @@
       return rows;
     }
 
-    // ── Journal d'audit (filtre par type d'action + pagination) ──
+    // ── Journal d'audit (filtre catégorie → action, dates, pagination) ──
+    let auditCat = 'tous';
     let auditType = 'tous';
     let auditDepuis = '';
     let auditJusqu = '';
     let auditPage = 1;
-    let auditTypesConnus = false;
+    let auditTypes = [];          // actions présentes en base (renvoyées par audit.php)
+    let auditTypesSig = '';       // pour ne repeupler les menus que s'ils changent
+
+    const auditCatSel  = document.getElementById('auditCatFilter');
+    const auditTypeSel = document.getElementById('auditTypeFilter');
+
+    /** Actions à demander au serveur ; vide = tout le journal. */
+    function actionsFiltrees() {
+      if (auditType !== 'tous') return [auditType];
+      if (auditCat === 'tous') return [];
+      return auditTypes.filter(t => categorieAudit(t) === auditCat);
+    }
 
     function chargerAudit() {
-      const params = new URLSearchParams({ type: auditType, page: auditPage });
+      const params = new URLSearchParams({ page: auditPage });
+      const actions = actionsFiltrees();
+      if (actions.length) params.set('actions', actions.join(','));
       if (auditDepuis) params.set('depuis', auditDepuis);
       if (auditJusqu)  params.set('jusqu', auditJusqu);
       fetch('/api/admin/audit.php?' + params.toString())
@@ -1004,7 +1064,45 @@
         .catch(() => renderAudit({ entries: [], types: [], page: 1, pages: 1, total: 0 }));
     }
 
-    document.getElementById('auditTypeFilter').addEventListener('change', e => {
+    /** Menu des catégories : seules celles qui ont au moins une action en base. */
+    function remplirCategoriesAudit() {
+      const presentes = new Set(auditTypes.map(categorieAudit));
+      auditCatSel.innerHTML = '<option value="tous">Toutes les catégories</option>';
+      AUDIT_CATEGORIES.filter(c => presentes.has(c.id)).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.icon + ' ' + c.txt;
+        auditCatSel.appendChild(opt);
+      });
+      if (!presentes.has(auditCat)) auditCat = 'tous';
+      auditCatSel.value = auditCat;
+      remplirActionsAudit();
+    }
+
+    /** Second menu, visible une fois une catégorie choisie : ses actions. */
+    function remplirActionsAudit() {
+      const actions = auditCat === 'tous' ? [] : auditTypes.filter(t => categorieAudit(t) === auditCat);
+      auditTypeSel.hidden = actions.length < 2;
+      auditTypeSel.innerHTML = '<option value="tous">Toutes ses actions</option>';
+      actions
+        .map(t => ({ t, l: libelleAudit(t) }))
+        .sort((x, y) => x.l.txt.localeCompare(y.l.txt, 'fr'))
+        .forEach(({ t, l }) => {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = l.icon + ' ' + l.txt;
+          auditTypeSel.appendChild(opt);
+        });
+      if (!actions.includes(auditType)) auditType = 'tous';
+      auditTypeSel.value = auditType;
+    }
+
+    auditCatSel.addEventListener('change', e => {
+      auditCat = e.target.value; auditType = 'tous'; auditPage = 1;
+      remplirActionsAudit();
+      chargerAudit();
+    });
+    auditTypeSel.addEventListener('change', e => {
       auditType = e.target.value; auditPage = 1; chargerAudit();
     });
     const auditFrom  = document.getElementById('auditDateFrom');
@@ -1032,17 +1130,13 @@
     });
 
     function renderAudit(d) {
-      // Peuple le sélecteur de types une seule fois (les types n'apparaissent
-      // ni ne disparaissent en cours de session), avec les libellés connus.
-      if (!auditTypesConnus && d.types && d.types.length) {
-        auditTypesConnus = true;
-        const sel = document.getElementById('auditTypeFilter');
-        d.types.forEach(t => {
-          const opt = document.createElement('option');
-          opt.value = t;
-          opt.textContent = (AUDIT_LABELS[t] ? AUDIT_LABELS[t].icon + ' ' + AUDIT_LABELS[t].txt : t);
-          sel.appendChild(opt);
-        });
+      // Une action faite dans un autre onglet peut ajouter un type en cours de
+      // session : les menus suivent, sans perdre la sélection en cours.
+      // (Une réponse en erreur arrive sans types : on garde alors les menus.)
+      if (Array.isArray(d.types) && d.types.length && d.types.join(',') !== auditTypesSig) {
+        auditTypes = d.types;
+        auditTypesSig = d.types.join(',');
+        remplirCategoriesAudit();
       }
 
       document.getElementById('auditCount').textContent = d.total ? '(' + d.total + ')' : '';
@@ -1055,7 +1149,7 @@
       }
       box.innerHTML = '';
       liste.forEach(a => {
-        const meta = AUDIT_LABELS[a.action] || { icon: '•', txt: a.action };
+        const meta = libelleAudit(a.action);
         const item = document.createElement('div');
         item.className = 'audit-item';
         const summary = a.details ? ' <span class="audit-meta">(' + echap(a.details) + ')</span>' : '';
@@ -1280,11 +1374,11 @@
       majSelection();
     }
 
-    function traiterPending(action, ids) {
+    async function traiterPending(action, ids) {
       if (!ids.length) return;
       if (action === 'refuser') {
         const quoi = ids.length > 1 ? 'ces ' + ids.length + ' demandes' : 'cette demande';
-        if (!confirm('Refuser ' + quoi + ' ?')) return;
+        if (!await confirmer({ titre: 'Refuser ' + quoi + ' ?', valider: 'Refuser', danger: true })) return;
       }
       const body = new URLSearchParams();
       body.set('action', action);
@@ -1293,9 +1387,9 @@
         .then(r => r.json())
         .then(d => {
           if (d.ok) rafraichirApresAction();
-          else alert(d.error || 'Action impossible.');
+          else informer({ titre: 'Action impossible', texte: d.error || '' });
         })
-        .catch(() => alert('Erreur réseau.'));
+        .catch(() => informer({ titre: 'Erreur réseau', texte: "L'action n'a pas pu être envoyée." }));
     }
 
     // ── Modale de modification ──
@@ -1536,8 +1630,12 @@
       if (t.statut === 'ouvert') bouton('✓ Clore', '', () => actionTicket('clore'));
       if (t.statut === 'clos')   bouton('↺ Rouvrir', '', () => actionTicket('rouvrir'));
       if (t.statut !== 'clos_definitif') {
-        bouton('⛔ Fermer définitivement', 'danger', () => {
-          if (confirm('Fermer définitivement ce ticket ?\nPersonne ne pourra plus le rouvrir ni y répondre — pas même un admin.')) {
+        bouton('⛔ Fermer définitivement', 'danger', async () => {
+          if (await confirmer({
+            titre: 'Fermer définitivement ce ticket ?',
+            texte: 'Personne ne pourra plus le rouvrir ni y répondre — pas même un admin.',
+            valider: 'Fermer définitivement', danger: true,
+          })) {
             actionTicket('fermer_definitif');
           }
         });
@@ -1552,7 +1650,7 @@
       })
         .then(r => r.json())
         .then(d => {
-          if (d.error) alert(d.error);
+          if (d.error) informer({ titre: 'Action impossible', texte: d.error });
           tchatNb = -1;
           chargerFil();
         })
@@ -1573,7 +1671,7 @@
         .then(r => r.json())
         .then(d => {
           btn.disabled = false;
-          if (d.error) { alert(d.error); return; }
+          if (d.error) { informer({ titre: 'Réponse non envoyée', texte: d.error }); return; }
           zone.value = '';
           tchatNb = -1;
           chargerFil();

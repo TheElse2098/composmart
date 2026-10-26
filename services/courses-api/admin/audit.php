@@ -1,7 +1,10 @@
 <?php
 /**
  * Admin — journal d'audit filtré + paginé.
- *  GET ?type=...&page=... → liste des entrées audit_log, plus récentes d'abord.
+ *  GET ?actions=a,b,c&depuis=…&jusqu=…&page=… → entrées audit_log, plus récentes d'abord.
+ *  `actions` absent = toutes ; c'est le front qui traduit une catégorie
+ *  (Carte, Cours…) en liste d'actions, pour que le catalogue des actions
+ *  ne vive qu'à un seul endroit.
  */
 ob_start();
 error_reporting(0);
@@ -53,10 +56,17 @@ $types = [];
 $res = mysqli_query($c, 'SELECT DISTINCT action FROM audit_log ORDER BY action');
 while ($row = mysqli_fetch_assoc($res)) { $types[] = $row['action']; }
 
-// Filtre : 'tous', ou une action précise (ex. 'signalement_cree').
-$type = $_GET['type'] ?? 'tous';
-if ($type !== 'tous' && !in_array($type, $types, true)) { $type = 'tous'; }
-$where = $type === 'tous' ? '' : 'WHERE action = \'' . mysqli_real_escape_string($c, $type) . '\'';
+// Filtre : liste d'actions (une catégorie ou une action précise), réduite aux
+// actions réellement présentes. Une liste demandée dont rien n'existe en base
+// renvoie une liste vide — surtout pas tout le journal.
+$where = '';
+$demandees = array_values(array_filter(explode(',', (string)($_GET['actions'] ?? ''))));
+if ($demandees) {
+    $valides = array_values(array_intersect($demandees, $types));
+    $where = $valides
+        ? "WHERE action IN ('" . implode("','", array_map(fn($a) => mysqli_real_escape_string($c, $a), $valides)) . "')"
+        : 'WHERE 0';
+}
 
 // Plage de dates optionnelle (YYYY-MM-DD), chaque borne indépendante et incluse.
 $depuis = $_GET['depuis'] ?? '';
@@ -77,11 +87,12 @@ $page  = min($page, $pages);
 $offset = ($page - 1) * PAR_PAGE;
 
 $res = mysqli_query($c,
-    "SELECT username, action, details, target_type, target_id, snapshot, created_at
+    "SELECT id, username, action, details, target_type, target_id, snapshot, created_at
      FROM audit_log $where ORDER BY id DESC LIMIT " . PAR_PAGE . " OFFSET $offset");
 $entries = [];
 while ($row = mysqli_fetch_assoc($res)) {
     $entries[] = [
+        'id'          => (int)$row['id'],
         'username'    => $row['username'] ?: 'inconnu',
         'action'      => $row['action'],
         'details'     => $row['details'],
@@ -96,7 +107,6 @@ mysqli_close($c);
 echo json_encode([
     'entries' => $entries,
     'types'   => $types,
-    'type'    => $type,
     'page'    => $page,
     'pages'   => $pages,
     'total'   => $total,

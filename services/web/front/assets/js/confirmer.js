@@ -17,6 +17,10 @@
 
    Renvoie une promesse résolue à true/false. Échap et le clic hors de la boîte
    valent « non ».
+
+   Pour un simple message (remplace alert()) :
+     await informer({ titre: 'Action impossible', texte: d.error });
+   Un seul bouton « OK » ; la promesse se résout à la fermeture.
    ============================================================================ */
 (function () {
   var CSS = [
@@ -65,7 +69,7 @@
         + '<div class="cfm-titre">' + echapper(opts.titre || 'Confirmer ?') + '</div>'
         + (opts.texte ? '<div class="cfm-texte">' + echapper(opts.texte) + '</div>' : '')
         + '<div class="cfm-actions">'
-        + '<button type="button" class="cfm-non">' + echapper(opts.annuler || 'Annuler') + '</button>'
+        + (opts.seul ? '' : '<button type="button" class="cfm-non">' + echapper(opts.annuler || 'Annuler') + '</button>')
         + '<button type="button" class="cfm-oui' + (opts.danger ? ' danger' : '') + '">'
         + echapper(opts.valider || 'Confirmer') + '</button>'
         + '</div></div>';
@@ -88,13 +92,23 @@
         if (ev.key === 'Enter') fermer(true);
       }
 
-      fond.querySelector('.cfm-non').onclick = function () { fermer(false); };
+      if (!opts.seul) fond.querySelector('.cfm-non').onclick = function () { fermer(false); };
       fond.querySelector('.cfm-oui').onclick = function () { fermer(true); };
       fond.onclick = function (ev) { if (ev.target === fond) fermer(false); };
       document.addEventListener('keydown', auClavier);
 
       // Le focus part sur « Confirmer » : Entrée valide, Échap annule.
       fond.querySelector('.cfm-oui').focus();
+    });
+  };
+
+  window.informer = function (opts) {
+    opts = opts || {};
+    return window.confirmer({
+      titre: opts.titre || 'Information',
+      texte: opts.texte,
+      valider: opts.valider || 'OK',
+      seul: true,
     });
   };
 })();

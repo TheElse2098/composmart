@@ -159,12 +159,18 @@ if ($action === 'supprimer') {
     $id = (int)($_POST['id'] ?? 0);
     if ($id <= 0) { echo json_encode(['error' => 'Parcours invalide.']); exit; }
 
+    // Nom lu avant suppression : c'est lui qui rend la ligne du journal lisible.
+    $stmt = mysqli_prepare($conn, 'SELECT nom FROM parcours WHERE id = ?');
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $p = $stmt->get_result()->fetch_assoc();
+
     $stmt = mysqli_prepare($conn, 'DELETE FROM parcours WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();
     if (mysqli_affected_rows($conn) !== 1) { echo json_encode(['error' => 'Parcours introuvable.']); exit; }
 
-    audit_log($conn, 'parcours_supprime', '', ['target_type' => 'parcours', 'target_id' => $id]);
+    audit_log($conn, 'parcours_supprime', $p['nom'] ?? "parcours #$id", ['target_type' => 'parcours', 'target_id' => $id]);
     echo json_encode(['ok' => true]);
     exit;
 }
