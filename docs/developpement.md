@@ -88,9 +88,12 @@ détail par entrée.
   `audit_annulation_echec()` lève la marque. Une entrée sans `changements`,
   `etat` ni `version_id` n'est pas annulable.
 
-La case rouge « Admin » du bandeau (`partials/site-nav.html`) est révélée par
-`assets/js/admin-badge.js` pour les administrateurs ; ce script est inclus en
-`?v=N` : incrémenter N dans toutes les pages à chaque modification.
+La case rouge « Admin » du bandeau fait partie du composant `<cs-bandeau>`
+(`services/web/front/ui/composants/bandeau/`), qui la révèle aux
+administrateurs. `assets/js/admin-badge.js` ne sert plus qu'aux quatre pages
+de jeu, qui ont leur propre barre. Le `?v=N` qui suit encore son nom dans les
+pages n'a plus d'effet : les scripts sont revalidés à chaque chargement
+(cf. [front.md](front.md), « Cache »).
 
 ## Jeux
 

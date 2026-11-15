@@ -58,11 +58,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://composmart.fr/achat</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://composmart.fr/contact</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>

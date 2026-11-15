@@ -1,6 +1,13 @@
 /* ============================================================================
    admin-badge.js — case rouge « Admin » du bandeau, pour les administrateurs.
 
+   DEPUIS LA REFONTE DU FRONT (docs/front.md) : le bandeau partagé est le
+   composant <cs-bandeau>, qui révèle lui-même sa case Admin. Ce script ne
+   sert plus qu'aux pages de jeu, qui ont leur propre <nav> : il y crée la
+   case dans la zone droite. Sur les autres pages il ne trouve rien à faire.
+   Il disparaîtra avec la migration des jeux. La description qui suit est
+   celle de l'ancien bandeau.
+
    Le bandeau partagé (partials/site-nav.html) contient déjà la case en trois
    exemplaires masqués : ce script les révèle si /api/auth/me.php répond
    isAdmin, et les marque actifs sur les pages d'administration.

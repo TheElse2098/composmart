@@ -49,12 +49,12 @@ test('bandeau : le lien de la page courante est marqué actif, et lui seul', () 
   assert.equal(compter(String(bandeau.gabaritBarre('/admin')), /class="actif"/g), 0);
 });
 
-test('bandeau : dix entrées dans le tiroir, dans l’ordre, précédées de l’entrée Admin masquée', () => {
+test('bandeau : neuf entrées dans le tiroir, dans l’ordre, précédées de l’entrée Admin masquée', () => {
   const tiroir = String(new Bandeau().gabaritTiroir('/'));
   const libelles = [...tiroir.matchAll(/<\/span> ([^<]+)<\/a>/g)].map((m) => m[1]);
   assert.deepEqual(libelles, [
     'Admin', 'Accueil', 'Mon compte', 'Classement', 'Carte interactive', 'Les cours',
-    'Jeux', 'Le matériel', 'Événements', 'Nous contacter', 'Achat',
+    'Jeux', 'Le matériel', 'Événements', 'Nous contacter',
   ]);
   assert.equal(compter(tiroir, /data-admin hidden/g), 2);
   assert.match(tiroir, /data-action="fermer"/);

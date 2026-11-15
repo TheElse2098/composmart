@@ -1,11 +1,11 @@
 /* ============================================================================
-   Les passerelles de la transition (phase 2) : les anciens scripts communs
-   (site-nav.js, site-footer.js, verif-banner.js) exécutés dans une page
-   historique type, avec et sans le paramètre ?ui=2.
+   Les passerelles de la transition : les scripts communs des pages pas encore
+   migrées (site-nav.js, site-footer.js, verif-banner.js), exécutés dans une
+   page historique type.
 
-   Deux choses à garantir : sans le paramètre, rien ne change pour un
-   visiteur ; avec, les nouveaux composants prennent exactement la place des
-   anciens, sous les mêmes identifiants.
+   À garantir : les nouveaux composants prennent exactement la place des
+   anciens conteneurs, sous les mêmes identifiants, et les scripts restés tels
+   quels (theme.js, admin-badge.js) ne s'en mêlent pas.
 
    Ce fichier n'importe aucun composant d'avance : comme dans une vraie page,
    les balises existent avant que leur module n'arrive.
@@ -30,6 +30,7 @@ const ADMIN_NON_CONFIRME = { logged_in: true, id: 1, username: 'eliott', email: 
 const PAGE_COMPLETE = ['site-footer.js', 'site-nav.js', 'theme.js', 'verif-banner.js', 'admin-badge.js'];
 const PAGE_SANS_RAPPEL = ['site-footer.js', 'site-nav.js', 'theme.js', 'admin-badge.js'];
 const PAGE_ADMIN_ATELIERS = ['site-nav.js', 'admin-badge.js', 'theme.js'];
+const PAGE_CARTE = ['site-nav.js', 'theme.js', 'verif-banner.js', 'admin-badge.js'];
 
 /**
  * Ouvre une page historique type : son squelette, un faux serveur, puis ses
@@ -41,8 +42,6 @@ const PAGE_ADMIN_ATELIERS = ['site-nav.js', 'admin-badge.js', 'theme.js'];
 async function ouvrir(adresse, scripts, moi = VISITEUR) {
   const serveur = fauxFetch((demande) => {
     const chemin = demande.split('?')[0];
-    if (chemin === '/partials/site-nav') return { texte: lireFront('partials/site-nav.html') };
-    if (chemin === '/partials/site-footer') return { texte: lireFront('partials/site-footer.html') };
     if (chemin === '/api/auth/me.php') return { corps: moi };
     return { statut: 404, corps: { error: 'non prévu : ' + chemin } };
   });
@@ -58,30 +57,12 @@ const plan = () => dom.document.body.children.map((/** @type {any} */ e) => e.lo
 
 afterEach(async () => {
   dom.vider();
-  dom.stockageOnglet.clear(); // chaque test repart d'un onglet neuf
   session.oublier();
   await dom.stabiliser();
 });
 
-test('sans le paramètre : l’ancien bandeau et l’ancien pied, aucun nouveau composant', async () => {
+test('page complète : bandeau, rappel et pied à la place des conteneurs, sous les mêmes identifiants', async () => {
   const { appels } = await ouvrir('/cours', PAGE_COMPLETE, ADMIN_NON_CONFIRME);
-
-  assert.equal(dom.document.querySelector('cs-bandeau'), null);
-  assert.equal(dom.document.querySelector('cs-pied'), null);
-  assert.equal(dom.document.querySelector('cs-rappel-email'), null);
-  assert.deepEqual(dom.modulesDemandes, [], 'aucun module de ui/ n’est demandé');
-
-  const bandeau = dom.document.getElementById('site-nav');
-  assert.equal(bandeau.localName, 'div');
-  assert.ok(bandeau.querySelector('.nav-logo'), 'le bandeau historique est injecté');
-  assert.ok(dom.document.getElementById('site-footer').querySelector('.footer-inner'), 'le pied historique aussi');
-  assert.ok(dom.document.querySelector('.verif-bandeau'), 'et l’ancien rappel');
-  assert.ok(appels.some((a) => a.adresse === '/partials/site-nav'));
-  assert.ok(appels.some((a) => a.adresse === '/partials/site-footer'));
-});
-
-test('avec ?ui=2 : les nouveaux composants à la place des anciens, sous les mêmes identifiants', async () => {
-  const { appels } = await ouvrir('/cours?ui=2', PAGE_COMPLETE, ADMIN_NON_CONFIRME);
 
   assert.deepEqual(plan().slice(0, 5), ['cs-bandeau#site-nav', 'cs-rappel-email', 'div.fil-retour', 'main.contenu', 'cs-pied#site-footer']);
   assert.deepEqual([...dom.modulesDemandes].sort(), [
@@ -95,62 +76,52 @@ test('avec ?ui=2 : les nouveaux composants à la place des anciens, sous les mê
   assert.equal(bandeau.querySelector('.bandeau__liens a.actif').textContent, 'Cours');
   assert.ok(dom.document.getElementById('site-footer').querySelector('.pied__legal'));
   assert.equal(dom.document.querySelector('cs-rappel-email strong').textContent, 'e@exemple.fr');
-  assert.ok(dom.document.body.querySelector('.bandeau-tiroir'), 'le nouveau tiroir est sous <body>');
+  assert.ok(dom.document.body.querySelector('.bandeau-tiroir'), 'le tiroir est sous <body>');
+  assert.ok(dom.liensAjoutes.some((l) => l.getAttribute('href') === '/ui/composants/bandeau/bandeau.css'), 'la feuille du bandeau est demandée d’emblée');
 
-  // Rien de l'ancien monde ne s'est affiché en double.
+  // Plus rien de l'ancien bandeau, et les anciens fragments ne sont plus demandés.
   assert.equal(dom.document.querySelector('.nav-logo'), null);
   assert.equal(dom.document.querySelector('.verif-bandeau'), null);
   assert.equal(dom.document.getElementById('drawer'), null);
-  assert.equal(dom.document.getElementById('adminBadge'), null, 'admin-badge.js n’a rien ajouté');
-  assert.ok(!appels.some((a) => a.adresse.startsWith('/partials/')), 'les anciens fragments ne sont plus demandés');
+  assert.ok(!appels.some((a) => a.adresse.startsWith('/partials/')));
 
-  // La case Admin est celle du nouveau bandeau.
+  // La case Admin est celle du bandeau ; admin-badge.js n'en a pas ajouté une seconde.
   assert.equal(bandeau.querySelector('.bandeau__admin-mini').hidden, false);
-  assert.ok(dom.liensAjoutes.some((l) => l.getAttribute('href') === '/ui/composants/bandeau/bandeau.css'), 'la feuille du bandeau est demandée d’emblée');
+  assert.equal(dom.document.getElementById('adminBadge'), null);
 });
 
-test('?ui=2 : le burger garde l’identifiant que la carte guette', async () => {
-  await ouvrir('/carte?ui=2', ['site-nav.js', 'theme.js', 'verif-banner.js', 'admin-badge.js']);
+test('le burger garde l’identifiant que la carte guette', async () => {
+  await ouvrir('/carte', PAGE_CARTE);
   const burger = dom.document.getElementById('burgerBtn');
   assert.ok(burger && burger.classList.contains('bandeau__burger'));
   burger.click();
   assert.equal(dom.document.body.querySelector('.bandeau-tiroir').classList.contains('bandeau-tiroir--ouvert'), true);
 });
 
-test('?ui=2 : le bouton de thème bascule une fois, l’ancien theme.js ne s’en mêle pas', async () => {
-  await ouvrir('/cours?ui=2', PAGE_COMPLETE);
+test('le bouton de thème bascule une fois : l’ancien theme.js ne s’en mêle pas', async () => {
+  await ouvrir('/cours', PAGE_COMPLETE);
   const bouton = dom.document.getElementById('site-nav').querySelector('.bandeau__theme');
   bouton.click();
   assert.equal(dom.document.documentElement.classList.contains('dark'), true);
   assert.equal(bouton.textContent, '☀️');
 });
 
-test('le choix suit la navigation dans l’onglet ; ?ui=1 revient à l’ancien', async () => {
-  await ouvrir('/cours?ui=2', PAGE_SANS_RAPPEL);
-  assert.equal(dom.document.getElementById('site-nav').localName, 'cs-bandeau');
-  dom.vider();
-  await dom.stabiliser();
-
-  // Page suivante, sans paramètre : toujours le nouveau bandeau.
-  await ouvrir('/jeux', PAGE_SANS_RAPPEL);
-  assert.equal(dom.document.getElementById('site-nav').localName, 'cs-bandeau');
-  assert.equal(dom.document.getElementById('site-footer').localName, 'cs-pied');
-  dom.vider();
-  await dom.stabiliser();
-
-  // ?ui=1 : retour à l'ancien, et il tient.
-  await ouvrir('/jeux?ui=1', PAGE_SANS_RAPPEL);
-  assert.equal(dom.document.getElementById('site-nav').localName, 'div');
-  dom.vider();
-  await dom.stabiliser();
-  await ouvrir('/materiel', PAGE_SANS_RAPPEL);
-  assert.equal(dom.document.getElementById('site-nav').localName, 'div');
-  assert.equal(dom.document.querySelector('cs-bandeau'), null);
+test('page sans rappel : bandeau et pied seulement', async () => {
+  await ouvrir('/contact', PAGE_SANS_RAPPEL, ADMIN_NON_CONFIRME);
+  assert.deepEqual(plan().slice(0, 4), ['cs-bandeau#site-nav', 'div.fil-retour', 'main.contenu', 'cs-pied#site-footer']);
+  assert.equal(dom.document.querySelector('cs-rappel-email'), null, 'pas de rappel sur une page qui ne charge pas verif-banner.js');
 });
 
-test('?ui=2 sur une page sans rappel ni pied : seul le bandeau est remplacé', async () => {
-  await ouvrir('/evenements-admin?ui=2', PAGE_ADMIN_ATELIERS);
+test('page d’administration des ateliers : seul le bandeau est posé, le reste est intact', async () => {
+  await ouvrir('/evenements-admin', PAGE_ADMIN_ATELIERS);
   assert.deepEqual(plan().slice(0, 4), ['cs-bandeau#site-nav', 'div.fil-retour', 'main.contenu', 'div#site-footer']);
-  assert.equal(dom.document.querySelector('cs-rappel-email'), null);
   assert.equal(dom.document.querySelector('cs-pied'), null, 'une page qui ne charge pas site-footer.js garde son conteneur tel quel');
+});
+
+test('un script exécuté deux fois ne pose pas deux composants', async () => {
+  await ouvrir('/cours', [...PAGE_COMPLETE, 'site-nav.js', 'site-footer.js', 'verif-banner.js']);
+  assert.equal(dom.document.querySelectorAll('cs-bandeau').length, 1);
+  assert.equal(dom.document.querySelectorAll('cs-pied').length, 1);
+  assert.equal(dom.document.querySelectorAll('cs-rappel-email').length, 1);
+  assert.equal(dom.document.body.querySelectorAll('.bandeau-tiroir').length, 1);
 });

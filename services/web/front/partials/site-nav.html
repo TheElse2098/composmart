@@ -1,4 +1,10 @@
 <!-- ============================================================================
+     FICHIER EN FIN DE VIE — ne plus le modifier. Le bandeau est désormais le
+     composant /ui/composants/bandeau/ ; plus aucun script du dépôt ne lit ce
+     fragment. Il reste servi pour les navigateurs qui gardent en cache
+     l'ancien site-nav.js, et sera supprimé au ménage final (docs/front.md,
+     « Transition »).
+
      site-nav.html — bandeau (nav) + sidebar (drawer) + overlay, partagés.
      Injecté dans chaque page par /assets/js/site-nav.js (fetch au chargement).
 
@@ -66,8 +72,6 @@
     <li><a href="/evenement" data-match="/evenement,/evenement.html"><span class="menu-icon">🎟️</span> Événements</a></li>
     <div class="drawer-divider"></div>
     <li><a href="/contact.html" data-match="/contact,/contact.html"><span class="menu-icon">✉️</span> Nous contacter</a></li>
-    <div class="drawer-divider"></div>
-    <li><a href="/achat.html" data-match="/achat,/achat.html"><span class="menu-icon">🛒</span> Achat</a></li>
     <div class="drawer-divider"></div>
   </ul>
 </div>

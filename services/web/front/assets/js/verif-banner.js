@@ -1,93 +1,29 @@
 /* ============================================================================
-   verif-banner.js — bandeau « confirme ton adresse email ».
+   verif-banner.js — passerelle : pose le rappel « confirme ton adresse email »
+   dans les pages pas encore migrées.
 
-   S'affiche sous le bandeau de navigation pour tout compte connecté dont
-   l'adresse n'est pas encore confirmée, avec un bouton de renvoi du lien.
-   Rien ne s'affiche pour un visiteur non connecté ni pour un compte vérifié.
+   Le rappel lui-même vit dans /ui/composants/rappel-email/ : il ne s'affiche
+   que pour un compte connecté dont l'adresse n'est pas confirmée. Ce script
+   place le composant <cs-rappel-email> sous le bandeau et charge son module.
 
-   Usage : <script src="/assets/js/verif-banner.js"></script>
+   Une page migrée écrit directement <cs-rappel-email> et n'a plus besoin de ce
+   fichier, qui disparaîtra avec la dernière page historique
+   (docs/front.md, « Transition »).
+
+   Usage dans une page historique : <script src="/assets/js/verif-banner.js"></script>
    ============================================================================ */
 (function () {
-  /* ── Passerelle vers le nouveau rappel (docs/front.md, « Transition ») ──
-     Avec ?ui=2 dans l'adresse, le composant <cs-rappel-email> remplace ce
-     script le temps de l'onglet ; ?ui=1 revient à l'ancien. Sans ce paramètre,
-     rien ne change. Fonction recopiée de site-nav.js, où elle est expliquée. */
-  function nouvelleInterface() {
-    try {
-      var choix = new URLSearchParams(window.location.search).get('ui');
-      if (choix === '2') sessionStorage.setItem('ui', '2');
-      else if (choix === '1') sessionStorage.removeItem('ui');
-      return sessionStorage.getItem('ui') === '2';
-    } catch (e) {
-      return false; // stockage inaccessible : ancienne interface
-    }
-  }
+  if (document.querySelector('cs-rappel-email')) return; // déjà posé
 
-  if (nouvelleInterface()) {
-    // Sous le bandeau, comme l'ancien rappel ; en tête de page s'il n'y en a pas.
-    var rappel = document.createElement('cs-rappel-email');
-    var bandeau = document.getElementById('site-nav');
-    if (bandeau) bandeau.after(rappel);
-    else document.body.prepend(rappel);
+  // Sous le bandeau ; en tête de page s'il n'y en a pas.
+  var rappel = document.createElement('cs-rappel-email');
+  var bandeau = document.getElementById('site-nav');
+  if (bandeau) bandeau.after(rappel);
+  else document.body.prepend(rappel);
 
-    var module = document.createElement('script');
-    module.type = 'module';
-    module.src = '/ui/composants/rappel-email/rappel-email.js';
-    module.onerror = function () { console.error('[verif-banner] nouveau rappel indisponible'); };
-    document.head.appendChild(module);
-    return;
-  }
-
-  fetch('/api/auth/me.php')
-    .then(function (r) { return r.json(); })
-    .then(function (me) {
-      if (!me || !me.logged_in || me.email_verifie) return;
-      injecter(me);
-    })
-    .catch(function () { /* silencieux : le bandeau est un rappel, pas une fonction vitale */ });
-
-  function injecter(me) {
-    var style = document.createElement('style');
-    style.textContent = [
-      '.verif-bandeau{background:linear-gradient(135deg,#f9a825,#ff8f00);color:#3d2b00;',
-      'display:flex;align-items:center;gap:12px;flex-wrap:wrap;',
-      'padding:11px 18px;font-family:inherit;font-size:0.86rem;font-weight:700;position:relative;z-index:95}',
-      '.verif-bandeau-txt{flex:1;min-width:200px;line-height:1.4}',
-      '.verif-bandeau button{background:#3d2b00;color:#ffd98a;border:none;border-radius:20px;',
-      'padding:7px 15px;font-family:inherit;font-size:0.8rem;font-weight:800;cursor:pointer;white-space:nowrap}',
-      '.verif-bandeau button:disabled{opacity:0.55;cursor:default}',
-      '.verif-bandeau a{color:#3d2b00;font-weight:800;text-decoration:underline;white-space:nowrap}'
-    ].join('');
-    document.head.appendChild(style);
-
-    var barre = document.createElement('div');
-    barre.className = 'verif-bandeau';
-    barre.innerHTML =
-      '<span>✉️</span>'
-      + '<span class="verif-bandeau-txt">Confirme ton adresse <strong>'
-      + (me.email || '').replace(/[<>&]/g, '') + '</strong> : c\'est elle qui te permettra de récupérer ton compte.</span>'
-      + '<button type="button" id="verifRenvoi">Renvoyer le lien</button>'
-      + '<a href="/verifier">En savoir plus</a>';
-
-    // Sous le bandeau de nav s'il est déjà injecté, en tête de page sinon.
-    var nav = document.getElementById('site-nav');
-    if (nav && nav.nextSibling) {
-      nav.parentNode.insertBefore(barre, nav.nextSibling);
-    } else {
-      document.body.insertBefore(barre, document.body.firstChild);
-    }
-
-    document.getElementById('verifRenvoi').addEventListener('click', function () {
-      var b = this;
-      b.disabled = true;
-      b.textContent = 'Envoi…';
-      fetch('/api/auth/resend.php', { method: 'POST' })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          b.textContent = d.ok ? 'Email envoyé ✓' : 'Échec';
-          if (!d.ok) { b.disabled = false; }
-        })
-        .catch(function () { b.textContent = 'Échec'; b.disabled = false; });
-    });
-  }
+  var module = document.createElement('script');
+  module.type = 'module';
+  module.src = '/ui/composants/rappel-email/rappel-email.js';
+  module.onerror = function () { console.error('[verif-banner] rappel indisponible'); };
+  document.head.appendChild(module);
 })();

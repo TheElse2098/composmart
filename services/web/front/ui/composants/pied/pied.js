@@ -43,7 +43,6 @@ export class Pied extends Composant {
             <h5>Contact</h5>
             <a href="mailto:contact@composmart.fr">contact@composmart.fr</a>
             <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a>
-            <a href="/achat">Matériel &amp; achat</a>
           </div>
         </div>
         <div class="pied__legal">

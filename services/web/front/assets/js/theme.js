@@ -1,4 +1,11 @@
-/* Toggle thème clair/sombre. Robuste au nav injecté après le chargement :
+/* DEPUIS LA REFONTE DU FRONT (docs/front.md) : le bandeau partagé est le
+   composant <cs-bandeau>, qui gère lui-même son bouton de thème
+   (ui/socle/theme.js, même clé de stockage et même évènement `themechange`).
+   Ce script ne sert plus qu'aux pages de jeu, qui ont leur propre bouton
+   #themeToggle ; ailleurs il ne trouve rien à faire. Il disparaîtra avec la
+   migration des jeux. La description qui suit est celle de l'ancien bandeau.
+
+   Toggle thème clair/sombre. Robuste au nav injecté après le chargement :
    - délégation d'événement au niveau document (le bouton peut apparaître à tout moment)
    - + attache directe quand initThemeToggle() est appelé après injection (ceinture/bretelles) */
 (function () {

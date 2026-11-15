@@ -237,26 +237,32 @@ morceaux de la page), servie par le contrôleur après vérification des droits.
 
 ## Transition : les pages pas encore migrées
 
-Les pages historiques chargent encore `assets/js/site-nav.js`,
-`site-footer.js` et `verif-banner.js`. Ces trois scripts servent de
-**passerelles** : ils peuvent céder la place à `<cs-bandeau>`, `<cs-pied>` et
-`<cs-rappel-email>` sans qu'aucune page ne soit modifiée.
+Les pages historiques contiennent encore `<div id="site-nav"></div>` et
+`<div id="site-footer"></div>`, et chargent `assets/js/site-nav.js`,
+`site-footer.js` et `verif-banner.js`. Ces trois scripts sont des
+**passerelles** : chacun remplace son conteneur par le composant
+(`<cs-bandeau>`, `<cs-pied>`, `<cs-rappel-email>`) et charge son module. Toutes
+les pages du site affichent donc le même bandeau et le même pied, sans avoir
+été modifiées.
 
-- **Prévisualisation.** Ajouter `?ui=2` à l'adresse d'une page affiche les
-  nouveaux composants dans cet onglet, et le choix suit les liens (il est gardé
-  dans `sessionStorage`). `?ui=1` revient aux anciens. Sans paramètre, un
-  visiteur garde l'ancienne interface.
-- **Identifiants conservés.** Le nouveau bandeau reprend `id="site-nav"` et le
-  nouveau pied `id="site-footer"` : des pages les visent encore (mode
-  projection du suivi d'atelier, pied masqué pendant un parcours). Le burger
-  garde `id="burgerBtn"`, que la carte guette pour quitter le plein écran. Ces
-  identifiants disparaîtront avec la migration des pages concernées.
+- **Identifiants conservés.** Posé par une passerelle, le bandeau reprend
+  `id="site-nav"` et le pied `id="site-footer"` : des pages les visent encore
+  (mode projection du suivi d'atelier, pied masqué pendant un parcours). Le
+  burger garde `id="burgerBtn"`, que la carte guette pour quitter le plein
+  écran. Ces identifiants disparaîtront avec la migration des pages concernées.
 - **Ce que le socle apporte de lui-même.** Un composant charge les variables
   de couleur et les polices du site s'il arrive dans une page qui ne les
-  référence pas (`/carte` et `/achat` n'ont pas `fonts.css`).
-- **Fin de la transition.** Quand les nouveaux composants deviennent la règle,
-  l'interrupteur et `partials/` sont supprimés ; les passerelles restent
-  jusqu'à la migration de la dernière page qui les charge.
+  référence pas (`/carte` n'a pas `fonts.css`).
+- **Scripts laissés tels quels.** `theme.js` et `admin-badge.js` servent encore
+  aux quatre pages de jeu, qui ont leur propre barre ; ailleurs ils ne trouvent
+  rien à faire.
+- **`partials/` reste en place pour l'instant.** Plus aucun script ne s'en
+  sert, mais un navigateur peut garder plusieurs jours une copie de l'ancien
+  `site-nav.js`, téléchargée avant l'en-tête `no-cache` : cette copie demande
+  encore `/partials/site-nav` et n'afficherait plus de menu s'il avait
+  disparu. Le dossier se supprime au ménage final.
+- **Fin de la transition.** Une passerelle disparaît avec la dernière page
+  qui la charge.
 
 La page `404.html` n'existe qu'en un exemplaire, dans `web`. Les Dockerfile de
 courses-api, games-api et evenements-api la copient : la réponse d'une adresse

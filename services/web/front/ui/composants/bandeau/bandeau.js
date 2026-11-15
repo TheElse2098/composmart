@@ -45,14 +45,13 @@ const PAGES = {
   materiel:   { href: '/materiel',      chemins: ['/materiel', '/materiel.html'],                 icone: '🧰', long: 'Le matériel',       court: 'Matériel' },
   evenement:  { href: '/evenement',     chemins: ['/evenement', '/evenement.html'],               icone: '🎟️', long: 'Événements',        court: 'Événements' },
   contact:    { href: '/contact',       chemins: ['/contact', '/contact.html'],                   icone: '✉️', long: 'Nous contacter',    court: 'Nous contacter' },
-  achat:      { href: '/achat',         chemins: ['/achat', '/achat.html'],                       icone: '🛒', long: 'Achat' },
 };
 
 /** Ordre des liens dans la barre (ordinateur). */
 const BARRE = ['carte', 'cours', 'jeux', 'materiel', 'classement', 'evenement', 'contact'];
 
 /** Ordre des entrées dans le tiroir (téléphone). */
-const TIROIR = ['accueil', 'compte', 'classement', 'carte', 'cours', 'jeux', 'materiel', 'evenement', 'contact', 'achat'];
+const TIROIR = ['accueil', 'compte', 'classement', 'carte', 'cours', 'jeux', 'materiel', 'evenement', 'contact'];
 
 /** Espaces d'administration : la case « Admin » y est marquée active. */
 const ESPACES_ADMIN = ['/admin', '/jeux-admin', '/evenements-admin'];

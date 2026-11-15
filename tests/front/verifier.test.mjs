@@ -264,7 +264,7 @@ test('faute : script historique qui passe la main à un fichier absent, ou mal �
   const passerelle = 'services/web/front/assets/js/site-nav.js';
   attendre(fautes(passerelle, (s) => s.replace('/ui/composants/bandeau/bandeau.js', '/ui/composants/bandeau/Bandeau.js')), /site-nav\.js → \/ui\/composants\/bandeau\/Bandeau\.js : casse différente/);
   attendre(fautes(passerelle, (s) => s.replace('/ui/composants/bandeau/bandeau.css', '/ui/composants/bandeau/absent.css')), /site-nav\.js → \/ui\/composants\/bandeau\/absent\.css : fichier introuvable/);
-  attendre(fautes(passerelle, (s) => s.replace('function nouvelleInterface() {', 'function nouvelleInterface() {{')), /site-nav\.js → erreur de syntaxe/);
+  attendre(fautes(passerelle, (s) => s.replace('(function () {', '(function () {{')), /site-nav\.js → erreur de syntaxe/);
 });
 
 test('faute : deux composants pour la même balise', () => {
