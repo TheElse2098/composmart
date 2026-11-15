@@ -101,6 +101,39 @@ export function chargerStyle(adresse) {
   return demande;
 }
 
+/** @type {Map<string, Promise<void>>} */
+const scripts = new Map();
+
+/**
+ * Charge une bibliothèque (script classique de assets/vendor), une seule fois.
+ * Contrairement à une feuille de style, une bibliothèque absente est une
+ * erreur : le composant qui en dépend ne peut pas fonctionner sans elle.
+ * @param {string | URL} adresse
+ * @returns {Promise<void>}
+ */
+export function chargerScript(adresse) {
+  const src = new URL(String(adresse), document.baseURI).href;
+  let demande = scripts.get(src);
+  if (!demande) {
+    demande = new Promise((resoudre, rejeter) => {
+      // Déjà citée dans le <head> de la page : elle s'est exécutée avant les modules.
+      for (const present of document.querySelectorAll('script[src]')) {
+        if (present instanceof HTMLScriptElement && present.src === src) {
+          resoudre();
+          return;
+        }
+      }
+      const script = document.createElement('script');
+      script.src = src;
+      script.addEventListener('load', () => resoudre());
+      script.addEventListener('error', () => rejeter(new Error('bibliothèque introuvable : ' + src)));
+      document.head.appendChild(script);
+    });
+    scripts.set(src, demande);
+  }
+  return demande;
+}
+
 export class Composant extends HTMLElement {
   /** Nom de la balise, toujours `cs-…`. À définir dans chaque composant. */
   static balise = '';
@@ -108,6 +141,11 @@ export class Composant extends HTMLElement {
   /** Feuilles de style du composant, chargées avant monter().
    *  @type {(string | URL)[]} */
   static styles = [];
+
+  /** Bibliothèques dont le composant a besoin (assets/vendor), chargées avant
+   *  monter(). La page n'a pas à savoir qu'un de ses morceaux s'en sert.
+   *  @type {(string | URL)[]} */
+  static scripts = [];
 
   /** Enregistre la balise auprès du navigateur. À appeler une fois, en fin de fichier. */
   static definir() {
@@ -152,7 +190,10 @@ export class Composant extends HTMLElement {
   async #demarrer() {
     const classe = /** @type {typeof Composant} */ (this.constructor);
     try {
-      await Promise.all([JETONS, POLICES, ...classe.styles].map(chargerStyle));
+      await Promise.all([
+        ...[JETONS, POLICES, ...classe.styles].map(chargerStyle),
+        ...classe.scripts.map(chargerScript),
+      ]);
       if (!this.#monte) return; // retiré de la page pendant le chargement
       await this.monter();
     } catch (erreur) {
@@ -268,15 +309,23 @@ export class Composant extends HTMLElement {
    * Premier élément du composant qui correspond au sélecteur. S'il n'existe
    * pas, lève une erreur qui le dit, plutôt que de laisser un `null` casser
    * dix lignes plus loin.
+   *
+   * Pour atteindre un composant enfant et appeler ses méthodes, donner sa
+   * classe : `this.trouver('cs-enfant', Enfant).rafraichir()`.
+   *
+   * @template {HTMLElement} [T=HTMLElement]
    * @param {string} selecteur
-   * @returns {HTMLElement}
+   * @param {new () => T} [type]  classe attendue (par défaut : tout élément)
+   * @returns {T}
    */
-  trouver(selecteur) {
+  trouver(selecteur, type) {
+    const attendu = type ?? HTMLElement;
     const element = this.querySelector(selecteur);
-    if (!(element instanceof HTMLElement)) {
-      throw new Error('<' + this.localName + '> : aucun élément « ' + selecteur + ' »');
+    if (!(element instanceof attendu)) {
+      throw new Error('<' + this.localName + '> : aucun élément « ' + selecteur + ' »'
+        + (element ? ' du type ' + attendu.name : ''));
     }
-    return element;
+    return /** @type {T} */ (element);
   }
 
   /**

@@ -1,0 +1,28 @@
+/* ============================================================================
+   graphe-periode.css — habillage de <cs-admin-graphe-periode>.
+   ============================================================================ */
+
+cs-admin-graphe-periode {
+  display: block;
+
+  --graphe-bouton-texte: #1e6e3e;
+  --graphe-bouton-trait: #c8e6c9;
+}
+html.dark cs-admin-graphe-periode {
+  --graphe-bouton-texte: #7fc99a;
+  --graphe-bouton-trait: #2d4030;
+}
+
+/* ── Choix de la période ── */
+cs-admin-graphe-periode .evo-bar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+cs-admin-graphe-periode .evo-btn { border: 1.5px solid var(--graphe-bouton-trait); border-radius: 20px; padding: 6px 16px; font-size: 0.8rem; font-weight: 800; cursor: pointer; background: var(--surface); color: var(--graphe-bouton-texte); font-family: inherit; transition: background 0.15s, color 0.15s; }
+cs-admin-graphe-periode .evo-btn.active,
+cs-admin-graphe-periode .evo-btn:hover { background: var(--action); color: #fff; border-color: var(--action); }
+
+/* ── Le graphique ── */
+cs-admin-graphe-periode .evo-card { background: var(--surface); border-radius: 16px; padding: 20px 16px 14px; box-shadow: 0 2px 10px rgba(30, 110, 62, 0.08); }
+/* Chart.js règle la taille du <canvas> sur celle de son parent : il lui faut
+   un conteneur à lui seul. */
+cs-admin-graphe-periode .graphe-toile { position: relative; }
+cs-admin-graphe-periode .graphe-message { margin-top: 10px; text-align: center; font-size: 0.85rem; font-weight: 700; color: var(--alerte-texte); }
+cs-admin-graphe-periode .graphe-message[hidden] { display: none; }

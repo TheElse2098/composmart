@@ -158,7 +158,7 @@ Ce que la classe de base fournit :
 | `ecouterSur(cible, type, reaction)` | écoute sur le document, la fenêtre, un élément placé sous `<body>` |
 | `minuterie(ms, action)` | répétition, arrêtée d'office à la sortie de la page |
 | `aLaFin(defaire)` | action à exécuter à la sortie de la page |
-| `trouver(selecteur)`, `tous(selecteur)` | éléments du composant ; `trouver` lève une erreur claire au lieu de renvoyer `null` |
+| `trouver(selecteur, Classe?)`, `tous(selecteur)` | éléments du composant ; `trouver` lève une erreur claire au lieu de renvoyer `null`. Avec une classe, il rend le composant enfant, prêt à recevoir un appel de méthode |
 | `emettre(nom, detail)` | prévient les composants parents |
 | `afficherChargement()`, `afficherErreur(message)` | états standard |
 | `surErreur(erreur)` | reçoit une erreur échappée de `monter()` ; par défaut l'affiche |
@@ -169,6 +169,29 @@ Node sur une réponse d'API d'exemple (`tests/front/classement.test.mjs`).
 Si `monter()` attend une réponse (`await`), poser les écoutes avant : elles
 valent pour le contenu à venir, et un composant retiré de la page pendant
 l'attente ne garde pas d'écoute orpheline.
+
+Un composant qui a besoin d'une bibliothèque de `assets/vendor` la déclare ;
+elle est chargée avant `monter()`, et la page n'a pas à le savoir :
+
+```js
+static scripts = [new URL('../../../assets/vendor/chartjs-4.6.1/chart.umd.min.js', import.meta.url)];
+```
+
+### Un composant fait d'autres composants
+
+Le panneau d'administration (`ui/admin/panel/`) sert de modèle :
+
+- le parent écrit la balise de l'enfant dans son gabarit et importe son
+  module ;
+- il le règle par une méthode, juste après l'affichage :
+  `this.trouver('[data-graphe="parc"]', AdminGraphePeriode).configurer({ … })` ;
+- l'enfant prévient le parent par un évènement : `this.emettre('donnees-modifiees')`,
+  que le parent reçoit par `ecouterSur(this, 'donnees-modifiees', …)` ;
+- ce qui est commun à tous les enfants (titres de section) est habillé par la
+  feuille du parent, sous sa balise.
+
+Un onglet du panneau expose `rafraichir()` : il est créé à sa première
+ouverture, gardé ensuite (ses filtres survivent), et rechargé à chaque retour.
 
 Types : chaque module est annoté en JSDoc. La forme d'une réponse d'API se
 déclare par un `@typedef` à côté du composant qui la lit, avec le nom du

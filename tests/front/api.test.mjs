@@ -95,8 +95,13 @@ test('une liste JSON est renvoyée telle quelle', async () => {
 
 test('texteErreur : phrase du serveur reprise, code ou erreur de programme remplacés', () => {
   assert.equal(texteErreur(new ErreurApi('Connexion requise.')), 'Connexion requise.');
-  assert.equal(texteErreur(new ErreurApi('db')), "Ce contenu n'a pas pu être chargé.");
+  assert.equal(texteErreur(new ErreurApi('Action inconnue')), 'Action inconnue');
+  assert.equal(texteErreur(new ErreurApi("Nom d'utilisateur : lettres, chiffres, _ - . uniquement")), "Nom d'utilisateur : lettres, chiffres, _ - . uniquement");
   assert.equal(texteErreur(new TypeError('x is not a function'), 'Indisponible.'), 'Indisponible.');
+  // Les codes que renvoient réellement les API du site.
+  for (const code of ['db', 'DB error', 'bad_request', 'method', 'forbidden', 'user_not_found', 'session_perdue', 'not_logged_in']) {
+    assert.equal(texteErreur(new ErreurApi(code)), "Ce contenu n'a pas pu être chargé.", code);
+  }
 });
 
 test('une instance par service, sur les préfixes de l’Ingress', async () => {

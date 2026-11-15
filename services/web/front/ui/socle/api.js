@@ -37,17 +37,22 @@ export class ErreurApi extends Error {
   }
 }
 
+/** Ce que certains endpoints renvoient en guise d'erreur : un code pour le
+ *  programme (`db`, `not_logged_in`, `bad_request`, `DB error`), pas une
+ *  phrase à montrer à quelqu'un. */
+const CODE_TECHNIQUE = /^(\w+|db error)$/i;
+
 /**
  * Texte à montrer à l'utilisateur pour une erreur. Le message du serveur est
- * repris tel quel s'il s'agit d'une phrase ; un simple code (`db`,
- * `not_logged_in`) ou une erreur de programmation laissent place au message
- * par défaut — le détail reste dans la console.
+ * repris tel quel s'il s'agit d'une phrase (« Connexion requise. ») ; un code
+ * technique ou une erreur de programmation laissent place au message par
+ * défaut — le détail reste dans la console.
  * @param {unknown} erreur
  * @param {string} [defaut]
  * @returns {string}
  */
 export function texteErreur(erreur, defaut = "Ce contenu n'a pas pu être chargé.") {
-  return erreur instanceof ErreurApi && /\s/.test(erreur.message) ? erreur.message : defaut;
+  return erreur instanceof ErreurApi && !CODE_TECHNIQUE.test(erreur.message.trim()) ? erreur.message : defaut;
 }
 
 /**

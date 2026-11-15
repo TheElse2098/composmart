@@ -95,12 +95,9 @@ let copie;
 
 before(() => {
   copie = mkdtempSync(join(tmpdir(), 'composmart-verificateur-'));
-  // Le front sans ses bibliothèques (lourdes, et jamais lues par le contrôle),
-  // et les coquilles d'administration.
-  cpSync(join(RACINE, 'services', 'web', 'front'), join(copie, 'services', 'web', 'front'), {
-    recursive: true,
-    filter: (source) => !source.includes(join('assets', 'vendor')),
-  });
+  // Le front entier (bibliothèques comprises : des composants les citent) et
+  // les coquilles d'administration.
+  cpSync(join(RACINE, 'services', 'web', 'front'), join(copie, 'services', 'web', 'front'), { recursive: true });
   for (const service of ['courses-api', 'games-api', 'evenements-api']) {
     const vues = join('services', service, 'admin-pages', 'vues');
     cpSync(join(RACINE, vues), join(copie, vues), { recursive: true });
@@ -184,6 +181,10 @@ test('faute : composant jamais enregistré', () => {
 
 test('faute : feuille de style déclarée mais absente', () => {
   attendre(fautes(UI + 'composants/pied/pied.js', (s) => s.replace("'./pied.css'", "'./pieds.css'")), /feuille de style « \.\/pieds\.css » introuvable/);
+});
+
+test('faute : bibliothèque citée par un composant mais absente', () => {
+  attendre(fautes(UI + 'admin/panel/graphe-periode.js', (s) => s.replace('chartjs-4.6.1', 'chartjs-9.9.9')), /graphe-periode\.js → fichier « \.\.\/\.\.\/\.\.\/assets\/vendor\/chartjs-9\.9\.9\/chart\.umd\.min\.js » introuvable/);
 });
 
 test('faute : variable CSS utilisée sans être définie', () => {

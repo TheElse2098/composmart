@@ -248,6 +248,8 @@ export class FauxElement {
     this.remove();
   }
 
+  get firstElementChild() { return this.children[0] ?? null; }
+
   // Ce dont se servent encore les scripts historiques.
   get tagName() { return this.localName.toUpperCase(); }
   get parentNode() { return this.parentElement; }
@@ -360,6 +362,11 @@ export class FauxElement {
 class HTMLElement extends FauxElement {}
 class HTMLButtonElement extends HTMLElement {}
 class HTMLAnchorElement extends HTMLElement {}
+class HTMLScriptElement extends HTMLElement {
+  type = '';
+  get src() { return this.getAttribute('src') || ''; }
+  set src(valeur) { this.setAttribute('src', valeur); }
+}
 class HTMLLinkElement extends HTMLElement {
   /** La feuille, une fois chargée ; `null` tant qu'elle ne l'est pas. @type {object | null} */
   sheet = null;
@@ -405,7 +412,8 @@ function promouvoir(ancien, Classe) {
 /** @param {string} nom @returns {FauxElement} */
 function creerElement(nom) {
   const Classe = definis.get(nom)
-    ?? (nom === 'button' ? HTMLButtonElement : nom === 'a' ? HTMLAnchorElement : nom === 'link' ? HTMLLinkElement : HTMLElement);
+    ?? (nom === 'button' ? HTMLButtonElement : nom === 'a' ? HTMLAnchorElement : nom === 'link' ? HTMLLinkElement
+      : nom === 'script' ? HTMLScriptElement : HTMLElement);
   const element = new Classe();
   element.localName = nom;
   return element;
@@ -482,6 +490,8 @@ export function installerFauxDom() {
   const liensAjoutes = [];
   /** Adresses des modules qu'un script de la page a demandés. @type {string[]} */
   const modulesDemandes = [];
+  /** Adresses des bibliothèques (scripts classiques) demandées. @type {string[]} */
+  const bibliothequesDemandees = [];
   const stockage = new Map();
   const stockageOnglet = new Map();
 
@@ -508,6 +518,13 @@ export function installerFauxDom() {
           () => { if (script.onload) script.onload(); },
           () => { if (script.onerror) script.onerror(); },
         );
+      } else if (noeud.localName === 'script') {
+        // Une bibliothèque (assets/vendor) : rien n'est exécuté ici, le test
+        // fournit lui-même ce qu'elle aurait défini. Une adresse contenant
+        // « introuvable » échoue.
+        bibliothequesDemandees.push(String(script.src));
+        const echec = String(script.src).includes('introuvable');
+        queueMicrotask(() => noeud.dispatchEvent(new FauxEvenement(echec ? 'error' : 'load', { bubbles: false })));
       }
     }
   };
@@ -533,6 +550,7 @@ export function installerFauxDom() {
   g.HTMLButtonElement = HTMLButtonElement;
   g.HTMLAnchorElement = HTMLAnchorElement;
   g.HTMLLinkElement = HTMLLinkElement;
+  g.HTMLScriptElement = HTMLScriptElement;
   g.CustomEvent = FauxEvenement;
   g.KeyboardEvent = class KeyboardEvent extends FauxEvenement {};
   g.document = document;
@@ -561,6 +579,7 @@ export function installerFauxDom() {
     stockageOnglet,
     liensAjoutes,
     modulesDemandes,
+    bibliothequesDemandees,
     /** Écrit du HTML dans <body> et rend son premier élément. */
     monter(/** @type {string} */ source) {
       const conteneur = creerElement('div');

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CompoSmart – Admin panel</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="48x48" href="/assets/img/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
+
+  <!--
+    Coquille du panneau d'administration, version en composants.
+
+    Servie par le contrôleur (admin-pages/controleur.php) à l'adresse
+    /admin/panel-v2, après vérification des droits, le temps que tous les
+    onglets soient reconstruits ; elle remplacera alors tableau-de-bord.html à
+    l'adresse /admin/panel. Elle ne contient que la liste des morceaux de la
+    page : l'interface vit dans le service web
+    (services/web/front/ui/admin/panel/) et les données ne viennent que des
+    API, qui vérifient les droits de leur côté.
+  -->
+
+  <!-- En-tête type des pages migrées (docs/front.md) : thème posé avant le
+       premier affichage, puis polices, couleurs et socle. -->
+  <script src="/ui/socle/amorce.js"></script>
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <link rel="stylesheet" href="/ui/styles/jetons.css">
+  <link rel="stylesheet" href="/ui/styles/base.css">
+
+  <!-- Les morceaux de cette page. -->
+  <link rel="stylesheet" href="/ui/composants/bandeau/bandeau.css">
+  <link rel="stylesheet" href="/ui/composants/pied/pied.css">
+  <link rel="stylesheet" href="/ui/admin/panel/panel.css">
+  <script type="module" src="/ui/composants/bandeau/bandeau.js"></script>
+  <script type="module" src="/ui/admin/panel/panel.js"></script>
+  <script type="module" src="/ui/composants/pied/pied.js"></script>
+</head>
+<body>
+  <cs-bandeau></cs-bandeau>
+  <cs-admin-panel></cs-admin-panel>
+  <cs-pied></cs-pied>
+  <div class="cs-lisere"></div>
+</body>
+</html>

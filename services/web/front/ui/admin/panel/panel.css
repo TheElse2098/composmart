@@ -1,0 +1,58 @@
+/* ============================================================================
+   panel.css — habillage de <cs-admin-panel> : en-tête, onglets, zone de
+   contenu, et ce que tous les onglets ont en commun (titres de section,
+   message « rien à afficher »).
+
+   Les onglets sont des composants enfants ; leurs règles propres sont dans
+   leur feuille. Tout est préfixé par la balise du panneau.
+   ============================================================================ */
+
+cs-admin-panel {
+  display: block;
+
+  --panel-lien-survol: #17572f;
+}
+html.dark cs-admin-panel {
+  --panel-lien-survol: #2d9959;
+}
+
+/* ── En-tête ── */
+cs-admin-panel .hero { text-align: center; padding: 26px 20px 12px; }
+/* La pastille reste rouge dans les deux thèmes : elle signale l'administration. */
+cs-admin-panel .hero-badge { display: inline-block; background: var(--rouge); color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+cs-admin-panel h1 { font-family: var(--police-titre); font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; color: var(--texte); }
+cs-admin-panel .hero-lien { display: inline-block; margin-top: 12px; background: var(--action); color: #fff; font-family: var(--police-titre); font-size: 0.88rem; font-weight: 800; padding: 9px 20px; border-radius: 50px; text-decoration: none; }
+cs-admin-panel .hero-lien:hover { background: var(--panel-lien-survol); }
+
+/* ── Onglets : défilent sur téléphone, se partagent la largeur au-delà ── */
+cs-admin-panel .tabs { display: flex; gap: 8px; padding: 16px 16px 0; width: 100%; max-width: 760px; margin: 0 auto; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; box-sizing: border-box; }
+cs-admin-panel .tabs::-webkit-scrollbar { display: none; }
+cs-admin-panel .tabs > .tab:last-child { margin-right: 16px; }
+cs-admin-panel .tab { flex-shrink: 0; white-space: nowrap; padding: 10px 16px; border-radius: 20px; font-family: var(--police-titre); font-weight: 900; font-size: 0.85rem; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; background: var(--surface); color: var(--texte-doux); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); display: flex; align-items: center; gap: 6px; }
+cs-admin-panel .tab.active { background: var(--action); color: #fff; border-color: var(--action); }
+cs-admin-panel .tab:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+cs-admin-panel .tab-count { background: rgba(0, 0, 0, 0.08); color: inherit; font-size: 0.72rem; font-weight: 800; padding: 1px 7px; border-radius: 8px; }
+cs-admin-panel .tab.active .tab-count { background: rgba(255, 255, 255, 0.25); }
+cs-admin-panel .tab.alert:not(.active) { color: var(--alerte-texte); }
+cs-admin-panel .tab.alert:not(.active) .tab-count { background: var(--alerte-fond); color: var(--alerte-texte); }
+@media (min-width: 640px) {
+  cs-admin-panel .tabs { padding: 20px 24px 0; }
+  cs-admin-panel .tabs > .tab:last-child { margin-right: 0; }
+  cs-admin-panel .tab { flex: 1; justify-content: center; }
+}
+
+/* ── Zone de contenu : étroite sur téléphone, large sur ordinateur ── */
+cs-admin-panel .page-content { width: 100%; max-width: 760px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 900px) {
+  cs-admin-panel .page-content { max-width: 1100px; }
+}
+@media (min-width: 1400px) {
+  cs-admin-panel .page-content { max-width: 1240px; }
+}
+
+/* ── Communs à tous les onglets ── */
+cs-admin-panel .section-title { font-family: var(--police-titre); font-size: 1.1rem; font-weight: 900; color: var(--texte); margin: 24px 4px 12px; display: flex; align-items: center; gap: 8px; }
+cs-admin-panel .empty-msg { text-align: center; color: #999; font-size: 0.85rem; padding: 18px; background: var(--surface); border-radius: 12px; }
+
+/* ── Onglet pas encore reconstruit ── */
+cs-admin-panel .en-attente { margin-top: 24px; text-align: center; padding: 28px 18px; background: var(--surface); border-radius: 16px; color: var(--texte-doux); font-size: 0.92rem; font-weight: 600; }

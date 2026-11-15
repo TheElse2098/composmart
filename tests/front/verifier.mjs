@@ -394,10 +394,12 @@ export function controler(racine = RACINE) {
       baliseDe.set(fichier, balise);
     }
 
-    // Feuilles de style citées par le module (celles d'un composant, celles du socle).
-    for (const m of code.matchAll(/new\s+URL\(\s*['"]([^'"]+\.css)['"]\s*,\s*import\.meta\.url\s*\)/g)) {
+    // Fichiers cités par le module : feuilles de style d'un composant ou du
+    // socle, bibliothèques de assets/vendor.
+    for (const m of code.matchAll(/new\s+URL\(\s*['"]([^'"]+)['"]\s*,\s*import\.meta\.url\s*\)/g)) {
       const etat = presence(resolve(dirname(fichier), m[1]), racine);
-      if (etat !== 'ok') erreur(fichier, 'feuille de style « ' + m[1] + ' » ' + (etat === 'casse' ? ': casse différente du nom du fichier' : 'introuvable'));
+      const sorte = m[1].endsWith('.css') ? 'feuille de style' : 'fichier';
+      if (etat !== 'ok') erreur(fichier, sorte + ' « ' + m[1] + ' » ' + (etat === 'casse' ? ': casse différente du nom du fichier' : 'introuvable'));
     }
   }
 
