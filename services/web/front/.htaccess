@@ -3,6 +3,20 @@ RewriteEngine On
 # Page d'erreur 404 personnalisée (au lieu de l'erreur Apache brute).
 ErrorDocument 404 /404.html
 
+# Pages, scripts et styles : le navigateur redemande à chaque fois au serveur
+# si le fichier a changé (réponse 304, sans corps, quand ce n'est pas le cas).
+# Sans cet en-tête il décide seul de la durée de garde, et peut servir un
+# module d'avant le déploiement à côté d'un module d'après : une page faite
+# de plusieurs fichiers qui s'importent ne le supporte pas. C'est aussi ce qui
+# rend inutile l'ancienne convention « ?v=N » sur les scripts.
+# <IfModule> : si le module headers manquait à l'image, cette règle serait
+# ignorée au lieu de mettre tout le site en erreur 500.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|js|css)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
+
 # Derrière le proxy TLS (Traefik/k3s), Apache ne voit que du HTTP : les
 # redirections doivent reprendre le schéma d'origine du client
 # (X-Forwarded-Proto), sinon Location: http://... → mixed content en HTTPS.

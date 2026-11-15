@@ -24,6 +24,11 @@ projet. Pour le déploiement, voir [helm/README.md](../helm/README.md).
   jamais `alert` / `confirm` / `prompt`.
 - **Interface** : mobile d'abord ; sur ordinateur (`assets/css/desktop.css`),
   utiliser la largeur plutôt qu'une colonne étroite centrée.
+- **Front en composants** : le front migre, page par page, vers des composants
+  rangés dans `services/web/front/ui/`. Toute interface nouvelle ou migrée
+  suit [front.md](front.md), et `npm --prefix tests/front run controle` doit
+  passer avant de livrer. Les pages pas encore migrées gardent les
+  conventions de cette liste.
 
 ## Accès libre
 

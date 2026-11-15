@@ -9,7 +9,9 @@
 #   docker build -f services/web/Dockerfile -t composmart/web .
 FROM php:8.3.36-apache
 
-RUN a2enmod rewrite \
+# headers : en-tête Cache-Control posé par front/.htaccess (revalidation des
+# pages, scripts et styles — cf. docs/front.md, « Cache »).
+RUN a2enmod rewrite headers \
     && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
 # Front statique uniquement (pas d'API embarquée : elle vit dans les services dédiés).

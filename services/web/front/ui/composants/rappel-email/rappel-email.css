@@ -1,0 +1,25 @@
+/* ============================================================================
+   rappel-email.css — habillage de <cs-rappel-email>.
+
+   Reprend les règles que assets/js/verif-banner.js injectait depuis une chaîne
+   JavaScript. Mêmes couleurs dans les deux thèmes : c'est un avertissement.
+   ============================================================================ */
+
+/* Vide tant qu'il n'y a rien à rappeler : le composant n'occupe alors aucune place. */
+cs-rappel-email { display: block; width: 100%; }
+
+cs-rappel-email .rappel-email__barre {
+  position: relative; z-index: 95;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 11px 18px;
+  background: linear-gradient(135deg, #f9a825, #ff8f00); color: #3d2b00;
+  font-family: inherit; font-size: 0.86rem; font-weight: 700;
+}
+cs-rappel-email .rappel-email__texte { flex: 1; min-width: 200px; line-height: 1.4; }
+cs-rappel-email button {
+  background: #3d2b00; color: #ffd98a; border: none; border-radius: 20px;
+  padding: 7px 15px; font-family: inherit; font-size: 0.8rem; font-weight: 800;
+  cursor: pointer; white-space: nowrap;
+}
+cs-rappel-email button:disabled { opacity: 0.55; cursor: default; }
+cs-rappel-email a { color: #3d2b00; font-weight: 800; text-decoration: underline; white-space: nowrap; }

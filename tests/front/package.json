@@ -1,0 +1,15 @@
+{
+  "name": "composmart-controles-front",
+  "private": true,
+  "type": "module",
+  "description": "Contrôles du front (services/web/front/ui) : vérificateur, types, tests. Outils de développement : rien d'ici n'entre dans une image Docker.",
+  "scripts": {
+    "verifier": "node verifier.mjs",
+    "types": "tsc -p tsconfig.json",
+    "tests": "node --test --test-timeout=20000",
+    "controle": "node verifier.mjs && tsc -p tsconfig.json && node --test --test-timeout=20000"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}

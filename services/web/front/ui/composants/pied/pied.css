@@ -1,0 +1,42 @@
+/* ============================================================================
+   pied.css — habillage de <cs-pied>.
+
+   Remplace les règles « #site-footer » de assets/css/desktop.css.
+   ============================================================================ */
+
+/* margin-top: auto, dans un <body> en colonne (styles/base.css) : le pied est
+   repoussé en bas de la fenêtre sur une page courte, au lieu de laisser un
+   vide sous lui. Sans effet si le contenu dépasse déjà la hauteur de l'écran. */
+cs-pied {
+  --pied-fond: #123d20;
+  display: block; width: 100%; margin-top: auto;
+  font-family: var(--police);
+}
+html.dark cs-pied { --pied-fond: #0a2413; }
+
+.pied {
+  width: 100%; box-sizing: border-box; padding: 40px 20px 60px;
+  background: var(--pied-fond); color: rgba(255, 255, 255, 0.8);
+}
+
+.pied__colonnes { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 24px; }
+.pied__logo { font-family: var(--police-titre); font-size: 1.3rem; font-weight: 900; font-style: italic; color: #fff; letter-spacing: 1px; }
+.pied__logo span { color: var(--menthe); }
+.pied__accroche { margin: 10px 0 0; font-size: 0.88rem; line-height: 1.5; }
+.pied__colonne h5 { margin: 0 0 10px; color: #fff; font-size: 0.95rem; font-weight: 800; }
+.pied__colonne a { display: block; padding: 4px 0; color: rgba(255, 255, 255, 0.75); font-size: 0.9rem; text-decoration: none; }
+.pied__colonne a:hover { color: var(--menthe); }
+
+.pied__legal {
+  max-width: 1000px; margin: 28px auto 0; padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px;
+}
+.pied__legal a { color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; text-decoration: none; }
+.pied__legal a:hover { color: var(--menthe); text-decoration: underline; }
+
+.pied__bas { margin-top: 28px; text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 0.82rem; }
+
+@media (min-width: 900px) {
+  .pied__colonnes { grid-template-columns: 2fr 1fr 1fr 1fr; }
+}

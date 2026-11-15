@@ -1,296 +1,38 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
-  <link rel="stylesheet" href="/assets/css/dark.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CompoSmart – Classement</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="48x48" href="/assets/img/favicon-48.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16.png">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
+
+  <!-- En-tête type des pages migrées (docs/front.md) : thème posé avant le
+       premier affichage, puis polices, couleurs et socle. -->
+  <script src="/ui/socle/amorce.js"></script>
   <link rel="stylesheet" href="/assets/css/fonts.css">
-  <title>CompoSmart – Classement</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  <link rel="stylesheet" href="/ui/styles/jetons.css">
+  <link rel="stylesheet" href="/ui/styles/base.css">
 
-    /* ── NAV / DRAWER (markup injecté par site-nav.js) ── */
-    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; position: sticky; top: 0; z-index: 100; }
-    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
-    .nav-logo span { color: #a8e6bf; }
-    .nav-right { display: flex; align-items: center; gap: 12px; }
-    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; transition: color 0.15s; }
-    .nav-profil:hover { color: #fff; }
-    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
-    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
-    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-    .burger.open span:nth-child(2) { opacity: 0; }
-    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
-    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
-    .drawer.open { right: 0; }
-    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
-    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
-    .drawer-logo span { color: #a8e6bf; }
-    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
-    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
-    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
-    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
-    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
-    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-    .overlay.open { opacity: 1; pointer-events: all; }
-
-    /* ── HERO (même traitement que l'accueil) ── */
-    .hero {
-      position: relative; text-align: center; padding: 54px 20px 80px; color: #fff; overflow: hidden;
-      background-color: #1e6e3e;
-      background-image: url('/assets/img/motif-branchage-light.svg'), linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2d9959 100%);
-      background-repeat: repeat, no-repeat;
-      background-size: 220px 220px, cover;
-    }
-    .hero::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 60px; background: #eef4ec; clip-path: ellipse(75% 100% at 50% 100%); }
-    .hero-inner { position: relative; z-index: 2; max-width: 620px; margin: 0 auto; }
-    .hero h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 900; line-height: 1.15; }
-    .hero-sub { font-size: 1rem; color: rgba(255,255,255,0.9); font-weight: 600; margin-top: 8px; }
-
-    /* ── SÉLECTEUR DE PÉRIODE (chevauche la courbe, comme les chiffres de l'accueil) ── */
-    .periode-wrap { position: relative; z-index: 5; margin-top: -26px; padding: 0 16px; display: flex; justify-content: center; }
-    .periode-switch { display: flex; gap: 4px; background: #fff; border-radius: 50px; padding: 6px; box-shadow: 0 6px 22px rgba(30,110,62,0.14); max-width: 100%; overflow-x: auto; scrollbar-width: none; }
-    .periode-switch::-webkit-scrollbar { display: none; }
-    .per-btn { border: none; background: none; border-radius: 50px; padding: 10px 16px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 0.86rem; color: #4a7a5a; cursor: pointer; white-space: nowrap; transition: background 0.18s, color 0.18s; }
-    .per-btn.active { background: #1e6e3e; color: #fff; }
-    .per-btn:hover:not(.active) { background: #eef4ec; color: #1e6e3e; }
-
-    .board { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 20px 20px; }
-
-    /* ── PODIUM (top 3) ── */
-    .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: end; margin: 30px 0 22px; }
-    .pod { background: #fff; border-radius: 20px; padding: 16px 8px 14px; text-align: center; box-shadow: 0 4px 16px rgba(30,110,62,0.10); border: 2px solid transparent; min-width: 0; }
-    /* Le vainqueur domine par la hauteur, pas par la couleur seule */
-    .pod-1 { padding-top: 26px; padding-bottom: 20px; border-color: #f9c449; }
-    .pod-2 { border-color: #cfd4d8; }
-    .pod-3 { border-color: #d9a273; }
-    .pod-medal { font-size: 1.7rem; line-height: 1; }
-    .pod-ava { width: 48px; height: 48px; border-radius: 50%; margin: 8px auto 7px; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 1.2rem; color: #fff; background: linear-gradient(160deg, #1e6e3e, #2d9959); }
-    .pod-1 .pod-ava { width: 58px; height: 58px; font-size: 1.45rem; }
-    .pod-name { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.88rem; color: #1a3a25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .pod-xp { font-size: 0.78rem; font-weight: 800; color: #1e6e3e; margin-top: 3px; }
-    .pod.is-me { box-shadow: 0 0 0 3px #a8e6bf, 0 4px 16px rgba(30,110,62,0.10); }
-
-    /* ── LISTE (rangs 4+) ── */
-    .lb-list { display: flex; flex-direction: column; gap: 8px; }
-    .lb-row { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 16px; padding: 13px 16px; box-shadow: 0 2px 10px rgba(30,110,62,0.07); transition: transform 0.15s; }
-    .lb-row:hover { transform: translateX(3px); }
-    .lb-rank { font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 900; color: #9db8a8; width: 34px; text-align: center; flex-shrink: 0; }
-    .lb-ava { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.9rem; color: #1e6e3e; background: #eef4ec; }
-    .lb-name { flex: 1; min-width: 0; font-size: 0.92rem; font-weight: 800; color: #1a3a25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lb-lvl { font-size: 0.7rem; font-weight: 700; color: #7aaa8a; }
-    .lb-xp { font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 900; color: #1e6e3e; white-space: nowrap; flex-shrink: 0; }
-    .lb-row.lb-me { background: #e8f5e9; box-shadow: 0 0 0 2px #a8e6bf; }
-    .lb-row.lb-me .lb-name { color: #1e6e3e; }
-    .lb-me-tag { font-size: 0.68rem; font-weight: 800; color: #1e6e3e; background: #fff; border-radius: 20px; padding: 2px 8px; margin-left: 6px; }
-    .lb-sep { text-align: center; font-size: 0.9rem; color: #9db8a8; font-weight: 800; letter-spacing: 3px; padding: 4px 0; }
-    .lb-empty { text-align: center; font-size: 0.92rem; color: #7aaa8a; font-weight: 600; background: #fff; border-radius: 20px; padding: 32px 20px; box-shadow: 0 2px 10px rgba(30,110,62,0.07); }
-
-    .join-cta { background: #fff; border-radius: 20px; padding: 24px 22px; margin-top: 18px; text-align: center; box-shadow: 0 4px 16px rgba(30,110,62,0.08); }
-    .join-cta p { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; margin-bottom: 14px; max-width: 30rem; margin-left: auto; margin-right: auto; line-height: 1.55; }
-    .cta-cadenas { font-size: 2.4rem; line-height: 1; margin-bottom: 12px; }
-    .cta-inscription { margin-top: 14px; }
-    .cta-inscription a { font-size: 0.84rem; font-weight: 700; color: #4a7a5a; text-decoration: underline; text-underline-offset: 3px; }
-    .cta-inscription a:hover { color: #1e6e3e; }
-    .btn-primary { display: inline-block; background: #1e6e3e; color: #fff; border: none; border-radius: 50px; padding: 12px 30px; font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 800; text-decoration: none; cursor: pointer; box-shadow: 0 4px 14px rgba(30,110,62,0.28); transition: transform 0.18s, box-shadow 0.18s; }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(30,110,62,0.34); }
-
-    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); z-index: 90; }
-
-    @media (min-width: 640px) {
-      .podium { gap: 16px; margin-top: 38px; }
-      .pod { padding: 20px 12px 18px; }
-      .pod-1 { padding-top: 32px; padding-bottom: 26px; }
-      .per-btn { padding: 10px 22px; font-size: 0.9rem; }
-    }
-
-    /* ── DARK MODE ── */
-    html.dark body { background: #0f1811; color: #e8f5ee; }
-    html.dark .hero {
-      background-color: #0d2f18;
-      background-image: url('/assets/img/motif-branchage-dark.svg'), linear-gradient(160deg, #0d2f18 0%, #12401f 55%, #1a5c33 100%);
-      background-repeat: repeat, no-repeat;
-      background-size: 220px 220px, cover;
-    }
-    html.dark .hero::after { background: #0f1811; }
-    html.dark .hero-sub { color: rgba(255,255,255,0.82); }
-    html.dark .periode-switch, html.dark .pod, html.dark .lb-row,
-    html.dark .lb-empty, html.dark .join-cta { background: #16211a; box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
-    html.dark .per-btn { color: #7ab88e; }
-    html.dark .per-btn.active { background: #2d9959; color: #fff; }
-    html.dark .per-btn:hover:not(.active) { background: #1e2d22; color: #52b788; }
-    html.dark .pod-name, html.dark .lb-name { color: #e8f5ee; }
-    html.dark .pod-xp, html.dark .lb-xp { color: #52b788; }
-    html.dark .lb-ava { background: #1e2d22; color: #52b788; }
-    html.dark .lb-rank, html.dark .lb-lvl, html.dark .lb-sep,
-    html.dark .lb-empty, html.dark .join-cta p,
-    html.dark .cta-inscription a { color: #7ab88e; }
-    html.dark .cta-inscription a:hover { color: #52b788; }
-    html.dark .lb-row.lb-me { background: #16291c; box-shadow: 0 0 0 2px #2d9959; }
-    html.dark .lb-row.lb-me .lb-name { color: #52b788; }
-    html.dark .lb-me-tag { background: #0f1811; color: #52b788; }
-    html.dark .pod.is-me { box-shadow: 0 0 0 3px #2d9959, 0 4px 16px rgba(0,0,0,0.35); }
-    html.dark .btn-primary { background: #2d9959; }
-    html.dark .drawer { background: #1a2b1e; }
-    html.dark .drawer-menu li a { color: #b0d4be; }
-    html.dark .drawer-menu li a:hover, html.dark .drawer-menu li a.active { background: #243328; color: #52b788; border-left-color: #52b788; }
-    html.dark .drawer-divider { background: #2a3d2e; }
-  </style>
-  <link rel="stylesheet" href="/assets/css/desktop.css">
+  <!-- Les morceaux de cette page. Chaque composant charge sa feuille lui-même ;
+       la citer ici la fait simplement arriver plus tôt. -->
+  <link rel="stylesheet" href="/ui/composants/bandeau/bandeau.css">
+  <link rel="stylesheet" href="/ui/composants/pied/pied.css">
+  <link rel="stylesheet" href="/ui/pages/classement/classement.css">
+  <script type="module" src="/ui/composants/bandeau/bandeau.js"></script>
+  <script type="module" src="/ui/composants/rappel-email/rappel-email.js"></script>
+  <script type="module" src="/ui/pages/classement/classement.js"></script>
+  <script type="module" src="/ui/composants/pied/pied.js"></script>
 </head>
 <body>
-
-  <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
-  <div id="site-nav"></div>
-
-  <header class="hero">
-    <div class="hero-inner">
-      <h1>🏆 Classement</h1>
-      <p class="hero-sub" id="heroSub">Les meilleurs composteurs de la communauté</p>
-    </div>
-  </header>
-
-  <div class="periode-wrap">
-    <div class="periode-switch" id="periodeSwitch">
-      <button type="button" class="per-btn active" data-p="total">🏆 Général</button>
-      <button type="button" class="per-btn" data-p="semaine">📅 7 jours</button>
-      <button type="button" class="per-btn" data-p="jour">⚡ 24 h</button>
-    </div>
-  </div>
-
-  <main class="board" id="board">
-    <div class="lb-empty">Chargement…</div>
-  </main>
-
-  <!-- Footer partagé (injecté par site-footer.js) -->
-  <div id="site-footer"></div>
-
-  <div class="bottom-leaf"></div>
-
-  <script>
-    function esc(t) { const d = document.createElement('div'); d.textContent = (t == null ? '' : String(t)); return d.innerHTML; }
-    function initiale(nom) { return (nom || '?').charAt(0).toUpperCase(); }
-
-    // Libellés dépendants de la période : en « général » on montre un cumul,
-    // sur une fenêtre glissante on montre un gain — le dire évite de croire
-    // que l'XP totale d'un joueur a fondu en changeant d'onglet.
-    const PERIODES = {
-      total:   { sous: 'Les meilleurs composteurs de la communauté', suffixe: 'XP',        vide: 'Aucun joueur classé pour l\'instant.' },
-      semaine: { sous: 'XP gagnée au cours des 7 derniers jours',    suffixe: 'XP gagnés', vide: 'Personne n\'a gagné d\'XP cette semaine.' },
-      jour:    { sous: 'XP gagnée au cours des dernières 24 heures', suffixe: 'XP gagnés', vide: 'Personne n\'a gagné d\'XP aujourd\'hui.' },
-    };
-
-    let periode = 'total';
-
-    document.querySelectorAll('#periodeSwitch .per-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (btn.dataset.p === periode) return;
-        periode = btn.dataset.p;
-        document.querySelectorAll('#periodeSwitch .per-btn').forEach(b => b.classList.toggle('active', b === btn));
-        charger();
-      });
-    });
-
-    function charger() {
-      document.getElementById('heroSub').textContent = PERIODES[periode].sous;
-      document.getElementById('board').innerHTML = '<div class="lb-empty">Chargement…</div>';
-      fetch('/api/auth/leaderboard.php?periode=' + periode)
-        .then(r => (r.status === 401 ? { nonConnecte: true } : r.json()))
-        .catch(() => ({ top: [], me: null }))
-        .then(render);
-    }
-
-    // Visiteur non connecté : le sélecteur de période n'a plus d'objet, on le
-    // masque et on remplace le tableau par une invitation à se connecter.
-    function ecranConnexion() {
-      document.getElementById('heroSub').textContent = 'Connecte-toi pour découvrir le classement de la communauté';
-      document.querySelector('.periode-wrap').style.display = 'none';
-      document.getElementById('board').innerHTML = `
-        <div class="join-cta">
-          <div class="cta-cadenas">🔒</div>
-          <p>Le classement est réservé aux membres. Connecte-toi pour voir les meilleurs composteurs — et y figurer à ton tour !</p>
-          <a href="/login" class="btn-primary">Se connecter</a>
-          <div class="cta-inscription"><a href="/signin">Pas encore de compte ? Créer un compte</a></div>
-        </div>`;
-    }
-
-    function render(lb) {
-      const top = lb.top || [];
-      const me  = lb.me || null;
-      const cfg = PERIODES[periode];
-      const board = document.getElementById('board');
-
-      if (lb.nonConnecte) { ecranConnexion(); return; }
-      if (lb.indisponible) {
-        board.innerHTML = '<div class="lb-empty">Le classement par période n\'est pas encore disponible.</div>';
-        return;
-      }
-      if (!top.length) {
-        board.innerHTML = '<div class="lb-empty">' + cfg.vide + '</div>';
-        return;
-      }
-
-      const medals = ['🥇', '🥈', '🥉'];
-      const estMoi = u => me && u.id === me.id;
-      let html = '';
-
-      // ── Podium : les 3 premiers, le vainqueur au centre et surélevé ──
-      const trois = top.slice(0, 3);
-      if (trois.length === 3) {
-        const ordre = [1, 0, 2]; // 2e à gauche, 1er au centre, 3e à droite
-        html += '<div class="podium">' + ordre.map(i => {
-          const u = trois[i];
-          return `<div class="pod pod-${i + 1}${estMoi(u) ? ' is-me' : ''}">
-            <div class="pod-medal">${medals[i]}</div>
-            <div class="pod-ava">${esc(initiale(u.username))}</div>
-            <div class="pod-name">${esc(u.username)}</div>
-            <div class="pod-xp">${u.xp} ${cfg.suffixe}</div>
-          </div>`;
-        }).join('') + '</div>';
-      }
-
-      // ── Reste du classement (ou tout, si moins de 3 joueurs) ──
-      const reste = trois.length === 3 ? top.slice(3) : top;
-      const depart = trois.length === 3 ? 4 : 1;
-      if (reste.length) {
-        html += '<div class="lb-list">' + reste.map((u, i) => ligne(u, depart + i, estMoi(u), cfg)).join('') + '</div>';
-      }
-
-      // ── Ma position si je suis hors du tableau affiché ──
-      if (me && !top.some(u => u.id === me.id)) {
-        html += '<div class="lb-sep">···</div><div class="lb-list">' + ligne(me, me.rank, true, cfg) + '</div>';
-      }
-
-      board.innerHTML = html;
-    }
-
-    function ligne(u, rang, isMe, cfg) {
-      return `<div class="lb-row${isMe ? ' lb-me' : ''}">
-        <div class="lb-rank">#${rang}</div>
-        <div class="lb-ava">${esc(initiale(u.username))}</div>
-        <div class="lb-name">${esc(u.username)}${isMe ? '<span class="lb-me-tag">moi</span>' : ''}
-          <div class="lb-lvl">Niveau ${u.niveau}</div>
-        </div>
-        <div class="lb-xp">${u.xp} ${cfg.suffixe}</div>
-      </div>`;
-    }
-
-    charger();
-  </script>
-
-  <script src="/assets/js/site-footer.js"></script>
-  <script src="/assets/js/site-nav.js"></script>
-  <script src="/assets/js/theme.js"></script>
-  <script src="/assets/js/verif-banner.js"></script>
-  <script src="/assets/js/admin-badge.js?v=3"></script>
+  <cs-bandeau></cs-bandeau>
+  <cs-rappel-email></cs-rappel-email>
+  <cs-classement></cs-classement>
+  <cs-pied></cs-pied>
+  <div class="cs-lisere"></div>
 </body>
 </html>

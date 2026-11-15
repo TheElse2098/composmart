@@ -1,0 +1,55 @@
+/* ============================================================================
+   accueil.css — habillage de <cs-admin-accueil> (page /admin).
+
+   Toutes les règles sont préfixées par la balise : rien ici ne peut déborder
+   sur un autre composant.
+   ============================================================================ */
+
+/* ── Couleurs et ombres propres à cette page (le reste vient de styles/jetons.css) ── */
+cs-admin-accueil {
+  display: block;
+
+  --pastille-fond: #e53935;
+  --pastille-texte: #fff;
+  --tuile-accent: #1e6e3e;      /* titre, flèche, texte des puces */
+  --tuile-description: #4a7a5a;
+  --tuile-ombre: 0 2px 10px rgba(30, 110, 62, 0.08);
+  --tuile-ombre-survol: 0 6px 18px rgba(30, 110, 62, 0.14);
+}
+html.dark cs-admin-accueil {
+  --pastille-fond: #243328;
+  --pastille-texte: #7ab88e;
+  --tuile-accent: #7fc99a;
+  --tuile-description: #b0d4be;
+  --tuile-ombre: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --tuile-ombre-survol: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* ── En-tête ── */
+cs-admin-accueil .hero { text-align: center; padding: 26px 20px 8px; }
+cs-admin-accueil .hero-badge { display: inline-block; background: var(--pastille-fond); color: var(--pastille-texte); font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+cs-admin-accueil h1 { font-family: var(--police-titre); font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; color: var(--texte); }
+
+/* ── Tuiles : une colonne sur téléphone, deux puis quatre sur grand écran ── */
+cs-admin-accueil .tuiles { width: 100%; max-width: 1240px; margin: 0 auto; padding: 20px 16px 48px; display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 700px) {
+  cs-admin-accueil .tuiles { grid-template-columns: 1fr 1fr; padding: 24px 24px 56px; gap: 20px; }
+}
+@media (min-width: 1200px) {
+  cs-admin-accueil .tuiles { grid-template-columns: repeat(4, 1fr); }
+}
+
+cs-admin-accueil .tuile { position: relative; display: flex; flex-direction: column; gap: 8px; background: var(--surface); border-radius: 18px; padding: 22px 20px 18px; text-decoration: none; color: inherit; box-shadow: var(--tuile-ombre); border: 2px solid transparent; transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; }
+cs-admin-accueil a.tuile:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--tuile-ombre-survol); }
+cs-admin-accueil a.tuile:focus-visible { outline: 3px solid #52b788; outline-offset: 2px; }
+cs-admin-accueil .tuile-emoji { font-size: 2.2rem; line-height: 1; }
+cs-admin-accueil .tuile-titre { font-family: var(--police-titre); font-size: 1.3rem; font-weight: 900; color: var(--tuile-accent); }
+cs-admin-accueil .tuile-desc { font-size: 0.9rem; color: var(--tuile-description); line-height: 1.45; flex: 1; }
+cs-admin-accueil .tuile-fleche { position: absolute; top: 20px; right: 20px; font-weight: 900; color: var(--tuile-accent); opacity: 0.5; transition: opacity 0.15s, transform 0.15s; }
+cs-admin-accueil a.tuile:hover .tuile-fleche { opacity: 1; transform: translateX(3px); }
+
+/* ── Puces d'état ── */
+cs-admin-accueil .tuile-etat { display: flex; flex-wrap: wrap; gap: 6px; min-height: 26px; margin-top: 4px; }
+cs-admin-accueil .puce { font-size: 0.76rem; font-weight: 800; padding: 4px 10px; border-radius: 12px; background: var(--surface-creuse); color: var(--tuile-accent); white-space: nowrap; }
+cs-admin-accueil .puce.alerte { background: var(--alerte-fond); color: var(--alerte-texte); }
+cs-admin-accueil .puce.calme { background: transparent; color: #7a9a85; padding-left: 0; }

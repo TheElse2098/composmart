@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Marqueur pour les outils Node (tests/front) : les fichiers .js de front/ui sont des modules ES. Aucune dépendance, et ce fichier n'entre pas dans l'image : le Dockerfile ne copie que front/."
+}

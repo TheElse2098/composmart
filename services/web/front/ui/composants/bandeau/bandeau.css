@@ -1,0 +1,161 @@
+/* ============================================================================
+   bandeau.css — habillage de <cs-bandeau> (barre, tiroir, voile, case Admin).
+
+   Remplace les règles qui étaient réparties entre le <style> de chaque page,
+   assets/css/site-nav.css, desktop.css et dark.css.
+
+   Le tiroir et le voile sont placés sous <body> par bandeau.js : leurs classes
+   (.bandeau-tiroir, .bandeau-voile) ne dépendent donc pas de la balise.
+
+   À référencer aussi dans le <head> des pages : la bande verte est ainsi
+   réservée avant que le composant ne s'affiche, et la page ne saute pas.
+   ============================================================================ */
+
+/* ── Couleurs propres au bandeau (le reste vient de styles/jetons.css) ── */
+cs-bandeau,
+.bandeau-tiroir {
+  --bandeau-fond: #1e6e3e;
+  --bandeau-tiroir-fond: #fff;
+  --bandeau-tiroir-ombre: -4px 0 24px rgba(0, 0, 0, 0.12);
+  --bandeau-tiroir-texte: #1a3a25;
+  --bandeau-tiroir-survol: #eef4ec;
+  --bandeau-admin-texte: #c62828;
+  --bandeau-admin-trait: #e53935;
+}
+html.dark cs-bandeau,
+html.dark .bandeau-tiroir {
+  --bandeau-fond: #174f30;
+  --bandeau-tiroir-fond: #1a2b1e;
+  --bandeau-tiroir-ombre: -4px 0 24px rgba(0, 0, 0, 0.5);
+  --bandeau-tiroir-texte: #b0d4be;
+  --bandeau-tiroir-survol: #243328;
+  --bandeau-admin-texte: #ef9a9a;
+  --bandeau-admin-trait: #ef9a9a;
+}
+
+/* ── Le composant : collé en haut de la fenêtre ──
+   min-height réserve la bande avant l'affichage ; la barre est plus haute. */
+cs-bandeau {
+  display: block; width: 100%;
+  position: sticky; top: 0; z-index: 100;
+  min-height: 52px;
+  background: var(--bandeau-fond);
+  font-family: var(--police);
+}
+cs-bandeau *,
+.bandeau-tiroir,
+.bandeau-tiroir * { box-sizing: border-box; }
+
+/* ── Barre ── */
+.bandeau__barre {
+  width: 100%; margin: 0; padding: 14px 20px; position: static;
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  background: var(--bandeau-fond);
+}
+.bandeau__logo {
+  font-family: var(--police-titre); font-size: 1.4rem; font-weight: 900; font-style: italic;
+  color: #fff; letter-spacing: 2px; text-transform: uppercase; text-decoration: none;
+}
+.bandeau__logo span { color: var(--menthe); }
+
+.bandeau__droite { display: flex; align-items: center; gap: 12px; }
+.bandeau__profil { color: rgba(255, 255, 255, 0.85); font-size: 1.3rem; line-height: 1; text-decoration: none; transition: color 0.15s; }
+.bandeau__profil:hover { color: #fff; }
+.bandeau__theme {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.15rem; padding: 4px; line-height: 1;
+  opacity: 0.85; transition: opacity 0.15s;
+}
+.bandeau__theme:hover { opacity: 1; }
+
+.bandeau__burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
+.bandeau__burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
+.bandeau__burger--ouvert span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+.bandeau__burger--ouvert span:nth-child(2) { opacity: 0; }
+.bandeau__burger--ouvert span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+/* ── Liens en ligne : masqués sur téléphone, affichés à partir de 900 px ── */
+.bandeau__liens { display: none; list-style: none; margin: 0; padding: 0; }
+
+@media (min-width: 900px) {
+  .bandeau__liens { display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; }
+  .bandeau__liens a {
+    color: rgba(255, 255, 255, 0.9); text-decoration: none; font-weight: 700; font-size: 0.95rem;
+    padding: 8px 14px; border-radius: 20px; white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+  .bandeau__liens a:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
+  .bandeau__liens a.actif { background: rgba(255, 255, 255, 0.22); color: #fff; }
+  .bandeau__burger { display: none; }
+  .bandeau__logo,
+  .bandeau__droite { flex-shrink: 0; }
+}
+
+/* ── Case « Admin » ──
+   Deux emplacements, jamais affichés ensemble : dans les liens à partir de
+   1200 px, dans la zone de droite en dessous — entre 900 et 1200 px une
+   huitième entrée ferait déborder la rangée de liens. Le !important protège
+   l'attribut `hidden` des règles `display` qui suivent. */
+.bandeau__admin[hidden],
+.bandeau__admin-mini[hidden],
+.bandeau-tiroir [hidden] { display: none !important; }
+
+.bandeau__liens .bandeau__admin { display: none; }
+.bandeau__admin-mini {
+  display: inline-flex; align-items: center; flex-shrink: 0; white-space: nowrap;
+  background: var(--rouge); color: #fff;
+  font-family: var(--police); font-size: 0.78rem; font-weight: 900; letter-spacing: 0.5px;
+  padding: 5px 12px; border-radius: 20px; text-decoration: none;
+  box-shadow: 0 1px 4px rgba(229, 57, 53, 0.4);
+}
+.bandeau__admin-mini:hover,
+.bandeau__admin-mini.actif { background: var(--rouge-fonce); color: #fff; }
+
+@media (min-width: 1200px) {
+  .bandeau__liens .bandeau__admin { display: list-item; }
+  .bandeau__liens .bandeau__admin a,
+  .bandeau__liens .bandeau__admin a.actif { background: var(--rouge); color: #fff; }
+  .bandeau__liens .bandeau__admin a:hover { background: var(--rouge-fonce); }
+  .bandeau__liens .bandeau__admin a.actif { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.7); }
+  .bandeau__admin-mini { display: none; }
+}
+
+/* ── Tiroir (téléphone) ── */
+.bandeau-tiroir {
+  position: fixed; top: 0; right: -320px; z-index: 200;
+  width: 280px; max-width: 85vw; height: 100vh;
+  display: flex; flex-direction: column;
+  background: var(--bandeau-tiroir-fond);
+  box-shadow: var(--bandeau-tiroir-ombre);
+  font-family: var(--police);
+  transition: right 0.32s cubic-bezier(.4, 0, .2, 1);
+}
+.bandeau-tiroir--ouvert { right: 0; }
+
+.bandeau-tiroir__tete { background: var(--vert); padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
+.bandeau-tiroir__logo { font-family: var(--police-titre); font-size: 1.2rem; font-weight: 900; font-style: italic; color: #fff; letter-spacing: 2px; }
+.bandeau-tiroir__logo span { color: var(--menthe); }
+.bandeau-tiroir__fermer { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
+
+.bandeau-tiroir__menu { list-style: none; margin: 0; padding: 8px 0; flex: 1; overflow-y: auto; }
+.bandeau-tiroir__menu a {
+  display: flex; align-items: center; gap: 14px; padding: 15px 24px;
+  font-size: 1rem; font-weight: 700; color: var(--bandeau-tiroir-texte); text-decoration: none;
+  border-left: 3px solid transparent; transition: background 0.15s;
+}
+.bandeau-tiroir__menu a:hover,
+.bandeau-tiroir__menu a.actif { background: var(--bandeau-tiroir-survol); border-left-color: var(--accent); color: var(--accent); }
+.bandeau-tiroir__icone { font-size: 1.2rem; width: 24px; text-align: center; }
+.bandeau-tiroir__trait { height: 1px; margin: 4px 24px; background: var(--trait); }
+
+.bandeau-tiroir__admin a { color: var(--bandeau-admin-texte); }
+.bandeau-tiroir__admin a:hover,
+.bandeau-tiroir__admin a.actif { background: var(--alerte-fond); border-left-color: var(--bandeau-admin-trait); color: var(--bandeau-admin-texte); }
+
+/* ── Voile derrière le tiroir ouvert ── */
+.bandeau-voile {
+  position: fixed; inset: 0; z-index: 150;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.bandeau-voile--ouvert { opacity: 1; pointer-events: all; }

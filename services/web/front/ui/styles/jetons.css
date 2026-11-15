@@ -1,0 +1,66 @@
+/* ============================================================================
+   jetons.css — les couleurs et les polices du site, en un seul endroit.
+
+   Chaque valeur est donnée deux fois : thème clair (:root), thème sombre
+   (html.dark, classe posée par socle/amorce.js). Un composant écrit
+   `color: var(--texte)` et n'a plus rien à prévoir pour le mode sombre.
+
+   Ce fichier ne contient que des variables : le charger dans une page ne
+   change rien à son apparence. Le socle le charge d'office avant d'afficher
+   un composant.
+
+   N'entre ici que ce qui sert à plusieurs composants. Une couleur propre à un
+   seul morceau se déclare en tête de son fichier CSS, sous la même forme
+   (une valeur claire, une valeur sombre).
+   ============================================================================ */
+
+:root {
+  /* Marque : identique dans les deux thèmes */
+  --vert: #1e6e3e;
+  --menthe: #a8e6bf;
+  --rouge: #e53935;
+  --rouge-fonce: #c62828;
+
+  /* Surfaces */
+  --fond: #eef4ec;            /* fond de page */
+  --surface: #fff;            /* cartes, panneaux */
+  --surface-creuse: #eef4ec;  /* pastilles, avatars, survols sur une carte */
+
+  /* Textes */
+  --texte: #1a3a25;
+  --texte-doux: #4a7a5a;      /* texte secondaire */
+  --texte-pale: #7aaa8a;      /* légendes, états vides */
+
+  /* Action */
+  --action: #1e6e3e;          /* fond d'un bouton plein, d'un onglet actif */
+  --accent: #1e6e3e;          /* texte mis en avant, lien, bordure active */
+
+  /* Traits */
+  --trait: #e5ede8;
+
+  /* Alerte */
+  --alerte-fond: #fdecea;
+  --alerte-texte: #c0392b;
+
+  /* Polices (déclarées dans /assets/css/fonts.css) */
+  --police: 'Nunito', Arial, sans-serif;
+  --police-titre: 'Baloo 2', cursive;
+}
+
+html.dark {
+  --fond: #0f1811;
+  --surface: #16211a;
+  --surface-creuse: #1e2d22;
+
+  --texte: #e8f5ee;
+  --texte-doux: #7ab88e;
+  --texte-pale: #7ab88e;
+
+  --action: #2d9959;
+  --accent: #52b788;
+
+  --trait: #2a3d2e;
+
+  --alerte-fond: #3d1a1a;
+  --alerte-texte: #ef9a9a;
+}

@@ -105,6 +105,7 @@ db/            schémas des bases et migrations
 content/       contenu initial des cours
 helm/          chart Helm et script de déploiement
 docs/          notes de développement et d'exploitation
+tests/         contrôles du front avant déploiement (structure, types, tests)
 ```
 
 ## Déploiement
@@ -115,6 +116,7 @@ bash helm/deploy.sh
 
 Détails, installation sur un serveur neuf et test local : [helm/README.md](helm/README.md).
 Conventions de développement : [docs/developpement.md](docs/developpement.md).
+Architecture du front : [docs/front.md](docs/front.md).
 
 ## Licence
 

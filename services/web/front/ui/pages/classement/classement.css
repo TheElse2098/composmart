@@ -1,0 +1,115 @@
+/* ============================================================================
+   classement.css — habillage de <cs-classement> (page /classement).
+
+   Toutes les règles sont préfixées par la balise : rien ici ne peut déborder
+   sur un autre composant.
+   ============================================================================ */
+
+/* ── Couleurs et ombres propres à cette page (le reste vient de styles/jetons.css) ── */
+cs-classement {
+  display: block;
+
+  --heros-fond: #1e6e3e;
+  --heros-motif: url('/assets/img/motif-branchage-light.svg');
+  --heros-degrade: linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2d9959 100%);
+  --heros-titre: #fff;
+  --heros-sous-titre: rgba(255, 255, 255, 0.9);
+
+  --texte-efface: #9db8a8;      /* rang, séparateur */
+  --moi-fond: #e8f5e9;          /* ma ligne */
+  --moi-halo: #a8e6bf;          /* contour de ma ligne, de ma place sur le podium */
+  --moi-etiquette: #fff;
+
+  --ombre-selecteur: 0 6px 22px rgba(30, 110, 62, 0.14);
+  --ombre-podium: 0 4px 16px rgba(30, 110, 62, 0.10);
+  --ombre-ligne: 0 2px 10px rgba(30, 110, 62, 0.07);
+  --ombre-invitation: 0 4px 16px rgba(30, 110, 62, 0.08);
+}
+html.dark cs-classement {
+  --heros-fond: #0d2f18;
+  --heros-motif: url('/assets/img/motif-branchage-dark.svg');
+  --heros-degrade: linear-gradient(160deg, #0d2f18 0%, #12401f 55%, #1a5c33 100%);
+  --heros-titre: #c8e6d4;
+  --heros-sous-titre: rgba(255, 255, 255, 0.82);
+
+  --texte-efface: #7ab88e;
+  --moi-fond: #16291c;
+  --moi-halo: #2d9959;
+  --moi-etiquette: #0f1811;
+
+  --ombre-selecteur: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --ombre-podium: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --ombre-ligne: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --ombre-invitation: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+/* ── En-tête (même traitement que l'accueil) ── */
+cs-classement .hero {
+  position: relative; text-align: center; padding: 54px 20px 80px; color: #fff; overflow: hidden;
+  background-color: var(--heros-fond);
+  background-image: var(--heros-motif), var(--heros-degrade);
+  background-repeat: repeat, no-repeat;
+  background-size: 220px 220px, cover;
+}
+/* La courbe du bas reprend la couleur du fond de page. */
+cs-classement .hero::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 60px; background: var(--fond); clip-path: ellipse(75% 100% at 50% 100%); }
+cs-classement .hero-inner { position: relative; z-index: 2; max-width: 620px; margin: 0 auto; }
+cs-classement .hero h1 { font-family: var(--police-titre); font-size: clamp(1.8rem, 5vw, 2.8rem); font-weight: 900; line-height: 1.15; color: var(--heros-titre); }
+cs-classement .hero-sub { font-size: 1rem; color: var(--heros-sous-titre); font-weight: 600; margin-top: 8px; }
+
+/* ── Sélecteur de période (chevauche la courbe, comme les chiffres de l'accueil) ── */
+cs-classement .periode-wrap { position: relative; z-index: 5; margin-top: -26px; padding: 0 16px; display: flex; justify-content: center; }
+cs-classement .periode-wrap[hidden] { display: none; }
+cs-classement .periode-switch { display: flex; gap: 4px; background: var(--surface); border-radius: 50px; padding: 6px; box-shadow: var(--ombre-selecteur); max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+cs-classement .periode-switch::-webkit-scrollbar { display: none; }
+cs-classement .per-btn { border: none; background: none; border-radius: 50px; padding: 10px 16px; font-family: var(--police-titre); font-weight: 800; font-size: 0.86rem; color: var(--texte-doux); cursor: pointer; white-space: nowrap; transition: background 0.18s, color 0.18s; }
+cs-classement .per-btn.active { background: var(--action); color: #fff; }
+cs-classement .per-btn:hover:not(.active) { background: var(--surface-creuse); color: var(--accent); }
+
+cs-classement .board { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 20px 20px; }
+
+/* ── Podium (les trois premiers) ── */
+cs-classement .podium { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: end; margin: 30px 0 22px; }
+cs-classement .pod { background: var(--surface); border-radius: 20px; padding: 16px 8px 14px; text-align: center; box-shadow: var(--ombre-podium); border: 2px solid transparent; min-width: 0; }
+/* Le vainqueur domine par la hauteur, pas par la couleur seule */
+cs-classement .pod-1 { padding-top: 26px; padding-bottom: 20px; border-color: #f9c449; }
+cs-classement .pod-2 { border-color: #cfd4d8; }
+cs-classement .pod-3 { border-color: #d9a273; }
+cs-classement .pod-medal { font-size: 1.7rem; line-height: 1; }
+cs-classement .pod-ava { width: 48px; height: 48px; border-radius: 50%; margin: 8px auto 7px; display: flex; align-items: center; justify-content: center; font-family: var(--police-titre); font-weight: 900; font-size: 1.2rem; color: #fff; background: linear-gradient(160deg, #1e6e3e, #2d9959); }
+cs-classement .pod-1 .pod-ava { width: 58px; height: 58px; font-size: 1.45rem; }
+cs-classement .pod-name { font-family: var(--police-titre); font-weight: 900; font-size: 0.88rem; color: var(--texte); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+cs-classement .pod-xp { font-size: 0.78rem; font-weight: 800; color: var(--accent); margin-top: 3px; }
+cs-classement .pod.is-me { box-shadow: 0 0 0 3px var(--moi-halo), var(--ombre-podium); }
+
+/* ── Liste (à partir du quatrième) ── */
+cs-classement .lb-list { display: flex; flex-direction: column; gap: 8px; }
+cs-classement .lb-row { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: 16px; padding: 13px 16px; box-shadow: var(--ombre-ligne); transition: transform 0.15s; }
+cs-classement .lb-row:hover { transform: translateX(3px); }
+cs-classement .lb-rank { font-family: var(--police-titre); font-size: 1rem; font-weight: 900; color: var(--texte-efface); width: 34px; text-align: center; flex-shrink: 0; }
+cs-classement .lb-ava { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: var(--police-titre); font-weight: 900; font-size: 0.9rem; color: var(--accent); background: var(--surface-creuse); }
+cs-classement .lb-name { flex: 1; min-width: 0; font-size: 0.92rem; font-weight: 800; color: var(--texte); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+cs-classement .lb-lvl { font-size: 0.7rem; font-weight: 700; color: var(--texte-pale); }
+cs-classement .lb-xp { font-family: var(--police-titre); font-size: 0.95rem; font-weight: 900; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+cs-classement .lb-row.lb-me { background: var(--moi-fond); box-shadow: 0 0 0 2px var(--moi-halo); }
+cs-classement .lb-row.lb-me .lb-name { color: var(--accent); }
+cs-classement .lb-me-tag { font-size: 0.68rem; font-weight: 800; color: var(--accent); background: var(--moi-etiquette); border-radius: 20px; padding: 2px 8px; margin-left: 6px; }
+cs-classement .lb-sep { text-align: center; font-size: 0.9rem; color: var(--texte-efface); font-weight: 800; letter-spacing: 3px; padding: 4px 0; }
+cs-classement .lb-empty { text-align: center; font-size: 0.92rem; color: var(--texte-pale); font-weight: 600; background: var(--surface); border-radius: 20px; padding: 32px 20px; box-shadow: var(--ombre-ligne); }
+
+/* ── Invitation à se connecter ── */
+cs-classement .join-cta { background: var(--surface); border-radius: 20px; padding: 24px 22px; margin-top: 18px; text-align: center; box-shadow: var(--ombre-invitation); }
+cs-classement .join-cta p { font-size: 0.9rem; color: var(--texte-doux); font-weight: 600; margin-bottom: 14px; max-width: 30rem; margin-left: auto; margin-right: auto; line-height: 1.55; }
+cs-classement .cta-cadenas { font-size: 2.4rem; line-height: 1; margin-bottom: 12px; }
+cs-classement .cta-inscription { margin-top: 14px; }
+cs-classement .cta-inscription a { font-size: 0.84rem; font-weight: 700; color: var(--texte-doux); text-decoration: underline; text-underline-offset: 3px; }
+cs-classement .cta-inscription a:hover { color: var(--accent); }
+cs-classement .btn-primary { display: inline-block; background: var(--action); color: #fff; border: none; border-radius: 50px; padding: 12px 30px; font-family: var(--police-titre); font-size: 0.95rem; font-weight: 800; text-decoration: none; cursor: pointer; box-shadow: 0 4px 14px rgba(30, 110, 62, 0.28); transition: transform 0.18s, box-shadow 0.18s; }
+cs-classement .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(30, 110, 62, 0.34); }
+
+@media (min-width: 640px) {
+  cs-classement .podium { gap: 16px; margin-top: 38px; }
+  cs-classement .pod { padding: 20px 12px 18px; }
+  cs-classement .pod-1 { padding-top: 32px; padding-bottom: 26px; }
+  cs-classement .per-btn { padding: 10px 22px; font-size: 0.9rem; }
+}

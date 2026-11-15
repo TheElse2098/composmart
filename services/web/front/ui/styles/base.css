@@ -1,0 +1,39 @@
+/* ============================================================================
+   base.css — socle des pages migrées.
+
+   Ce que toutes les pages ont en commun et qui était recopié dans le <style>
+   de chacune : remise à zéro, corps de page, liseré du bas. Rien de propre à
+   un composant : chaque composant apporte sa feuille.
+
+   À référencer dans le <head>, après jetons.css (cf. docs/front.md, « en-tête
+   type »).
+   ============================================================================ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* Colonne : le pied de page (<cs-pied>, margin-top: auto) reste en bas de la
+   fenêtre sur une page courte. */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--fond);
+  color: var(--texte);
+  font-family: var(--police);
+}
+
+/* ── Liseré vert fixé en bas de la fenêtre ──
+   <div class="cs-lisere"></div>, en dernier dans le <body>. */
+.cs-lisere {
+  position: fixed; bottom: 0; left: 0; right: 0; height: 6px; z-index: 90;
+  background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e);
+}
+
+/* ── États communs des composants ──
+   Composant.afficherChargement() et Composant.afficherErreur(). */
+.cs-etat {
+  padding: 28px 20px; text-align: center;
+  font-size: 0.92rem; font-weight: 600; line-height: 1.5;
+  color: var(--texte-pale);
+}
+.cs-etat--erreur { color: var(--alerte-texte); }
