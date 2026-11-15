@@ -8,6 +8,36 @@
    Usage : <script src="/assets/js/verif-banner.js"></script>
    ============================================================================ */
 (function () {
+  /* ── Passerelle vers le nouveau rappel (docs/front.md, « Transition ») ──
+     Avec ?ui=2 dans l'adresse, le composant <cs-rappel-email> remplace ce
+     script le temps de l'onglet ; ?ui=1 revient à l'ancien. Sans ce paramètre,
+     rien ne change. Fonction recopiée de site-nav.js, où elle est expliquée. */
+  function nouvelleInterface() {
+    try {
+      var choix = new URLSearchParams(window.location.search).get('ui');
+      if (choix === '2') sessionStorage.setItem('ui', '2');
+      else if (choix === '1') sessionStorage.removeItem('ui');
+      return sessionStorage.getItem('ui') === '2';
+    } catch (e) {
+      return false; // stockage inaccessible : ancienne interface
+    }
+  }
+
+  if (nouvelleInterface()) {
+    // Sous le bandeau, comme l'ancien rappel ; en tête de page s'il n'y en a pas.
+    var rappel = document.createElement('cs-rappel-email');
+    var bandeau = document.getElementById('site-nav');
+    if (bandeau) bandeau.after(rappel);
+    else document.body.prepend(rappel);
+
+    var module = document.createElement('script');
+    module.type = 'module';
+    module.src = '/ui/composants/rappel-email/rappel-email.js';
+    module.onerror = function () { console.error('[verif-banner] nouveau rappel indisponible'); };
+    document.head.appendChild(module);
+    return;
+  }
+
   fetch('/api/auth/me.php')
     .then(function (r) { return r.json(); })
     .then(function (me) {

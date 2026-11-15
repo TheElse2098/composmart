@@ -34,14 +34,18 @@ html.dark .bandeau-tiroir {
 }
 
 /* ── Le composant : collé en haut de la fenêtre ──
-   min-height réserve la bande avant l'affichage ; la barre est plus haute. */
+   width et flex-shrink : dans un <body> en colonne qui centre ses enfants, le
+   bandeau occupe toute la largeur et ne se laisse pas écraser par une page
+   qui remplit l'écran (la carte). */
 cs-bandeau {
-  display: block; width: 100%;
+  display: block; width: 100%; flex-shrink: 0;
   position: sticky; top: 0; z-index: 100;
-  min-height: 52px;
   background: var(--bandeau-fond);
   font-family: var(--police);
 }
+/* Tant que le composant n'a rien affiché, la bande verte est réservée : la
+   page ne saute pas à son arrivée. Sans effet une fois la barre en place. */
+cs-bandeau:empty { min-height: 52px; }
 cs-bandeau *,
 .bandeau-tiroir,
 .bandeau-tiroir * { box-sizing: border-box; }
@@ -120,9 +124,12 @@ cs-bandeau *,
   .bandeau__admin-mini { display: none; }
 }
 
-/* ── Tiroir (téléphone) ── */
+/* ── Tiroir (téléphone) ──
+   Le menu ouvert passe au-dessus de tout le reste de la page, y compris des
+   panneaux de la carte (jusqu'à 1001) : d'où des plans élevés pour le tiroir
+   et son voile. Fermés, ils sont hors champ ou transparents. */
 .bandeau-tiroir {
-  position: fixed; top: 0; right: -320px; z-index: 200;
+  position: fixed; top: 0; right: -320px; z-index: 3000;
   width: 280px; max-width: 85vw; height: 100vh;
   display: flex; flex-direction: column;
   background: var(--bandeau-tiroir-fond);
@@ -154,7 +161,7 @@ cs-bandeau *,
 
 /* ── Voile derrière le tiroir ouvert ── */
 .bandeau-voile {
-  position: fixed; inset: 0; z-index: 150;
+  position: fixed; inset: 0; z-index: 2500;
   background: rgba(0, 0, 0, 0.4);
   opacity: 0; pointer-events: none; transition: opacity 0.3s;
 }

@@ -32,18 +32,20 @@ import { theme } from '../../socle/theme.js';
  * @property {string} [court]   libellé dans la barre, pour les pages qui y figurent
  */
 
-/** Toutes les pages du menu. @type {Record<string, Page>} */
+/** Toutes les pages du menu. Les adresses sont sans « .html » : le serveur
+ *  sert `/carte` directement, alors que `/carte.html` coûte une redirection.
+ *  @type {Record<string, Page>} */
 const PAGES = {
   accueil:    { href: '/',              chemins: ['/', '/index.html'],                            icone: '🏠', long: 'Accueil' },
   compte:     { href: '/compte',        chemins: ['/compte', '/compte.html'],                     icone: '👤', long: 'Mon compte' },
   classement: { href: '/classement',    chemins: ['/classement', '/classement.html'],             icone: '🏆', long: 'Classement',        court: 'Classement' },
-  carte:      { href: '/carte.html',    chemins: ['/carte', '/carte.html'],                       icone: '🗺️', long: 'Carte interactive', court: 'Carte' },
-  cours:      { href: '/cours.html',    chemins: ['/cours', '/cours.html', '/cours-detail.html'], icone: '📚', long: 'Les cours',         court: 'Cours' },
+  carte:      { href: '/carte',         chemins: ['/carte', '/carte.html'],                       icone: '🗺️', long: 'Carte interactive', court: 'Carte' },
+  cours:      { href: '/cours',         chemins: ['/cours', '/cours.html', '/cours-detail.html'], icone: '📚', long: 'Les cours',         court: 'Cours' },
   jeux:       { href: '/jeux',          chemins: ['/jeux', '/jeux.html'],                         icone: '🎮', long: 'Jeux',              court: 'Jeux' },
-  materiel:   { href: '/materiel.html', chemins: ['/materiel', '/materiel.html'],                 icone: '🧰', long: 'Le matériel',       court: 'Matériel' },
+  materiel:   { href: '/materiel',      chemins: ['/materiel', '/materiel.html'],                 icone: '🧰', long: 'Le matériel',       court: 'Matériel' },
   evenement:  { href: '/evenement',     chemins: ['/evenement', '/evenement.html'],               icone: '🎟️', long: 'Événements',        court: 'Événements' },
-  contact:    { href: '/contact.html',  chemins: ['/contact', '/contact.html'],                   icone: '✉️', long: 'Nous contacter',    court: 'Nous contacter' },
-  achat:      { href: '/achat.html',    chemins: ['/achat', '/achat.html'],                       icone: '🛒', long: 'Achat' },
+  contact:    { href: '/contact',       chemins: ['/contact', '/contact.html'],                   icone: '✉️', long: 'Nous contacter',    court: 'Nous contacter' },
+  achat:      { href: '/achat',         chemins: ['/achat', '/achat.html'],                       icone: '🛒', long: 'Achat' },
 };
 
 /** Ordre des liens dans la barre (ordinateur). */
@@ -115,6 +117,12 @@ export class Bandeau extends Composant {
 
   /**
    * La barre : logo, liens (ordinateur), compte, thème, burger (téléphone).
+   *
+   * Le burger garde l'identifiant `burgerBtn` de l'ancien bandeau : la carte,
+   * pas encore migrée, guette un clic dessus pour quitter le plein écran avant
+   * que le menu ne s'ouvre. Seule entorse à la règle « pas d'id global », à
+   * retirer quand la carte sera un composant et écoutera le bandeau.
+   *
    * @param {string} chemin adresse courante, normalisée
    */
   gabaritBarre(chemin) {
@@ -130,7 +138,7 @@ export class Bandeau extends Composant {
           <a href="/admin" class="bandeau__admin-mini" data-admin hidden>Admin</a>
           <a href="/compte" class="bandeau__profil" aria-label="Mon compte">👤</a>
           <button type="button" class="bandeau__theme" data-action="theme" aria-label="Changer de thème">🌙</button>
-          <button type="button" class="bandeau__burger" data-action="ouvrir" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+          <button type="button" class="bandeau__burger" id="burgerBtn" data-action="ouvrir" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
         </div>
       </nav>`;
   }

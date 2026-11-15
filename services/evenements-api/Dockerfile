@@ -36,6 +36,10 @@ COPY services/evenements-api/cron/       /var/www/cron/
 # ── Pages d'administration ─────────────────────────────────────────────────
 COPY services/evenements-api/admin-pages/controleur.php /var/www/html/evenements-admin-controleur.php
 COPY services/evenements-api/admin-pages/vues/          /var/www/evenements-admin-vues/
+# La page 404 est celle du site, copiée telle quelle : pour un
+# non-administrateur, la réponse doit être celle d'une adresse inexistante, au
+# caractère près. Une copie tenue à la main ici finissait par en diverger.
+COPY services/web/front/404.html                        /var/www/evenements-admin-vues/404.html
 COPY services/evenements-api/htaccess-racine            /var/www/html/.htaccess
 
 RUN chown -R www-data:www-data /var/www/html /var/www/evenements-admin-vues

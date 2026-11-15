@@ -35,17 +35,24 @@
 import { texteErreur } from './api.js';
 import { Html, html } from './outils.js';
 
-/** Variables de couleur. Chargées d'office : un composant doit s'afficher
- *  correctement même dans une page qui ne les référence pas elle-même. */
+/** Variables de couleur et polices du site. Chargées d'office : un composant
+ *  doit s'afficher correctement même dans une page qui ne les référence pas
+ *  elle-même (c'est le cas de pages pas encore migrées). */
 const JETONS = new URL('../styles/jetons.css', import.meta.url);
+const POLICES = new URL('../../assets/css/fonts.css', import.meta.url);
 
 /** @type {Map<string, Promise<void>>} */
 const feuilles = new Map();
 
+/** Délai au bout duquel un composant s'affiche même si une feuille de style
+ *  n'a toujours pas répondu. */
+const ATTENTE_STYLE = 4000;
+
 /**
  * Ajoute une feuille de style à la page, une seule fois. La promesse se résout
- * quand la feuille est appliquée. Une feuille introuvable est signalée dans la
- * console mais ne bloque pas le composant : mal habillé vaut mieux qu'absent.
+ * quand la feuille est appliquée. Une feuille introuvable, ou qui tarde trop,
+ * est signalée dans la console mais ne bloque pas le composant : mal habillé
+ * vaut mieux qu'absent.
  * @param {string | URL} adresse
  * @returns {Promise<void>}
  */
@@ -54,23 +61,40 @@ export function chargerStyle(adresse) {
   let demande = feuilles.get(href);
   if (!demande) {
     demande = new Promise((resoudre) => {
-      // Déjà référencée par la page : une feuille du <head> est appliquée
-      // avant que le moindre module ne s'exécute.
-      for (const lien of document.querySelectorAll('link[rel="stylesheet"]')) {
-        if (lien instanceof HTMLLinkElement && lien.href === href) {
-          resoudre();
-          return;
-        }
+      /** Feuille déjà référencée par la page, ou balise à créer. */
+      let lien = null;
+      for (const present of document.querySelectorAll('link[rel="stylesheet"]')) {
+        if (present instanceof HTMLLinkElement && present.href === href) lien = present;
       }
-      const lien = document.createElement('link');
-      lien.rel = 'stylesheet';
-      lien.href = href;
-      lien.addEventListener('load', () => resoudre());
-      lien.addEventListener('error', () => {
-        console.error('[ui] feuille de style introuvable : ' + href);
+      // Déjà appliquée : c'est le cas des feuilles citées dans le <head>, que
+      // le navigateur charge avant d'exécuter le moindre module.
+      if (lien && lien.sheet) {
         resoudre();
-      });
-      document.head.appendChild(lien);
+        return;
+      }
+
+      const delai = setTimeout(() => {
+        console.error('[ui] feuille de style toujours en attente : ' + href);
+        resoudre();
+      }, ATTENTE_STYLE);
+      /** @param {boolean} trouvee */
+      const finir = (trouvee) => {
+        clearTimeout(delai);
+        if (!trouvee) console.error('[ui] feuille de style introuvable : ' + href);
+        resoudre();
+      };
+
+      // Référencée mais encore en chargement (posée à l'instant par un script
+      // de la page) : on attend la même balise plutôt que d'en créer une autre.
+      const nouvelle = !lien;
+      if (!lien) {
+        lien = document.createElement('link');
+        lien.rel = 'stylesheet';
+        lien.href = href;
+      }
+      lien.addEventListener('load', () => finir(true));
+      lien.addEventListener('error', () => finir(false));
+      if (nouvelle) document.head.appendChild(lien);
     });
     feuilles.set(href, demande);
   }
@@ -128,7 +152,7 @@ export class Composant extends HTMLElement {
   async #demarrer() {
     const classe = /** @type {typeof Composant} */ (this.constructor);
     try {
-      await Promise.all([JETONS, ...classe.styles].map(chargerStyle));
+      await Promise.all([JETONS, POLICES, ...classe.styles].map(chargerStyle));
       if (!this.#monte) return; // retiré de la page pendant le chargement
       await this.monter();
     } catch (erreur) {

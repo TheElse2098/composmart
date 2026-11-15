@@ -11,6 +11,46 @@
   var mount = document.getElementById('site-nav');
   if (!mount) { console.warn('[site-nav] pas de <div id="site-nav"> sur cette page'); return; }
 
+  /* ── Passerelle vers le nouveau bandeau (docs/front.md, « Transition ») ──
+     Ajouter ?ui=2 à l'adresse d'une page affiche dans cet onglet le composant
+     <cs-bandeau> à la place de ce script ; ?ui=1 revient à l'ancien. Le choix
+     tient le temps de l'onglet (sessionStorage), pour suivre les liens sans le
+     retaper. Sans ce paramètre, rien ne change.
+     nouvelleInterface() est recopiée telle quelle dans site-footer.js et
+     verif-banner.js : ces scripts se chargent dans un ordre qui varie d'une
+     page à l'autre. Le tout disparaît quand le nouveau bandeau devient la règle. */
+  function nouvelleInterface() {
+    try {
+      var choix = new URLSearchParams(window.location.search).get('ui');
+      if (choix === '2') sessionStorage.setItem('ui', '2');
+      else if (choix === '1') sessionStorage.removeItem('ui');
+      return sessionStorage.getItem('ui') === '2';
+    } catch (e) {
+      return false; // stockage inaccessible : ancienne interface
+    }
+  }
+
+  if (nouvelleInterface()) {
+    // La feuille d'abord : la bande verte est réservée avant l'arrivée du composant.
+    var feuille = document.createElement('link');
+    feuille.rel = 'stylesheet';
+    feuille.href = '/ui/composants/bandeau/bandeau.css';
+    document.head.appendChild(feuille);
+
+    // Même identifiant que l'ancien conteneur : des pages le visent encore
+    // (mode projection du suivi d'atelier).
+    var bandeau = document.createElement('cs-bandeau');
+    bandeau.id = 'site-nav';
+    mount.replaceWith(bandeau);
+
+    var module = document.createElement('script');
+    module.type = 'module';
+    module.src = '/ui/composants/bandeau/bandeau.js';
+    module.onerror = function () { console.error('[site-nav] nouveau bandeau indisponible'); };
+    document.head.appendChild(module);
+    return;
+  }
+
   // Sans .html : la 301 du .htaccess (strip d'extension) génère un Location en
   // http:// derrière le proxy TLS → mixed content bloqué en HTTPS.
   fetch('/partials/site-nav')

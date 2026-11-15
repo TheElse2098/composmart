@@ -43,7 +43,7 @@ test('bandeau : le lien de la page courante est marqué actif, et lui seul', () 
   assert.equal(compter(barre, /class="actif"/g), 1);
 
   const tiroir = String(bandeau.gabaritTiroir('/cours-detail.html'));
-  assert.match(tiroir, /<a href="\/cours\.html" class="actif">/);
+  assert.match(tiroir, /<a href="\/cours" class="actif">/);
   assert.equal(compter(tiroir, /class="actif"/g), 1);
 
   assert.equal(compter(String(bandeau.gabaritBarre('/admin')), /class="actif"/g), 0);
@@ -62,10 +62,16 @@ test('bandeau : dix entrées dans le tiroir, dans l’ordre, précédées de l�
 
 test('pied : les liens légaux et les trois colonnes de liens sont là', () => {
   const pied = String(new Pied().gabarit());
-  for (const adresse of ['/mentions-legales', '/confidentialite', '/cgu', '/carte.html', '/classement', '/compte', 'mailto:contact@composmart.fr']) {
+  for (const adresse of ['/mentions-legales', '/confidentialite', '/cgu', '/carte', '/classement', '/compte', 'mailto:contact@composmart.fr']) {
     assert.ok(pied.includes('href="' + adresse + '"'), 'lien vers ' + adresse + ' attendu');
   }
   assert.equal(compter(pied, /<h5>/g), 3);
+});
+
+test('bandeau et pied : aucun lien interne ne porte « .html » (une redirection par clic sinon)', () => {
+  const bandeau = new Bandeau();
+  const sorties = [String(bandeau.gabaritBarre('/')), String(bandeau.gabaritTiroir('/')), String(new Pied().gabarit())];
+  for (const sortie of sorties) assert.doesNotMatch(sortie, /href="\/[^"]*\.html"/);
 });
 
 test('rappel email : l’adresse est affichée échappée', () => {

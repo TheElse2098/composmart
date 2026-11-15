@@ -18,6 +18,8 @@
      pages        aucune ligne de CSS ou de JS dans une page migrée ; en-tête
                   type ; fichiers cités présents ; chaque balise <cs-…>
                   utilisée est définie par un module que la page charge
+     transition   syntaxe des scripts historiques (assets/js) et présence des
+                  fichiers de ui/ auxquels ils passent la main
 
    Il affiche aussi l'avancement de la migration.
 
@@ -390,11 +392,12 @@ export function controler(racine = RACINE) {
         if (deja === balise) erreur(fichier, 'balise « ' + balise + ' » déjà définie par ' + court(autre));
       }
       baliseDe.set(fichier, balise);
+    }
 
-      for (const m of code.matchAll(/new\s+URL\(\s*['"]([^'"]+\.css)['"]\s*,\s*import\.meta\.url\s*\)/g)) {
-        const etat = presence(resolve(dirname(fichier), m[1]), racine);
-        if (etat !== 'ok') erreur(fichier, 'feuille de style « ' + m[1] + ' » ' + (etat === 'casse' ? ': casse différente du nom du fichier' : 'introuvable'));
-      }
+    // Feuilles de style citées par le module (celles d'un composant, celles du socle).
+    for (const m of code.matchAll(/new\s+URL\(\s*['"]([^'"]+\.css)['"]\s*,\s*import\.meta\.url\s*\)/g)) {
+      const etat = presence(resolve(dirname(fichier), m[1]), racine);
+      if (etat !== 'ok') erreur(fichier, 'feuille de style « ' + m[1] + ' » ' + (etat === 'casse' ? ': casse différente du nom du fichier' : 'introuvable'));
     }
   }
 
@@ -541,6 +544,21 @@ export function controler(racine = RACINE) {
         const fermees = (html.match(new RegExp('</' + balise + '>', 'g')) || []).length;
         if (ouvertes !== fermees) erreur(page, '<' + balise + '> : ' + ouvertes + ' ouverte(s), ' + fermees + ' fermée(s) — une balise personnalisée se ferme toujours par </' + balise + '>');
       }
+    }
+  }
+
+  // ── Scripts historiques (assets/js) ──
+  // Le temps de la transition, certains passent la main aux composants de
+  // ui/ : leur syntaxe et les fichiers qu'ils citent sont contrôlés aussi.
+  for (const script of lister(join(FRONT, 'assets', 'js'), '.js', false)) {
+    const source = lire(script);
+    const syntaxe = erreurDeSyntaxe(source, true);
+    if (syntaxe) erreur(script, 'erreur de syntaxe : ' + syntaxe);
+    for (const m of sansCommentairesJs(source).matchAll(/['"](\/ui\/[^'"]+\.(?:js|css))['"]/g)) {
+      const cible = join(FRONT, ...m[1].split('/').filter(Boolean));
+      const etat = presence(cible, racine);
+      if (etat !== 'ok') erreur(script, m[1] + (etat === 'casse' ? ' : casse différente du nom du fichier' : ' : fichier introuvable'));
+      else if (codes.has(cible)) for (const f of fermeture(cible)) modulesCharges.add(f);
     }
   }
 

@@ -116,6 +116,7 @@ export class FauxElement {
   removeAttribute(nom) { this.attributs.delete(nom); }
 
   get id() { return this.getAttribute('id') || ''; }
+  set id(valeur) { this.setAttribute('id', valeur); }
   get className() { return this.getAttribute('class') || ''; }
   set className(valeur) { this.setAttribute('class', valeur); }
   get hidden() { return this.hasAttribute('hidden'); }
@@ -198,17 +199,67 @@ export class FauxElement {
   }
 
   // Arbre
+  /**
+   * Place un nœud parmi les enfants, avant le repère (ou à la fin). Un nœud
+   * déjà dans la page est d'abord retiré de là où il était, comme dans un
+   * navigateur : un composant déplacé sort puis rentre.
+   * @param {FauxElement | string} noeud
+   * @param {FauxElement | string | null} repere
+   */
+  #placer(noeud, repere) {
+    if (typeof noeud !== 'string') noeud.remove();
+    const position = repere === null ? -1 : this.noeuds.indexOf(repere);
+    this.noeuds.splice(position < 0 ? this.noeuds.length : position, 0, noeud);
+    if (typeof noeud === 'string') return;
+    noeud.parentElement = this;
+    if (this.isConnected) noeud.#prevenir('connectedCallback');
+  }
+
   /** @param {...(FauxElement | string)} noeuds */
   append(...noeuds) {
-    for (const noeud of noeuds) {
-      if (typeof noeud !== 'string') noeud.remove();
-      this.#attacher(noeud);
-    }
+    for (const noeud of noeuds) this.#placer(noeud, null);
   }
 
   /** @param {FauxElement} noeud */
   appendChild(noeud) {
     this.append(noeud);
+    return noeud;
+  }
+
+  /** @param {...(FauxElement | string)} noeuds */
+  prepend(...noeuds) {
+    const premier = this.noeuds[0] ?? null;
+    for (const noeud of noeuds) this.#placer(noeud, premier);
+  }
+
+  /** Insère juste après cet élément. @param {...(FauxElement | string)} noeuds */
+  after(...noeuds) {
+    const parent = this.parentElement;
+    if (!parent) return;
+    const suivant = parent.noeuds[parent.noeuds.indexOf(this) + 1] ?? null;
+    for (const noeud of noeuds) parent.#placer(noeud, suivant);
+  }
+
+  /** @param {FauxElement | string} noeud */
+  replaceWith(noeud) {
+    const parent = this.parentElement;
+    if (!parent) return;
+    parent.#placer(noeud, this);
+    this.remove();
+  }
+
+  // Ce dont se servent encore les scripts historiques.
+  get tagName() { return this.localName.toUpperCase(); }
+  get parentNode() { return this.parentElement; }
+  get firstChild() { return this.noeuds[0] ?? null; }
+  get nextSibling() {
+    const parent = this.parentElement;
+    return parent ? parent.noeuds[parent.noeuds.indexOf(this) + 1] ?? null : null;
+  }
+
+  /** @param {FauxElement} noeud @param {FauxElement | string | null} repere */
+  insertBefore(noeud, repere) {
+    this.#placer(noeud, repere);
     return noeud;
   }
 
@@ -310,6 +361,8 @@ class HTMLElement extends FauxElement {}
 class HTMLButtonElement extends HTMLElement {}
 class HTMLAnchorElement extends HTMLElement {}
 class HTMLLinkElement extends HTMLElement {
+  /** La feuille, une fois chargée ; `null` tant qu'elle ne l'est pas. @type {object | null} */
+  sheet = null;
   get rel() { return this.getAttribute('rel') || ''; }
   set rel(valeur) { this.setAttribute('rel', valeur); }
   get href() { return this.getAttribute('href') || ''; }
@@ -318,6 +371,36 @@ class HTMLLinkElement extends HTMLElement {
 
 /** Composants enregistrés par customElements.define(). @type {Map<string, new () => FauxElement>} */
 const definis = new Map();
+
+/** Le dossier servi par « web » : les modules `/ui/…` d'une page se lisent là. */
+const RACINE_WEB = new URL('../../services/web/front/', import.meta.url);
+
+/**
+ * Une balise écrite dans la page avant que son module n'arrive est un élément
+ * ordinaire ; à l'enregistrement du composant, le navigateur la « promeut ».
+ * Ici l'élément est remplacé sur place par une instance du composant, avec ses
+ * attributs et son contenu.
+ * @param {FauxElement} ancien
+ * @param {new () => FauxElement} Classe
+ */
+function promouvoir(ancien, Classe) {
+  const neuf = new Classe();
+  neuf.localName = ancien.localName;
+  for (const [nom, valeur] of ancien.attributs) neuf.attributs.set(nom, valeur);
+  for (const noeud of ancien.noeuds) {
+    neuf.noeuds.push(noeud);
+    if (typeof noeud !== 'string') noeud.parentElement = neuf;
+  }
+  ancien.noeuds = [];
+  const parent = ancien.parentElement;
+  if (parent) {
+    parent.noeuds[parent.noeuds.indexOf(ancien)] = neuf;
+    neuf.parentElement = parent;
+    ancien.parentElement = null;
+  }
+  const composant = /** @type {any} */ (neuf);
+  if (neuf.isConnected && typeof composant.connectedCallback === 'function') composant.connectedCallback();
+}
 
 /** @param {string} nom @returns {FauxElement} */
 function creerElement(nom) {
@@ -397,18 +480,35 @@ export function installerFauxDom() {
   const page = new FauxElement('#document');
   /** @type {FauxElement[]} */
   const liensAjoutes = [];
+  /** Adresses des modules qu'un script de la page a demandés. @type {string[]} */
+  const modulesDemandes = [];
   const stockage = new Map();
+  const stockageOnglet = new Map();
 
-  // Une feuille ajoutée au <head> se « charge » juste après ; une feuille dont
-  // l'adresse contient « introuvable » échoue.
+  // Ce qu'on ajoute au <head> se « charge » juste après, comme dans un
+  // navigateur : une feuille de style (celle dont l'adresse contient
+  // « introuvable » échoue), ou un module `/ui/…`, lu dans le dépôt.
   const ajouter = head.append.bind(head);
   head.append = (...noeuds) => {
     ajouter(...noeuds);
     for (const noeud of noeuds) {
-      if (typeof noeud === 'string' || noeud.localName !== 'link') continue;
-      liensAjoutes.push(noeud);
-      const echec = (noeud.getAttribute('href') || '').includes('introuvable');
-      queueMicrotask(() => noeud.dispatchEvent(new FauxEvenement(echec ? 'error' : 'load', { bubbles: false })));
+      if (typeof noeud === 'string') continue;
+      if (noeud.localName === 'link') {
+        liensAjoutes.push(noeud);
+        const echec = (noeud.getAttribute('href') || '').includes('introuvable');
+        queueMicrotask(() => {
+          if (!echec) /** @type {any} */ (noeud).sheet = {};
+          noeud.dispatchEvent(new FauxEvenement(echec ? 'error' : 'load', { bubbles: false }));
+        });
+      }
+      const script = /** @type {any} */ (noeud);
+      if (noeud.localName === 'script' && script.type === 'module') {
+        modulesDemandes.push(String(script.src));
+        import(new URL('.' + script.src, RACINE_WEB).href).then(
+          () => { if (script.onload) script.onload(); },
+          () => { if (script.onerror) script.onerror(); },
+        );
+      }
     }
   };
 
@@ -422,6 +522,7 @@ export function installerFauxDom() {
     createElement: creerElement,
     querySelectorAll: (/** @type {string} */ s) => [...head.querySelectorAll(s), ...body.querySelectorAll(s)],
     querySelector: (/** @type {string} */ s) => head.querySelector(s) ?? body.querySelector(s),
+    getElementById: (/** @type {string} */ id) => body.querySelector('#' + id),
     addEventListener: page.addEventListener.bind(page),
     removeEventListener: page.removeEventListener.bind(page),
     dispatchEvent: page.dispatchEvent.bind(page),
@@ -435,23 +536,31 @@ export function installerFauxDom() {
   g.CustomEvent = FauxEvenement;
   g.KeyboardEvent = class KeyboardEvent extends FauxEvenement {};
   g.document = document;
-  g.location = { pathname: '/' };
+  g.window = g;
+  g.location = { pathname: '/', search: '' };
   g.customElements = {
     get: (/** @type {string} */ nom) => definis.get(nom),
-    define: (/** @type {string} */ nom, /** @type {new () => FauxElement} */ classe) => { definis.set(nom, classe); },
-  };
-  Object.defineProperty(g, 'localStorage', {
-    configurable: true,
-    value: {
-      getItem: (/** @type {string} */ cle) => (stockage.has(cle) ? stockage.get(cle) : null),
-      setItem: (/** @type {string} */ cle, /** @type {string} */ valeur) => { stockage.set(cle, String(valeur)); },
+    define: (/** @type {string} */ nom, /** @type {new () => FauxElement} */ classe) => {
+      definis.set(nom, classe);
+      // Les balises déjà écrites dans la page deviennent des composants.
+      for (const ancien of [...body.querySelectorAll(nom)]) promouvoir(ancien, classe);
     },
+  };
+  /** @param {Map<string, string>} donnees */
+  const stockageWeb = (donnees) => ({
+    getItem: (/** @type {string} */ cle) => (donnees.has(cle) ? donnees.get(cle) : null),
+    setItem: (/** @type {string} */ cle, /** @type {string} */ valeur) => { donnees.set(cle, String(valeur)); },
+    removeItem: (/** @type {string} */ cle) => { donnees.delete(cle); },
   });
+  Object.defineProperty(g, 'localStorage', { configurable: true, value: stockageWeb(stockage) });
+  Object.defineProperty(g, 'sessionStorage', { configurable: true, value: stockageWeb(stockageOnglet) });
 
   g.__fauxDom = {
     document,
     stockage,
+    stockageOnglet,
     liensAjoutes,
+    modulesDemandes,
     /** Écrit du HTML dans <body> et rend son premier élément. */
     monter(/** @type {string} */ source) {
       const conteneur = creerElement('div');
@@ -463,17 +572,23 @@ export function installerFauxDom() {
     async stabiliser() {
       for (let i = 0; i < 6; i++) await new Promise((resoudre) => setTimeout(resoudre, 0));
     },
-    /** Retire tout de <body> (les composants en sont prévenus) et remet l'état de page à neuf. */
+    /** Retire tout de <body> (les composants en sont prévenus) et remet l'état de page à neuf.
+     *  Le choix gardé pour l'onglet (sessionStorage) survit, comme d'une page à la suivante. */
     vider() {
       for (const enfant of [...body.children]) enfant.remove();
       document.activeElement = null;
       body.style = {};
       g.location.pathname = '/';
+      g.location.search = '';
       html.className = '';
       stockage.clear();
     },
-    /** Change l'adresse de la page, pour le prochain composant monté. */
-    aller(/** @type {string} */ chemin) { g.location.pathname = chemin; },
+    /** Change l'adresse de la page, pour le prochain composant monté : `/carte`, `/carte?ui=2`. */
+    aller(/** @type {string} */ adresse) {
+      const [chemin, requete] = adresse.split('?');
+      g.location.pathname = chemin;
+      g.location.search = requete ? '?' + requete : '';
+    },
   };
   return g.__fauxDom;
 }

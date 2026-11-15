@@ -235,6 +235,34 @@ morceaux de la page), servie par le contrôleur après vérification des droits.
   donnée, aucun secret, aucune adresse interne en dur.**
 - Modifier l'interface d'administration ne reconstruit que `web`.
 
+## Transition : les pages pas encore migrées
+
+Les pages historiques chargent encore `assets/js/site-nav.js`,
+`site-footer.js` et `verif-banner.js`. Ces trois scripts servent de
+**passerelles** : ils peuvent céder la place à `<cs-bandeau>`, `<cs-pied>` et
+`<cs-rappel-email>` sans qu'aucune page ne soit modifiée.
+
+- **Prévisualisation.** Ajouter `?ui=2` à l'adresse d'une page affiche les
+  nouveaux composants dans cet onglet, et le choix suit les liens (il est gardé
+  dans `sessionStorage`). `?ui=1` revient aux anciens. Sans paramètre, un
+  visiteur garde l'ancienne interface.
+- **Identifiants conservés.** Le nouveau bandeau reprend `id="site-nav"` et le
+  nouveau pied `id="site-footer"` : des pages les visent encore (mode
+  projection du suivi d'atelier, pied masqué pendant un parcours). Le burger
+  garde `id="burgerBtn"`, que la carte guette pour quitter le plein écran. Ces
+  identifiants disparaîtront avec la migration des pages concernées.
+- **Ce que le socle apporte de lui-même.** Un composant charge les variables
+  de couleur et les polices du site s'il arrive dans une page qui ne les
+  référence pas (`/carte` et `/achat` n'ont pas `fonts.css`).
+- **Fin de la transition.** Quand les nouveaux composants deviennent la règle,
+  l'interrupteur et `partials/` sont supprimés ; les passerelles restent
+  jusqu'à la migration de la dernière page qui les charge.
+
+La page `404.html` n'existe qu'en un exemplaire, dans `web`. Les Dockerfile de
+courses-api, games-api et evenements-api la copient : la réponse d'une adresse
+d'administration à un non-administrateur est la même, au caractère près, que
+celle d'une adresse inexistante.
+
 ## Contrôles
 
 À lancer avant de livrer, depuis la racine du dépôt :

@@ -40,6 +40,10 @@ COPY shared/seeds/                /docker-seeds/
 # l'interface à n'importe qui, ce que le contrôle de session est censé empêcher.
 COPY services/courses-api/admin-pages/controleur.php /var/www/html/admin-controleur.php
 COPY services/courses-api/admin-pages/vues/          /var/www/admin-vues/
+# La page 404 est celle du site, copiée telle quelle : pour un
+# non-administrateur, la réponse doit être celle d'une adresse inexistante, au
+# caractère près. Une copie tenue à la main ici finissait par en diverger.
+COPY services/web/front/404.html                     /var/www/admin-vues/404.html
 COPY services/courses-api/htaccess-racine            /var/www/html/.htaccess
 
 # PHPMailer (envoi SMTP des messages de contact) : installé à côté de _guard.php,

@@ -28,22 +28,22 @@ export class Pied extends Composant {
           </div>
           <div class="pied__colonne">
             <h5>Explorer</h5>
-            <a href="/carte.html">Carte</a>
-            <a href="/cours.html">Cours</a>
+            <a href="/carte">Carte</a>
+            <a href="/cours">Cours</a>
             <a href="/jeux">Jeux</a>
-            <a href="/materiel.html">Matériel</a>
+            <a href="/materiel">Matériel</a>
           </div>
           <div class="pied__colonne">
             <h5>Communauté</h5>
             <a href="/classement">Classement</a>
             <a href="/compte">Mon compte</a>
-            <a href="/contact.html">Nous contacter</a>
+            <a href="/contact">Nous contacter</a>
           </div>
           <div class="pied__colonne">
             <h5>Contact</h5>
             <a href="mailto:contact@composmart.fr">contact@composmart.fr</a>
             <a href="https://www.openstreetmap.org" target="_blank" rel="noopener">OpenStreetMap</a>
-            <a href="/achat.html">Matériel &amp; achat</a>
+            <a href="/achat">Matériel &amp; achat</a>
           </div>
         </div>
         <div class="pied__legal">

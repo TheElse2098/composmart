@@ -155,6 +155,41 @@ test('chargerStyle() : une feuille n’est ajoutée qu’une fois, une feuille d
   assert.equal(dom.liensAjoutes.length, apres, 'aucune seconde balise <link>');
 });
 
+test('chargerStyle() : une feuille citée par la page et déjà appliquée ne fait rien attendre', async () => {
+  const appliquee = dom.document.createElement('link');
+  appliquee.rel = 'stylesheet';
+  appliquee.href = 'https://composmart.test/ui/appliquee.css';
+  dom.document.head.append(appliquee);
+  await dom.stabiliser(); // la feuille est chargée, comme celles du <head> à l'exécution des modules
+  assert.ok(appliquee.sheet);
+  const avant = dom.liensAjoutes.length;
+  await chargerStyle('/ui/appliquee.css');
+  assert.equal(dom.liensAjoutes.length, avant);
+});
+
+test('chargerStyle() : une feuille qui ne répond jamais finit par laisser passer le composant', async (t) => {
+  // Une balise posée hors du <head> du faux navigateur : elle ne se charge jamais.
+  const muette = dom.document.createElement('link');
+  muette.rel = 'stylesheet';
+  muette.href = 'https://composmart.test/ui/muette.css';
+  dom.document.body.append(muette);
+
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let passe = false;
+  const vues = await enSilence(async () => {
+    const demande = chargerStyle('/ui/muette.css').then(() => { passe = true; });
+    await Promise.resolve();
+    assert.equal(passe, false, 'tant que le délai n’est pas écoulé, le composant attend');
+    t.mock.timers.tick(4000);
+    await demande;
+  });
+  t.mock.timers.reset();
+
+  assert.equal(passe, true);
+  assert.match(vues[0], /toujours en attente/);
+  muette.remove();
+});
+
 test('chargerStyle() : une feuille introuvable ne bloque pas le composant', async () => {
   const vues = await enSilence(async () => { await chargerStyle('/ui/introuvable.css'); });
   assert.match(vues[0], /feuille de style introuvable/);

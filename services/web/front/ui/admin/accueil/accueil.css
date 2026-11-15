@@ -9,16 +9,12 @@
 cs-admin-accueil {
   display: block;
 
-  --pastille-fond: #e53935;
-  --pastille-texte: #fff;
   --tuile-accent: #1e6e3e;      /* titre, flèche, texte des puces */
   --tuile-description: #4a7a5a;
   --tuile-ombre: 0 2px 10px rgba(30, 110, 62, 0.08);
   --tuile-ombre-survol: 0 6px 18px rgba(30, 110, 62, 0.14);
 }
 html.dark cs-admin-accueil {
-  --pastille-fond: #243328;
-  --pastille-texte: #7ab88e;
   --tuile-accent: #7fc99a;
   --tuile-description: #b0d4be;
   --tuile-ombre: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -27,7 +23,8 @@ html.dark cs-admin-accueil {
 
 /* ── En-tête ── */
 cs-admin-accueil .hero { text-align: center; padding: 26px 20px 8px; }
-cs-admin-accueil .hero-badge { display: inline-block; background: var(--pastille-fond); color: var(--pastille-texte); font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+/* La pastille reste rouge dans les deux thèmes : elle signale l'administration. */
+cs-admin-accueil .hero-badge { display: inline-block; background: var(--rouge); color: #fff; font-size: 0.78rem; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
 cs-admin-accueil h1 { font-family: var(--police-titre); font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; color: var(--texte); }
 
 /* ── Tuiles : une colonne sur téléphone, deux puis quatre sur grand écran ── */

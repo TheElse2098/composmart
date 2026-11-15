@@ -260,6 +260,13 @@ test('faute : la coquille d’administration est contrôlée comme les autres pa
   attendre(fautes(coquille, (s) => s.replace('<cs-admin-accueil></cs-admin-accueil>', '<cs-admin-acceuil></cs-admin-acceuil>')), /accueil\.html → <cs-admin-acceuil> utilisée par la page/);
 });
 
+test('faute : script historique qui passe la main à un fichier absent, ou mal écrit', () => {
+  const passerelle = 'services/web/front/assets/js/site-nav.js';
+  attendre(fautes(passerelle, (s) => s.replace('/ui/composants/bandeau/bandeau.js', '/ui/composants/bandeau/Bandeau.js')), /site-nav\.js → \/ui\/composants\/bandeau\/Bandeau\.js : casse différente/);
+  attendre(fautes(passerelle, (s) => s.replace('/ui/composants/bandeau/bandeau.css', '/ui/composants/bandeau/absent.css')), /site-nav\.js → \/ui\/composants\/bandeau\/absent\.css : fichier introuvable/);
+  attendre(fautes(passerelle, (s) => s.replace('function nouvelleInterface() {', 'function nouvelleInterface() {{')), /site-nav\.js → erreur de syntaxe/);
+});
+
 test('faute : deux composants pour la même balise', () => {
   const origine = join(copie, ...(UI + 'composants/pied/pied.js').split('/'));
   const double = join(copie, ...(UI + 'pages/classement/pied.js').split('/'));
