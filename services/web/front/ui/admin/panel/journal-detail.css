@@ -1,0 +1,132 @@
+/* ============================================================================
+   journal-detail.css — habillage de <cs-admin-journal-detail> : la fenêtre,
+   les lignes du détail, le tableau avant / après et les textes comparés
+   (gabarits de journal-diff.js).
+   ============================================================================ */
+
+cs-admin-journal-detail {
+  display: block;
+
+  --detail-fond: #fff;
+  --detail-titre: #1a3a25;
+  --detail-trait: #edf3ee;
+  --detail-ligne: #f0f4f0;
+  --detail-fermer-survol: #eef4ec;
+  --detail-fermer-texte: #1e6e3e;
+  --detail-bouton-fond: #eef4ec;
+  --detail-annuler-survol: #f9d6d1;
+  --detail-gris-fond: #eceff1;
+  --detail-gris-texte: #455a64;
+  --detail-puce-texte: #2d6a4f;
+  --detail-ajout-fond: #c8ecd2;
+  --detail-ajout-texte: #1b5e20;
+  --detail-retrait-fond: #f8d4cf;
+  --detail-retrait-texte: #b71c1c;
+  --detail-avant-fond: #fdf0ee;
+  --detail-avant-texte: #6d2a22;
+  --detail-apres-fond: #ebf7ee;
+  --detail-apres-texte: #1b4d2c;
+  --detail-diff-bord: #e3ece5;
+  --detail-diff-egal: #667;
+  --detail-diff-saut: #f6f8f6;
+  --detail-mot-retire: #f5b7b1;
+  --detail-mot-ajoute: #a9dfbf;
+}
+html.dark cs-admin-journal-detail {
+  --detail-fond: #1a2b1e;
+  --detail-titre: #c8e6d4;
+  --detail-trait: #243a2c;
+  --detail-ligne: #243a2c;
+  --detail-fermer-survol: #243328;
+  --detail-fermer-texte: #7fc99a;
+  --detail-bouton-fond: #243328;
+  --detail-annuler-survol: #4a2020;
+  --detail-gris-fond: #263238;
+  --detail-gris-texte: #b0bec5;
+  --detail-puce-texte: #7fc99a;
+  --detail-ajout-fond: #1d4029;
+  --detail-ajout-texte: #a5dcb6;
+  --detail-retrait-fond: #4a1f1c;
+  --detail-retrait-texte: #f1aaa2;
+  --detail-avant-fond: #3a1d1a;
+  --detail-avant-texte: #f3c4bd;
+  --detail-apres-fond: #183323;
+  --detail-apres-texte: #bfe8cc;
+  --detail-diff-bord: #243a2c;
+  --detail-diff-egal: #9fb0a5;
+  --detail-diff-saut: #1b261e;
+  --detail-mot-retire: #7a2e27;
+  --detail-mot-ajoute: #2f6b45;
+}
+
+/* ── Fenêtre ── */
+cs-admin-journal-detail .modal-back { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 600; display: none; align-items: center; justify-content: center; padding: 18px; }
+cs-admin-journal-detail .modal-back.show { display: flex; }
+cs-admin-journal-detail .modal-box { background: var(--detail-fond); border-radius: 20px; width: 100%; max-width: 820px; max-height: 88vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; }
+cs-admin-journal-detail .audit-modal-head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 20px 12px; border-bottom: 1px solid var(--detail-trait); }
+cs-admin-journal-detail .audit-modal-icon { font-size: 1.6rem; line-height: 1; }
+cs-admin-journal-detail .modal-title { font-family: var(--police-titre); font-size: 1.05rem; font-weight: 900; color: var(--detail-titre); margin-bottom: 2px; }
+cs-admin-journal-detail .audit-meta { color: #888; font-size: 0.7rem; }
+cs-admin-journal-detail .audit-modal-close { margin-left: auto; background: none; border: none; font-size: 1.1rem; color: #888; cursor: pointer; padding: 2px 6px; border-radius: 8px; }
+cs-admin-journal-detail .audit-modal-close:hover { background: var(--detail-fermer-survol); color: var(--detail-fermer-texte); }
+cs-admin-journal-detail .audit-modal-body { padding: 4px 20px 6px; overflow-y: auto; }
+
+cs-admin-journal-detail .modal-actions { display: flex; gap: 8px; padding: 12px 20px 18px; }
+cs-admin-journal-detail .modal-actions button { flex: 1; border: none; border-radius: 12px; padding: 11px; font-size: 0.85rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+cs-admin-journal-detail .modal-cancel { background: var(--detail-bouton-fond); color: var(--texte-doux); }
+cs-admin-journal-detail .modal-annuler-action { background: var(--alerte-fond); color: var(--alerte-texte); }
+cs-admin-journal-detail .modal-annuler-action:hover:not(:disabled) { background: var(--detail-annuler-survol); }
+cs-admin-journal-detail .modal-annuler-action:disabled { opacity: 0.55; cursor: default; }
+
+/* ── Sections et lignes « clé : valeur » ── */
+cs-admin-journal-detail .audit-sec { margin-top: 14px; }
+cs-admin-journal-detail .modal-label { font-size: 0.75rem; font-weight: 800; color: var(--texte-doux); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 5px; }
+cs-admin-journal-detail .audit-sec > .modal-label { margin-top: 0; }
+cs-admin-journal-detail .audit-annule-banniere { background: var(--detail-gris-fond); color: var(--detail-gris-texte); border-radius: 10px; padding: 8px 12px; font-size: 0.8rem; font-weight: 700; margin-top: 12px; }
+cs-admin-journal-detail .audit-note { color: #888; font-size: 0.78rem; font-style: italic; margin: 10px 0; }
+cs-admin-journal-detail .audit-row { display: flex; gap: 8px; padding: 3px 0; border-top: 1px solid var(--detail-ligne); }
+cs-admin-journal-detail .audit-row:first-child { border-top: none; }
+cs-admin-journal-detail .audit-key { color: var(--texte-doux); font-weight: 800; min-width: 110px; flex-shrink: 0; }
+cs-admin-journal-detail .audit-val { color: var(--texte); word-break: break-word; }
+cs-admin-journal-detail .audit-val.empty { color: #aaa; font-style: italic; }
+cs-admin-journal-detail .audit-vide { color: #aaa; font-style: italic; }
+cs-admin-journal-detail .audit-obj { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; }
+cs-admin-journal-detail .audit-obj > .k { color: var(--texte-doux); font-weight: 700; }
+
+/* ── Puces (listes, éléments ajoutés ou retirés) ── */
+cs-admin-journal-detail .audit-chip { display: inline-block; background: var(--surface-creuse); color: var(--detail-puce-texte); border-radius: 8px; padding: 1px 7px; font-size: 0.72rem; font-weight: 700; margin: 1px 2px 1px 0; }
+cs-admin-journal-detail .audit-chip.nok { background: var(--alerte-fond); color: var(--alerte-texte); }
+cs-admin-journal-detail .audit-chip.ajout { background: var(--detail-ajout-fond); color: var(--detail-ajout-texte); }
+cs-admin-journal-detail .audit-chip.retrait { background: var(--detail-retrait-fond); color: var(--detail-retrait-texte); text-decoration: line-through; }
+
+/* ── Tableau Champ | Avant | Après ── */
+cs-admin-journal-detail .audit-chg { display: grid; grid-template-columns: minmax(110px, 0.6fr) 1fr 1fr; gap: 6px 10px; align-items: start; font-size: 0.8rem; }
+cs-admin-journal-detail .audit-chg-entete { font-size: 0.68rem; font-weight: 800; color: #999; text-transform: uppercase; letter-spacing: 0.4px; }
+cs-admin-journal-detail .audit-chg-cle { color: var(--texte-doux); font-weight: 800; padding-top: 4px; word-break: break-word; }
+cs-admin-journal-detail .audit-chg-large { grid-column: 1 / -1; }
+cs-admin-journal-detail .val-avant,
+cs-admin-journal-detail .val-apres { border-radius: 8px; padding: 4px 8px; white-space: pre-wrap; word-break: break-word; min-height: 1.6em; }
+cs-admin-journal-detail .val-avant { background: var(--detail-avant-fond); color: var(--detail-avant-texte); }
+cs-admin-journal-detail .val-apres { background: var(--detail-apres-fond); color: var(--detail-apres-texte); }
+
+/* ── Textes comparés ligne à ligne (cours, anecdotes, descriptions longues) ── */
+cs-admin-journal-detail .diff-bloc { border: 1px solid var(--detail-diff-bord); border-radius: 10px; overflow: hidden; font-size: 0.78rem; line-height: 1.5; margin-top: 4px; }
+cs-admin-journal-detail .dl { padding: 2px 10px 2px 22px; white-space: pre-wrap; word-break: break-word; position: relative; }
+cs-admin-journal-detail .dl::before { position: absolute; left: 8px; color: #999; }
+cs-admin-journal-detail .dl-del { background: var(--detail-avant-fond); color: var(--detail-avant-texte); }
+cs-admin-journal-detail .dl-del::before { content: '−'; color: #c0392b; }
+cs-admin-journal-detail .dl-add { background: var(--detail-apres-fond); color: var(--detail-apres-texte); }
+cs-admin-journal-detail .dl-add::before { content: '+'; color: #1e6e3e; }
+cs-admin-journal-detail .dl-eq { color: var(--detail-diff-egal); }
+cs-admin-journal-detail .dl-saut { color: #999; font-style: italic; background: var(--detail-diff-saut); text-align: center; padding-left: 10px; }
+cs-admin-journal-detail del.dw { background: var(--detail-mot-retire); text-decoration: line-through; border-radius: 3px; }
+cs-admin-journal-detail ins.dw { background: var(--detail-mot-ajoute); text-decoration: none; border-radius: 3px; }
+cs-admin-journal-detail .diff-panneau { margin-top: 10px; }
+cs-admin-journal-detail .diff-panneau-titre { font-weight: 800; font-size: 0.8rem; color: var(--texte); }
+
+/* Sur téléphone, le nom du champ passe au-dessus de ses deux colonnes. */
+@media (max-width: 640px) {
+  cs-admin-journal-detail .audit-chg { grid-template-columns: 1fr 1fr; }
+  cs-admin-journal-detail .audit-chg-entete:first-child { display: none; }
+  cs-admin-journal-detail .audit-chg-cle { grid-column: 1 / -1; padding-top: 8px; }
+}

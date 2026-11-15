@@ -1,0 +1,54 @@
+/* ============================================================================
+   dialogue.css — habillage de <cs-dialogue> (confirmation, message).
+
+   Reprend les règles que assets/js/confirmer.js injectait depuis une chaîne
+   JavaScript.
+   ============================================================================ */
+
+cs-dialogue {
+  display: block;
+
+  --dialogue-fond: #fff;
+  --dialogue-texte: #4a7a5a;
+  --dialogue-non-fond: #eceff1;
+  --dialogue-non-texte: #607d8b;
+}
+html.dark cs-dialogue {
+  --dialogue-fond: #1a2b1e;
+  --dialogue-texte: #9fb8a8;
+  --dialogue-non-fond: #243328;
+  --dialogue-non-texte: #9fb0a5;
+}
+
+/* Au-dessus de tout, fenêtres de détail comprises. */
+cs-dialogue .dialogue__fond {
+  position: fixed; inset: 0; z-index: 900;
+  display: flex; align-items: center; justify-content: center; padding: 18px;
+  background: rgba(15, 24, 17, 0.55);
+  animation: dialogue-fond 0.18s both;
+}
+cs-dialogue .dialogue__boite {
+  width: 100%; max-width: 420px; padding: 24px;
+  background: var(--dialogue-fond); border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  animation: dialogue-boite 0.18s both;
+}
+cs-dialogue.ferme .dialogue__fond { opacity: 0; transition: opacity 0.18s; }
+
+cs-dialogue .dialogue__titre { font-family: var(--police-titre); font-weight: 900; font-size: 1.12rem; color: var(--texte); margin-bottom: 8px; }
+cs-dialogue .dialogue__texte { font-size: 0.92rem; line-height: 1.55; color: var(--dialogue-texte); font-weight: 600; }
+cs-dialogue .dialogue__actions { display: flex; gap: 9px; margin-top: 20px; }
+cs-dialogue .dialogue__actions button { flex: 1; border: none; border-radius: 50px; padding: 11px 16px; font-family: var(--police-titre); font-weight: 800; font-size: 0.88rem; cursor: pointer; }
+cs-dialogue .dialogue__non { background: var(--dialogue-non-fond); color: var(--dialogue-non-texte); }
+cs-dialogue .dialogue__oui { background: var(--vert); color: #fff; }
+cs-dialogue .dialogue__oui.danger { background: #c0392b; }
+cs-dialogue .dialogue__actions button:focus-visible { outline: 3px solid var(--menthe); outline-offset: 2px; }
+
+@keyframes dialogue-fond {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes dialogue-boite {
+  from { transform: translateY(8px) scale(0.98); }
+  to { transform: none; }
+}

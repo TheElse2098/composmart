@@ -184,13 +184,13 @@ test('panneau : changer d’onglet, puis revenir recharge la vue d’ensemble sa
   const vue = panneau.querySelector('cs-admin-vue-ensemble');
   const avant = appels.filter((a) => a.adresse === '/api/admin/stats.php').length;
 
-  panneau.querySelector('[data-onglet="journal"]').click();
+  panneau.querySelector('[data-onglet="utilisateurs"]').click();
   assert.equal(panneau.querySelector('[data-contenu="ensemble"]').hidden, true);
-  assert.equal(panneau.querySelector('[data-contenu="journal"]').hidden, false);
-  assert.equal(panneau.querySelector('[data-onglet="journal"]').classList.contains('active'), true);
-  assert.equal(panneau.querySelector('[data-onglet="journal"]').getAttribute('aria-selected'), 'true');
-  assert.match(panneau.querySelector('[data-contenu="journal"] .en-attente').textContent, /pas encore reconstruit/);
-  assert.equal(panneau.querySelector('[data-contenu="journal"] a').getAttribute('href'), '/admin/panel');
+  assert.equal(panneau.querySelector('[data-contenu="utilisateurs"]').hidden, false);
+  assert.equal(panneau.querySelector('[data-onglet="utilisateurs"]').classList.contains('active'), true);
+  assert.equal(panneau.querySelector('[data-onglet="utilisateurs"]').getAttribute('aria-selected'), 'true');
+  assert.match(panneau.querySelector('[data-contenu="utilisateurs"] .en-attente').textContent, /pas encore reconstruit/);
+  assert.equal(panneau.querySelector('[data-contenu="utilisateurs"] a').getAttribute('href'), '/admin/panel');
 
   panneau.querySelector('[data-onglet="ensemble"]').click();
   await dom.stabiliser();

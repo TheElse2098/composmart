@@ -59,7 +59,15 @@ tests/front/    contrôles : vérificateur, types, tests (hors des images Docker
    une fonction dans `outils.js`. Deux niveaux d'héritage au plus.
 10. **Le contenu éditorial reste dans le HTML** (accueil, matériel, pages
     légales) : un composant sert à ce qui est dynamique ou partagé.
-11. **Jamais de boîte native** (`alert`, `confirm`, `prompt`).
+11. **Jamais de boîte native** (`alert`, `confirm`, `prompt`) : `confirmer()`
+    et `informer()` de `composants/dialogue/dialogue.js` les remplacent.
+
+    ```js
+    import { confirmer, informer } from '../../composants/dialogue/dialogue.js';
+
+    if (!await confirmer({ titre: 'Supprimer ?', texte: '…', valider: 'Supprimer', danger: true })) return;
+    informer({ titre: 'Action impossible', texte: texteErreur(erreur) });
+    ```
 
 Le vérificateur contrôle les règles 1, 2, 4, 6, 7, 8 et 11, et pour la
 règle 5 l'absence de `fetch` hors de `socle/api.js`.
@@ -192,6 +200,23 @@ Le panneau d'administration (`ui/admin/panel/`) sert de modèle :
 
 Un onglet du panneau expose `rafraichir()` : il est créé à sa première
 ouverture, gardé ensuite (ses filtres survivent), et rechargé à chaque retour.
+
+Un morceau trop gros pour un fichier se découpe par nature, pas par taille.
+Le journal, par exemple :
+
+| Fichier | Contenu | Sorte |
+|---|---|---|
+| `journal.js` | la liste, ses filtres, sa pagination | composant |
+| `journal-detail.js` | la fenêtre de détail, l'annulation | composant |
+| `journal-diff.js` | comparer un avant et un après | fonctions pures |
+| `journal-libelles.js` | actions, catégories, noms des champs | tables |
+
+Ajouter une action journalisée côté serveur ne touche que
+`journal-libelles.js` (la marche à suivre est en tête du fichier).
+
+Une fenêtre ouverte par un composant (détail, formulaire) est un composant
+enfant, posé dans le gabarit du parent, que le parent ouvre par une méthode :
+`this.trouver('cs-admin-journal-detail', AdminJournalDetail).ouvrir(entree)`.
 
 Types : chaque module est annoté en JSDoc. La forme d'une réponse d'API se
 déclare par un `@typedef` à côté du composant qui la lit, avec le nom du

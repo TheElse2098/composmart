@@ -357,11 +357,53 @@ export class FauxElement {
   click() {
     this.dispatchEvent(new FauxEvenement('click'));
   }
+
+  /** Le focus : l'élément devient `document.activeElement`. */
+  focus() {
+    /** @type {any} */ (globalThis).document.activeElement = this;
+  }
 }
 
 class HTMLElement extends FauxElement {}
 class HTMLButtonElement extends HTMLElement {}
 class HTMLAnchorElement extends HTMLElement {}
+
+/** Champ de saisie : sa valeur est celle qu'on lui donne, sinon son attribut `value`. */
+class HTMLInputElement extends HTMLElement {
+  /** @type {string | null} */
+  #valeur = null;
+  min = '';
+  max = '';
+  get value() { return this.#valeur ?? this.getAttribute('value') ?? ''; }
+  set value(valeur) { this.#valeur = String(valeur); }
+}
+
+/** Menu déroulant : sa valeur est celle qu'on lui donne si une option la porte,
+ *  sinon celle de l'option `selected`, sinon de la première. Réécrire ses
+ *  options oublie le choix fait, comme dans un navigateur. */
+class HTMLSelectElement extends HTMLElement {
+  /** @type {string | null} */
+  #valeur = null;
+  get value() {
+    const options = this.querySelectorAll('option');
+    if (this.#valeur !== null && options.some((o) => o.getAttribute('value') === this.#valeur)) return this.#valeur;
+    const choisie = options.find((o) => o.hasAttribute('selected')) ?? options[0];
+    return choisie ? choisie.getAttribute('value') ?? choisie.textContent : '';
+  }
+  set value(valeur) { this.#valeur = String(valeur); }
+  get innerHTML() { return super.innerHTML; }
+  set innerHTML(html) {
+    this.#valeur = null;
+    super.innerHTML = html;
+  }
+
+  /** Ce que fait quelqu'un qui choisit une option : la valeur change, puis `change` remonte.
+   *  @param {string} valeur */
+  choisir(valeur) {
+    this.value = valeur;
+    this.dispatchEvent(new FauxEvenement('change'));
+  }
+}
 class HTMLScriptElement extends HTMLElement {
   type = '';
   get src() { return this.getAttribute('src') || ''; }
@@ -375,6 +417,16 @@ class HTMLLinkElement extends HTMLElement {
   get href() { return this.getAttribute('href') || ''; }
   set href(valeur) { this.setAttribute('href', valeur); }
 }
+
+/** Les balises du navigateur qui ont leur propre classe. @type {Record<string, new () => FauxElement>} */
+const NATIFS = {
+  a: HTMLAnchorElement,
+  button: HTMLButtonElement,
+  input: HTMLInputElement,
+  link: HTMLLinkElement,
+  script: HTMLScriptElement,
+  select: HTMLSelectElement,
+};
 
 /** Composants enregistrés par customElements.define(). @type {Map<string, new () => FauxElement>} */
 const definis = new Map();
@@ -411,9 +463,7 @@ function promouvoir(ancien, Classe) {
 
 /** @param {string} nom @returns {FauxElement} */
 function creerElement(nom) {
-  const Classe = definis.get(nom)
-    ?? (nom === 'button' ? HTMLButtonElement : nom === 'a' ? HTMLAnchorElement : nom === 'link' ? HTMLLinkElement
-      : nom === 'script' ? HTMLScriptElement : HTMLElement);
+  const Classe = definis.get(nom) ?? NATIFS[nom] ?? HTMLElement;
   const element = new Classe();
   element.localName = nom;
   return element;
@@ -549,6 +599,8 @@ export function installerFauxDom() {
   g.HTMLElement = HTMLElement;
   g.HTMLButtonElement = HTMLButtonElement;
   g.HTMLAnchorElement = HTMLAnchorElement;
+  g.HTMLInputElement = HTMLInputElement;
+  g.HTMLSelectElement = HTMLSelectElement;
   g.HTMLLinkElement = HTMLLinkElement;
   g.HTMLScriptElement = HTMLScriptElement;
   g.CustomEvent = FauxEvenement;

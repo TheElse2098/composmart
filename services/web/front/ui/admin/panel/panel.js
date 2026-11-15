@@ -24,6 +24,7 @@
 import { ErreurApi, api } from '../../socle/api.js';
 import { Composant } from '../../socle/composant.js';
 import { html } from '../../socle/outils.js';
+import './journal.js';
 import './vue-ensemble.js';
 
 /**
@@ -149,6 +150,8 @@ export class AdminPanel extends Composant {
     switch (cle) {
       case 'ensemble':
         return html`<cs-admin-vue-ensemble></cs-admin-vue-ensemble>`;
+      case 'journal':
+        return html`<cs-admin-journal></cs-admin-journal>`;
       default:
         return this.gabaritEnAttente();
     }
