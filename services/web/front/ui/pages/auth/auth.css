@@ -1,0 +1,163 @@
+/* ============================================================================
+   auth.css — les pages d'authentification (connexion, inscription, mot de
+   passe oublié, nouveau mot de passe, confirmation de l'email, compte admin
+   initial) : une carte seule, au milieu de la page, sans bandeau ni pied.
+
+   La carte est dessinée par carte-auth.js, dont héritent les six composants ;
+   cette feuille les habille tous. Elle était recopiée dans chaque page, avec
+   des écarts (police, largeur) qui n'avaient pas de raison d'être.
+   ============================================================================ */
+
+/* La carte au milieu de la fenêtre. Seules ces pages chargent cette feuille. */
+body { align-items: center; justify-content: center; padding: 24px 16px; }
+
+cs-connexion,
+cs-inscription,
+cs-mot-de-passe-oublie,
+cs-reinitialiser,
+cs-verification-email,
+cs-lancement {
+  display: block; width: 100%; max-width: var(--auth-largeur);
+
+  --auth-largeur: 400px;
+  --auth-carte: #fff;
+  --auth-ombre: 0 4px 32px rgba(30, 110, 62, 0.12);
+  --auth-entete: linear-gradient(160deg, #145228 0%, #1e6e3e 60%, #2a9450 100%);
+  --auth-libelle: #2c4a34;
+  --auth-champ-fond: #f7fbf8;
+  --auth-champ-bord: #c8dfc8;
+  --auth-champ-actif: #fff;
+  --auth-champ-actif-bord: #1e6e3e;
+  --auth-oeil: #7aaa8a;
+  --auth-pied: #7aaa8a;
+  --auth-lien: #1e6e3e;
+  --auth-aide: #7aaa8a;
+  --auth-texte: #4a7a5a;
+  --auth-titre: #1a3a25;
+  --auth-bouton: #1e6e3e;
+  --auth-ok-fond: #e8f5e9;
+  --auth-ok-texte: #1b5e20;
+  --auth-ko-fond: #fdecea;
+  --auth-ko-texte: #c0392b;
+  --auth-case: #2c4a34;
+  --auth-alerte-fond: #fff8e1;
+  --auth-alerte-texte: #6d4c00;
+}
+html.dark cs-connexion,
+html.dark cs-inscription,
+html.dark cs-mot-de-passe-oublie,
+html.dark cs-reinitialiser,
+html.dark cs-verification-email,
+html.dark cs-lancement {
+  --auth-carte: #1a2b1e;
+  --auth-ombre: 0 4px 32px rgba(0, 0, 0, 0.4);
+  --auth-libelle: #7ab88e;
+  --auth-champ-fond: #1e2d22;
+  --auth-champ-bord: #2d4030;
+  --auth-champ-actif: #243328;
+  --auth-champ-actif-bord: #52b788;
+  --auth-oeil: #4a7a5a;
+  --auth-pied: #7ab88e;
+  --auth-lien: #52b788;
+  --auth-aide: #5a8a6a;
+  --auth-texte: #7ab88e;
+  --auth-titre: #c8e6d4;
+  --auth-ok-fond: #16291c;
+  --auth-ok-texte: #7fc99a;
+  --auth-ko-fond: #3d1a1a;
+  --auth-ko-texte: #ef9a9a;
+  --auth-case: #c8e6d4;
+  --auth-alerte-fond: #2a1f00;
+  --auth-alerte-texte: #f0c060;
+}
+/* Les pages au contenu plus long ont une carte un peu plus large. */
+cs-mot-de-passe-oublie,
+cs-reinitialiser { --auth-largeur: 420px; }
+cs-verification-email { --auth-largeur: 430px; }
+/* Sur ordinateur, toutes un peu plus larges, pour plus de présence. */
+@media (min-width: 900px) {
+  cs-connexion,
+  cs-inscription,
+  cs-mot-de-passe-oublie,
+  cs-reinitialiser,
+  cs-verification-email,
+  cs-lancement { --auth-largeur: 460px; }
+}
+
+/* La page de création du compte admin initial est violette : elle ne se
+   confond avec aucune autre. */
+cs-lancement {
+  --auth-entete: linear-gradient(160deg, #1a1a4a 0%, #2d2d7a 60%, #3a3a9a 100%);
+  --auth-bouton: linear-gradient(135deg, #2d2d7a, #3a3a9a);
+  --auth-champ-actif-bord: #3a3a9a;
+}
+html.dark cs-lancement {
+  --auth-champ-actif-bord: #6060c0;
+  --auth-texte: #4a7a5a;
+}
+
+/* ── La carte ── */
+.auth-card { background: var(--auth-carte); border-radius: 24px; box-shadow: var(--auth-ombre); overflow: hidden; }
+.auth-header { background: var(--auth-entete); padding: 28px 24px 24px; text-align: center; }
+.auth-logo { font-family: var(--police-titre); font-size: 1.3rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; display: block; margin-bottom: 16px; }
+.auth-logo span { color: var(--menthe); }
+.auth-title { font-family: var(--police-titre); font-size: 1.2rem; font-weight: 900; color: #fff; }
+.auth-badge { display: inline-block; background: rgba(255, 255, 255, 0.15); color: #e8d5ff; font-size: 0.72rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+.auth-subtitle { font-size: 0.8rem; color: rgba(255, 255, 255, 0.65); margin-top: 5px; }
+.auth-body { padding: 28px 24px 32px; }
+.auth-body.centre { padding: 30px 26px 32px; text-align: center; }
+
+/* ── Formulaire ── */
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 0.78rem; font-weight: 700; color: var(--auth-libelle); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.field input { display: block; width: 100%; padding: 11px 14px; border: 1.5px solid var(--auth-champ-bord); border-radius: 10px; font-size: 0.95rem; color: var(--texte); background: var(--auth-champ-fond); outline: none; transition: border-color 0.15s; font-family: inherit; }
+.field input:focus { border-color: var(--auth-champ-actif-bord); background: var(--auth-champ-actif); }
+.field-aide { font-size: 0.72rem; color: var(--auth-aide); font-weight: 600; margin-top: 5px; line-height: 1.4; }
+
+/* Mot de passe et son bouton « afficher » */
+.pass-wrap { position: relative; }
+.pass-wrap input { padding-right: 44px; }
+.toggle-pass { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--auth-oeil); line-height: 1; padding: 2px; }
+
+/* Case des conditions d'utilisation */
+.cgu-check { display: flex; gap: 10px; align-items: flex-start; font-size: 0.85rem; color: var(--auth-case); line-height: 1.45; margin: 4px 0 14px; cursor: pointer; }
+.cgu-check input { margin-top: 3px; width: 17px; height: 17px; flex-shrink: 0; accent-color: var(--vert); }
+.cgu-check a,
+.rgpd-info a { color: var(--auth-lien); font-weight: 700; }
+.rgpd-info { font-size: 0.75rem; color: var(--auth-aide); line-height: 1.45; margin-top: 14px; text-align: center; }
+
+.intro { font-size: 0.88rem; color: var(--auth-texte); font-weight: 600; line-height: 1.55; margin-bottom: 20px; }
+.warn-box { background: var(--auth-alerte-fond); border-left: 4px solid #f9a825; border-radius: 10px; padding: 11px 14px; font-size: 0.8rem; font-weight: 600; color: var(--auth-alerte-texte); margin-bottom: 20px; line-height: 1.45; }
+
+/* ── Boutons ── */
+.btn-submit { display: block; width: 100%; background: var(--auth-bouton); color: #fff; border: none; border-radius: 50px; padding: 13px; font-family: var(--police-titre); font-size: 1rem; font-weight: 800; cursor: pointer; transition: opacity 0.15s; margin-top: 8px; text-decoration: none; text-align: center; }
+.btn-submit:hover { opacity: 0.85; }
+.btn-submit:disabled { opacity: 0.5; cursor: default; }
+.auth-body.centre .btn-submit { margin-top: 20px; }
+.lien-secondaire { display: inline-block; margin-top: 16px; font-size: 0.85rem; font-weight: 700; color: var(--auth-texte); text-decoration: underline; text-underline-offset: 3px; }
+.lien-secondaire:hover { color: var(--auth-lien); }
+
+/* ── Messages ── */
+.avis { border-radius: 10px; padding: 12px 14px; font-size: 0.86rem; font-weight: 600; line-height: 1.5; margin-bottom: 16px; }
+.avis.ok { background: var(--auth-ok-fond); color: var(--auth-ok-texte); }
+.avis.ko { background: var(--auth-ko-fond); color: var(--auth-ko-texte); }
+.auth-body.centre .avis { margin: 16px 0 0; }
+
+.auth-footer { text-align: center; margin-top: 20px; font-size: 0.88rem; color: var(--auth-pied); }
+.auth-footer a { color: var(--auth-lien); font-weight: 700; text-decoration: none; }
+.auth-footer a:hover { text-decoration: underline; }
+.auth-footer.serre { margin-top: 14px; }
+
+/* ── Un état plutôt qu'un formulaire (confirmation de l'email, compte admin) ── */
+.etat-icone { font-size: 3rem; line-height: 1; margin-bottom: 14px; }
+.etat-titre { font-family: var(--police-titre); font-size: 1.15rem; font-weight: 900; color: var(--auth-titre); margin-bottom: 8px; }
+.etat-texte { font-size: 0.9rem; color: var(--auth-texte); font-weight: 600; line-height: 1.6; }
+.etat-texte strong { color: var(--auth-lien); }
+.etat-tourne { display: inline-block; animation: auth-tourner 1s linear infinite; }
+@keyframes auth-tourner {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .etat-tourne { animation: none; }
+}

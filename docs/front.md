@@ -470,6 +470,11 @@ content="noindex">`), qu'on compare à l'ancienne en production. Une fois
 validée, elle prend l'adresse définitive et l'ancienne page est supprimée,
 en une livraison à part : la bascule.
 
+Plusieurs pages qui se ressemblent partagent une classe de base dans leur
+dossier : les six pages d'authentification (`ui/pages/auth/`) héritent de
+`CarteAuth` (`carte-auth.js` : la carte, les messages, le bouton 👁 des mots
+de passe) et ne gardent que leur formulaire et leurs envois.
+
 Exemple de page découpée en parties : `ui/pages/compte/` — la page
 (`compte.js`) n'affiche que ce qui est simple ; chaque partie qui a son propre
 comportement (`compte-tickets.js`, `compte-reglages.js`, `compte-sortie.js`)

@@ -377,6 +377,9 @@ class HTMLInputElement extends HTMLElement {
   #valeur = null;
   min = '';
   max = '';
+  /** Le type du champ, lu et écrit dans son attribut (`password`, `text`…). */
+  get type() { return this.getAttribute('type') || 'text'; }
+  set type(valeur) { this.setAttribute('type', valeur); }
   /** Case à cocher : cochée, ou « à moitié » (une partie de la sélection). */
   checked = false;
   indeterminate = false;
