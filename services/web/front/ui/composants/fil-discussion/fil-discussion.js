@@ -111,7 +111,7 @@ export class FilDiscussion extends Fenetre {
   #arreterRelecture = null;
 
   monter() {
-    this.poserFenetre(this.gabarit());
+    this.poserFenetre(this.gabarit(), { colonne: true });
     this.ecouter('click', '[data-action="envoyer"]', () => this.#envoyer());
     this.ecouter('keydown', 'textarea', (_zone, evenement) => {
       if (evenement instanceof KeyboardEvent && evenement.key === 'Enter' && (evenement.ctrlKey || evenement.metaKey)) this.#envoyer();
@@ -137,7 +137,7 @@ export class FilDiscussion extends Fenetre {
     this.desQuePosee(() => {
       this.#id = id;
       this.#statut = '';
-      this.trouver('.fil-titre').textContent = '#' + id;
+      this.trouver('.fenetre__titre').textContent = '#' + id;
       this.rendre(html``, this.trouver('.fil-statut'));
       this.afficherChargement('Chargement…', this.trouver('.fil-messages'));
       this.rendre(html``, this.trouver('.fil-actions'));
@@ -191,7 +191,7 @@ export class FilDiscussion extends Fenetre {
     const ticket = fil.ticket;
     this.#statut = ticket.statut;
     this.rendreSiChange(gabaritStatut(ticket.statut, vue.statuts), this.trouver('.fil-statut'));
-    this.trouver('.fil-titre').textContent = vue.titre(ticket);
+    this.trouver('.fenetre__titre').textContent = vue.titre(ticket);
 
     // Redessiné seulement si le fil a changé : la relecture ne doit pas casser
     // une sélection de texte ni faire perdre la position de lecture.
@@ -262,10 +262,10 @@ export class FilDiscussion extends Fenetre {
 
   gabarit() {
     return html`
-      <div class="fil-tete">
+      <div class="fenetre__tete">
         <span class="fil-statut"></span>
-        <div class="fil-titre"></div>
-        <button type="button" class="fil-fermer" data-action="fermer" aria-label="Fermer">✕</button>
+        <div class="fenetre__titre"></div>
+        <button type="button" class="fenetre__fermer" data-action="fermer" aria-label="Fermer">✕</button>
       </div>
       <div class="fil-messages"></div>
       <div class="fil-info" hidden></div>

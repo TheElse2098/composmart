@@ -12,6 +12,7 @@
   --fenetre-titre: #1a3a25;
   --fenetre-bord: #d7e6da;
   --fenetre-annuler-fond: #eef4ec;
+  --fenetre-trait: #eef4ec;
 
   position: fixed; inset: 0; z-index: 600;
   display: none; align-items: center; justify-content: center; padding: 18px;
@@ -22,6 +23,7 @@ html.dark .fenetre__fond {
   --fenetre-titre: #c8e6d4;
   --fenetre-bord: #2b3c30;
   --fenetre-annuler-fond: #243328;
+  --fenetre-trait: #243328;
 }
 .fenetre__fond.ouverte { display: flex; }
 
@@ -38,3 +40,12 @@ html.dark .fenetre__fond {
 .fenetre__actions button:disabled { opacity: 0.55; cursor: default; }
 .fenetre__valider { background: var(--vert); color: #fff; }
 .fenetre__annuler { background: var(--fenetre-annuler-fond); color: var(--texte-doux); }
+
+/* ── Cadre « en colonne » (poserFenetre(…, { colonne: true })) ──
+   Sans marge : un en-tête fixe, puis un corps qui défile seul. Chaque fenêtre
+   donne à son corps sa marge et son défilement, et sa largeur à la boîte. */
+.fenetre__fond--colonne { background: rgba(15, 24, 17, 0.55); padding: 16px; }
+.fenetre__boite--colonne { background: var(--surface); border-radius: 18px; max-width: 560px; padding: 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: none; }
+.fenetre__tete { padding: 13px 16px; border-bottom: 1.5px solid var(--fenetre-trait); display: flex; align-items: center; gap: 10px; }
+.fenetre__tete .fenetre__titre { flex: 1; min-width: 0; margin-bottom: 0; font-size: 0.92rem; color: var(--texte); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fenetre__fermer { background: none; border: none; font-size: 1.05rem; cursor: pointer; color: #7aaa8a; }

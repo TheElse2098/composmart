@@ -245,6 +245,7 @@ export class AdminAjoutEdition extends Fenetre {
 | Méthode | Rôle |
 |---|---|
 | `poserFenetre(gabarit)` | pose le cadre, fermé ; une fois, dans `monter()` |
+| `poserFenetre(gabarit, { colonne: true })` | cadre sans marge pour un contenu long : en-tête fixe (`.fenetre__tete`, `.fenetre__titre`, `.fenetre__fermer`), puis un corps qui défile seul |
 | `desQuePosee(action)` | exécute maintenant, ou dès que le cadre est posé |
 | `montrer()` / `fermer()` | ouvre, ferme |
 | `ouverte`, `posee` | états |
@@ -274,6 +275,15 @@ Le type `PointDeVue`, en tête de `fil-discussion.js`, liste ce qu'il faut
 fournir ; l'exemple complet est `VUE_ADMIN` dans `admin/panel/messages.js`.
 Ne jamais ajouter au composant un `if (admin)` : ajouter un champ au point de
 vue.
+
+Quand seules des mesures changent d'une page à l'autre, le composant les
+expose en variables CSS, que la page règle dans sa propre feuille.
+`<cs-courbe-xp>` (la courbe d'XP, sur la page de compte et sur la fiche
+joueur du panneau) :
+
+```css
+cs-admin-fiche-joueur cs-courbe-xp { --courbe-hauteur: 110px; --courbe-total: 1.3rem; }
+```
 Une feuille de fenêtre ne contient que ses écarts au cadre commun, sous sa
 balise. Pour une question oui / non ou un message, c'est `confirmer()` et
 `informer()` (règle 11), pas une fenêtre.

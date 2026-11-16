@@ -390,9 +390,11 @@ class HTMLInputElement extends HTMLElement {
     this.dispatchEvent(new FauxEvenement('change'));
   }
 
-  /** Ce que fait quelqu'un qui remplit le champ. @param {string} valeur */
+  /** Ce que fait quelqu'un qui remplit le champ : `input` à la frappe, `change` en le quittant.
+   *  @param {string} valeur */
   saisir(valeur) {
     this.value = valeur;
+    this.dispatchEvent(new FauxEvenement('input'));
     this.dispatchEvent(new FauxEvenement('change'));
   }
 }

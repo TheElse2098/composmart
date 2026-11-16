@@ -1,0 +1,54 @@
+/* ============================================================================
+   utilisateurs.css — habillage de <cs-admin-utilisateurs> : champ de
+   recherche, tableau des comptes, boutons d'action.
+
+   Le titre de section et son compteur sont ceux du panneau : panel.css. La
+   fiche joueur a sa propre feuille : fiche-joueur.css.
+   ============================================================================ */
+
+cs-admin-utilisateurs {
+  display: block;
+
+  --utilisateurs-bord: #d7e6da;
+  --utilisateurs-trait: #f0f4f0;
+  --utilisateurs-promu-fond: #e8f5e9;
+  --utilisateurs-promu-texte: #1e6e3e;
+  --utilisateurs-retro-fond: #fff3e0;
+  --utilisateurs-retro-texte: #b26a00;
+}
+html.dark cs-admin-utilisateurs {
+  --utilisateurs-bord: #2b3c30;
+  --utilisateurs-trait: #243a2c;
+  --utilisateurs-promu-fond: #16291c;
+  --utilisateurs-promu-texte: #7fc99a;
+  --utilisateurs-retro-fond: #2e2410;
+  --utilisateurs-retro-texte: #e8b931;
+}
+
+/* ── Recherche ── */
+cs-admin-utilisateurs .user-search { width: 100%; border: 1.5px solid var(--utilisateurs-bord); border-radius: 12px; padding: 9px 13px; font-size: 0.85rem; font-family: inherit; background: var(--surface); color: var(--texte); outline: none; margin-bottom: 10px; }
+cs-admin-utilisateurs .user-search:focus { border-color: var(--accent); }
+
+/* ── Tableau : défile en largeur sur téléphone ── */
+cs-admin-utilisateurs .user-table-wrap { background: var(--surface); border-radius: 14px; box-shadow: 0 2px 10px rgba(30, 110, 62, 0.08); overflow: hidden; overflow-x: auto; }
+cs-admin-utilisateurs table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+cs-admin-utilisateurs th { background: var(--surface-creuse); color: var(--texte); font-weight: 800; text-align: left; padding: 10px 12px; white-space: nowrap; }
+cs-admin-utilisateurs td { padding: 9px 12px; border-top: 1px solid var(--utilisateurs-trait); color: var(--texte); white-space: nowrap; }
+cs-admin-utilisateurs .user-empty { text-align: center; color: #999; font-size: 0.82rem; padding: 16px; }
+
+/* Le pseudo ouvre la fiche du joueur : un bouton qui a l'air d'un texte. */
+cs-admin-utilisateurs .fiche-user-btn { background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: transparent; transition: text-decoration-color 0.12s; }
+cs-admin-utilisateurs .fiche-user-btn:hover { text-decoration-color: currentColor; }
+
+/* La pastille ADMIN reste rouge dans les deux thèmes, comme celle du niveau reste jaune. */
+cs-admin-utilisateurs .badge-admin { background: var(--rouge); color: #fff; font-size: 0.62rem; font-weight: 900; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.5px; }
+cs-admin-utilisateurs .lvl-pill { background: #fff9c4; color: #b26a00; font-weight: 800; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; }
+
+/* ── Actions ── */
+cs-admin-utilisateurs .act-cell { white-space: nowrap; }
+cs-admin-utilisateurs .act-btn { border: none; border-radius: 12px; padding: 4px 10px; font-size: 0.7rem; font-weight: 800; cursor: pointer; transition: opacity 0.12s; }
+cs-admin-utilisateurs .act-btn:hover { opacity: 0.82; }
+cs-admin-utilisateurs .act-promote { background: var(--utilisateurs-promu-fond); color: var(--utilisateurs-promu-texte); }
+cs-admin-utilisateurs .act-demote { background: var(--utilisateurs-retro-fond); color: var(--utilisateurs-retro-texte); }
+cs-admin-utilisateurs .act-delete { background: var(--alerte-fond); color: var(--alerte-texte); }
+cs-admin-utilisateurs .act-self { color: #bbb; font-size: 0.72rem; font-style: italic; }

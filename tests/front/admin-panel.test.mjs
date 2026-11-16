@@ -52,6 +52,7 @@ const TOUT_VA_BIEN = {
   '/api/carte/count.php': { corps: CARTE },
   '/api/jeux/count.php': { corps: { parties: 77 } },
   '/api/admin/tickets.php': { corps: { a_traiter: 0 } },
+  '/api/admin/users.php': { corps: { users: [{ id: 1, username: 'eliott', xp: 10, niveau: 1, isAdmin: true, date: '2026-01-01 10:00:00' }], me: 1, total: 1 } },
   '/api/admin/evolution.php': (/** @type {string} */ adresse) => ({ corps: { labels: ['lun', 'mar'], inscrits: [1, 2], connexions: adresse.includes('period=7d') ? null : [5, 8] } }),
   '/api/carte/evolution.php': { corps: { labels: ['lun', 'mar'], totaux: [5800, 5812], periode: '30d' } },
 };
@@ -189,8 +190,8 @@ test('panneau : changer d’onglet, puis revenir recharge la vue d’ensemble sa
   assert.equal(panneau.querySelector('[data-contenu="utilisateurs"]').hidden, false);
   assert.equal(panneau.querySelector('[data-onglet="utilisateurs"]').classList.contains('active'), true);
   assert.equal(panneau.querySelector('[data-onglet="utilisateurs"]').getAttribute('aria-selected'), 'true');
-  assert.match(panneau.querySelector('[data-contenu="utilisateurs"] .en-attente').textContent, /pas encore reconstruit/);
-  assert.equal(panneau.querySelector('[data-contenu="utilisateurs"] a').getAttribute('href'), '/admin/panel');
+  await dom.stabiliser();
+  assert.equal(panneau.querySelectorAll('[data-contenu="utilisateurs"] cs-admin-utilisateurs tbody tr').length, 1, 'l’onglet est créé à sa première ouverture');
 
   panneau.querySelector('[data-onglet="ensemble"]').click();
   await dom.stabiliser();

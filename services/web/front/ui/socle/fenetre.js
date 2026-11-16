@@ -47,16 +47,23 @@ export class Fenetre extends Composant {
 
   /**
    * Pose le cadre, fermé, avec son contenu. À appeler une fois, dans monter().
+   *
+   * Deux cadres existent. Le cadre simple entoure un formulaire court d'une
+   * marge. Le cadre « en colonne » n'a pas de marge : un en-tête fixe
+   * (`.fenetre__tete`, avec son `.fenetre__titre` et sa croix
+   * `.fenetre__fermer`), puis un corps qui défile seul — pour un contenu long.
+   *
    * @param {Html} contenu
+   * @param {{ colonne?: boolean }} [options]
    */
-  poserFenetre(contenu) {
+  poserFenetre(contenu, { colonne = false } = {}) {
     // Une ouverture demandée avant la pose est servie une fois monter() terminé.
     queueMicrotask(() => {
       const action = this.#enAttente;
       this.#enAttente = null;
       if (action && this.isConnected) action();
     });
-    this.rendre(html`<div class="fenetre__fond"><div class="fenetre__boite" role="dialog" aria-modal="true">${contenu}</div></div>`);
+    this.rendre(html`<div class="fenetre__fond${colonne && ' fenetre__fond--colonne'}"><div class="fenetre__boite${colonne && ' fenetre__boite--colonne'}" role="dialog" aria-modal="true">${contenu}</div></div>`);
     this.ecouter('click', '[data-action="fermer"]', () => this.fermer());
     this.ecouter('click', '.fenetre__fond', (fond, evenement) => {
       if (evenement.target === fond) this.fermer(); // clic à côté de la fenêtre

@@ -28,12 +28,14 @@ import './ajouts.js';
 import './journal.js';
 import './messages.js';
 import './signalements.js';
+import './utilisateurs.js';
 import './vue-ensemble.js';
 
 /**
  * @typedef {object} Onglet
  * @property {string} cle
  * @property {string} libelle
+ * @property {() => import('../../socle/outils.js').Html} composant  sa balise
  * @property {'signalements' | 'en_attente' | 'a_traiter'} [compteur]  ce que compte sa pastille
  *
  * @typedef {object} Compteurs  ce qui attend une décision, par onglet
@@ -42,14 +44,19 @@ import './vue-ensemble.js';
  * @property {number} [a_traiter]     messages sans réponse
  */
 
-/** @type {Onglet[]} */
+/**
+ * Les onglets, dans l'ordre de la rangée. Ajouter un onglet : son module en
+ * import ci-dessus, sa ligne ici. La balise est écrite en toutes lettres :
+ * c'est ce qui permet au vérificateur de s'assurer que le module est chargé.
+ * @type {Onglet[]}
+ */
 const ONGLETS = [
-  { cle: 'ensemble', libelle: "📊 Vue d'ensemble" },
-  { cle: 'signalements', libelle: '🚩 Signalements', compteur: 'signalements' },
-  { cle: 'ajouts', libelle: '🌱 Ajouts', compteur: 'en_attente' },
-  { cle: 'messages', libelle: '✉️ Messages', compteur: 'a_traiter' },
-  { cle: 'utilisateurs', libelle: '👥 Utilisateurs' },
-  { cle: 'journal', libelle: '📜 Journal' },
+  { cle: 'ensemble', libelle: "📊 Vue d'ensemble", composant: () => html`<cs-admin-vue-ensemble></cs-admin-vue-ensemble>` },
+  { cle: 'signalements', libelle: '🚩 Signalements', compteur: 'signalements', composant: () => html`<cs-admin-signalements></cs-admin-signalements>` },
+  { cle: 'ajouts', libelle: '🌱 Ajouts', compteur: 'en_attente', composant: () => html`<cs-admin-ajouts></cs-admin-ajouts>` },
+  { cle: 'messages', libelle: '✉️ Messages', compteur: 'a_traiter', composant: () => html`<cs-admin-messages></cs-admin-messages>` },
+  { cle: 'utilisateurs', libelle: '👥 Utilisateurs', composant: () => html`<cs-admin-utilisateurs></cs-admin-utilisateurs>` },
+  { cle: 'journal', libelle: '📜 Journal', composant: () => html`<cs-admin-journal></cs-admin-journal>` },
 ];
 
 /** Un onglet sait-il se recharger ? @param {unknown} element @returns {element is { rafraichir: () => unknown }} */
@@ -88,7 +95,7 @@ export class AdminPanel extends Composant {
 
     const zone = this.trouver('[data-contenu="' + onglet.cle + '"]');
     const composant = zone.firstElementChild;
-    if (!composant) this.rendre(this.gabaritOnglet(onglet.cle), zone); // première ouverture
+    if (!composant) this.rendre(onglet.composant(), zone);            // première ouverture
     else if (seRafraichit(composant)) composant.rafraichir();          // retour sur l'onglet
   }
 
@@ -141,37 +148,6 @@ export class AdminPanel extends Composant {
 
       <div class="page-content">
         ${ONGLETS.map((o) => html`<section data-contenu="${o.cle}" hidden></section>`)}
-      </div>`;
-  }
-
-  /**
-   * Le composant d'un onglet. La balise est écrite en toutes lettres : c'est
-   * ce qui permet au vérificateur de s'assurer que son module est bien chargé.
-   * @param {string} cle
-   */
-  gabaritOnglet(cle) {
-    switch (cle) {
-      case 'ensemble':
-        return html`<cs-admin-vue-ensemble></cs-admin-vue-ensemble>`;
-      case 'signalements':
-        return html`<cs-admin-signalements></cs-admin-signalements>`;
-      case 'ajouts':
-        return html`<cs-admin-ajouts></cs-admin-ajouts>`;
-      case 'messages':
-        return html`<cs-admin-messages></cs-admin-messages>`;
-      case 'journal':
-        return html`<cs-admin-journal></cs-admin-journal>`;
-      default:
-        return this.gabaritEnAttente();
-    }
-  }
-
-  /** Onglet pas encore reconstruit : il renvoie vers le panneau en service. */
-  gabaritEnAttente() {
-    return html`
-      <div class="en-attente">
-        <p>Cet onglet n'est pas encore reconstruit dans cette version du panneau.</p>
-        <a href="/admin/panel" class="hero-lien">Ouvrir le panneau actuel</a>
       </div>`;
   }
 }

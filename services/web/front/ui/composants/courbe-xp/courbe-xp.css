@@ -1,0 +1,31 @@
+/* ============================================================================
+   courbe-xp.css — habillage de <cs-courbe-xp>.
+
+   Deux mesures se règlent sur la balise, depuis la feuille de la page qui
+   l'accueille : --courbe-hauteur et --courbe-total.
+   ============================================================================ */
+
+cs-courbe-xp {
+  display: block;
+
+  --courbe-hauteur: 120px;
+  --courbe-total: 1.5rem;
+
+  --courbe-couleur: #2d9959;
+  --courbe-sol: #e3efe5;
+}
+html.dark cs-courbe-xp {
+  --courbe-couleur: #52b788;
+  --courbe-sol: #243328;
+}
+
+cs-courbe-xp .courbe-total { font-family: var(--police-titre); font-size: var(--courbe-total); font-weight: 900; color: var(--accent); line-height: 1; margin-bottom: 12px; }
+cs-courbe-xp .courbe-total span { font-family: var(--police); font-size: 0.78rem; font-weight: 700; color: var(--texte-pale); }
+
+cs-courbe-xp .courbe-dessin { width: 100%; height: var(--courbe-hauteur); display: block; overflow: visible; }
+cs-courbe-xp .courbe-sol { stroke: var(--courbe-sol); stroke-width: 1; }
+cs-courbe-xp .courbe-aire { fill: var(--courbe-couleur); fill-opacity: 0.12; stroke: none; }
+cs-courbe-xp .courbe-trait { fill: none; stroke: var(--courbe-couleur); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+
+cs-courbe-xp .courbe-dates { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--texte-pale); font-weight: 700; margin-top: 6px; }
+cs-courbe-xp .courbe-vide { font-size: 0.85rem; color: var(--texte-pale); font-weight: 600; }

@@ -183,7 +183,7 @@ test('messages : un clic sur un ticket ouvre sa discussion, vue du côté admini
   const fenetre = onglet.querySelector('cs-fil-discussion');
   assert.equal(fenetre.ouverte, true);
   assert.ok(appels.some((a) => a.adresse === '/api/admin/tickets.php?id=12'));
-  assert.equal(fenetre.querySelector('.fil-titre').textContent, '#12 · La carte <plante> — lea');
+  assert.equal(fenetre.querySelector('.fenetre__titre').textContent, '#12 · La carte <plante> — lea');
   assert.deepEqual(fenetre.querySelectorAll('.bulle').map((/** @type {any} */ b) => [b.classList.contains('moi'), b.children[0].textContent]), [[false, 'lea · 2026-11-14 09:15'], [true, 'eliott · ADMIN · 2026-11-14 10:00']]);
   assert.equal(fenetre.querySelector('textarea').placeholder, 'Répondre… (Ctrl+Entrée pour envoyer)');
   assert.deepEqual(fenetre.querySelectorAll('.fil-action').map((/** @type {any} */ b) => b.textContent), ['✓ Clore', '⛔ Fermer définitivement']);
@@ -206,7 +206,7 @@ test('messages : répondre envoie le message ; refermer recharge la liste et pr�
   assert.deepEqual(signaux, [], 'rien n’est rechargé tant que la discussion est ouverte');
 
   const avant = listes(appels).length;
-  fenetre.querySelector('.fil-fermer').click();
+  fenetre.querySelector('.fenetre__fermer').click();
   await dom.stabiliser();
   assert.deepEqual(signaux, ['donnees-modifiees']);
   assert.equal(listes(appels).length, avant + 1, 'le ticket vient d’être lu : la liste est relue');
@@ -251,7 +251,7 @@ test('panneau : l’onglet Messages monte la liste ; refermer une discussion fai
   const avant = comptages();
   panneau.querySelector('[data-ticket="12"]').click();
   await dom.stabiliser();
-  panneau.querySelector('cs-fil-discussion .fil-fermer').click();
+  panneau.querySelector('cs-fil-discussion .fenetre__fermer').click();
   await dom.stabiliser();
   assert.equal(comptages(), avant + 1);
 });

@@ -73,6 +73,3 @@ cs-admin-panel .pages-info { font-size: 0.8rem; color: var(--texte-doux); font-w
 cs-admin-panel .action-voir { background: var(--surface-creuse); color: var(--panel-voir-texte); }
 cs-admin-panel .action-oui { background: var(--vert); color: #fff; }
 cs-admin-panel .action-non { background: var(--alerte-fond); color: var(--alerte-texte); }
-
-/* ── Onglet pas encore reconstruit ── */
-cs-admin-panel .en-attente { margin-top: 24px; text-align: center; padding: 28px 18px; background: var(--surface); border-radius: 16px; color: var(--texte-doux); font-size: 0.92rem; font-weight: 600; }

@@ -127,7 +127,7 @@ test('fil : titre, état, bulles dans l’ordre, texte échappé, zone de répon
   const fil = await ouvrir(e);
 
   assert.equal(fil.ouverte, true);
-  assert.equal(fil.querySelector('.fil-titre').textContent, '#12 · La carte <plante>');
+  assert.equal(fil.querySelector('.fenetre__titre').textContent, '#12 · La carte <plante>');
   assert.equal(fil.querySelector('.fil-discussion-statut').textContent, 'Ouvert');
   assert.deepEqual(bulles(fil), [
     ['moi', 'Moi · 2026-11-14 09:15', 'Bonjour,\nla carte ne charge plus <b>du tout</b>.'],
@@ -169,7 +169,7 @@ test('fil : passer d’un ticket à l’autre n’affiche que le dernier demand�
   fil.ouvrir(12);
   fil.ouvrir(13);
   await dom.stabiliser();
-  assert.equal(fil.querySelector('.fil-titre').textContent, '#13 · Autre');
+  assert.equal(fil.querySelector('.fenetre__titre').textContent, '#13 · Autre');
   assert.deepEqual(bulles(fil).map((b) => b[2]), ['Coucou']);
 });
 
@@ -361,7 +361,7 @@ test('fermeture : le parent est prévenu, la relecture s’arrête, la zone est 
   fil.addEventListener('fil-ferme', () => signaux.push('fil-ferme'));
   fil.querySelector('textarea').saisir('Brouillon');
 
-  fil.querySelector('.fil-fermer').click();
+  fil.querySelector('.fenetre__fermer').click();
   assert.equal(fil.ouverte, false);
   assert.deepEqual(signaux, ['fil-ferme']);
   mock.timers.tick(30000);

@@ -1,0 +1,41 @@
+/* ============================================================================
+   fiche-joueur.css — habillage de <cs-admin-fiche-joueur> : les deux chiffres,
+   les listes de cours et de jeux.
+
+   Le cadre « en colonne » et son en-tête viennent de styles/fenetre.css, les
+   titres de section et le message « rien à afficher » du panneau (panel.css),
+   la courbe de composants/courbe-xp.
+   ============================================================================ */
+
+cs-admin-fiche-joueur {
+  display: block;
+
+  --fiche-libelle: #4a7a5a;
+  --fiche-ligne: #f6faf6;
+}
+html.dark cs-admin-fiche-joueur {
+  --fiche-libelle: #cfe8d8;
+  --fiche-ligne: #101a13;
+}
+
+cs-admin-fiche-joueur .fenetre__boite { max-width: 420px; }
+cs-admin-fiche-joueur .fiche-corps { padding: 16px; overflow-y: auto; }
+cs-admin-fiche-joueur .section-title.sans-marge { margin-top: 0; }
+
+/* La courbe, un peu plus petite que sur la page de compte. */
+cs-admin-fiche-joueur cs-courbe-xp { --courbe-hauteur: 110px; --courbe-total: 1.3rem; }
+
+/* ── Niveau et XP ── */
+cs-admin-fiche-joueur .fiche-chiffres { display: flex; gap: 10px; margin-bottom: 18px; }
+cs-admin-fiche-joueur .fiche-chiffre { flex: 1; background: var(--surface); border-radius: 16px; padding: 16px 14px; text-align: center; box-shadow: 0 2px 10px rgba(30, 110, 62, 0.08); }
+cs-admin-fiche-joueur .fiche-nombre { font-family: var(--police-titre); font-size: 1.7rem; font-weight: 900; color: var(--vert); line-height: 1; }
+cs-admin-fiche-joueur .fiche-libelle { font-size: 0.72rem; color: var(--fiche-libelle); font-weight: 700; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── Cours terminés, jeux ── */
+cs-admin-fiche-joueur .fiche-liste { display: flex; flex-direction: column; gap: 7px; }
+cs-admin-fiche-joueur .fiche-ligne { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--fiche-ligne); border-radius: 10px; }
+cs-admin-fiche-joueur .fiche-emoji { font-size: 1.15rem; flex-shrink: 0; }
+cs-admin-fiche-joueur .fiche-nom { flex: 1; min-width: 0; font-size: 0.83rem; font-weight: 700; color: var(--texte); }
+cs-admin-fiche-joueur .fiche-score { font-size: 0.78rem; font-weight: 800; color: var(--accent); flex-shrink: 0; }
+cs-admin-fiche-joueur .fiche-score.vide { color: #b7c9bd; font-weight: 700; }
+cs-admin-fiche-joueur .fiche-date { font-size: 0.74rem; font-weight: 700; color: var(--texte-pale); flex-shrink: 0; }
