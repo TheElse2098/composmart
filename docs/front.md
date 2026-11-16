@@ -456,7 +456,8 @@ d'après. La convention `?v=N` n'a plus lieu d'être sur les fichiers de `ui/`.
    sur ordinateur, connecté et non connecté.
 
 Une page importante se reconstruit à côté de l'ancienne, à une adresse
-provisoire (`/admin/panel-v2`, `/compte-v2`, avec `<meta name="robots"
+provisoire (le panneau d'administration a été refait à `/admin/panel-v2`, la
+page de compte à `/compte-v2.html`, avec `<meta name="robots"
 content="noindex">`), qu'on compare à l'ancienne en production. Une fois
 validée, elle prend l'adresse définitive et l'ancienne page est supprimée,
 en une livraison à part : la bascule.
