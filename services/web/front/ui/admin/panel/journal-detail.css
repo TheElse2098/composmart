@@ -1,19 +1,19 @@
 /* ============================================================================
-   journal-detail.css — habillage de <cs-admin-journal-detail> : la fenêtre,
-   les lignes du détail, le tableau avant / après et les textes comparés
-   (gabarits de journal-diff.js).
+   journal-detail.css — habillage de <cs-admin-journal-detail> : les lignes du
+   détail, le tableau avant / après et les textes comparés (gabarits de
+   journal-diff.js).
+
+   Le cadre de la fenêtre (fond, boîte, titre, intitulés, boutons) est commun
+   à toutes les fenêtres : styles/fenetre.css.
    ============================================================================ */
 
 cs-admin-journal-detail {
   display: block;
 
-  --detail-fond: #fff;
-  --detail-titre: #1a3a25;
   --detail-trait: #edf3ee;
   --detail-ligne: #f0f4f0;
   --detail-fermer-survol: #eef4ec;
   --detail-fermer-texte: #1e6e3e;
-  --detail-bouton-fond: #eef4ec;
   --detail-annuler-survol: #f9d6d1;
   --detail-gris-fond: #eceff1;
   --detail-gris-texte: #455a64;
@@ -33,13 +33,10 @@ cs-admin-journal-detail {
   --detail-mot-ajoute: #a9dfbf;
 }
 html.dark cs-admin-journal-detail {
-  --detail-fond: #1a2b1e;
-  --detail-titre: #c8e6d4;
   --detail-trait: #243a2c;
   --detail-ligne: #243a2c;
   --detail-fermer-survol: #243328;
   --detail-fermer-texte: #7fc99a;
-  --detail-bouton-fond: #243328;
   --detail-annuler-survol: #4a2020;
   --detail-gris-fond: #263238;
   --detail-gris-texte: #b0bec5;
@@ -59,29 +56,23 @@ html.dark cs-admin-journal-detail {
   --detail-mot-ajoute: #2f6b45;
 }
 
-/* ── Fenêtre ── */
-cs-admin-journal-detail .modal-back { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 600; display: none; align-items: center; justify-content: center; padding: 18px; }
-cs-admin-journal-detail .modal-back.show { display: flex; }
-cs-admin-journal-detail .modal-box { background: var(--detail-fond); border-radius: 20px; width: 100%; max-width: 820px; max-height: 88vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); display: flex; flex-direction: column; }
+/* ── Fenêtre : plus large que le cadre commun, en-tête et boutons collés aux bords ── */
+cs-admin-journal-detail .fenetre__boite { max-width: 820px; padding: 0; display: flex; flex-direction: column; }
 cs-admin-journal-detail .audit-modal-head { display: flex; align-items: flex-start; gap: 12px; padding: 18px 20px 12px; border-bottom: 1px solid var(--detail-trait); }
 cs-admin-journal-detail .audit-modal-icon { font-size: 1.6rem; line-height: 1; }
-cs-admin-journal-detail .modal-title { font-family: var(--police-titre); font-size: 1.05rem; font-weight: 900; color: var(--detail-titre); margin-bottom: 2px; }
+cs-admin-journal-detail .fenetre__titre { margin-bottom: 2px; }
 cs-admin-journal-detail .audit-meta { color: #888; font-size: 0.7rem; }
 cs-admin-journal-detail .audit-modal-close { margin-left: auto; background: none; border: none; font-size: 1.1rem; color: #888; cursor: pointer; padding: 2px 6px; border-radius: 8px; }
 cs-admin-journal-detail .audit-modal-close:hover { background: var(--detail-fermer-survol); color: var(--detail-fermer-texte); }
 cs-admin-journal-detail .audit-modal-body { padding: 4px 20px 6px; overflow-y: auto; }
 
-cs-admin-journal-detail .modal-actions { display: flex; gap: 8px; padding: 12px 20px 18px; }
-cs-admin-journal-detail .modal-actions button { flex: 1; border: none; border-radius: 12px; padding: 11px; font-size: 0.85rem; font-weight: 800; cursor: pointer; font-family: inherit; }
-cs-admin-journal-detail .modal-cancel { background: var(--detail-bouton-fond); color: var(--texte-doux); }
+cs-admin-journal-detail .fenetre__actions { padding: 12px 20px 18px; margin-top: 0; }
 cs-admin-journal-detail .modal-annuler-action { background: var(--alerte-fond); color: var(--alerte-texte); }
 cs-admin-journal-detail .modal-annuler-action:hover:not(:disabled) { background: var(--detail-annuler-survol); }
-cs-admin-journal-detail .modal-annuler-action:disabled { opacity: 0.55; cursor: default; }
 
 /* ── Sections et lignes « clé : valeur » ── */
 cs-admin-journal-detail .audit-sec { margin-top: 14px; }
-cs-admin-journal-detail .modal-label { font-size: 0.75rem; font-weight: 800; color: var(--texte-doux); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 5px; }
-cs-admin-journal-detail .audit-sec > .modal-label { margin-top: 0; }
+cs-admin-journal-detail .audit-sec > .fenetre__label { margin-top: 0; }
 cs-admin-journal-detail .audit-annule-banniere { background: var(--detail-gris-fond); color: var(--detail-gris-texte); border-radius: 10px; padding: 8px 12px; font-size: 0.8rem; font-weight: 700; margin-top: 12px; }
 cs-admin-journal-detail .audit-note { color: #888; font-size: 0.78rem; font-style: italic; margin: 10px 0; }
 cs-admin-journal-detail .audit-row { display: flex; gap: 8px; padding: 3px 0; border-top: 1px solid var(--detail-ligne); }

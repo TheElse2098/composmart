@@ -1,0 +1,29 @@
+/* ============================================================================
+   ajout-edition.css — habillage de <cs-admin-ajout-edition> : les pastilles
+   de déchets à trois états.
+
+   Le cadre de la fenêtre (fond, boîte, titre, champs, boutons) est commun à
+   toutes les fenêtres : styles/fenetre.css.
+   ============================================================================ */
+
+cs-admin-ajout-edition {
+  display: block;
+
+  --edition-bord: #d7e6da;
+  --edition-oui-fond: #e8f5e9;
+  --edition-oui-texte: #1b5e20;
+  --edition-non-texte: #b71c1c;
+}
+html.dark cs-admin-ajout-edition {
+  --edition-bord: #2b3c30;
+  --edition-oui-fond: #16291c;
+  --edition-oui-texte: #7fc99a;
+  --edition-non-texte: #ef9a9a;
+}
+
+cs-admin-ajout-edition .elt-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+
+/* Pastille : neutre (0) → autorisé (1) → interdit (2) → neutre */
+cs-admin-ajout-edition .elt-chip { border: 1.5px solid var(--edition-bord); background: var(--surface); color: var(--texte-doux); border-radius: 12px; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+cs-admin-ajout-edition .elt-chip[data-etat="1"] { background: var(--edition-oui-fond); border-color: #43a047; color: var(--edition-oui-texte); }
+cs-admin-ajout-edition .elt-chip[data-etat="2"] { background: var(--alerte-fond); border-color: var(--rouge); color: var(--edition-non-texte); }

@@ -52,8 +52,9 @@ function lireSimple(texte) {
 }
 
 /** Un sélecteur : des variantes (virgule), chacune une chaîne de descendants (espace).
+ *  Une espace dans une valeur d'attribut (`[data-nom="marc de café"]`) ne sépare rien.
  *  @param {string} selecteur @returns {Simple[][]} */
-const lireSelecteur = (selecteur) => selecteur.split(',').map((variante) => variante.trim().split(/\s+/).map(lireSimple));
+const lireSelecteur = (selecteur) => selecteur.split(',').map((variante) => (variante.match(/(?:\[[^\]]*\]|[^\s[\]])+/g) ?? []).map(lireSimple));
 
 /** @param {FauxElement} element @param {Simple} simple */
 function correspond(element, simple) {
@@ -374,8 +375,24 @@ class HTMLInputElement extends HTMLElement {
   #valeur = null;
   min = '';
   max = '';
+  /** Case à cocher : cochée, ou « à moitié » (une partie de la sélection). */
+  checked = false;
+  indeterminate = false;
   get value() { return this.#valeur ?? this.getAttribute('value') ?? ''; }
   set value(valeur) { this.#valeur = String(valeur); }
+
+  /** Ce que fait quelqu'un qui coche ou décoche la case : l'état change, puis `change` remonte.
+   *  @param {boolean} cochee */
+  cocher(cochee) {
+    this.checked = cochee;
+    this.dispatchEvent(new FauxEvenement('change'));
+  }
+
+  /** Ce que fait quelqu'un qui remplit le champ. @param {string} valeur */
+  saisir(valeur) {
+    this.value = valeur;
+    this.dispatchEvent(new FauxEvenement('change'));
+  }
 }
 
 /** Menu déroulant : sa valeur est celle qu'on lui donne si une option la porte,

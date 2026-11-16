@@ -195,8 +195,11 @@ Le panneau d'administration (`ui/admin/panel/`) sert de modèle :
   `this.trouver('[data-graphe="parc"]', AdminGraphePeriode).configurer({ … })` ;
 - l'enfant prévient le parent par un évènement : `this.emettre('donnees-modifiees')`,
   que le parent reçoit par `ecouterSur(this, 'donnees-modifiees', …)` ;
-- ce qui est commun à tous les enfants (titres de section) est habillé par la
-  feuille du parent, sous sa balise.
+- ce qui est commun à plusieurs enfants est habillé par la feuille du parent,
+  sous sa balise (`panel.css`, « Communs à tous les onglets » : titre de
+  section et son compteur, message « rien à afficher », pagination, couleurs
+  des boutons d'action) ; un gabarit commun est une fonction de `communs.js`
+  (`gabaritPages()`), un vocabulaire commun une table (`carte-libelles.js`).
 
 Un onglet du panneau expose `rafraichir()` : il est créé à sa première
 ouverture, gardé ensuite (ses filtres survivent), et rechargé à chaque retour.
@@ -214,9 +217,44 @@ Le journal, par exemple :
 Ajouter une action journalisée côté serveur ne touche que
 `journal-libelles.js` (la marche à suivre est en tête du fichier).
 
-Une fenêtre ouverte par un composant (détail, formulaire) est un composant
-enfant, posé dans le gabarit du parent, que le parent ouvre par une méthode :
-`this.trouver('cs-admin-journal-detail', AdminJournalDetail).ouvrir(entree)`.
+### Une fenêtre
+
+Une fenêtre (détail, formulaire) est un composant enfant qui hérite de
+`Fenetre` (`socle/fenetre.js`) au lieu de `Composant`. La classe de base
+apporte le cadre, l'ouverture, la fermeture (bouton `data-action="fermer"`,
+clic à côté, Échap), la page figée derrière et l'habillage commun
+(`styles/fenetre.css` : `.fenetre__titre`, `.fenetre__label`,
+`.fenetre__champ`, `.fenetre__actions`, `.fenetre__valider`,
+`.fenetre__annuler`, `.fenetre__erreur`).
+
+```js
+export class AdminAjoutEdition extends Fenetre {
+  static balise = 'cs-admin-ajout-edition';
+  static styles = [...Fenetre.styles, new URL('./ajout-edition.css', import.meta.url)];
+
+  monter() {
+    this.poserFenetre(this.gabarit());   // le contenu, dans le cadre commun
+  }
+
+  ouvrir(demande) {
+    this.desQuePosee(() => { /* remplir */ this.montrer(); });
+  }
+}
+```
+
+| Méthode | Rôle |
+|---|---|
+| `poserFenetre(gabarit)` | pose le cadre, fermé ; une fois, dans `monter()` |
+| `desQuePosee(action)` | exécute maintenant, ou dès que le cadre est posé |
+| `montrer()` / `fermer()` | ouvre, ferme |
+| `ouverte`, `posee` | états |
+| `aLaFermeture()` | à redéfinir : oublier ce que la fenêtre montrait |
+
+Le parent pose la balise dans son gabarit et ouvre par une méthode :
+`this.trouver('cs-admin-ajout-edition', AdminAjoutEdition).ouvrir(demande)`.
+Une feuille de fenêtre ne contient que ses écarts au cadre commun, sous sa
+balise. Pour une question oui / non ou un message, c'est `confirmer()` et
+`informer()` (règle 11), pas une fenêtre.
 
 Types : chaque module est annoté en JSDoc. La forme d'une réponse d'API se
 déclare par un `@typedef` à côté du composant qui la lit, avec le nom du

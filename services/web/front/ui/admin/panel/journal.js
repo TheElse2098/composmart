@@ -20,7 +20,8 @@
    ============================================================================ */
 import { api, texteErreur } from '../../socle/api.js';
 import { Composant } from '../../socle/composant.js';
-import { html, pluriel } from '../../socle/outils.js';
+import { html } from '../../socle/outils.js';
+import { gabaritPages } from './communs.js';
 import { AdminJournalDetail } from './journal-detail.js';
 import { CATEGORIES, categorieDe, dateJournal, libelleAction } from './journal-libelles.js';
 
@@ -168,7 +169,7 @@ export class AdminJournal extends Composant {
       }
       this.#page = d.page; // le serveur ramène une page trop lointaine à la dernière
       this.#entrees = d.entries;
-      this.trouver('.journal-total').textContent = d.total ? '(' + d.total + ')' : '';
+      this.trouver('.section-compte').textContent = d.total ? '(' + d.total + ')' : '';
       this.rendre(this.gabaritListe(d), zone);
     } catch (erreur) {
       if (demande !== this.#demande) return;
@@ -207,7 +208,7 @@ export class AdminJournal extends Composant {
 
   gabarit() {
     return html`
-      <div class="section-title">📜 Journal d'activité <span class="journal-total"></span></div>
+      <div class="section-title">📜 Journal d'activité <span class="section-compte"></span></div>
       <div class="audit-filters">
         <select class="audit-type-select" data-filtre="categorie" aria-label="Catégorie">${this.gabaritCategories([], 'tous')}</select>
         <select class="audit-type-select" data-filtre="action" aria-label="Action" hidden></select>
@@ -240,12 +241,7 @@ export class AdminJournal extends Composant {
     if (!d.entries.length) return html`<div class="empty-msg">Aucune action enregistrée pour ce filtre.</div>`;
     return html`
       ${d.entries.map((e) => this.gabaritLigne(e))}
-      ${d.pages > 1 && html`
-        <div class="journal-pages">
-          <button type="button" data-page="${d.page - 1}"${d.page <= 1 && html` disabled`}>← Précédent</button>
-          <span class="journal-pages-info">Page ${d.page} / ${d.pages} · ${pluriel(d.total, 'action', 'actions')}</span>
-          <button type="button" data-page="${d.page + 1}"${d.page >= d.pages && html` disabled`}>Suivant →</button>
-        </div>`}`;
+      ${gabaritPages(d, 'action', 'actions')}`;
   }
 
   /** @param {Resume} e */

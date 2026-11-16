@@ -103,15 +103,6 @@ export const CATEGORIES = [
   { id: 'autres',   icone: '❔', texte: 'Autres',   prefixes: [] },
 ];
 
-/** Motifs d'un signalement sur la carte. @type {Record<string, string>} */
-export const MOTIFS = {
-  position: '📍 Mauvaise position',
-  type_acces: '🏷️ Mauvais type ou accès',
-  regles: '📋 Règles incorrectes',
-  inexistant: "❌ N'existe plus",
-  autre: '💬 Autre',
-};
-
 /** Noms lisibles des champs d'un avant/après. @type {Record<string, string>} */
 export const CHAMPS = {
   titre: 'Titre', theme: 'Thème', emoji: 'Emoji', description: 'Description', niveau: 'Niveau',

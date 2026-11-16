@@ -1,9 +1,8 @@
 /* ============================================================================
-   journal.css — habillage de <cs-admin-journal> : filtres, lignes de la
-   liste, pagination.
+   journal.css — habillage de <cs-admin-journal> : filtres, lignes de la liste.
 
-   Le titre de section (.section-title) et le message « rien à afficher »
-   (.empty-msg) sont ceux du panneau : panel.css. La fenêtre de détail a sa
+   Le titre de section, son compteur, le message « rien à afficher » et la
+   pagination sont ceux du panneau : panel.css. La fenêtre de détail a sa
    propre feuille : journal-detail.css.
    ============================================================================ */
 
@@ -12,19 +11,15 @@ cs-admin-journal {
 
   --journal-bord: #d4e6d8;
   --journal-survol: #f3f8f3;
-  --journal-page-texte: #1e6e3e;
   --journal-annule-fond: #eceff1;
   --journal-annule-texte: #607d8b;
 }
 html.dark cs-admin-journal {
   --journal-bord: #2b3c30;
   --journal-survol: #1e2d22;
-  --journal-page-texte: #7ab88e;
   --journal-annule-fond: #263238;
   --journal-annule-texte: #b0bec5;
 }
-
-cs-admin-journal .journal-total { font-weight: 700; color: var(--texte-doux); font-size: 0.85rem; }
 
 /* ── Filtres ── */
 cs-admin-journal .audit-filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
@@ -47,10 +42,3 @@ cs-admin-journal .audit-meta { color: #888; font-size: 0.7rem; }
 cs-admin-journal .audit-date { color: #999; font-size: 0.68rem; white-space: nowrap; flex-shrink: 0; }
 cs-admin-journal .audit-chevron { color: #bbb; font-size: 0.8rem; flex-shrink: 0; }
 cs-admin-journal .audit-badge-annule { display: inline-block; background: var(--journal-annule-fond); color: var(--journal-annule-texte); border-radius: 8px; padding: 1px 7px; font-size: 0.68rem; font-weight: 800; margin-left: 6px; vertical-align: 1px; }
-
-/* ── Pagination ── */
-cs-admin-journal .journal-pages { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 6px; }
-cs-admin-journal .journal-pages button { background: var(--surface); border: 1.5px solid var(--journal-bord); color: var(--journal-page-texte); border-radius: 8px; padding: 7px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
-cs-admin-journal .journal-pages button:disabled { opacity: 0.4; cursor: default; }
-cs-admin-journal .journal-pages button:not(:disabled):hover { background: var(--surface-creuse); }
-cs-admin-journal .journal-pages-info { font-size: 0.8rem; color: var(--texte-doux); font-weight: 700; }

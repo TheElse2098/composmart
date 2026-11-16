@@ -1,0 +1,25 @@
+/* ============================================================================
+   signalements.css — habillage de <cs-admin-signalements>.
+
+   Le titre de section, le message « rien à afficher » et les couleurs des
+   boutons d'action (.action-voir, .action-oui, .action-non) sont ceux du
+   panneau : panel.css.
+   ============================================================================ */
+
+cs-admin-signalements {
+  display: block;
+
+  --signalements-texte: #1a3a25;
+}
+html.dark cs-admin-signalements {
+  --signalements-texte: #cfe8d8;
+}
+
+cs-admin-signalements .signal-item { background: var(--surface); border-radius: 12px; padding: 12px 14px; font-size: 0.82rem; color: var(--signalements-texte); box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05); margin-bottom: 10px; }
+cs-admin-signalements .signal-item-motif { font-weight: 800; margin-bottom: 2px; }
+cs-admin-signalements .signal-item-meta { color: #888; font-size: 0.7rem; margin-bottom: 5px; }
+cs-admin-signalements .signal-item-comment { font-style: italic; margin-bottom: 8px; word-break: break-word; }
+cs-admin-signalements .signal-item-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+cs-admin-signalements .signal-item-actions button,
+cs-admin-signalements .signal-item-actions a { border: none; border-radius: 14px; padding: 5px 12px; font-size: 0.72rem; font-weight: 700; cursor: pointer; text-decoration: none; }
+cs-admin-signalements .signal-item-actions button:disabled { opacity: 0.5; cursor: default; }

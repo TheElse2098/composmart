@@ -20,10 +20,11 @@
    ============================================================================ */
 import { confirmer, informer } from '../../composants/dialogue/dialogue.js';
 import { ErreurApi, api, texteErreur } from '../../socle/api.js';
-import { Composant } from '../../socle/composant.js';
+import { Fenetre } from '../../socle/fenetre.js';
 import { html } from '../../socle/outils.js';
+import { MOTIFS } from './carte-libelles.js';
 import { changements, diffCoursTexte, diffObjet, diffQuiz, etatElement, ligne, valeur } from './journal-diff.js';
-import { ANNULATIONS, AVEC_AVANT_APRES, MOTIFS, PRECISIONS_ANNULATION, annulable, dateJournal, libelleAction } from './journal-libelles.js';
+import { ANNULATIONS, AVEC_AVANT_APRES, PRECISIONS_ANNULATION, annulable, dateJournal, libelleAction } from './journal-libelles.js';
 
 /**
  * Une ligne de la liste du journal (/api/admin/audit.php).
@@ -115,23 +116,23 @@ export function gabaritDetail(a) {
   if (propres.length) sections.push(html`<div class="audit-sec">${propres}</div>`);
 
   if (s.message) {
-    sections.push(html`<div class="audit-sec"><div class="modal-label">Message envoyé</div><div class="val-apres">${s.message}</div></div>`);
+    sections.push(html`<div class="audit-sec"><div class="fenetre__label">Message envoyé</div><div class="val-apres">${s.message}</div></div>`);
   }
   if (s.changements) {
-    sections.push(html`<div class="audit-sec"><div class="modal-label">Modifications</div>${changements(s.changements)}</div>`);
+    sections.push(html`<div class="audit-sec"><div class="fenetre__label">Modifications</div>${changements(s.changements)}</div>`);
   } else if (AVEC_AVANT_APRES.test(a.action)) {
     sections.push(html`<div class="audit-note">Avant / après non disponible : entrée écrite avant le 26/10/2026, quand le journal ne le conservait pas encore.</div>`);
   }
   if (s.etat) {
     const titre = /_(cree|demande)$/.test(a.action) ? 'Élément créé' : "Élément tel qu'il était avant suppression";
-    sections.push(html`<div class="audit-sec"><div class="modal-label">${titre}</div>${etatElement(s.etat)}</div>`);
+    sections.push(html`<div class="audit-sec"><div class="fenetre__label">${titre}</div>${etatElement(s.etat)}</div>`);
   }
   if (!sections.length) sections.push(html`<div class="audit-note">Aucun détail enregistré pour cette action.</div>`);
 
   // Texte, quiz, vidéo, podcast d'un cours : trop lourds pour le journal, ils
   // sont relus dans l'historique des versions (zone remplie après coup).
   if (s.version_id && Array.isArray(s.contenu_modifie) && s.contenu_modifie.length) {
-    sections.push(html`<div class="audit-sec"><div class="modal-label">Contenu du cours</div><div data-zone="contenu-cours"><div class="audit-note">Chargement du contenu…</div></div></div>`);
+    sections.push(html`<div class="audit-sec"><div class="fenetre__label">Contenu du cours</div><div data-zone="contenu-cours"><div class="audit-note">Chargement du contenu…</div></div></div>`);
   }
   return html`${sections}`;
 }
@@ -144,15 +145,15 @@ export function gabaritDetail(a) {
  */
 export function gabaritContenuCours(parties, avant, apres) {
   return html`
-    ${parties.includes('texte') && html`<div class="modal-label">Texte</div>${diffCoursTexte(avant.texte, apres.texte)}`}
-    ${parties.includes('quiz') && html`<div class="modal-label">Quiz</div>${diffQuiz(avant.quiz, apres.quiz)}`}
-    ${parties.includes('video') && html`<div class="modal-label">Vidéo</div>${diffObjet(avant.video, apres.video)}`}
-    ${parties.includes('podcast') && html`<div class="modal-label">Podcast</div>${diffObjet(avant.podcast, apres.podcast)}`}`;
+    ${parties.includes('texte') && html`<div class="fenetre__label">Texte</div>${diffCoursTexte(avant.texte, apres.texte)}`}
+    ${parties.includes('quiz') && html`<div class="fenetre__label">Quiz</div>${diffQuiz(avant.quiz, apres.quiz)}`}
+    ${parties.includes('video') && html`<div class="fenetre__label">Vidéo</div>${diffObjet(avant.video, apres.video)}`}
+    ${parties.includes('podcast') && html`<div class="fenetre__label">Podcast</div>${diffObjet(avant.podcast, apres.podcast)}`}`;
 }
 
-export class AdminJournalDetail extends Composant {
+export class AdminJournalDetail extends Fenetre {
   static balise = 'cs-admin-journal-detail';
-  static styles = [new URL('./journal-detail.css', import.meta.url)];
+  static styles = [...Fenetre.styles, new URL('./journal-detail.css', import.meta.url)];
 
   /** L'entrée affichée. Une réponse arrivée en retard pour une autre est ignorée.
    *  @type {Resume | null} */
@@ -161,36 +162,30 @@ export class AdminJournalDetail extends Composant {
   #entree = null;
 
   monter() {
-    this.rendre(this.gabaritFenetre());
-    this.ecouter('click', '[data-action="fermer"]', () => this.fermer());
+    this.poserFenetre(this.gabarit());
     this.ecouter('click', '[data-action="annuler"]', (bouton) => this.#annuler(bouton));
-    this.ecouter('click', '.modal-back', (fond, evenement) => {
-      if (evenement.target === fond) this.fermer(); // clic hors de la fenêtre
-    });
-    this.ecouterSur(document, 'keydown', (evenement) => {
-      // Une boîte de confirmation ouverte par-dessus garde la touche pour elle.
-      if (evenement instanceof KeyboardEvent && evenement.key === 'Escape' && !document.querySelector('cs-dialogue')) this.fermer();
-    });
-    // Une ouverture demandée pendant que la feuille de style arrivait.
-    if (this.#resume) this.ouvrir(this.#resume);
   }
 
   /**
    * Ouvre la fenêtre sur une entrée et va chercher son détail.
    * @param {Resume} resume
    */
-  async ouvrir(resume) {
+  ouvrir(resume) {
+    this.desQuePosee(() => { this.#afficher(resume); });
+  }
+
+  /** @param {Resume} resume */
+  async #afficher(resume) {
     this.#resume = resume;
     this.#entree = null;
-    if (!this.querySelector('.modal-back')) return; // pas encore montée : monter() s'en chargera
     const libelle = libelleAction(resume.action);
     this.trouver('.audit-modal-icon').textContent = libelle.icone;
-    this.trouver('.modal-title').textContent = libelle.texte;
+    this.trouver('.fenetre__titre').textContent = libelle.texte;
     this.trouver('.audit-meta').textContent = 'par ' + resume.username + ' · ' + dateJournal(resume.date);
     const corps = this.trouver('.audit-modal-body');
     this.rendre(html`<div class="audit-note">Chargement…</div>`, corps);
     this.#montrerActions(null);
-    this.trouver('.modal-back').classList.add('show');
+    this.montrer();
 
     try {
       /** @type {{ entry: Entree }} */
@@ -207,10 +202,10 @@ export class AdminJournalDetail extends Composant {
     }
   }
 
-  fermer() {
+  /** Fenêtre fermée : une réponse encore attendue ne doit plus rien afficher. */
+  aLaFermeture() {
     this.#resume = null;
     this.#entree = null;
-    this.trouver('.modal-back').classList.remove('show');
   }
 
   /**
@@ -240,7 +235,7 @@ export class AdminJournalDetail extends Composant {
   #montrerActions(entree) {
     this.rendre(html`
       ${entree && annulable(entree) && html`<button type="button" class="modal-annuler-action" data-action="annuler">↩️ Annuler cette action</button>`}
-      <button type="button" class="modal-cancel" data-action="fermer">Fermer</button>`, this.trouver('.modal-actions'));
+      <button type="button" class="fenetre__annuler" data-action="fermer">Fermer</button>`, this.trouver('.fenetre__actions'));
   }
 
   /** @param {HTMLElement} bouton */
@@ -280,22 +275,19 @@ export class AdminJournalDetail extends Composant {
     }
   }
 
-  gabaritFenetre() {
+  /** L'intérieur de la fenêtre : en-tête, corps et boutons, remplis par ouvrir(). */
+  gabarit() {
     return html`
-      <div class="modal-back">
-        <div class="modal-box audit-modal-box" role="dialog" aria-modal="true">
-          <div class="audit-modal-head">
-            <span class="audit-modal-icon"></span>
-            <div>
-              <div class="modal-title"></div>
-              <div class="audit-meta"></div>
-            </div>
-            <button type="button" class="audit-modal-close" data-action="fermer" aria-label="Fermer">✕</button>
-          </div>
-          <div class="audit-modal-body"></div>
-          <div class="modal-actions"></div>
+      <div class="audit-modal-head">
+        <span class="audit-modal-icon"></span>
+        <div>
+          <div class="fenetre__titre"></div>
+          <div class="audit-meta"></div>
         </div>
-      </div>`;
+        <button type="button" class="audit-modal-close" data-action="fermer" aria-label="Fermer">✕</button>
+      </div>
+      <div class="audit-modal-body"></div>
+      <div class="fenetre__actions"></div>`;
   }
 }
 

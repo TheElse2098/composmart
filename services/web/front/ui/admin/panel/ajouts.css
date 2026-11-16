@@ -1,0 +1,56 @@
+/* ============================================================================
+   ajouts.css — habillage de <cs-admin-ajouts> : barre d'actions groupées,
+   cartes des demandes.
+
+   Le titre de section, son compteur, le message « rien à afficher », la
+   pagination et les couleurs des boutons d'action (.action-voir, .action-oui,
+   .action-non) sont ceux du panneau : panel.css. La fenêtre de correction a sa
+   propre feuille : ajout-edition.css.
+   ============================================================================ */
+
+cs-admin-ajouts {
+  display: block;
+
+  --ajouts-badge-texte: #1e6e3e;
+  --ajouts-manque-fond: #fff3e0;
+  --ajouts-manque-texte: #b26a00;
+  --ajouts-regle-texte: #2d6a4f;
+}
+html.dark cs-admin-ajouts {
+  --ajouts-badge-texte: #7fc99a;
+  --ajouts-manque-fond: #2e2410;
+  --ajouts-manque-texte: #e8b931;
+  --ajouts-regle-texte: #7fc99a;
+}
+
+/* ── Barre d'actions groupées ── */
+cs-admin-ajouts .bulk-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--surface); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05); }
+cs-admin-ajouts .bulk-check { display: flex; align-items: center; gap: 7px; font-size: 0.82rem; font-weight: 700; color: var(--texte); cursor: pointer; }
+cs-admin-ajouts .bulk-count { font-size: 0.78rem; color: var(--texte-doux); font-weight: 700; }
+cs-admin-ajouts .bulk-actions { display: flex; gap: 6px; margin-left: auto; }
+cs-admin-ajouts .bulk-btn { border: none; border-radius: 12px; padding: 7px 14px; font-size: 0.78rem; font-weight: 800; cursor: pointer; transition: opacity 0.12s; }
+cs-admin-ajouts .bulk-btn:disabled { opacity: 0.4; cursor: default; }
+cs-admin-ajouts .bulk-btn:not(:disabled):hover { opacity: 0.82; }
+
+/* ── Une demande ── */
+cs-admin-ajouts .pending-item { background: var(--surface); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05); display: flex; gap: 12px; align-items: flex-start; }
+cs-admin-ajouts .pending-item.sel { outline: 2px solid var(--vert); }
+cs-admin-ajouts .pending-cb { margin-top: 3px; flex-shrink: 0; width: 17px; height: 17px; cursor: pointer; accent-color: var(--vert); }
+cs-admin-ajouts .bulk-check .pending-cb { margin-top: 0; }
+cs-admin-ajouts .pending-main { flex: 1; min-width: 0; }
+cs-admin-ajouts .pending-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.85rem; font-weight: 800; color: var(--texte); }
+cs-admin-ajouts .pending-id { color: #7aaa8a; font-weight: 700; }
+cs-admin-ajouts .pending-badge { font-size: 0.68rem; font-weight: 800; padding: 2px 9px; border-radius: 10px; background: var(--surface-creuse); color: var(--ajouts-badge-texte); }
+cs-admin-ajouts .pending-badge.vide { background: var(--ajouts-manque-fond); color: var(--ajouts-manque-texte); }
+cs-admin-ajouts .pending-meta { font-size: 0.72rem; color: #888; margin-top: 3px; }
+
+/* Règles de tri proposées : déchets autorisés, puis interdits */
+cs-admin-ajouts .pending-rules { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+cs-admin-ajouts .regle { display: inline-block; background: var(--surface-creuse); color: var(--ajouts-regle-texte); border-radius: 8px; padding: 1px 7px; font-size: 0.72rem; font-weight: 700; margin: 1px 2px 1px 0; }
+cs-admin-ajouts .regle.nok { background: var(--alerte-fond); color: var(--alerte-texte); }
+
+cs-admin-ajouts .pending-actions { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+cs-admin-ajouts .pending-actions button,
+cs-admin-ajouts .pending-actions a { border: none; border-radius: 12px; padding: 5px 12px; font-size: 0.72rem; font-weight: 800; cursor: pointer; text-decoration: none; }
+cs-admin-ajouts .action-modifier { background: var(--ajouts-manque-fond); color: var(--ajouts-manque-texte); transition: opacity 0.12s; }
+cs-admin-ajouts .action-modifier:hover { opacity: 0.82; }

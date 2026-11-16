@@ -125,7 +125,7 @@ test('gabaritLigne : libellé, objet échappé, auteur, date à la minute, marqu
 test('gabaritListe : message quand rien ne passe le filtre, pagination seulement s’il y a plusieurs pages', () => {
   const journal = new AdminJournal();
   assert.match(String(journal.gabaritListe({ entries: [], types: [], page: 1, pages: 1, total: 0 })), /class="empty-msg">Aucune action enregistrée pour ce filtre\./);
-  assert.ok(!String(journal.gabaritListe({ entries: ENTREES, types: TYPES, page: 1, pages: 1, total: 3 })).includes('journal-pages'));
+  assert.ok(!String(journal.gabaritListe({ entries: ENTREES, types: TYPES, page: 1, pages: 1, total: 3 })).includes('class="pages"'));
 
   const milieu = String(journal.gabaritListe({ entries: ENTREES, types: TYPES, page: 2, pages: 3, total: 61 }));
   assert.match(milieu, /<button type="button" data-page="1">← Précédent<\/button>/);
@@ -147,7 +147,7 @@ test('détail d’un signalement : qui, pourquoi, sur quel composteur', () => {
   assert.match(lignes, />Motif<\/span><span class="audit-val">📍 Mauvaise position</);
   assert.match(lignes, />Commentaire<\/span><span class="audit-val">« Il est &lt;en face&gt; »</);
   assert.match(lignes, />Composteur<\/span><span class="audit-val">#88</);
-  assert.match(lignes, /<div class="modal-label">Modifications<\/div><div class="audit-chg">/);
+  assert.match(lignes, /<div class="fenetre__label">Modifications<\/div><div class="audit-chg">/);
   assert.match(lignes, /<div class="val-avant">En attente<\/div><div class="val-apres">Résolu<\/div>/);
 });
 
@@ -189,21 +189,21 @@ test('détail d’un email : destinataire, sujet, statut, raison de l’échec',
 test('détail : bandeau « annulée », élément créé ou supprimé, entrée ancienne, entrée vide', () => {
   const annulee = String(gabaritDetail(DETAILS[6]));
   assert.match(annulee, /<div class="audit-annule-banniere">↩️ Annulée le 2026-11-09 10:30 par eliott<\/div>/);
-  assert.match(annulee, /<div class="modal-label">Contenu du cours<\/div><div data-zone="contenu-cours">/);
+  assert.match(annulee, /<div class="fenetre__label">Contenu du cours<\/div><div data-zone="contenu-cours">/);
 
   const base = { id: 1, username: 'a', details: null, target_type: 'theme', target_id: 2, date: '', annule_at: null, annule_par: null };
-  assert.match(String(gabaritDetail({ ...base, action: 'theme_cree', snapshot: { etat: { nom: 'Sols' } } })), /<div class="modal-label">Élément créé<\/div>/);
+  assert.match(String(gabaritDetail({ ...base, action: 'theme_cree', snapshot: { etat: { nom: 'Sols' } } })), /<div class="fenetre__label">Élément créé<\/div>/);
   assert.match(String(gabaritDetail({ ...base, action: 'theme_supprime', snapshot: { etat: { nom: 'Sols' } } })), /Élément tel qu&#39;il était avant suppression/);
   assert.match(String(gabaritDetail({ ...base, action: 'theme_modifie', snapshot: null })), /Avant \/ après non disponible : entrée écrite avant le 26\/10\/2026/);
   assert.match(String(gabaritDetail({ ...base, action: 'theme_cree', snapshot: null })), /^<div class="audit-note">Aucun détail enregistré pour cette action\.<\/div>$/);
   assert.match(String(gabaritDetail({ ...base, action: 'ticket_repondu', target_type: 'ticket', snapshot: { sujet: 'Bug', message: 'Corrigé <ici>' } })),
-    />Ticket<\/span><span class="audit-val">« Bug »<\/span><\/div><\/div><div class="audit-sec"><div class="modal-label">Message envoyé<\/div><div class="val-apres">Corrigé &lt;ici&gt;<\/div>/);
+    />Ticket<\/span><span class="audit-val">« Bug »<\/span><\/div><\/div><div class="audit-sec"><div class="fenetre__label">Message envoyé<\/div><div class="val-apres">Corrigé &lt;ici&gt;<\/div>/);
 });
 
 test('gabaritContenuCours : seulement les parties modifiées', () => {
   const sortie = String(gabaritContenuCours(['texte', 'video'], { texte: '## Un\na', quiz: [], video: { url: 'a' } }, { texte: '## Un\nb', quiz: [{ question: 'Q' }], video: { url: 'b' } }));
-  assert.match(sortie, /<div class="modal-label">Texte<\/div><div class="diff-panneau">/);
-  assert.match(sortie, /<div class="modal-label">Vidéo<\/div><div class="audit-chg">/);
+  assert.match(sortie, /<div class="fenetre__label">Texte<\/div><div class="diff-panneau">/);
+  assert.match(sortie, /<div class="fenetre__label">Vidéo<\/div><div class="audit-chg">/);
   assert.ok(!sortie.includes('>Quiz<') && !sortie.includes('>Podcast<'));
 });
 
@@ -214,7 +214,7 @@ test('journal : première page, total, menus tirés des actions présentes en ba
   const element = await monterJournal();
 
   assert.deepEqual(listes(appels), ['/api/admin/audit.php?page=1']);
-  assert.equal(element.querySelector('.journal-total').textContent, '(3)');
+  assert.equal(element.querySelector('.section-compte').textContent, '(3)');
   assert.deepEqual(element.querySelectorAll('.audit-action').map((e) => e.textContent), ['Composteur modifié', 'Cours modifié', 'Email envoyé']);
   assert.equal(element.querySelectorAll('.audit-badge-annule').length, 1);
 
@@ -283,14 +283,14 @@ test('journal : plage de dates, bornes croisées, bouton pour l’effacer', asyn
 test('journal : changer de page garde les filtres, changer de filtre revient à la première page', async () => {
   const { appels } = serveur({ '/api/admin/audit.php': journal({ pages: 3, total: 61 }) });
   const element = await monterJournal();
-  assert.equal(element.querySelector('.journal-pages-info').textContent, 'Page 1 / 3 · 61 actions');
+  assert.equal(element.querySelector('.pages-info').textContent, 'Page 1 / 3 · 61 actions');
 
   element.querySelector('[data-filtre="categorie"]').choisir('cours');
   await dom.stabiliser();
   element.querySelector('[data-page="2"]').click();
   await dom.stabiliser();
   assert.equal(listes(appels).at(-1), '/api/admin/audit.php?page=2&actions=cours_modifie');
-  assert.equal(element.querySelector('.journal-pages-info').textContent, 'Page 2 / 3 · 61 actions');
+  assert.equal(element.querySelector('.pages-info').textContent, 'Page 2 / 3 · 61 actions');
 
   await element.rafraichir();
   assert.equal(listes(appels).at(-1), '/api/admin/audit.php?page=2&actions=cours_modifie', 'rafraichir() recharge la page affichée');
@@ -344,20 +344,20 @@ test('détail : un clic sur une ligne ouvre la fenêtre et demande l’entrée c
   const { appels } = serveur({ '/api/admin/audit.php': journal() });
   const element = await monterJournal();
   const detail = element.querySelector('cs-admin-journal-detail');
-  assert.equal(detail.querySelector('.modal-back').classList.contains('show'), false);
+  assert.equal(detail.querySelector('.fenetre__fond').classList.contains('ouverte'), false);
 
   element.querySelector('.audit-head[data-id="7"]').click();
-  assert.equal(detail.querySelector('.modal-back').classList.contains('show'), true);
-  assert.equal(detail.querySelector('.modal-title').textContent, 'Composteur modifié');
+  assert.equal(detail.querySelector('.fenetre__fond').classList.contains('ouverte'), true);
+  assert.equal(detail.querySelector('.fenetre__titre').textContent, 'Composteur modifié');
   assert.equal(detail.querySelector('.audit-meta').textContent, 'par eliott · 2026-11-10 14:03');
   assert.equal(detail.querySelector('.audit-modal-body').textContent, 'Chargement…');
-  assert.deepEqual(detail.querySelectorAll('.modal-actions button').map((b) => b.textContent), ['Fermer']);
+  assert.deepEqual(detail.querySelectorAll('.fenetre__actions button').map((b) => b.textContent), ['Fermer']);
 
   await dom.stabiliser();
   assert.ok(appels.some((a) => a.adresse === '/api/admin/audit.php?id=7'));
   assert.match(detail.querySelector('.audit-modal-body').textContent, /Compost <du> parc/);
   assert.deepEqual(detail.querySelectorAll('.audit-chg-cle').map((e) => e.textContent), ['Accès']);
-  assert.deepEqual(detail.querySelectorAll('.modal-actions button').map((b) => b.textContent), ['↩️ Annuler cette action', 'Fermer']);
+  assert.deepEqual(detail.querySelectorAll('.fenetre__actions button').map((b) => b.textContent), ['↩️ Annuler cette action', 'Fermer']);
 });
 
 test('détail : pas de bouton d’annulation pour une action déjà annulée ou non annulable', async () => {
@@ -372,46 +372,46 @@ test('détail : pas de bouton d’annulation pour une action déjà annulée ou 
 
   element.querySelector('.audit-head[data-id="5"]').click();
   await dom.stabiliser();
-  assert.equal(detail.querySelector('.modal-title').textContent, 'Email envoyé');
+  assert.equal(detail.querySelector('.fenetre__titre').textContent, 'Email envoyé');
   assert.equal(detail.querySelector('[data-action="annuler"]'), null);
 });
 
 test('détail : au clavier — Entrée ou Espace ouvre, Échap ferme', async () => {
   serveur({ '/api/admin/audit.php': journal() });
   const element = await monterJournal();
-  const fond = element.querySelector('cs-admin-journal-detail .modal-back');
+  const fond = element.querySelector('cs-admin-journal-detail .fenetre__fond');
   const ligne = element.querySelector('.audit-head[data-id="5"]');
 
   ligne.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
-  assert.equal(fond.classList.contains('show'), false);
+  assert.equal(fond.classList.contains('ouverte'), false);
   ligne.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-  assert.equal(fond.classList.contains('show'), true);
+  assert.equal(fond.classList.contains('ouverte'), true);
   taper('Escape');
-  assert.equal(fond.classList.contains('show'), false);
+  assert.equal(fond.classList.contains('ouverte'), false);
   ligne.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
-  assert.equal(fond.classList.contains('show'), true);
+  assert.equal(fond.classList.contains('ouverte'), true);
 });
 
 test('détail : la croix, « Fermer » et un clic à côté ferment ; un clic dedans non', async () => {
   serveur({ '/api/admin/audit.php': journal() });
   const element = await monterJournal();
   const detail = element.querySelector('cs-admin-journal-detail');
-  const fond = detail.querySelector('.modal-back');
+  const fond = detail.querySelector('.fenetre__fond');
   const ouvrir = async () => { element.querySelector('.audit-head[data-id="7"]').click(); await dom.stabiliser(); };
 
   await ouvrir();
   detail.querySelector('.audit-modal-body').click();
-  assert.equal(fond.classList.contains('show'), true);
+  assert.equal(fond.classList.contains('ouverte'), true);
   fond.click();
-  assert.equal(fond.classList.contains('show'), false);
+  assert.equal(fond.classList.contains('ouverte'), false);
 
   await ouvrir();
   detail.querySelector('.audit-modal-close').click();
-  assert.equal(fond.classList.contains('show'), false);
+  assert.equal(fond.classList.contains('ouverte'), false);
 
   await ouvrir();
-  detail.querySelector('.modal-cancel').click();
-  assert.equal(fond.classList.contains('show'), false);
+  detail.querySelector('.fenetre__annuler').click();
+  assert.equal(fond.classList.contains('ouverte'), false);
 });
 
 test('détail : entrée introuvable, le message du serveur dans la fenêtre', async () => {
@@ -444,7 +444,7 @@ test('détail : une réponse arrivée après qu’on a ouvert une autre entrée 
   enAttente[0](null); // puis la première, en retard
   await dom.stabiliser();
 
-  assert.equal(detail.querySelector('.modal-title').textContent, 'Email envoyé');
+  assert.equal(detail.querySelector('.fenetre__titre').textContent, 'Email envoyé');
   assert.match(detail.querySelector('.audit-modal-body').textContent, /a@exemple\.fr/);
   assert.equal(detail.querySelector('[data-action="annuler"]'), null, 'le bouton de l’autre entrée n’apparaît pas');
 });
@@ -460,7 +460,7 @@ test('détail : le contenu d’un cours est relu dans l’historique des version
 
   assert.ok(appels.some((a) => a.adresse === '/api/admin/cours_versions.php?id=40'));
   const zone = element.querySelector('[data-zone="contenu-cours"]');
-  assert.deepEqual(zone.querySelectorAll('.modal-label').map((e) => e.textContent), ['Texte', 'Quiz']);
+  assert.deepEqual(zone.querySelectorAll('.fenetre__label').map((e) => e.textContent), ['Texte', 'Quiz']);
   assert.deepEqual(zone.querySelectorAll('.diff-panneau-titre').map((e) => e.textContent), ['✏️ Panneau modifié — « Un »', '➕ Question ajoutée — « Q1 »']);
   assert.deepEqual(zone.querySelectorAll('ins').map((e) => e.textContent), ['chien']);
 });
@@ -509,7 +509,7 @@ test('annulation : confirmée, la demande part au service de la carte et tout se
   assert.deepEqual(signaux, ['donnees-modifiees'], 'le panneau est prévenu');
   assert.equal(listes(appels).length, avant.listes + 1, 'la liste est rechargée');
   assert.equal(appels.filter((a) => a.adresse === '/api/admin/audit.php?id=7').length, avant.details + 1, 'le détail est rouvert');
-  assert.equal(element.querySelector('cs-admin-journal-detail .modal-back').classList.contains('show'), true);
+  assert.equal(element.querySelector('cs-admin-journal-detail .fenetre__fond').classList.contains('ouverte'), true);
 });
 
 test('annulation : la précision propre à l’action est donnée avant la règle commune', async () => {
@@ -538,7 +538,7 @@ test('annulation : Échap sur la confirmation ferme la confirmation, pas le dét
   const { element } = await demanderAnnulation();
   taper('Escape');
   await dom.stabiliser();
-  assert.equal(element.querySelector('cs-admin-journal-detail .modal-back').classList.contains('show'), true);
+  assert.equal(element.querySelector('cs-admin-journal-detail .fenetre__fond').classList.contains('ouverte'), true);
 });
 
 test('annulation : refusée par le serveur, sa raison est affichée et le bouton redevient utilisable', async () => {

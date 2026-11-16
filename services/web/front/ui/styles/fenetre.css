@@ -1,0 +1,40 @@
+/* ============================================================================
+   fenetre.css — habillage commun des fenêtres (socle/fenetre.js) : le fond
+   assombri, la boîte, et ce qu'on y met le plus souvent — titre, intitulés,
+   champs, boutons du bas, message d'erreur.
+
+   Chargé par la classe Fenetre. Une fenêtre qui s'en écarte (plus large, sans
+   marge) le dit dans sa propre feuille, sous sa balise.
+   ============================================================================ */
+
+.fenetre__fond {
+  --fenetre-fond: #fff;
+  --fenetre-titre: #1a3a25;
+  --fenetre-bord: #d7e6da;
+  --fenetre-annuler-fond: #eef4ec;
+
+  position: fixed; inset: 0; z-index: 600;
+  display: none; align-items: center; justify-content: center; padding: 18px;
+  background: rgba(0, 0, 0, 0.55);
+}
+html.dark .fenetre__fond {
+  --fenetre-fond: #1a2b1e;
+  --fenetre-titre: #c8e6d4;
+  --fenetre-bord: #2b3c30;
+  --fenetre-annuler-fond: #243328;
+}
+.fenetre__fond.ouverte { display: flex; }
+
+.fenetre__boite { background: var(--fenetre-fond); border-radius: 20px; padding: 22px; width: 100%; max-width: 460px; max-height: 88vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25); }
+.fenetre__titre { font-family: var(--police-titre); font-size: 1.05rem; font-weight: 900; color: var(--fenetre-titre); margin-bottom: 14px; }
+.fenetre__label { font-size: 0.75rem; font-weight: 800; color: var(--texte-doux); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 5px; }
+.fenetre__champ { width: 100%; border: 1.5px solid var(--fenetre-bord); border-radius: 10px; padding: 8px 11px; font-size: 0.85rem; font-family: inherit; background: var(--surface); color: var(--texte); outline: none; }
+.fenetre__champ:focus { border-color: var(--accent); }
+.fenetre__aide { font-size: 0.7rem; color: #888; margin-top: 4px; }
+.fenetre__erreur { color: var(--alerte-texte); font-size: 0.78rem; font-weight: 700; margin-top: 10px; }
+
+.fenetre__actions { display: flex; gap: 8px; margin-top: 18px; }
+.fenetre__actions button { flex: 1; border: none; border-radius: 12px; padding: 11px; font-size: 0.85rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+.fenetre__actions button:disabled { opacity: 0.55; cursor: default; }
+.fenetre__valider { background: var(--vert); color: #fff; }
+.fenetre__annuler { background: var(--fenetre-annuler-fond); color: var(--texte-doux); }
