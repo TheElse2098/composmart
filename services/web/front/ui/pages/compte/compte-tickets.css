@@ -1,0 +1,36 @@
+/* ============================================================================
+   compte-tickets.css — habillage de <cs-compte-tickets> : les lignes de
+   « Mes signalements ».
+
+   Le panneau lui-même (.panel, .panel-head, .panel-count) est habillé par la
+   page : compte.css. La pastille d'état et la fenêtre de discussion le sont
+   par composants/fil-discussion/fil-discussion.css.
+   ============================================================================ */
+
+cs-compte-tickets {
+  display: block;
+
+  --tickets-trait: #eef4ec;
+  --tickets-survol: #f6faf6;
+}
+html.dark cs-compte-tickets {
+  --tickets-trait: #243328;
+  --tickets-survol: #101a13;
+}
+/* Aucun signalement : le panneau n'existe pas (et ne laisse pas de vide dans la colonne). */
+cs-compte-tickets[hidden] { display: none; }
+
+/* La discussion, un peu plus étroite que dans le panneau d'administration. */
+cs-compte-tickets cs-fil-discussion { --fil-largeur: 520px; --fil-hauteur-min: 160px; }
+
+cs-compte-tickets .ticket-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border: none; border-bottom: 1px solid var(--tickets-trait); cursor: pointer; border-radius: 8px; background: none; width: 100%; text-align: left; font-family: inherit; }
+cs-compte-tickets .ticket-row:hover { background: var(--tickets-survol); }
+cs-compte-tickets .ticket-row:last-child { border-bottom: none; }
+cs-compte-tickets .fil-discussion-statut { flex-shrink: 0; }
+cs-compte-tickets .ticket-sujet { flex: 1; min-width: 0; font-size: 0.85rem; font-weight: 700; color: var(--texte); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+cs-compte-tickets .ticket-date { font-size: 0.7rem; color: var(--texte-pale); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+/* « Réponse » reste rouge dans les deux thèmes : elle signale un message à lire. */
+cs-compte-tickets .ticket-reponse { background: var(--rouge); color: #fff; font-size: 0.62rem; font-weight: 900; padding: 2px 7px; border-radius: 20px; flex-shrink: 0; text-transform: uppercase; }
+cs-compte-tickets .ticket-voir-clos { background: none; border: none; color: var(--texte-pale); font-family: inherit; font-size: 0.78rem; font-weight: 800; cursor: pointer; margin-top: 8px; text-decoration: underline; text-underline-offset: 3px; }
+cs-compte-tickets .ticket-voir-clos:hover { color: var(--accent); }
+cs-compte-tickets .tickets-vide { font-size: 0.85rem; color: var(--texte-pale); font-weight: 600; }

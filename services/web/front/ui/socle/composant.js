@@ -157,6 +157,12 @@ export class Composant extends HTMLElement {
 
   #monte = false;
 
+  /** monter() est terminé : le composant a son contenu et ses écoutes. */
+  #pret = false;
+
+  /** Ce qui attend la fin de monter(). @type {(() => void)[]} */
+  #enAttente = [];
+
   /** Ce qu'il faut défaire quand le composant quitte la page.
    *  @type {(() => void)[]} */
   #nettoyages = [];
@@ -182,6 +188,8 @@ export class Composant extends HTMLElement {
     queueMicrotask(() => {
       if (this.isConnected || !this.#monte) return;
       this.#monte = false;
+      this.#pret = false;
+      this.#enAttente = [];
       for (const defaire of this.#nettoyages.splice(0)) defaire();
       this.demonter();
     });
@@ -196,9 +204,30 @@ export class Composant extends HTMLElement {
       ]);
       if (!this.#monte) return; // retiré de la page pendant le chargement
       await this.monter();
+      if (!this.#monte) return;
+      this.#pret = true;
+      for (const action of this.#enAttente.splice(0)) action();
     } catch (erreur) {
       this.surErreur(erreur);
     }
+  }
+
+  /**
+   * Exécute l'action tout de suite si monter() est terminé, sinon dès qu'il
+   * le sera. À utiliser dans toute méthode qu'un parent appelle pour régler
+   * ou ouvrir son enfant : la balise de l'enfant existe dès que le parent l'a
+   * écrite, mais son contenu n'arrive qu'après sa feuille de style.
+   *
+   *   configurer(donnees) {
+   *     this.apresMontage(() => this.rendre(this.gabarit(donnees)));
+   *   }
+   *
+   * Les actions en attente s'exécutent dans l'ordre des appels.
+   * @param {() => void} action
+   */
+  apresMontage(action) {
+    if (this.#pret) action();
+    else this.#enAttente.push(action);
   }
 
   /**

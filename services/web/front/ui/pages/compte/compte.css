@@ -1,0 +1,153 @@
+/* ============================================================================
+   compte.css — habillage de <cs-compte> (page /compte) : en-tête, chiffres,
+   les deux colonnes, et ce que tous les panneaux de la page ont en commun
+   (.panel, .panel-head, .panel-count).
+
+   Les parties qui sont des composants ont leur feuille : compte-tickets.css,
+   compte-reglages.css, compte-sortie.css. La courbe d'XP vient de
+   composants/courbe-xp.
+   ============================================================================ */
+
+cs-compte {
+  display: block;
+
+  --heros-fond: #1e6e3e;
+  --heros-motif: url('/assets/img/motif-branchage-light.svg');
+  --heros-degrade: linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2d9959 100%);
+  --heros-titre: #fff;
+  --heros-sous-titre: rgba(255, 255, 255, 0.9);
+
+  --compte-creux: #f4f9f4;        /* badges, records, survol d'un cours */
+  --compte-bord: #e3efe5;
+  --compte-trait: #eef4ec;
+  --compte-second-bord: #a8e6bf;  /* bouton « Se connecter » */
+  --ombre-chiffre: 0 6px 22px rgba(30, 110, 62, 0.12);
+  --ombre-panneau: 0 4px 16px rgba(30, 110, 62, 0.08);
+}
+html.dark cs-compte {
+  --heros-fond: #0d2f18;
+  --heros-motif: url('/assets/img/motif-branchage-dark.svg');
+  --heros-degrade: linear-gradient(160deg, #0d2f18 0%, #12401f 55%, #1a5c33 100%);
+  --heros-titre: #c8e6d4;
+  --heros-sous-titre: rgba(255, 255, 255, 0.82);
+
+  --compte-creux: #101a13;
+  --compte-bord: #243a2c;
+  --compte-trait: #243328;
+  --compte-second-bord: #2d4030;
+  --ombre-chiffre: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --ombre-panneau: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+/* ── En-tête ──
+   Même traitement que l'accueil (motif, dégradé, courbe du bas) : la page de
+   compte appartient au même site, elle ne doit pas ressembler à un module à part. */
+cs-compte .hero {
+  position: relative; text-align: center; padding: 56px 20px 84px; color: #fff; overflow: hidden;
+  background-color: var(--heros-fond);
+  background-image: var(--heros-motif), var(--heros-degrade);
+  background-repeat: repeat, no-repeat;
+  background-size: 220px 220px, cover;
+}
+/* La courbe du bas reprend la couleur du fond de page. */
+cs-compte .hero::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 60px; background: var(--fond); clip-path: ellipse(75% 100% at 50% 100%); }
+cs-compte .hero-inner { position: relative; z-index: 2; max-width: 620px; margin: 0 auto; }
+cs-compte .avatar {
+  width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 18px;
+  background: rgba(255, 255, 255, 0.16); border: 3px solid rgba(255, 255, 255, 0.45);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--police-titre); font-size: 2.6rem; font-weight: 900; color: #fff;
+  backdrop-filter: blur(4px);
+}
+cs-compte .hero h1 { font-family: var(--police-titre); font-size: clamp(1.7rem, 5vw, 2.6rem); font-weight: 900; line-height: 1.15; color: var(--heros-titre); }
+cs-compte .hero-sub { font-size: 1rem; color: var(--heros-sous-titre); font-weight: 600; margin-top: 6px; }
+
+/* La barre de niveau est dans l'en-tête : c'est l'information la plus lue,
+   elle mérite la place forte plutôt qu'une ligne perdue plus bas. */
+cs-compte .hero-xp { max-width: 420px; margin: 24px auto 0; }
+cs-compte .hero-xp-track { height: 10px; background: rgba(255, 255, 255, 0.22); border-radius: 20px; overflow: hidden; }
+cs-compte .hero-xp-fill { height: 100%; width: 0; background: var(--menthe); border-radius: 20px; transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
+cs-compte .hero-xp-label { font-size: 0.82rem; color: rgba(255, 255, 255, 0.85); font-weight: 700; margin-top: 8px; }
+cs-compte .hero-chip {
+  display: inline-flex; align-items: center; gap: 7px; margin-top: 20px;
+  background: rgba(255, 255, 255, 0.15); color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50px; padding: 9px 18px; font-size: 0.85rem; font-weight: 800;
+  text-decoration: none; backdrop-filter: blur(4px); transition: background 0.15s, transform 0.15s;
+}
+cs-compte .hero-chip:hover { background: rgba(255, 255, 255, 0.26); transform: translateY(-2px); }
+
+/* ── Chiffres (chevauchent la courbe de l'en-tête, comme sur l'accueil) ── */
+cs-compte .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 900px; margin: -52px auto 0; padding: 0 20px; position: relative; z-index: 5; }
+cs-compte .stats[hidden] { display: none; }
+cs-compte .stat { background: var(--surface); border-radius: 20px; padding: 20px 14px; text-align: center; box-shadow: var(--ombre-chiffre); }
+cs-compte .stat-num { font-family: var(--police-titre); font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 900; color: var(--accent); line-height: 1; }
+cs-compte .stat-label { font-size: 0.8rem; color: var(--texte-doux); font-weight: 700; margin-top: 6px; }
+
+/* ── Colonnes : une sur téléphone, deux sur ordinateur (pas de module centré) ── */
+cs-compte .profil-layout { width: 100%; max-width: 1120px; margin: 0 auto; padding: 40px 20px 0; display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
+cs-compte .col-main,
+cs-compte .col-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+cs-compte .col-side[hidden] { display: none; }
+
+/* ── Communs à tous les panneaux de la page ── */
+cs-compte .panel { background: var(--surface); border-radius: 22px; padding: 24px; box-shadow: var(--ombre-panneau); }
+cs-compte .panel-head { display: flex; align-items: center; gap: 9px; font-family: var(--police-titre); font-size: 1.1rem; font-weight: 900; color: var(--texte); margin-bottom: 16px; }
+cs-compte .panel-count { margin-left: auto; font-family: var(--police); font-size: 0.76rem; font-weight: 800; color: var(--texte-doux); background: var(--surface-creuse); padding: 3px 11px; border-radius: 20px; }
+cs-compte .course-empty { font-size: 0.85rem; color: var(--texte-pale); font-weight: 600; }
+cs-compte .course-empty a { color: var(--accent); font-weight: 800; }
+
+/* ── Cours terminés ── */
+cs-compte .history-list { display: flex; flex-direction: column; }
+cs-compte .history-row { display: flex; align-items: center; gap: 11px; padding: 10px 4px; border-bottom: 1px solid var(--compte-trait); text-decoration: none; transition: background 0.12s; border-radius: 8px; }
+cs-compte .history-row:last-child { border-bottom: none; }
+cs-compte .history-row:hover { background: var(--compte-creux); }
+cs-compte .history-emoji { font-size: 1.2rem; flex-shrink: 0; }
+cs-compte .history-title { flex: 1; min-width: 0; font-size: 0.86rem; font-weight: 700; color: var(--texte); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+cs-compte .history-date { font-size: 0.72rem; color: var(--texte-pale); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+
+/* ── Badges ── */
+cs-compte .badge-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+cs-compte .badge { text-align: center; padding: 14px 6px; border-radius: 16px; background: var(--compte-creux); border: 1.5px solid var(--compte-bord); transition: transform 0.15s; }
+cs-compte .badge.locked { opacity: 0.4; filter: grayscale(0.8); }
+cs-compte .badge:not(.locked) { box-shadow: 0 2px 8px rgba(30, 110, 62, 0.12); }
+cs-compte .badge:not(.locked):hover { transform: translateY(-3px); }
+cs-compte .badge-emoji { font-size: 1.8rem; line-height: 1; }
+cs-compte .badge-label { font-family: var(--police-titre); font-size: 0.72rem; font-weight: 900; color: var(--texte); margin-top: 6px; line-height: 1.2; }
+cs-compte .badge-desc { font-size: 0.62rem; color: var(--texte-pale); margin-top: 2px; line-height: 1.25; font-weight: 600; }
+
+/* ── Records de jeux ── */
+cs-compte .game-row { display: flex; align-items: center; gap: 12px; background: var(--compte-creux); border-radius: 14px; padding: 12px 14px; text-decoration: none; transition: background 0.15s, transform 0.15s; }
+cs-compte .game-row + .game-row { margin-top: 9px; }
+cs-compte .game-row:hover { background: var(--surface-creuse); transform: translateX(3px); }
+cs-compte .game-row-emoji { font-size: 1.6rem; flex-shrink: 0; }
+cs-compte .game-row-info { flex: 1; min-width: 0; }
+cs-compte .game-row-name { font-family: var(--police-titre); font-size: 0.92rem; font-weight: 900; color: var(--texte); }
+cs-compte .game-row-sub { font-size: 0.72rem; color: var(--texte-pale); font-weight: 600; margin-top: 1px; }
+cs-compte .game-row-best { font-family: var(--police-titre); font-size: 1rem; font-weight: 900; color: var(--accent); white-space: nowrap; flex-shrink: 0; }
+cs-compte .game-row-best.none { color: #bbb; font-size: 0.8rem; }
+
+/* ── Bas de page : la sortie (<cs-compte-sortie>) pour un membre ; pour un
+   visiteur la zone est vide et ne garde que sa marge, qui écarte le pied. ── */
+cs-compte .logout-wrap { max-width: 1120px; margin: 0 auto; padding: 26px 20px 48px; text-align: center; }
+
+/* ── Visiteur non connecté : une seule carte ── */
+cs-compte .profil-layout.guest { max-width: 460px; text-align: center; }
+cs-compte .guest .panel { padding: 34px 26px; }
+cs-compte .guest-title { font-family: var(--police-titre); font-size: 1.4rem; font-weight: 900; color: var(--texte); margin-bottom: 8px; }
+cs-compte .guest-sub { font-size: 0.92rem; color: var(--texte-doux); font-weight: 600; margin-bottom: 26px; line-height: 1.55; }
+cs-compte .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border-radius: 50px; font-family: var(--police-titre); font-weight: 800; font-size: 0.98rem; text-decoration: none; cursor: pointer; border: none; transition: transform 0.18s, box-shadow 0.18s, background 0.18s; }
+cs-compte .btn-primary { background: var(--action); color: #fff; box-shadow: 0 4px 14px rgba(30, 110, 62, 0.28); margin-bottom: 10px; }
+cs-compte .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(30, 110, 62, 0.34); }
+cs-compte .btn-secondary { background: var(--surface); color: var(--accent); border: 1.5px solid var(--compte-second-bord); }
+cs-compte .btn-secondary:hover { background: var(--surface-creuse); }
+
+/* ── Ordinateur ── */
+@media (min-width: 640px) {
+  cs-compte .stats { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 900px) {
+  /* La progression (lecture longue) à gauche, les blocs courts à droite. */
+  cs-compte .profil-layout { grid-template-columns: 1.45fr 1fr; padding-top: 48px; }
+  /* Visiteur : une seule carte, donc pas de seconde colonne où elle se coincerait. */
+  cs-compte .profil-layout.guest { grid-template-columns: 1fr; }
+}

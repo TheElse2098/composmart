@@ -701,7 +701,7 @@ export function installerFauxDom() {
 
 /**
  * Remplace `fetch` par des réponses fixées d'avance et note les appels reçus.
- * @param {(adresse: string, options: any) => { statut?: number, corps?: unknown, texte?: string } | Error} repondre
+ * @param {(adresse: string, options: any) => { statut?: number, corps?: unknown, texte?: string, entetes?: Record<string, string> } | Error} repondre
  * @returns {{ appels: { adresse: string, options: any }[] }}
  */
 export function fauxFetch(repondre) {
@@ -712,7 +712,7 @@ export function fauxFetch(repondre) {
     const reponse = repondre(adresse, options);
     if (reponse instanceof Error) throw reponse;
     const texte = reponse.texte ?? (reponse.corps === undefined ? '' : JSON.stringify(reponse.corps));
-    return new Response(texte, { status: reponse.statut ?? 200 });
+    return new Response(texte, { status: reponse.statut ?? 200, headers: reponse.entetes });
   };
   return { appels };
 }

@@ -1,0 +1,67 @@
+/* ============================================================================
+   compte-reglages.css — habillage de <cs-compte-reglages> : les lignes
+   « libellé → valeur » du compte, les liens d'action, le formulaire de
+   changement d'adresse.
+
+   Le panneau lui-même (.panel, .panel-head) est habillé par la page :
+   compte.css.
+   ============================================================================ */
+
+cs-compte-reglages {
+  display: block;
+
+  --reglages-trait: #eef4ec;
+  --reglages-ok-fond: #e4f6ea;
+  --reglages-attente-fond: #fdf1d8;
+  --reglages-attente-texte: #8a6100;
+  --reglages-attente-bord: #f0d49a;
+  --reglages-attente-survol: #fbe7bd;
+  --reglages-separation: #e3efe5;
+  --reglages-aide: #7aaa8a;
+  --reglages-champ-fond: #f7fbf8;
+  --reglages-champ-bord: #c8dfc8;
+  --reglages-champ-actif: #fff;
+}
+html.dark cs-compte-reglages {
+  --reglages-trait: #243328;
+  --reglages-ok-fond: #14301f;
+  --reglages-attente-fond: #2e2410;
+  --reglages-attente-texte: #e0b95f;
+  --reglages-attente-bord: #4a3a15;
+  --reglages-attente-survol: #3b2f14;
+  --reglages-separation: #243328;
+  --reglages-aide: #5a8a6a;
+  --reglages-champ-fond: #16211a;
+  --reglages-champ-bord: #2d4030;
+  --reglages-champ-actif: #16211a;
+}
+
+/* ── Libellé à gauche, valeur à droite ──
+   La valeur peut être une adresse longue dans une colonne étroite : elle doit
+   pouvoir se couper (overflow-wrap), et son conteneur l'y autoriser (min-width: 0). */
+cs-compte-reglages .info-list { display: flex; flex-direction: column; gap: 2px; }
+cs-compte-reglages .info-row { display: flex; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--reglages-trait); }
+cs-compte-reglages .info-row:last-child { border-bottom: none; }
+cs-compte-reglages .info-key { flex-shrink: 0; font-size: 0.74rem; font-weight: 800; color: var(--texte-pale); text-transform: uppercase; letter-spacing: 0.4px; }
+cs-compte-reglages .info-value { flex: 1; min-width: 0; text-align: right; font-size: 0.86rem; font-weight: 700; color: var(--texte); overflow-wrap: anywhere; }
+cs-compte-reglages .info-tag { display: inline-block; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+cs-compte-reglages .info-tag.ok { background: var(--reglages-ok-fond); color: var(--accent); }
+cs-compte-reglages .info-tag.pending { background: var(--reglages-attente-fond); color: var(--reglages-attente-texte); }
+
+/* ── Actions ── */
+cs-compte-reglages .info-links { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+cs-compte-reglages .info-link { display: inline-block; margin-top: 14px; font-size: 0.8rem; font-weight: 800; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+cs-compte-reglages button.info-link { background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; }
+cs-compte-reglages button.info-link:disabled { opacity: 0.6; cursor: default; }
+cs-compte-reglages .info-btn { width: 100%; margin-top: 14px; padding: 10px; border-radius: 50px; border: 1.5px solid var(--reglages-attente-bord); background: var(--reglages-attente-fond); color: var(--reglages-attente-texte); font-family: var(--police-titre); font-weight: 800; font-size: 0.85rem; cursor: pointer; }
+cs-compte-reglages .info-btn:hover { background: var(--reglages-attente-survol); }
+cs-compte-reglages .info-btn:disabled { opacity: 0.6; cursor: default; }
+cs-compte-reglages .info-msg { margin-top: 8px; font-size: 0.78rem; font-weight: 700; color: var(--reglages-attente-texte); text-align: center; }
+
+/* ── Changer d'adresse ── */
+cs-compte-reglages .email-form { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--reglages-separation); }
+cs-compte-reglages .email-form label { display: block; font-size: 0.74rem; font-weight: 800; color: var(--reglages-aide); text-transform: uppercase; letter-spacing: 0.4px; margin: 8px 0 4px; }
+cs-compte-reglages .email-form input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--reglages-champ-bord); background: var(--reglages-champ-fond); font-family: inherit; font-size: 0.88rem; color: var(--texte); }
+cs-compte-reglages .email-form input:focus { outline: none; border-color: var(--accent); background: var(--reglages-champ-actif); }
+cs-compte-reglages .email-aide { font-size: 0.74rem; font-weight: 600; color: var(--reglages-aide); line-height: 1.45; margin-top: 10px; }
+cs-compte-reglages .email-aide a { color: var(--accent); font-weight: 800; }

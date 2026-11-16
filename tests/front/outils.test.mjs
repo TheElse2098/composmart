@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { Html, brut, echapper, html, pluriel } from '../../services/web/front/ui/socle/outils.js';
+import { Html, brut, dateSql, echapper, html, jourCourt, moisAnnee, pluriel } from '../../services/web/front/ui/socle/outils.js';
 
 test('echapper neutralise les cinq caractères du HTML', () => {
   assert.equal(echapper(`<a href="x" title='y'>&</a>`), '&lt;a href=&quot;x&quot; title=&#39;y&#39;&gt;&amp;&lt;/a&gt;');
@@ -48,4 +48,17 @@ test('pluriel accorde à partir de 2', () => {
   assert.equal(pluriel(0, 'message', 'messages'), '0 message');
   assert.equal(pluriel(1, 'message', 'messages'), '1 message');
   assert.equal(pluriel(2, 'message', 'messages'), '2 messages');
+});
+
+test('dateSql : une date du serveur se lit à l’heure locale', () => {
+  const date = dateSql('2026-11-14 09:15:00');
+  assert.deepEqual([date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes()], [2026, 10, 14, 9, 15]);
+  assert.equal(dateSql('2026-11-14T09:15:00').getHours(), 9);
+});
+
+test('jourCourt et moisAnnee : en français, depuis une date ou une date du serveur', () => {
+  assert.equal(jourCourt('2026-11-14 09:15:00'), '14 nov.');
+  assert.equal(jourCourt(new Date(2026, 0, 1)), '1 janv.');
+  assert.equal(moisAnnee('2026-03-12 08:00:00'), 'mars 2026');
+  assert.equal(moisAnnee(new Date(2025, 11, 31)), 'décembre 2025');
 });

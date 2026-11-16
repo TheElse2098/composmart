@@ -134,7 +134,7 @@ export class FilDiscussion extends Fenetre {
   ouvrir(id) {
     const vue = this.#vue;
     if (!vue) throw new Error('<cs-fil-discussion> : configurer() doit être appelé avant ouvrir()');
-    this.desQuePosee(() => {
+    this.apresMontage(() => {
       this.#id = id;
       this.#statut = '';
       this.trouver('.fenetre__titre').textContent = '#' + id;

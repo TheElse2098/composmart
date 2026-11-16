@@ -19,7 +19,7 @@
      --courbe-total     taille du total (1.5rem)
    ============================================================================ */
 import { Composant } from '../../socle/composant.js';
-import { html } from '../../socle/outils.js';
+import { dateSql, html, jourCourt } from '../../socle/outils.js';
 
 /**
  * @typedef {object} Gain
@@ -39,15 +39,6 @@ const JOUR = 86400000;
 const LARGEUR = 300;
 const HAUTEUR = 100;
 const MARGE = { gauche: 4, droite: 4, haut: 8, bas: 4 };
-
-/** Une date MySQL (sans fuseau) : le « T » rend sa lecture fiable d'un navigateur à l'autre.
- *  @param {string} texte */
-export function dateSql(texte) {
-  return new Date(String(texte).replace(' ', 'T'));
-}
-
-/** « 14 nov. » @param {Date} date */
-const jourCourt = (date) => date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 
 /** La clé « AAAA-MM-JJ » d'un jour, à l'heure locale (pas en UTC, qui peut décaler le jour).
  *  @param {Date} d */
@@ -126,29 +117,14 @@ export class CourbeXp extends Composant {
   static balise = 'cs-courbe-xp';
   static styles = [new URL('./courbe-xp.css', import.meta.url)];
 
-  /** Ce qu'il faut tracer, reçu avant ou après l'arrivée de la feuille de style.
-   *  @type {{ historique: Gain[], messageVide?: string } | null} */
-  #demande = null;
-  #pret = false;
-
-  monter() {
-    this.#pret = true;
-    this.#tracer();
-  }
-
   /**
    * Trace la courbe d'un historique de gains.
    * @param {Gain[]} historique  du plus ancien au plus récent
    * @param {string} [messageVide]  ce qu'on dit quand il n'y a encore aucun gain
    */
   montrer(historique, messageVide) {
-    this.#demande = { historique, messageVide };
-    this.#tracer();
-  }
-
-  /** Rien n'est dessiné avant la feuille de style : sans elle, l'aire serait noire. */
-  #tracer() {
-    if (this.#pret && this.#demande) this.rendre(gabaritCourbe(this.#demande.historique, this.#demande.messageVide));
+    // Rien n'est dessiné avant la feuille de style : sans elle, l'aire serait noire.
+    this.apresMontage(() => this.rendre(gabaritCourbe(historique, messageVide)));
   }
 }
 

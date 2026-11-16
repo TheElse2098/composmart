@@ -7,7 +7,7 @@ import { afterEach, test } from 'node:test';
 import { installerFauxDom } from './faux-dom.mjs';
 
 const dom = installerFauxDom();
-const { dateSql, gabaritCourbe, pointsXp } = await import('../../services/web/front/ui/composants/courbe-xp/courbe-xp.js');
+const { gabaritCourbe, pointsXp } = await import('../../services/web/front/ui/composants/courbe-xp/courbe-xp.js');
 
 const HISTORIQUE = [
   { delta: 10, created_at: '2026-11-10 09:00:00' },
@@ -18,11 +18,6 @@ const HISTORIQUE = [
 afterEach(async () => {
   dom.vider();
   await dom.stabiliser();
-});
-
-test('dateSql : une date MySQL se lit à l’heure locale', () => {
-  const date = dateSql('2026-11-14 09:15:00');
-  assert.deepEqual([date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes()], [2026, 10, 14, 9, 15]);
 });
 
 test('pointsXp : cumul par jour, jours sans gain comblés', () => {

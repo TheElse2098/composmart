@@ -118,3 +118,35 @@ test('une instance par service, sur les préfixes de l’Ingress', async () => {
     '/api/carte/a.php', '/api/jeux/a.php', '/api/evenements/a.php',
   ]);
 });
+
+// ── telecharger : un fichier à enregistrer, pas des données à afficher ──────
+
+test('telecharger rend le contenu et le nom proposé par le serveur', async () => {
+  const { appels } = fauxFetch(() => ({ texte: '{"pseudo":"lea"}', entetes: { 'Content-Disposition': 'attachment; filename="composmart-mes-donnees-2026-11-16.json"' } }));
+  const fichier = await new Api('/api/auth').telecharger('export.php', { format: 'json' });
+  assert.equal(appels[0].adresse, '/api/auth/export.php?format=json');
+  assert.equal(appels[0].options.method, 'GET');
+  assert.equal(fichier.nom, 'composmart-mes-donnees-2026-11-16.json');
+  assert.equal(await fichier.contenu.text(), '{"pseudo":"lea"}');
+});
+
+test('telecharger : sans nom proposé, le nom est laissé à l’appelant', async () => {
+  fauxFetch(() => ({ texte: 'abc' }));
+  assert.equal((await new Api('/api/auth').telecharger('export.php')).nom, null);
+});
+
+test('telecharger : un refus arrive en ErreurApi avec la phrase du serveur, pas en fichier', async () => {
+  fauxFetch(() => ({ statut: 429, corps: { error: 'Trop de demandes. Réessaie dans une heure.' } }));
+  const refus = await erreurDe(new Api('/api/auth').telecharger('export.php'));
+  assert.equal(refus.message, 'Trop de demandes. Réessaie dans une heure.');
+  assert.equal(refus.statut, 429);
+
+  fauxFetch(() => ({ statut: 502, texte: '<html>Bad Gateway</html>' }));
+  const panne = await erreurDe(new Api('/api/auth').telecharger('export.php'));
+  assert.equal(panne.message, 'Le serveur a refusé la demande (HTTP 502).');
+
+  fauxFetch(() => new TypeError('fetch failed'));
+  const reseau = await erreurDe(new Api('/api/auth').telecharger('export.php'));
+  assert.equal(reseau.message, 'Connexion au serveur impossible.');
+  assert.equal(reseau.statut, 0);
+});

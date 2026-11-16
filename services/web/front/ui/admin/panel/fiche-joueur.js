@@ -64,7 +64,7 @@ export class AdminFicheJoueur extends Fenetre {
    * @param {string} pseudo  affiché tout de suite, pendant le chargement
    */
   ouvrir(id, pseudo) {
-    this.desQuePosee(() => { this.#afficher(id, pseudo); });
+    this.apresMontage(() => { this.#afficher(id, pseudo); });
   }
 
   aLaFermeture() {

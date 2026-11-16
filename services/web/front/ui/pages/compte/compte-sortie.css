@@ -1,0 +1,58 @@
+/* ============================================================================
+   compte-sortie.css — habillage de <cs-compte-sortie> : déconnexion et
+   suppression du compte.
+
+   La marge autour (.logout-wrap) est posée par la page : compte.css.
+   ============================================================================ */
+
+cs-compte-sortie {
+  display: block;
+
+  --sortie-rouge: #c0392b;
+  --sortie-trait: #e3efe5;
+  --sortie-discret: #9aa8a0;
+  --sortie-fond: #fff5f4;
+  --sortie-bord: #f0c9c4;
+  --sortie-texte: #6b4a46;
+  --sortie-champ: #fff;
+  --sortie-bouton: #c0392b;
+  --sortie-bouton-survol: #a5301f;
+  --sortie-annuler-survol: #fdecea;
+}
+html.dark cs-compte-sortie {
+  --sortie-rouge: #e57373;
+  --sortie-trait: #243328;
+  --sortie-discret: #5f7a68;
+  --sortie-fond: #1f1614;
+  --sortie-bord: #4a2b27;
+  --sortie-texte: #c9a9a4;
+  --sortie-champ: #16211a;
+  --sortie-bouton: #b0392b;
+  --sortie-bouton-survol: #c94a3b;
+  --sortie-annuler-survol: #241a18;
+}
+
+/* Déconnexion : action rare, en lien discret plutôt qu'en gros bouton rouge. */
+cs-compte-sortie .btn-logout { background: none; border: none; color: var(--sortie-rouge); font-family: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; padding: 10px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(192, 57, 43, 0.35); }
+cs-compte-sortie .btn-logout:hover { text-decoration-color: currentColor; }
+
+/* Suppression : irréversible, donc repliée et bien séparée de la déconnexion. */
+cs-compte-sortie .danger-sep { max-width: 420px; margin: 4px auto 14px; height: 1px; background: var(--sortie-trait); }
+cs-compte-sortie .btn-danger-open { background: none; border: none; color: var(--sortie-discret); font-family: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 6px 10px; }
+cs-compte-sortie .btn-danger-open:hover { color: var(--sortie-rouge); }
+cs-compte-sortie .danger-panel { max-width: 460px; margin: 14px auto 0; background: var(--sortie-fond); border: 1.5px solid var(--sortie-bord); border-radius: 16px; padding: 20px; text-align: left; }
+cs-compte-sortie .danger-title { font-family: var(--police-titre); font-size: 1.05rem; font-weight: 900; color: var(--sortie-rouge); margin-bottom: 8px; }
+cs-compte-sortie .danger-text { font-size: 0.84rem; color: var(--sortie-texte); font-weight: 600; line-height: 1.6; margin-bottom: 14px; }
+cs-compte-sortie .danger-text b { color: var(--sortie-rouge); }
+cs-compte-sortie .danger-label { display: block; font-size: 0.78rem; font-weight: 800; color: var(--sortie-texte); margin-bottom: 6px; }
+cs-compte-sortie .danger-input { width: 100%; padding: 11px 13px; border-radius: 10px; border: 1.5px solid var(--sortie-bord); background: var(--sortie-champ); font-family: inherit; font-size: 0.9rem; color: var(--texte); margin-bottom: 12px; }
+cs-compte-sortie .danger-input:focus { outline: none; border-color: var(--sortie-rouge); }
+cs-compte-sortie .danger-actions { display: flex; gap: 10px; }
+cs-compte-sortie .btn-danger-go,
+cs-compte-sortie .btn-danger-cancel { flex: 1; padding: 11px; border-radius: 50px; font-family: var(--police-titre); font-weight: 800; font-size: 0.9rem; cursor: pointer; border: none; transition: background 0.18s, opacity 0.18s; }
+cs-compte-sortie .btn-danger-go { background: var(--sortie-bouton); color: #fff; }
+cs-compte-sortie .btn-danger-go:hover { background: var(--sortie-bouton-survol); }
+cs-compte-sortie .btn-danger-go:disabled { opacity: 0.45; cursor: not-allowed; }
+cs-compte-sortie .btn-danger-cancel { background: var(--sortie-champ); color: var(--sortie-texte); border: 1.5px solid var(--sortie-bord); }
+cs-compte-sortie .btn-danger-cancel:hover { background: var(--sortie-annuler-survol); }
+cs-compte-sortie .danger-msg { font-size: 0.8rem; font-weight: 700; color: var(--sortie-rouge); margin-top: 10px; }

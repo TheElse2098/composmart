@@ -22,7 +22,7 @@
        }
 
        ouvrir(donnees) {
-         this.desQuePosee(() => { …remplir… ; this.montrer(); });
+         this.apresMontage(() => { …remplir… ; this.montrer(); });
        }
      }
 
@@ -42,9 +42,6 @@ export class Fenetre extends Composant {
    *  @type {(string | URL)[]} */
   static styles = [new URL('../styles/fenetre.css', import.meta.url)];
 
-  /** Ce qui attend que le cadre soit posé. @type {(() => void) | null} */
-  #enAttente = null;
-
   /**
    * Pose le cadre, fermé, avec son contenu. À appeler une fois, dans monter().
    *
@@ -57,12 +54,6 @@ export class Fenetre extends Composant {
    * @param {{ colonne?: boolean }} [options]
    */
   poserFenetre(contenu, { colonne = false } = {}) {
-    // Une ouverture demandée avant la pose est servie une fois monter() terminé.
-    queueMicrotask(() => {
-      const action = this.#enAttente;
-      this.#enAttente = null;
-      if (action && this.isConnected) action();
-    });
     this.rendre(html`<div class="fenetre__fond${colonne && ' fenetre__fond--colonne'}"><div class="fenetre__boite${colonne && ' fenetre__boite--colonne'}" role="dialog" aria-modal="true">${contenu}</div></div>`);
     this.ecouter('click', '[data-action="fermer"]', () => this.fermer());
     this.ecouter('click', '.fenetre__fond', (fond, evenement) => {
@@ -79,17 +70,6 @@ export class Fenetre extends Composant {
   /** Le cadre est-il posé ? Faux tant que la feuille de style n'est pas arrivée. */
   get posee() {
     return this.querySelector('.fenetre__fond') !== null;
-  }
-
-  /**
-   * Exécute l'action tout de suite si le cadre est posé, sinon dès qu'il le
-   * sera : un clic peut précéder l'arrivée de la feuille de style. À utiliser
-   * dans la méthode qui ouvre la fenêtre. Une seule action attend, la dernière.
-   * @param {() => void} action
-   */
-  desQuePosee(action) {
-    if (this.posee) action();
-    else this.#enAttente = action;
   }
 
   get ouverte() {

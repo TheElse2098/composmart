@@ -60,7 +60,7 @@ export class AdminAjoutEdition extends Fenetre {
    * @param {string[]} dechets  le référentiel des déchets, par ordre alphabétique
    */
   ouvrir(demande, dechets) {
-    this.desQuePosee(() => {
+    this.apresMontage(() => {
       this.#id = demande.id;
       this.trouver('.fenetre__titre').textContent = 'Modifier la demande #' + demande.id;
       this.#champ('type').value = demande.type || TYPES_COMPOSTEUR[0];

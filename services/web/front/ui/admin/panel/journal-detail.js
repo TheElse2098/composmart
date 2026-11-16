@@ -171,7 +171,7 @@ export class AdminJournalDetail extends Fenetre {
    * @param {Resume} resume
    */
   ouvrir(resume) {
-    this.desQuePosee(() => { this.#afficher(resume); });
+    this.apresMontage(() => { this.#afficher(resume); });
   }
 
   /** @param {Resume} resume */

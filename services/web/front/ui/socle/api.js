@@ -117,6 +117,45 @@ export class Api {
   }
 
   /**
+   * Va chercher un fichier que le serveur produit pour être enregistré (un
+   * export), et non des données à afficher. Le nom est celui que le serveur
+   * propose (`Content-Disposition`), s'il en propose un. Même règle d'erreur
+   * que les autres appels : un refus arrive en ErreurApi avec la phrase du
+   * serveur, pas sous la forme d'un fichier d'erreur téléchargé.
+   * Pour l'enregistrer : `enregistrer()` de socle/fichier.js.
+   * @param {string} fichier
+   * @param {Champs} [parametres]
+   * @returns {Promise<{ nom: string | null, contenu: Blob }>}
+   */
+  async telecharger(fichier, parametres) {
+    let reponse;
+    try {
+      reponse = await fetch(this.#adresse(fichier, parametres), { method: 'GET' });
+    } catch {
+      throw new ErreurApi('Connexion au serveur impossible.');
+    }
+    if (!reponse.ok) {
+      /** @type {any} */
+      let corps = null;
+      try {
+        corps = await reponse.json();
+      } catch {
+        // Pas de JSON : le code HTTP suffira.
+      }
+      const message = corps && typeof corps.error === 'string' && corps.error !== ''
+        ? corps.error
+        : 'Le serveur a refusé la demande (HTTP ' + reponse.status + ').';
+      throw new ErreurApi(message, { statut: reponse.status, donnees: corps });
+    }
+    const nom = (reponse.headers.get('Content-Disposition') || '').match(/filename="([^"]+)"/);
+    try {
+      return { nom: nom ? nom[1] : null, contenu: await reponse.blob() };
+    } catch {
+      throw new ErreurApi('Connexion au serveur impossible.');
+    }
+  }
+
+  /**
    * @param {string} fichier
    * @param {Champs} [parametres]
    * @returns {string}

@@ -168,6 +168,7 @@ Ce que la classe de base fournit :
 | `aLaFin(defaire)` | action à exécuter à la sortie de la page |
 | `trouver(selecteur, Classe?)`, `tous(selecteur)` | éléments du composant ; `trouver` lève une erreur claire au lieu de renvoyer `null`. Avec une classe, il rend le composant enfant, prêt à recevoir un appel de méthode |
 | `emettre(nom, detail)` | prévient les composants parents |
+| `apresMontage(action)` | exécute l'action quand `monter()` est terminé (tout de suite s'il l'est). À utiliser dans toute méthode qu'un parent appelle sur son enfant (`configurer()`, `ouvrir()`) : la balise existe dès que le parent l'écrit, son contenu seulement après sa feuille de style |
 | `afficherChargement()`, `afficherErreur(message)` | états standard |
 | `surErreur(erreur)` | reçoit une erreur échappée de `monter()` ; par défaut l'affiche |
 
@@ -237,7 +238,7 @@ export class AdminAjoutEdition extends Fenetre {
   }
 
   ouvrir(demande) {
-    this.desQuePosee(() => { /* remplir */ this.montrer(); });
+    this.apresMontage(() => { /* remplir */ this.montrer(); });
   }
 }
 ```
@@ -246,7 +247,6 @@ export class AdminAjoutEdition extends Fenetre {
 |---|---|
 | `poserFenetre(gabarit)` | pose le cadre, fermé ; une fois, dans `monter()` |
 | `poserFenetre(gabarit, { colonne: true })` | cadre sans marge pour un contenu long : en-tête fixe (`.fenetre__tete`, `.fenetre__titre`, `.fenetre__fermer`), puis un corps qui défile seul |
-| `desQuePosee(action)` | exécute maintenant, ou dès que le cadre est posé |
 | `montrer()` / `fermer()` | ouvre, ferme |
 | `ouverte`, `posee` | états |
 | `aLaFermeture()` | à redéfinir : oublier ce que la fenêtre montrait |
@@ -339,6 +339,18 @@ try {
 `texteErreur()` reprend le message du serveur s'il s'agit d'une phrase, et le
 message par défaut sinon. `session.moi()` répond à « qui est connecté » sans
 jamais lever, et ne questionne le serveur qu'une fois par page.
+
+Un fichier à faire enregistrer (un export) ne passe pas par un lien direct :
+une erreur deviendrait un fichier téléchargé qui contient le message.
+
+```js
+const fichier = await api.auth.telecharger('export.php');   // ErreurApi si refus
+enregistrer(fichier.nom || 'export.json', fichier.contenu);  // socle/fichier.js
+```
+
+Les dates du serveur (« 2026-11-14 09:15:00 ») se lisent avec `dateSql()`,
+s'écrivent avec `jourCourt()` (« 14 nov. ») et `moisAnnee()` (« novembre
+2026 ») : `socle/outils.js`.
 
 ## Administration
 
@@ -442,5 +454,17 @@ d'après. La convention `?v=N` n'a plus lieu d'être sur les fichiers de `ui/`.
 5. `npm --prefix tests/front run controle`.
 6. Déployer et vérifier sur le site, en clair et en sombre, sur téléphone et
    sur ordinateur, connecté et non connecté.
+
+Une page importante se reconstruit à côté de l'ancienne, à une adresse
+provisoire (`/admin/panel-v2`, `/compte-v2`, avec `<meta name="robots"
+content="noindex">`), qu'on compare à l'ancienne en production. Une fois
+validée, elle prend l'adresse définitive et l'ancienne page est supprimée,
+en une livraison à part : la bascule.
+
+Exemple de page découpée en parties : `ui/pages/compte/` — la page
+(`compte.js`) n'affiche que ce qui est simple ; chaque partie qui a son propre
+comportement (`compte-tickets.js`, `compte-reglages.js`, `compte-sortie.js`)
+est un composant que la page pose dans son gabarit et règle par
+`configurer()`.
 
 Le rendu ne change pas. Toute différence volontaire est décidée avant.

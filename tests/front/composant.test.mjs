@@ -300,3 +300,51 @@ test('trouver() dit ce qui manque au lieu de renvoyer null ; tous() rend une lis
   assert.deepEqual(c.tous('li').map((li) => li.textContent), ['a', 'b']);
   assert.deepEqual(c.tous('.absent'), []);
 });
+
+// ── apresMontage : régler un enfant qui n'a pas fini de se monter ───────────
+
+test('apresMontage : avant la fin de monter(), l’action attend ; après, elle part tout de suite', async () => {
+  const c = creer();
+  /** @type {string[]} */
+  const ordre = [];
+  c.auMontage = () => { ordre.push('monter'); };
+  dom.document.body.append(c);
+  c.apresMontage(() => ordre.push('première'));
+  c.apresMontage(() => ordre.push('seconde'));
+  assert.deepEqual(ordre, [], 'rien tant que la feuille de style n’est pas arrivée');
+
+  await dom.stabiliser();
+  assert.deepEqual(ordre, ['monter', 'première', 'seconde'], 'dans l’ordre des appels, une fois monter() terminé');
+
+  c.apresMontage(() => ordre.push('immédiate'));
+  assert.deepEqual(ordre.at(-1), 'immédiate');
+  c.remove();
+  await dom.stabiliser();
+});
+
+test('apresMontage : un monter() asynchrone est attendu jusqu’au bout', async () => {
+  const c = creer();
+  /** @type {() => void} */
+  let finir = () => {};
+  c.auMontage = () => new Promise((resoudre) => { finir = () => resoudre(); });
+  dom.document.body.append(c);
+  let faite = false;
+  c.apresMontage(() => { faite = true; });
+  await dom.stabiliser();
+  assert.equal(faite, false, 'monter() attend encore ses données');
+  finir();
+  await dom.stabiliser();
+  assert.equal(faite, true);
+  c.remove();
+  await dom.stabiliser();
+});
+
+test('apresMontage : un composant retiré avant d’être monté n’exécute rien', async () => {
+  const c = creer();
+  dom.document.body.append(c);
+  let faite = false;
+  c.apresMontage(() => { faite = true; });
+  c.remove();
+  await dom.stabiliser();
+  assert.equal(faite, false);
+});

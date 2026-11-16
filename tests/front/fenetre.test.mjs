@@ -24,7 +24,7 @@ class FenetreEssai extends Fenetre {
 
   /** @param {string} titre */
   ouvrir(titre) {
-    this.desQuePosee(() => {
+    this.apresMontage(() => {
       this.trouver('.fenetre__titre').textContent = titre;
       this.montrer();
     });

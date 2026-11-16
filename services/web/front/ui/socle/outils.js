@@ -85,6 +85,35 @@ export function brut(texte) {
 }
 
 /**
+ * Une date du serveur (« 2026-11-14 09:15:00 », datetime MySQL sans fuseau),
+ * lue à l'heure locale. Le « T » rend la lecture fiable d'un navigateur à
+ * l'autre.
+ * @param {string} texte
+ * @returns {Date}
+ */
+export function dateSql(texte) {
+  return new Date(String(texte).replace(' ', 'T'));
+}
+
+/**
+ * « 14 nov. »
+ * @param {Date | string} date  une date, ou une date du serveur
+ * @returns {string}
+ */
+export function jourCourt(date) {
+  return (date instanceof Date ? date : dateSql(date)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+/**
+ * « novembre 2026 »
+ * @param {Date | string} date  une date, ou une date du serveur
+ * @returns {string}
+ */
+export function moisAnnee(date) {
+  return (date instanceof Date ? date : dateSql(date)).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+}
+
+/**
  * « 1 message », « 3 messages » : le nombre suivi du mot accordé.
  * @param {number} n
  * @param {string} un
