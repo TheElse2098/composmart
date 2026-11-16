@@ -1,287 +1,47 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
-  <link rel="stylesheet" href="/assets/css/dark.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CompoSmart – Les Cours</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="48x48" href="/assets/img/favicon-48.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16.png">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
+
+  <!-- En-tête type des pages migrées (docs/front.md) : thème posé avant le
+       premier affichage, puis polices, couleurs et socle. -->
+  <script src="/ui/socle/amorce.js"></script>
   <link rel="stylesheet" href="/assets/css/fonts.css">
-  <title>CompoSmart – Les Cours</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+  <link rel="stylesheet" href="/ui/styles/jetons.css">
+  <link rel="stylesheet" href="/ui/styles/base.css">
 
-    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
-    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
-    .nav-logo span { color: #a8e6bf; }
-    .nav-right { display: flex; align-items: center; gap: 12px; }
-    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; transition: color 0.15s; }
-    .nav-profil:hover { color: #fff; }
-    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
-    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
-    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-    .burger.open span:nth-child(2) { opacity: 0; }
-    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
-    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
-    .drawer.open { right: 0; }
-    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
-    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
-    .drawer-logo span { color: #a8e6bf; }
-    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
-    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
-    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
-    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
-    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
-    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
-    .drawer-footer { padding: 16px 24px; border-top: 1px solid #e5ede8; }
-    .drawer-footer a { display: flex; align-items: center; gap: 14px; font-size: 0.95rem; font-weight: 700; color: #1e6e3e; text-decoration: none; }
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-    .overlay.open { opacity: 1; pointer-events: all; }
-
-    /* PAGE */
-    .hero { text-align: center; padding: 28px 20px 16px; }
-    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.82rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.4rem); font-weight: 900; color: #1a3a25; }
-    .hero-sub { font-size: 0.95rem; color: #4a7a5a; margin-top: 6px; font-weight: 600; }
-
-    /* CATEGORY SECTIONS */
-    .page-content { width: 100%; max-width: 600px; padding: 0 16px; }
-
-    .cat-section { margin-bottom: 28px; }
-    .cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; padding: 0 4px; }
-    .cat-icon { font-size: 1.6rem; }
-    .cat-title { font-family: 'Baloo 2', cursive; font-size: 1.15rem; font-weight: 900; color: #1a3a25; }
-    .cat-badge { margin-left: auto; background: #c8e6c9; color: #1a3a25; font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; }
-    .cat-desc { font-size: 0.8rem; color: #4a7a5a; font-weight: 600; padding: 0 4px; margin-bottom: 10px; line-height: 1.4; }
-
-    /* Horizontal scroll cards */
-    .cards-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 8px 4px 12px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    .cards-scroll::-webkit-scrollbar { display: none; }
-
-    .cours-card { flex-shrink: 0; width: 150px; border-radius: 18px; padding: 16px 12px 18px; display: flex; flex-direction: column; align-items: center; text-decoration: none; scroll-snap-align: start; transition: transform 0.18s ease, box-shadow 0.18s ease; position: relative; }
-    .cours-card:hover { transform: translateY(-3px) scale(1.03); }
-    .cours-card:active { transform: scale(0.97); }
-
-    .cours-card .c-emoji { font-size: 2.4rem; margin-bottom: 10px; }
-    .cours-card .c-title { font-family: 'Baloo 2', cursive; font-size: 0.88rem; font-weight: 900; color: #fff; text-align: center; line-height: 1.25; }
-    .cours-card .c-level { font-size: 0.68rem; color: rgba(255,255,255,0.8); font-weight: 700; margin-top: 5px; text-align: center; }
-    .cours-card .c-stars { font-size: 0.7rem; margin-top: 4px; }
-    /* Visible des seuls admins : les autres ne reçoivent pas ces cours. */
-    .cours-card .c-brouillon { position: absolute; top: 7px; left: 7px; background: #fdf1d8; color: #8a6100; font-size: 0.6rem; font-weight: 900; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px; }
-    .c-done { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.9); color: #1e6e3e; font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.5px; }
-
-    /* Stats connecté */
-    .stats-box { background: #fff; border-radius: 18px; padding: 16px 18px; display: flex; gap: 0; margin-bottom: 10px; box-shadow: 0 2px 12px rgba(30,110,62,0.1); }
-    .stats-cell { flex: 1; text-align: center; }
-    .stats-cell-border { border-right: 1px solid #e5ede8; }
-    .stats-val { font-family: 'Baloo 2', cursive; font-size: 1.6rem; font-weight: 900; }
-    .stats-label { font-size: 0.72rem; color: #4a7a5a; font-weight: 700; }
-
-    /* Invite connexion */
-    .login-invite { background: #fff; border-radius: 18px; padding: 18px 20px; margin-bottom: 10px; box-shadow: 0 2px 12px rgba(30,110,62,0.1); display: flex; align-items: center; gap: 14px; }
-    .login-invite-text { flex: 1; }
-    .login-invite-title { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.95rem; color: #1a3a25; }
-    .login-invite-sub { font-size: 0.75rem; color: #4a7a5a; font-weight: 700; margin-top: 2px; }
-    .login-invite-btn { background: linear-gradient(135deg,#1e6e3e,#2d9959); color: #fff; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.82rem; padding: 9px 16px; border-radius: 12px; text-decoration: none; white-space: nowrap; box-shadow: 0 3px 8px rgba(30,110,62,0.3); }
-
-    /* Pratique */
-    .cc-1a { background: linear-gradient(135deg, #1e6e3e, #2d9959); box-shadow: 0 4px 14px rgba(30,110,62,0.3); }
-    .cc-1b { background: linear-gradient(135deg, #2d6a4f, #40916c); box-shadow: 0 4px 14px rgba(45,106,79,0.3); }
-    .cc-1c { background: linear-gradient(135deg, #386641, #6a994e); box-shadow: 0 4px 14px rgba(56,102,65,0.3); }
-    .cc-1d { background: linear-gradient(135deg, #588157, #a7c957); box-shadow: 0 4px 14px rgba(88,129,87,0.3); }
-    /* Science */
-    .cc-2a { background: linear-gradient(135deg, #1565c0, #1e88e5); box-shadow: 0 4px 14px rgba(21,101,192,0.3); }
-    .cc-2b { background: linear-gradient(135deg, #0277bd, #29b6f6); box-shadow: 0 4px 14px rgba(2,119,189,0.3); }
-    .cc-2c { background: linear-gradient(135deg, #4a148c, #7b1fa2); box-shadow: 0 4px 14px rgba(74,20,140,0.3); }
-    .cc-2d { background: linear-gradient(135deg, #283593, #3f51b5); box-shadow: 0 4px 14px rgba(40,53,147,0.3); }
-    .cc-2e { background: linear-gradient(135deg, #004d40, #00897b); box-shadow: 0 4px 14px rgba(0,77,64,0.3); }
-
-    html.dark .stats-box { background: #1a2b1e; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
-    html.dark .stats-val { color: inherit; }
-    html.dark .stats-label { color: #4a7a5a; }
-    html.dark .login-invite { background: #1a2b1e; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
-    html.dark .login-invite-title { color: #c8e6d4; }
-    html.dark .login-invite-sub { color: #5a8a6a; }
-
-    /* Dark mode */
-
-    /* Daily challenge banner */
-
-    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
-
-    /* ─────────── DESKTOP : tuiles côte à côte, largeur remplie ───────────
-       En mobile, .cards-scroll défile (voulu). En desktop, .page-content est
-       déjà élargi (desktop.css, max-width: 1100px) : les tuiles grandissent
-       (flex-grow) pour occuper toute la largeur, mais restent flex (pas grid)
-       pour rester collées les unes aux autres via le gap existant, au lieu
-       d'être chacune centrée dans sa propre colonne avec du vide autour. */
-    @media (min-width: 900px) {
-      .cards-scroll { flex-wrap: wrap; overflow-x: visible; scroll-snap-type: none; }
-      .cours-card { flex: 1 1 170px; width: auto; max-width: 240px; }
-    }
-  </style>
-  <link rel="stylesheet" href="/assets/css/desktop.css">
+  <!-- Les morceaux de cette page. Chaque composant charge sa feuille lui-même ;
+       la citer ici la fait simplement arriver plus tôt. -->
+  <link rel="stylesheet" href="/ui/composants/bandeau/bandeau.css">
+  <link rel="stylesheet" href="/ui/composants/pied/pied.css">
+  <link rel="stylesheet" href="/ui/styles/en-tete.css">
+  <link rel="stylesheet" href="/ui/pages/cours-liste/cours-liste.css">
+  <script type="module" src="/ui/composants/bandeau/bandeau.js"></script>
+  <script type="module" src="/ui/composants/rappel-email/rappel-email.js"></script>
+  <script type="module" src="/ui/pages/cours-liste/cours-liste.js"></script>
+  <script type="module" src="/ui/composants/pied/pied.js"></script>
 </head>
 <body>
+  <cs-bandeau></cs-bandeau>
+  <cs-rappel-email></cs-rappel-email>
 
-    <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
-  <div id="site-nav"></div>
+  <header class="en-tete">
+    <div class="en-tete-pastille">📚 Apprends</div>
+    <h1 class="en-tete-titre">Les Cours</h1>
+    <p class="en-tete-phrase">Explore, apprends, deviens expert ! 🎓</p>
+  </header>
 
-  <div class="hero">
-    <div class="hero-badge">📚 Apprends</div>
-    <h1>Les Cours</h1>
-    <p class="hero-sub">Explore, apprends, deviens expert ! 🎓</p>
-  </div>
+  <cs-cours-liste></cs-cours-liste>
 
-  <div class="page-content">
-
-    <!-- Sections de cours (générées dynamiquement) -->
-    <div id="cours-container">
-      <div style="text-align:center;padding:40px 0;color:#7ab88e;">Chargement des cours…</div>
-    </div>
-
-    <!-- Stats / invite connexion -->
-    <div id="statsArea"></div>
-
-  </div>
-
-    <!-- Footer partagé (injecté par site-footer.js) -->
-  <div id="site-footer"></div>
-
-  <div class="bottom-leaf"></div>
-
-  <script>
-    var NIVEAUX = { debutant: 'Débutant', intermediaire: 'Intermédiaire', expert: 'Expert' };
-
-    // Couleur des tuiles de cours : dérivée du dégradé du thème (theme.couleur),
-    // assombrie progressivement selon la position du cours dans sa catégorie
-    // (1er cours = couleur d'origine, suivants = de plus en plus sombres).
-    var FALLBACK_GRADIENT = 'linear-gradient(135deg,#1e6e3e,#2d9959)';
-
-    function darkenHex(hex, factor) {
-      // factor 1 = couleur d'origine, < 1 = assombrit (0.7 = -30%, etc.)
-      var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
-      if (!m) return hex;
-      var channels = [m[1], m[2], m[3]].map(function (h) {
-        var v = Math.round(parseInt(h, 16) * factor);
-        return Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0');
-      });
-      return '#' + channels.join('');
-    }
-
-    function courseGradient(themeCouleur, ci) {
-      var grad = themeCouleur || FALLBACK_GRADIENT;
-      var m = /linear-gradient\(([^,]+),\s*(#[0-9a-f]{6}),\s*(#[0-9a-f]{6})\)/i.exec(grad);
-      if (!m) return grad;
-      var angle = m[1], c1 = m[2], c2 = m[3];
-      // -32% par cran de profondeur ; ci=0 → 1.0 (couleur d'origine), contraste marqué
-      var factor = Math.pow(0.68, ci);
-      return 'linear-gradient(' + angle + ',' + darkenHex(c1, factor) + ',' + darkenHex(c2, factor) + ')';
-    }
-
-    function renderPage(data) {
-      var themes = data.themes || data; // compat si ancien format
-      var user = data.user || null;
-
-      // ── Cours ──
-      var container = document.getElementById('cours-container');
-      if (!themes.length) {
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:#7ab88e;">Aucun cours disponible.</div>';
-      } else {
-        container.innerHTML = themes.map(function(theme, ti) {
-          var cards = theme.cours.map(function(c, ci) {
-            var grad = courseGradient(theme.couleur, ci);
-            var niveau = NIVEAUX[c.niveau] || c.niveau;
-            var qs = c.nb_questions > 0 ? ' · ' + c.nb_questions + ' q.' : '';
-            var doneBadge = c.completed ? '<div class="c-done">✓ fait</div>' : '';
-            // Un cours non publié n'est renvoyé qu'aux admins (cf. cours/list.php).
-            // Sans marqueur, il serait indiscernable d'un cours en ligne et on
-            // croirait avoir publié ce qui dort encore en brouillon.
-            var brouillon = (c.statut && c.statut !== 'publie')
-              ? '<div class="c-brouillon">' + c.statut + '</div>' : '';
-            return '<a href="/cours/' + c.slug + '" class="cours-card" data-slug="' + c.slug + '" style="background:' + grad + ';box-shadow:0 4px 14px rgba(0,0,0,0.2)">'
-              + doneBadge
-              + brouillon
-              + '<div class="c-emoji">' + (c.emoji || '📖') + '</div>'
-              + '<div class="c-title">' + c.titre + '</div>'
-              + '<div class="c-level">' + niveau + qs + '</div>'
-              + '</a>';
-          }).join('');
-          var doneCount = theme.cours.filter(function(c) { return c.completed; }).length;
-          var progressBadge = user && doneCount > 0
-            ? '<div class="cat-badge" style="background:#a8e6bf;color:#1a3a25">' + doneCount + '/' + theme.cours.length + ' fini' + (doneCount > 1 ? 's' : '') + '</div>'
-            : '<div class="cat-badge">' + theme.cours.length + ' cours</div>';
-          var descHtml = theme.description ? '<div class="cat-desc">' + theme.description + '</div>' : '';
-          return '<div class="cat-section">'
-            + '<div class="cat-header">'
-            + '<div class="cat-icon">' + (theme.emoji || '📂') + '</div>'
-            + '<div class="cat-title">' + theme.nom + '</div>'
-            + progressBadge
-            + '</div>'
-            + descHtml
-            + '<div class="cards-scroll">' + cards + '</div>'
-            + '</div>';
-        }).join('');
-      }
-
-      // ── Stats / invite ──
-      var statsArea = document.getElementById('statsArea');
-      if (user) {
-        var xpInLevel = user.xp % 100;
-        var pct = Math.round(xpInLevel);
-        statsArea.innerHTML =
-          '<div class="stats-box">'
-          + '<div class="stats-cell stats-cell-border">'
-          + '<div class="stats-val" style="color:#1e6e3e">' + user.completed + '</div>'
-          + '<div class="stats-label">cours finis</div>'
-          + '</div>'
-          + '<div class="stats-cell stats-cell-border">'
-          + '<div class="stats-val" style="color:#f9a825">' + user.xp + '</div>'
-          + '<div class="stats-label">XP gagnés</div>'
-          + '</div>'
-          + '<div class="stats-cell">'
-          + '<div class="stats-val" style="color:#1e6e3e">Niv. ' + user.niveau + '</div>'
-          + '<div class="stats-label">' + xpInLevel + ' / 100 XP</div>'
-          + '</div>'
-          + '</div>'
-          + '<div style="padding:0 4px 4px;display:flex;align-items:center;gap:8px">'
-          + '<div style="flex:1;height:6px;background:#c8e6c9;border-radius:6px;overflow:hidden">'
-          + '<div style="width:' + pct + '%;height:100%;background:linear-gradient(90deg,#1e6e3e,#52b788);border-radius:6px;transition:width 0.8s ease"></div>'
-          + '</div>'
-          + '<span style="font-family:\'Baloo 2\',cursive;font-weight:900;font-size:0.72rem;color:#4a7a5a;white-space:nowrap">Niveau ' + (user.niveau + 1) + ' dans ' + (100 - xpInLevel) + ' XP</span>'
-          + '</div>';
-      } else {
-        statsArea.innerHTML =
-          '<div class="login-invite">'
-          + '<div style="font-size:2rem">🏆</div>'
-          + '<div class="login-invite-text">'
-          + '<div class="login-invite-title">Suis ta progression !</div>'
-          + '<div class="login-invite-sub">Tous les cours sont en accès libre. Connecte-toi pour sauvegarder ta progression et gagner de l\'XP.</div>'
-          + '</div>'
-          + '<a href="/login" class="login-invite-btn">Se connecter</a>'
-          + '</div>';
-      }
-    }
-
-    fetch('/api/cours/list.php')
-      .then(function(r) { return r.json(); })
-      .then(renderPage)
-      .catch(function() {
-        document.getElementById('cours-container').innerHTML =
-          '<div style="text-align:center;padding:40px;color:#c0392b;">Erreur de chargement des cours.</div>';
-      });
-
-  </script>
-  <script src="/assets/js/site-footer.js"></script>
-  <script src="/assets/js/site-nav.js"></script>
-  <script src="/assets/js/theme.js"></script>
-  <script src="/assets/js/verif-banner.js"></script>
-  <script src="/assets/js/admin-badge.js?v=3"></script>
+  <cs-pied></cs-pied>
+  <div class="cs-lisere"></div>
 </body>
 </html>

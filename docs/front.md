@@ -62,6 +62,11 @@ tests/front/    contrôles : vérificateur, types, tests (hors des images Docker
     de texte n'a pas de composant : sa feuille est dans
     `ui/pages/<page>/<page>.css`, ses classes préfixées par le nom de la page
     (`ui/pages/legal/legal.css`, `ui/pages/introuvable/introuvable.css`).
+    Si ce texte a besoin d'un comportement (des onglets, un nombre à jour),
+    il est écrit à l'intérieur de la balise d'un composant dont `monter()`
+    n'appelle pas `rendre()` : il pose ses écoutes et modifie ce qui est déjà
+    là (`<cs-materiel>`, `<cs-accueil-chiffres>`). Le petit en-tête des
+    rubriques (pastille, titre, phrase) est habillé par `styles/en-tete.css`.
 11. **Jamais de boîte native** (`alert`, `confirm`, `prompt`) : `confirmer()`
     et `informer()` de `composants/dialogue/dialogue.js` les remplacent.
 

@@ -1,0 +1,150 @@
+/* ============================================================================
+   materiel.css — habillage de <cs-materiel> (page /materiel).
+
+   Téléphone : onglets en ligne qui défilent, fiches empilées.
+   Ordinateur (≥ 900px) : onglets en colonne à gauche, fiches en grille sur la
+   largeur restante. L'en-tête est celui des rubriques (styles/en-tete.css),
+   aligné à gauche sur ordinateur.
+   ============================================================================ */
+
+cs-materiel {
+  display: block;
+
+  --materiel-onglet-fond: #fff;
+  --materiel-onglet-texte: #4a7a5a;
+  --materiel-onglet-ombre: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --materiel-onglet-survol: #1e6e3e;
+  --materiel-onglet-fond-bureau: transparent;
+  --materiel-onglet-ombre-bureau: none;
+  --materiel-onglet-ombre-active-bureau: 0 2px 10px rgba(30, 110, 62, 0.25);
+  --materiel-onglet-survol-fond-bureau: #e3efe6;
+  --materiel-onglet-survol-bord-bureau: transparent;
+
+  --materiel-fiche: #fff;
+  --materiel-fiche-ombre: 0 2px 10px rgba(30, 110, 62, 0.08);
+  --materiel-fiche-ombre-survol: 0 4px 16px rgba(30, 110, 62, 0.18);
+  --materiel-titre: #1a3a25;
+  --materiel-desc: #4a7a5a;
+
+  --materiel-astuce-fond: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  --materiel-astuce-bord: #1e6e3e;
+  --materiel-astuce-texte: #1a3a25;
+
+  --materiel-interdit-fond: linear-gradient(135deg, #ffebee, #ffcdd2);
+  --materiel-interdit-titre: #c62828;
+  --materiel-interdit-pastille: #fff;
+}
+html.dark cs-materiel {
+  --materiel-onglet-fond: #1e2d22;
+  --materiel-onglet-texte: #5a8a6a;
+  --materiel-onglet-ombre: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --materiel-onglet-survol: #52b788;
+  --materiel-onglet-fond-bureau: #1e2d22;
+  --materiel-onglet-ombre-bureau: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --materiel-onglet-ombre-active-bureau: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --materiel-onglet-survol-fond-bureau: #243328;
+  --materiel-onglet-survol-bord-bureau: #52b788;
+
+  --materiel-fiche: #1e2d22;
+  --materiel-fiche-ombre: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --materiel-fiche-ombre-survol: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --materiel-titre: #c8e6d4;
+  --materiel-desc: #7ab88e;
+
+  --materiel-astuce-fond: linear-gradient(135deg, #1e2d22, #243328);
+  --materiel-astuce-bord: #2d9959;
+  --materiel-astuce-texte: #b0d4be;
+
+  --materiel-interdit-fond: linear-gradient(135deg, #2d1515, #3d1a1a);
+  --materiel-interdit-titre: #ef9a9a;
+  --materiel-interdit-pastille: #1a0e0e;
+}
+
+/* ── Onglets ── */
+cs-materiel .tabs { display: flex; gap: 8px; padding: 0 16px 16px; width: 100%; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+cs-materiel .tabs::-webkit-scrollbar { display: none; }
+/* Dernier onglet : une marge à droite, pour ne pas finir collé au bord en défilant. */
+cs-materiel .tabs > .tab:last-child { margin-right: 16px; }
+cs-materiel .tab { flex-shrink: 0; white-space: nowrap; padding: 10px 16px; border-radius: 20px; font-family: var(--police-titre); font-weight: 900; font-size: 0.88rem; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; background: var(--materiel-onglet-fond); color: var(--materiel-onglet-texte); box-shadow: var(--materiel-onglet-ombre); }
+cs-materiel .tab.active { background: var(--vert); color: #fff; border-color: var(--vert); }
+cs-materiel .tab:hover:not(.active) { border-color: var(--materiel-onglet-survol); color: var(--materiel-onglet-survol); }
+@media (min-width: 520px) {
+  cs-materiel .tabs { padding: 0 24px 16px; }
+  cs-materiel .tabs > .tab:last-child { margin-right: 0; }
+  cs-materiel .tab { flex: 1; text-align: center; }
+}
+
+/* ── Contenu ── */
+cs-materiel .layout { width: 100%; max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+cs-materiel .page-content { width: 100%; max-width: 600px; padding: 0 16px; }
+cs-materiel .tab-content { display: none; }
+cs-materiel .tab-content.active { display: block; }
+cs-materiel .tip-box,
+cs-materiel .no-compost-box { grid-column: 1 / -1; }
+
+/* Titre d'une partie */
+cs-materiel .sec-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; margin-top: 6px; }
+cs-materiel .sec-icon { font-size: 1.8rem; }
+cs-materiel .sec-title { font-family: var(--police-titre); font-size: 1.1rem; font-weight: 900; color: var(--materiel-titre); }
+cs-materiel .sec-badge-oblig { background: #ffccbc; color: #bf360c; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; margin-left: auto; }
+cs-materiel .sec-badge-opt { background: #dcedc8; color: #33691e; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; margin-left: auto; }
+
+/* Fiches */
+cs-materiel .item-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+cs-materiel .item-card { background: var(--materiel-fiche); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; box-shadow: var(--materiel-fiche-ombre); transition: transform 0.15s, box-shadow 0.15s; }
+cs-materiel .item-card:hover { transform: translateX(4px); box-shadow: var(--materiel-fiche-ombre-survol); }
+cs-materiel .item-card.achetable { cursor: pointer; }
+cs-materiel .item-card.achetable:hover .item-name::after { content: ' 🛒'; font-size: 0.8em; }
+cs-materiel .item-emoji { font-size: 2rem; flex-shrink: 0; }
+cs-materiel .item-info { flex: 1; }
+cs-materiel .item-name { font-family: var(--police-titre); font-size: 0.95rem; font-weight: 900; color: var(--materiel-titre); }
+cs-materiel .item-desc { font-size: 0.75rem; color: var(--materiel-desc); font-weight: 600; margin-top: 2px; line-height: 1.35; }
+cs-materiel .item-tag { display: inline-block; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 8px; margin-top: 5px; }
+cs-materiel .tag-oblig { background: #ffccbc; color: #bf360c; }
+cs-materiel .tag-opt { background: #dcedc8; color: #33691e; }
+cs-materiel .tag-conseil { background: #fff9c4; color: #f57f17; }
+cs-materiel .item-price { font-family: var(--police-titre); font-size: 0.9rem; font-weight: 900; color: var(--vert); flex-shrink: 0; white-space: nowrap; }
+
+/* Astuce */
+cs-materiel .tip-box { background: var(--materiel-astuce-fond); border-radius: 16px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px; border-left: 4px solid var(--materiel-astuce-bord); }
+cs-materiel .tip-emoji { font-size: 1.4rem; flex-shrink: 0; }
+cs-materiel .tip-text { font-size: 0.8rem; color: var(--materiel-astuce-texte); font-weight: 700; line-height: 1.4; }
+
+/* « À ne jamais composter » */
+cs-materiel .no-compost-box { background: var(--materiel-interdit-fond); border-radius: 16px; padding: 16px; margin-bottom: 10px; border-left: 4px solid var(--rouge); }
+cs-materiel .no-compost-title { font-family: var(--police-titre); font-weight: 900; color: var(--materiel-interdit-titre); margin-bottom: 10px; font-size: 1rem; }
+cs-materiel .no-compost-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+cs-materiel .no-compost-tag { background: var(--materiel-interdit-pastille); border-radius: 10px; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; color: var(--materiel-interdit-titre); }
+/* Sous les onglets, aligné sur le contenu. En marge, pas en padding : la
+   boîte a déjà le sien, les deux s'écraseraient. */
+cs-materiel .no-compost-fixed { width: calc(100% - 32px); max-width: 600px; margin: 0 auto 24px; box-sizing: border-box; }
+
+/* ── Ordinateur : onglets à gauche, fiches en grille ── */
+@media (min-width: 900px) {
+  cs-materiel .en-tete { text-align: left; padding: 32px 48px 8px; }
+  cs-materiel .layout { flex-direction: row; gap: 0; align-items: flex-start; max-width: none; }
+  cs-materiel .tabs {
+    flex-direction: column; gap: 6px; width: 240px; flex-shrink: 0;
+    padding: 8px 16px 24px 48px; overflow: visible; position: sticky; top: 20px;
+  }
+  cs-materiel .tab { flex: none; text-align: left; width: 100%; box-shadow: var(--materiel-onglet-ombre-bureau); background: var(--materiel-onglet-fond-bureau); padding: 12px 16px; }
+  cs-materiel .tab:hover:not(.active) { background: var(--materiel-onglet-survol-fond-bureau); border-color: var(--materiel-onglet-survol-bord-bureau); }
+  cs-materiel .tab.active { background: var(--vert); box-shadow: var(--materiel-onglet-ombre-active-bureau); }
+  cs-materiel .page-content { max-width: 1100px; flex: 1; padding: 0 48px 0 8px; }
+  cs-materiel .item-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 30px; }
+  cs-materiel .item-card { align-items: flex-start; }
+  cs-materiel .item-card:hover { transform: translateY(-4px); }
+  cs-materiel .sec-title { font-size: 1.2rem; }
+  /* Aligné sur le début des fiches : la colonne des onglets (240px) plus la
+     marge gauche du contenu (8px). */
+  cs-materiel .no-compost-fixed { width: auto; max-width: none; margin: 0 48px 24px 248px; }
+}
+@media (min-width: 1300px) {
+  cs-materiel .tabs { width: 260px; padding-left: 64px; }
+  cs-materiel .en-tete { padding-left: 64px; }
+  cs-materiel .page-content { padding-right: 64px; }
+  cs-materiel .no-compost-fixed { margin: 0 64px 24px 268px; }
+}
+@media (min-width: 1400px) {
+  cs-materiel .page-content { max-width: 1240px; }
+}

@@ -399,6 +399,14 @@ class HTMLInputElement extends HTMLElement {
   }
 }
 
+/** Formulaire : reset() remet ses champs à vide. */
+class HTMLFormElement extends HTMLElement {
+  reset() {
+    for (const champ of this.querySelectorAll('input, textarea')) /** @type {any} */ (champ).value = '';
+    for (const menu of this.querySelectorAll('select')) /** @type {any} */ (menu).value = null;
+  }
+}
+
 /** Zone de texte : une valeur, rien d'autre. */
 class HTMLTextAreaElement extends HTMLElement {
   value = '';
@@ -455,6 +463,7 @@ class HTMLLinkElement extends HTMLElement {
 const NATIFS = {
   a: HTMLAnchorElement,
   button: HTMLButtonElement,
+  form: HTMLFormElement,
   input: HTMLInputElement,
   link: HTMLLinkElement,
   script: HTMLScriptElement,
@@ -636,6 +645,7 @@ export function installerFauxDom() {
   g.HTMLInputElement = HTMLInputElement;
   g.HTMLSelectElement = HTMLSelectElement;
   g.HTMLTextAreaElement = HTMLTextAreaElement;
+  g.HTMLFormElement = HTMLFormElement;
   g.HTMLLinkElement = HTMLLinkElement;
   g.HTMLScriptElement = HTMLScriptElement;
   g.CustomEvent = FauxEvenement;

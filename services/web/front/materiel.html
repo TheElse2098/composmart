@@ -1,168 +1,44 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
-  <link rel="stylesheet" href="/assets/css/dark.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CompoSmart – Le Matériel</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="icon" type="image/png" sizes="48x48" href="/assets/img/favicon-48.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16.png">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
+
+  <!-- En-tête type des pages migrées (docs/front.md) : thème posé avant le
+       premier affichage, puis polices, couleurs et socle. -->
+  <script src="/ui/socle/amorce.js"></script>
   <link rel="stylesheet" href="/assets/css/fonts.css">
-  <title>CompoSmart – Le Matériel</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+  <link rel="stylesheet" href="/ui/styles/jetons.css">
+  <link rel="stylesheet" href="/ui/styles/base.css">
 
-    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; z-index: 100; }
-    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
-    .nav-logo span { color: #a8e6bf; }
-    .nav-right { display: flex; align-items: center; gap: 12px; }
-    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; transition: color 0.15s; }
-    .nav-profil:hover { color: #fff; }
-    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
-    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
-    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-    .burger.open span:nth-child(2) { opacity: 0; }
-    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
-    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
-    .drawer.open { right: 0; }
-    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
-    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
-    .drawer-logo span { color: #a8e6bf; }
-    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
-    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
-    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
-    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
-    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
-    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
-    .drawer-footer { padding: 16px 24px; border-top: 1px solid #e5ede8; }
-    .drawer-footer a { display: flex; align-items: center; gap: 14px; font-size: 0.95rem; font-weight: 700; color: #1e6e3e; text-decoration: none; }
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-    .overlay.open { opacity: 1; pointer-events: all; }
-
-    .hero { text-align: center; padding: 28px 20px 16px; }
-    .hero-badge { display: inline-block; background: #a8e6bf; color: #1a3a25; font-size: 0.82rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-    h1 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 5vw, 2.4rem); font-weight: 900; color: #1a3a25; }
-    .hero-sub { font-size: 0.95rem; color: #4a7a5a; margin-top: 6px; font-weight: 600; }
-
-    /* TABS */
-    .tabs { display: flex; gap: 8px; padding: 0 16px 16px; width: 100%; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-    .tabs::-webkit-scrollbar { display: none; }
-    /* dernier onglet : marge droite pour ne pas être collé au bord lors du scroll */
-    .tabs > .tab:last-child { margin-right: 16px; }
-    .tab { flex-shrink: 0; white-space: nowrap; padding: 10px 16px; border-radius: 20px; font-family: 'Baloo 2', cursive; font-weight: 900; font-size: 0.88rem; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; background: #fff; color: #4a7a5a; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .tab.active { background: #1e6e3e; color: #fff; border-color: #1e6e3e; }
-    .tab:hover:not(.active) { border-color: #1e6e3e; color: #1e6e3e; }
-    /* Desktop : onglets s'étalent sur toute la largeur */
-    @media (min-width: 520px) {
-      .tabs { padding: 0 24px 16px; }
-      .tabs > .tab:last-child { margin-right: 0; }
-      .tab { flex: 1; text-align: center; }
-    }
-
-    /* CONTENT */
-    /* Mobile : .layout est un conteneur pleine largeur (contenu empilé, centré). */
-    .layout { width: 100%; max-width: 600px; display: flex; flex-direction: column; align-items: center; }
-    .page-content { width: 100%; max-width: 600px; padding: 0 16px; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .tip-box, .no-compost-box { grid-column: 1 / -1; }
-
-    /* Section header */
-    .sec-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; margin-top: 6px; }
-    .sec-icon { font-size: 1.8rem; }
-    .sec-title { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 900; color: #1a3a25; }
-    .sec-badge-oblig { background: #ffccbc; color: #bf360c; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; margin-left: auto; }
-    .sec-badge-opt { background: #dcedc8; color: #33691e; font-size: 0.7rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; margin-left: auto; }
-
-    /* Item cards */
-    .item-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
-    .item-card { background: #fff; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 10px rgba(30,110,62,0.08); transition: transform 0.15s, box-shadow 0.15s; }
-    .item-card:hover { transform: translateX(4px); box-shadow: 0 4px 16px rgba(30,110,62,0.18); }
-    .item-card.achetable:hover .item-name::after { content: ' 🛒'; font-size: 0.8em; }
-    .item-card.achetable { cursor: pointer; }
-    .item-emoji { font-size: 2rem; flex-shrink: 0; }
-    .item-info { flex: 1; }
-    .item-name { font-family: 'Baloo 2', cursive; font-size: 0.95rem; font-weight: 900; color: #1a3a25; }
-    .item-desc { font-size: 0.75rem; color: #4a7a5a; font-weight: 600; margin-top: 2px; line-height: 1.35; }
-    .item-tag { display: inline-block; font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 8px; margin-top: 5px; }
-    .tag-oblig { background: #ffccbc; color: #bf360c; }
-    .tag-opt { background: #dcedc8; color: #33691e; }
-    .tag-conseil { background: #fff9c4; color: #f57f17; }
-    .item-price { font-family: 'Baloo 2', cursive; font-size: 0.9rem; font-weight: 900; color: #1e6e3e; flex-shrink: 0; white-space: nowrap; }
-
-    /* Tip box */
-    .tip-box { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-radius: 16px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; margin-bottom: 20px; border-left: 4px solid #1e6e3e; }
-    .tip-emoji { font-size: 1.4rem; flex-shrink: 0; }
-    .tip-text { font-size: 0.8rem; color: #1a3a25; font-weight: 700; line-height: 1.4; }
-
-    /* Boîte "à ne pas composter" */
-    .no-compost-box { background: linear-gradient(135deg, #ffebee, #ffcdd2); border-radius: 16px; padding: 16px; margin-bottom: 10px; border-left: 4px solid #e53935; }
-    .no-compost-title { font-family: 'Baloo 2', cursive; font-weight: 900; color: #c62828; margin-bottom: 10px; font-size: 1rem; }
-    .no-compost-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-    .no-compost-tag { background: #fff; border-radius: 10px; padding: 5px 10px; font-size: 0.75rem; font-weight: 700; color: #c62828; }
-
-    /* Hors de .layout (plus de contrainte de .page-content) : on reprend les
-       mêmes paliers de largeur pour rester aligné avec le contenu au-dessus.
-       En marge, pas en padding : .no-compost-box a déjà son padding interne
-       (16px) et les deux propriétés sur le même élément s'écraseraient. */
-    .no-compost-fixed { width: calc(100% - 32px); max-width: 600px; margin: 0 auto 24px; box-sizing: border-box; }
-
-    /* ─────────── DESKTOP : layout "web classique" sidebar + contenu ─────────── */
-    @media (min-width: 900px) {
-      body { align-items: stretch; }
-      .hero { text-align: left; padding: 32px 48px 8px; }
-      .layout { display: flex; flex-direction: row; gap: 0; align-items: flex-start; width: 100%; max-width: none; }
-      .tabs {
-        flex-direction: column; gap: 6px; width: 240px; flex-shrink: 0;
-        padding: 8px 16px 24px 48px; overflow: visible; position: sticky; top: 20px;
-      }
-      .tabs > .tab:last-child { margin-right: 0; }
-      .tab { flex: none; text-align: left; width: 100%; box-shadow: none; background: transparent; padding: 12px 16px; }
-      .tab:hover:not(.active) { background: #e3efe6; border-color: transparent; }
-      .tab.active { box-shadow: 0 2px 10px rgba(30,110,62,0.25); }
-      .page-content { max-width: none; flex: 1; padding: 0 48px 0 8px; }
-      .item-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 30px; }
-      .item-card:hover { transform: translateY(-4px); }
-      .item-card { align-items: flex-start; }
-      .sec-title { font-size: 1.2rem; }
-      /* Aligné avec le début de .page-content : largeur de la colonne .tabs
-         (240px) + le padding-left de .page-content lui-même (8px). En marge,
-         pas en padding — même raison qu'en mobile (cf. règle de base). */
-      .no-compost-fixed { width: auto; max-width: none; margin: 0 48px 24px 248px; }
-    }
-    @media (min-width: 1300px) {
-      .tabs { width: 260px; padding-left: 64px; }
-      .hero { padding-left: 64px; }
-      .page-content { padding-right: 64px; }
-      .no-compost-fixed { margin: 0 64px 24px 268px; }
-    }
-
-    html.dark .tab { background: #1e2d22; color: #5a8a6a; }
-    html.dark .tab.active { background: #1e6e3e; color: #fff; }
-    html.dark .tab:hover:not(.active) { border-color: #52b788; color: #52b788; }
-    html.dark .no-compost-box { background: linear-gradient(135deg, #2d1515, #3d1a1a); border-left-color: #e53935; }
-    html.dark .no-compost-title { color: #ef9a9a; }
-    html.dark .no-compost-tag { background: #1a0e0e; color: #ef9a9a; }
-
-    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); }
-  </style>
-  <link rel="stylesheet" href="/assets/css/desktop.css">
+  <!-- Les morceaux de cette page. Chaque composant charge sa feuille lui-même ;
+       la citer ici la fait simplement arriver plus tôt. -->
+  <link rel="stylesheet" href="/ui/composants/bandeau/bandeau.css">
+  <link rel="stylesheet" href="/ui/composants/pied/pied.css">
+  <link rel="stylesheet" href="/ui/styles/en-tete.css">
+  <link rel="stylesheet" href="/ui/pages/materiel/materiel.css">
+  <script type="module" src="/ui/composants/bandeau/bandeau.js"></script>
+  <script type="module" src="/ui/composants/rappel-email/rappel-email.js"></script>
+  <script type="module" src="/ui/pages/materiel/materiel.js"></script>
+  <script type="module" src="/ui/composants/pied/pied.js"></script>
 </head>
 <body>
+  <cs-bandeau></cs-bandeau>
+  <cs-rappel-email></cs-rappel-email>
 
-  <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
-  <div id="site-nav"></div>
-
-  <div class="hero">
-    <div class="hero-badge">🧰 Équipement</div>
-    <h1>Le Matériel</h1>
-    <p class="hero-sub">Tout ce qu'il te faut pour bien composter !</p>
-  </div>
+  <cs-materiel>
+  <header class="en-tete">
+    <div class="en-tete-pastille">🧰 Équipement</div>
+    <h1 class="en-tete-titre">Le Matériel</h1>
+    <p class="en-tete-phrase">Tout ce qu'il te faut pour bien composter !</p>
+  </header>
 
   <!-- Layout desktop : sidebar (tabs) + contenu. Empilé en mobile. -->
   <div class="layout">
@@ -474,44 +350,9 @@
       <span class="no-compost-tag">🔋 Piles &amp; plastiques</span>
     </div>
   </div>
+  </cs-materiel>
 
-    <!-- Footer partagé (injecté par site-footer.js) -->
-  <div id="site-footer"></div>
-
-  <div class="bottom-leaf"></div>
-
-  <script>
-    // (Bandeau + sidebar gérés par site-nav.js)
-
-    // Ecosia shopping on item click
-    document.querySelectorAll('.item-card').forEach(function(card) {
-      var price = card.querySelector('.item-price').textContent.trim();
-      if (price === 'Gratuit' || price === '—') return;
-      card.classList.add('achetable');
-      card.addEventListener('click', function() {
-        var name = card.querySelector('.item-name').textContent.trim();
-        // URLSearchParams sérialise en application/x-www-form-urlencoded, donc
-        // les espaces deviennent « + » — la forme attendue par Ecosia, là où
-        // encodeURIComponent produisait des « %20 ».
-        var url = 'https://www.ecosia.org/shopping?' + new URLSearchParams({ q: name });
-        window.open(url, '_blank', 'noopener');
-      });
-    });
-
-    // Tabs
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
-      });
-    });
-  </script>
-  <script src="/assets/js/site-footer.js"></script>
-  <script src="/assets/js/site-nav.js"></script>
-  <script src="/assets/js/theme.js"></script>
-  <script src="/assets/js/verif-banner.js"></script>
-  <script src="/assets/js/admin-badge.js?v=3"></script>
+  <cs-pied></cs-pied>
+  <div class="cs-lisere"></div>
 </body>
 </html>

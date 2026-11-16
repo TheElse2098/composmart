@@ -1,0 +1,93 @@
+/* ============================================================================
+   cours-liste.css — habillage de <cs-cours-liste> (page /cours).
+
+   L'en-tête de la page est celui des rubriques : styles/en-tete.css. La
+   couleur de chaque tuile vient du thème : elle est posée par le composant.
+   ============================================================================ */
+
+cs-cours-liste {
+  display: block;
+  width: 100%; max-width: 600px; margin: 0 auto; padding: 0 16px;
+
+  --liste-titre: #1a3a25;
+  --liste-desc: #4a7a5a;
+  --liste-badge-fond: #c8e6c9;
+  --liste-badge-texte: #1a3a25;
+  --liste-carte: #fff;
+  --liste-ombre: 0 2px 12px rgba(30, 110, 62, 0.1);
+  --liste-invite-titre: #1a3a25;
+  --liste-invite-texte: #4a7a5a;
+  --liste-separation: #e5ede8;
+}
+html.dark cs-cours-liste {
+  --liste-titre: #c8e6d4;
+  --liste-desc: #7ab88e;
+  --liste-badge-fond: #243328;
+  --liste-badge-texte: #7ab88e;
+  --liste-carte: #1a2b1e;
+  --liste-ombre: 0 2px 12px rgba(0, 0, 0, 0.3);
+  --liste-invite-titre: #c8e6d4;
+  --liste-invite-texte: #5a8a6a;
+  --liste-separation: #2a3d2e;
+}
+/* Sur ordinateur, la liste prend la largeur (pas de colonne étroite centrée). */
+@media (min-width: 900px) {
+  cs-cours-liste { max-width: 1100px; }
+}
+@media (min-width: 1400px) {
+  cs-cours-liste { max-width: 1240px; }
+}
+
+/* ── Un thème ── */
+cs-cours-liste .cat-section { margin-bottom: 28px; }
+cs-cours-liste .cat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; padding: 0 4px; }
+cs-cours-liste .cat-icon { font-size: 1.6rem; }
+cs-cours-liste .cat-title { font-family: var(--police-titre); font-size: 1.15rem; font-weight: 900; color: var(--liste-titre); }
+cs-cours-liste .cat-badge { margin-left: auto; background: var(--liste-badge-fond); color: var(--liste-badge-texte); font-size: 0.72rem; font-weight: 800; padding: 3px 10px; border-radius: 10px; text-transform: uppercase; }
+/* Les cours finis : même pastille dans les deux thèmes. */
+cs-cours-liste .cat-badge.fini { background: var(--menthe); color: #1a3a25; }
+cs-cours-liste .cat-desc { font-size: 0.8rem; color: var(--liste-desc); font-weight: 600; padding: 0 4px; margin-bottom: 10px; line-height: 1.4; }
+
+/* ── Les tuiles : défilent en largeur sur téléphone ── */
+cs-cours-liste .cards-scroll { display: flex; gap: 12px; overflow-x: auto; padding: 8px 4px 12px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+cs-cours-liste .cards-scroll::-webkit-scrollbar { display: none; }
+
+cs-cours-liste .cours-card { flex-shrink: 0; width: 150px; border-radius: 18px; padding: 16px 12px 18px; display: flex; flex-direction: column; align-items: center; text-decoration: none; scroll-snap-align: start; transition: transform 0.18s ease, box-shadow 0.18s ease; position: relative; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2); }
+cs-cours-liste .cours-card:hover { transform: translateY(-3px) scale(1.03); }
+cs-cours-liste .cours-card:active { transform: scale(0.97); }
+cs-cours-liste .c-emoji { font-size: 2.4rem; margin-bottom: 10px; }
+cs-cours-liste .c-title { font-family: var(--police-titre); font-size: 0.88rem; font-weight: 900; color: #fff; text-align: center; line-height: 1.25; }
+cs-cours-liste .c-level { font-size: 0.68rem; color: rgba(255, 255, 255, 0.8); font-weight: 700; margin-top: 5px; text-align: center; }
+/* Visible des seuls administrateurs : les autres ne reçoivent pas ces cours. */
+cs-cours-liste .c-brouillon { position: absolute; top: 7px; left: 7px; background: #fdf1d8; color: #8a6100; font-size: 0.6rem; font-weight: 900; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px; }
+cs-cours-liste .c-done { position: absolute; top: 8px; right: 8px; background: rgba(255, 255, 255, 0.9); color: var(--vert); font-size: 0.65rem; font-weight: 900; padding: 2px 7px; border-radius: 8px; letter-spacing: 0.5px; }
+
+/* ── Progression d'un membre ── */
+cs-cours-liste .stats-box { background: var(--liste-carte); border-radius: 18px; padding: 16px 18px; display: flex; margin-bottom: 10px; box-shadow: var(--liste-ombre); }
+cs-cours-liste .stats-cell { flex: 1; text-align: center; }
+cs-cours-liste .stats-cell-border { border-right: 1px solid var(--liste-separation); }
+cs-cours-liste .stats-val { font-family: var(--police-titre); font-size: 1.6rem; font-weight: 900; }
+cs-cours-liste .stats-val.vert { color: var(--vert); }
+cs-cours-liste .stats-val.or { color: #f9a825; }
+cs-cours-liste .stats-label { font-size: 0.72rem; color: #4a7a5a; font-weight: 700; }
+
+cs-cours-liste .niveau { padding: 0 4px 4px; display: flex; align-items: center; gap: 8px; }
+cs-cours-liste .niveau-piste { flex: 1; height: 6px; background: #c8e6c9; border-radius: 6px; overflow: hidden; }
+cs-cours-liste .niveau-barre { width: 0; height: 100%; background: linear-gradient(90deg, #1e6e3e, #52b788); border-radius: 6px; transition: width 0.8s ease; }
+cs-cours-liste .niveau-reste { font-family: var(--police-titre); font-weight: 900; font-size: 0.72rem; color: #4a7a5a; white-space: nowrap; }
+
+/* ── Invitation d'un visiteur ── */
+cs-cours-liste .login-invite { background: var(--liste-carte); border-radius: 18px; padding: 18px 20px; margin-bottom: 10px; box-shadow: var(--liste-ombre); display: flex; align-items: center; gap: 14px; }
+cs-cours-liste .login-invite-emoji { font-size: 2rem; }
+cs-cours-liste .login-invite-text { flex: 1; }
+cs-cours-liste .login-invite-title { font-family: var(--police-titre); font-weight: 900; font-size: 0.95rem; color: var(--liste-invite-titre); }
+cs-cours-liste .login-invite-sub { font-size: 0.75rem; color: var(--liste-invite-texte); font-weight: 700; margin-top: 2px; }
+cs-cours-liste .login-invite-btn { background: linear-gradient(135deg, #1e6e3e, #2d9959); color: #fff; font-family: var(--police-titre); font-weight: 900; font-size: 0.82rem; padding: 9px 16px; border-radius: 12px; text-decoration: none; white-space: nowrap; box-shadow: 0 3px 8px rgba(30, 110, 62, 0.3); }
+
+/* ── Ordinateur : les tuiles côte à côte, sur toute la largeur ──
+   Elles grandissent pour remplir la ligne, mais restent collées les unes aux
+   autres (flex plutôt que grille) au lieu de flotter chacune dans sa colonne. */
+@media (min-width: 900px) {
+  cs-cours-liste .cards-scroll { flex-wrap: wrap; overflow-x: visible; scroll-snap-type: none; }
+  cs-cours-liste .cours-card { flex: 1 1 170px; width: auto; max-width: 240px; }
+}

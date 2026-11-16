@@ -1,0 +1,35 @@
+/* ============================================================================
+   en-tete.css — le petit en-tête des pages de rubrique (jeux, cours, contact,
+   matériel) : une pastille, un titre, une phrase.
+
+   Il était recopié dans le <style> de chaque page. Il est écrit dans le HTML
+   de la page (c'est du texte), cette feuille l'habille :
+
+     <header class="en-tete">
+       <div class="en-tete-pastille">🎮 Jeux</div>
+       <h1 class="en-tete-titre">Apprends en t'amusant</h1>
+       <p class="en-tete-phrase">Des mini-jeux sur le compostage…</p>
+     </header>
+
+   Une page qui le veut autrement (aligné à gauche, plus serré) le dit dans sa
+   propre feuille.
+   ============================================================================ */
+
+.en-tete {
+  --en-tete-pastille-fond: #a8e6bf;
+  --en-tete-pastille-texte: #1a3a25;
+  --en-tete-titre: #1a3a25;
+  --en-tete-phrase: #4a7a5a;
+
+  text-align: center; padding: 28px 20px 16px;
+}
+html.dark .en-tete {
+  --en-tete-pastille-fond: #243328;
+  --en-tete-pastille-texte: #7ab88e;
+  --en-tete-titre: #c8e6d4;
+  --en-tete-phrase: #7ab88e;
+}
+
+.en-tete-pastille { display: inline-block; background: var(--en-tete-pastille-fond); color: var(--en-tete-pastille-texte); font-size: 0.82rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.en-tete-titre { font-family: var(--police-titre); font-size: clamp(1.5rem, 5vw, 2.4rem); font-weight: 900; color: var(--en-tete-titre); }
+.en-tete-phrase { font-size: 0.95rem; color: var(--en-tete-phrase); margin-top: 6px; font-weight: 600; }

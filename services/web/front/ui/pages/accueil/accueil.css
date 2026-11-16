@@ -1,0 +1,138 @@
+/* ============================================================================
+   accueil.css — la page d'accueil (index.html).
+
+   Page de texte : tout est écrit dans le HTML, sauf les nombres des chiffres
+   (<cs-accueil-chiffres>) et le bouton de l'encadré final pour un membre
+   (<cs-accueil-appel>), qui n'ont pas de feuille à eux : celle-ci les habille.
+   ============================================================================ */
+
+/* Le défilement vers « Découvrir » est doux, sauf pour qui a demandé à son
+   système de réduire les animations. */
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+/* L'en-tête déborde en largeur (courbe du bas) : pas de défilement horizontal. */
+body { overflow-x: hidden; }
+
+.hero,
+.stats,
+.section,
+.why,
+.cta-final {
+  --accueil-heros-fond: #1e6e3e;
+  --accueil-heros-motif: url('/assets/img/motif-branchage-light.svg');
+  --accueil-heros-degrade: linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2d9959 100%);
+  --accueil-heros-titre: #fff;
+  --accueil-pastille-fond: rgba(255, 255, 255, 0.15);
+  --accueil-pastille-texte: #d8f5e2;
+  --accueil-phrase: rgba(255, 255, 255, 0.9);
+  --accueil-bouton-fond: #fff;
+  --accueil-bouton-texte: #1e6e3e;
+  --accueil-ombre: 0 4px 16px rgba(30, 110, 62, 0.08);
+  --accueil-ombre-chiffre: 0 6px 22px rgba(30, 110, 62, 0.12);
+  --accueil-ombre-survol: 0 12px 30px rgba(30, 110, 62, 0.16);
+  --accueil-bord-survol: #cfe6d6;
+  --accueil-pourquoi: #fff;
+  --accueil-final: linear-gradient(160deg, #1e6e3e, #2d9959);
+  --accueil-final-titre: #fff;
+}
+html.dark .hero,
+html.dark .stats,
+html.dark .section,
+html.dark .why,
+html.dark .cta-final {
+  --accueil-heros-fond: #0d2f18;
+  --accueil-heros-motif: url('/assets/img/motif-branchage-dark.svg');
+  --accueil-heros-degrade: linear-gradient(160deg, #0d2f18 0%, #12401f 55%, #1a5c33 100%);
+  --accueil-heros-titre: #c8e6d4;
+  --accueil-pastille-fond: rgba(255, 255, 255, 0.10);
+  --accueil-pastille-texte: #cdeed9;
+  --accueil-phrase: rgba(255, 255, 255, 0.82);
+  --accueil-bouton-fond: #a8e6bf;
+  --accueil-bouton-texte: #0d2f18;
+  --accueil-ombre: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --accueil-ombre-chiffre: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --accueil-ombre-survol: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --accueil-bord-survol: #2d4030;
+  --accueil-pourquoi: #131d16;
+  --accueil-final: linear-gradient(160deg, #12401f, #1a5c33);
+  --accueil-final-titre: #c8e6d4;
+}
+
+/* ── En-tête ── */
+.hero {
+  position: relative; text-align: center; padding: 72px 20px 88px; color: #fff; overflow: hidden;
+  background-color: var(--accueil-heros-fond);
+  background-image: var(--accueil-heros-motif), var(--accueil-heros-degrade);
+  background-repeat: repeat, no-repeat;
+  background-size: 220px 220px, cover;
+}
+/* La courbe du bas reprend la couleur du fond de page. */
+.hero::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 60px; background: var(--fond); clip-path: ellipse(75% 100% at 50% 100%); }
+.hero-inner { position: relative; z-index: 2; max-width: 780px; margin: 0 auto; }
+.hero-badge { display: inline-block; background: var(--accueil-pastille-fond); color: var(--accueil-pastille-texte); font-size: 0.82rem; font-weight: 800; padding: 6px 16px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 18px; backdrop-filter: blur(4px); }
+.hero h1 { font-family: var(--police-titre); font-size: clamp(2rem, 6vw, 3.4rem); font-weight: 900; line-height: 1.12; color: var(--accueil-heros-titre); }
+.hero h1 .accent { color: var(--menthe); }
+.hero-sub { font-size: clamp(1rem, 2.5vw, 1.2rem); color: var(--accueil-phrase); margin: 16px auto 0; max-width: 560px; font-weight: 600; line-height: 1.5; }
+.hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
+
+/* ── Boutons ── */
+.btn, .btn:link, .btn:visited { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 50px; font-family: var(--police-titre); font-weight: 800; font-size: 1rem; text-decoration: none; cursor: pointer; border: none; transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease, background 0.4s ease; }
+.btn-primary, .btn-primary:visited { background: var(--accueil-bouton-fond); color: var(--accueil-bouton-texte); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); }
+.btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25); }
+.btn-ghost, .btn-ghost:visited { background: rgba(255, 255, 255, 0.14); color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.45); }
+.btn-ghost:hover { background: rgba(255, 255, 255, 0.24); transform: translateY(-3px); }
+/* Flèche de « Découvrir » : une ondulation douce qui invite à descendre. */
+.btn-ghost .arrow { display: inline-block; animation: accueil-descendre 2.2s ease-in-out infinite; }
+@keyframes accueil-descendre {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-ghost .arrow { animation: none; }
+}
+
+/* ── Sections ── */
+/* scroll-margin-top : l'arrivée se fait sous le bandeau, pas dessous. */
+.section { max-width: 1120px; margin: 0 auto; padding: 56px 20px; scroll-margin-top: 90px; }
+.section-tag { text-align: center; color: var(--accent); font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+.section-title { text-align: center; font-family: var(--police-titre); font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 900; color: var(--texte); margin-bottom: 8px; }
+.section-lead { text-align: center; color: var(--texte-doux); font-weight: 600; max-width: 620px; margin: 0 auto 36px; line-height: 1.55; }
+
+/* ── Chiffres (chevauchent la courbe de l'en-tête) ── */
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 900px; margin: -56px auto 0; padding: 0 20px; position: relative; z-index: 5; }
+.stat { background: var(--surface); border-radius: 20px; padding: 22px 16px; text-align: center; box-shadow: var(--accueil-ombre-chiffre); }
+.stat-num { font-family: var(--police-titre); font-size: clamp(1.7rem, 5vw, 2.6rem); font-weight: 900; color: var(--accent); line-height: 1; }
+.stat-label { font-size: 0.82rem; color: var(--texte-doux); font-weight: 700; margin-top: 6px; }
+
+/* ── Ce qu'on peut faire ── */
+.features { display: grid; grid-template-columns: 1fr; gap: 18px; }
+.feature { background: var(--surface); border-radius: 22px; padding: 26px 24px; display: flex; gap: 18px; align-items: flex-start; box-shadow: var(--accueil-ombre); text-decoration: none; color: inherit; transition: transform 0.18s, box-shadow 0.18s; border: 1.5px solid transparent; }
+.feature:hover { transform: translateY(-4px); box-shadow: var(--accueil-ombre-survol); border-color: var(--accueil-bord-survol); }
+.feature-emoji { font-size: 2.6rem; line-height: 1; flex-shrink: 0; }
+.feature-body h3 { font-family: var(--police-titre); font-size: 1.2rem; font-weight: 900; color: var(--texte); margin-bottom: 5px; }
+.feature-body p { font-size: 0.9rem; color: var(--texte-doux); font-weight: 600; line-height: 1.5; }
+.feature-arrow { margin-left: auto; align-self: center; color: var(--vert); font-size: 1.3rem; font-weight: 900; opacity: 0; transform: translateX(-6px); transition: all 0.18s; }
+.feature:hover .feature-arrow { opacity: 1; transform: translateX(0); }
+
+/* ── Pourquoi composter ── */
+.why { background: var(--accueil-pourquoi); }
+.why-grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1000px; margin: 0 auto; }
+.why-item { text-align: center; padding: 8px; }
+.why-emoji { font-size: 2.4rem; }
+.why-item h4 { font-family: var(--police-titre); font-size: 1.05rem; font-weight: 900; color: var(--texte); margin: 8px 0 4px; }
+.why-item p { font-size: 0.86rem; color: var(--texte-doux); font-weight: 600; line-height: 1.5; }
+
+/* ── Encadré final ── */
+.cta-final { text-align: center; background: var(--accueil-final); color: #fff; border-radius: 28px; max-width: 1000px; margin: 0 auto 56px; padding: 48px 24px; }
+.cta-final h2 { font-family: var(--police-titre); font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 900; color: var(--accueil-final-titre); }
+.cta-final p { color: rgba(255, 255, 255, 0.9); font-weight: 600; margin: 12px auto 26px; max-width: 500px; line-height: 1.5; }
+
+/* ── Ordinateur ── */
+@media (min-width: 640px) {
+  .stats { grid-template-columns: repeat(4, 1fr); }
+  .why-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 900px) {
+  .features { grid-template-columns: 1fr 1fr; }
+}

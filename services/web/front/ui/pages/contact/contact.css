@@ -1,0 +1,66 @@
+/* ============================================================================
+   contact.css — habillage de <cs-contact> (page /contact).
+
+   L'en-tête de la page est celui des rubriques : styles/en-tete.css.
+   ============================================================================ */
+
+cs-contact {
+  display: block;
+  padding: 0 16px;
+
+  --contact-carte: #fff;
+  --contact-ombre: 0 4px 24px rgba(30, 110, 62, 0.10);
+  --contact-libelle: #2c4a34;
+  --contact-champ-fond: #f7fbf8;
+  --contact-champ-bord: #c8dfc8;
+  --contact-champ-actif: #fff;
+  --contact-champ-actif-bord: #1e6e3e;
+  --contact-aide: #7aaa8a;
+  --contact-second-fond: #e3efe6;
+  --contact-second-texte: #1e6e3e;
+}
+html.dark cs-contact {
+  --contact-carte: #1a2b1e;
+  --contact-ombre: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --contact-libelle: #7ab88e;
+  --contact-champ-fond: #1e2d22;
+  --contact-champ-bord: #2d4030;
+  --contact-champ-actif: #243328;
+  --contact-champ-actif-bord: #52b788;
+  --contact-aide: #5a8a6a;
+  --contact-second-fond: #24352a;
+  --contact-second-texte: #7ab88e;
+}
+
+/* 8px au-dessus : l'en-tête de cette page était plus serré que celui des autres rubriques. */
+cs-contact .contact-card { background: var(--contact-carte); border-radius: 20px; box-shadow: var(--contact-ombre); max-width: 560px; margin: 8px auto 16px; padding: 28px 24px 30px; }
+
+/* ── Formulaire ── */
+cs-contact .field { margin-bottom: 16px; }
+cs-contact .field label { display: block; font-size: 0.78rem; font-weight: 800; color: var(--contact-libelle); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+cs-contact .field input,
+cs-contact .field select,
+cs-contact .field textarea { display: block; width: 100%; padding: 11px 14px; border: 1.5px solid var(--contact-champ-bord); border-radius: 10px; font-size: 0.95rem; color: var(--texte); background: var(--contact-champ-fond); outline: none; font-family: inherit; transition: border-color 0.15s; }
+cs-contact .field textarea { min-height: 130px; resize: vertical; }
+cs-contact .field input:focus,
+cs-contact .field select:focus,
+cs-contact .field textarea:focus { border-color: var(--contact-champ-actif-bord); background: var(--contact-champ-actif); }
+
+/* Le message garde ses couleurs dans les deux thèmes. */
+cs-contact .msg { border-radius: 10px; padding: 11px 14px; font-size: 0.88rem; font-weight: 700; margin-bottom: 16px; }
+cs-contact .msg.error { background: #fdecea; color: #c0392b; }
+cs-contact .msg.ok { background: #e8f5e9; color: #1e6e3e; }
+
+cs-contact .btn-submit { display: block; width: 100%; background: var(--vert); color: #fff; border: none; border-radius: 50px; padding: 13px; font-size: 1rem; font-weight: 800; cursor: pointer; transition: opacity 0.15s; margin-top: 4px; font-family: var(--police-titre); }
+cs-contact .btn-submit:hover { opacity: 0.88; }
+cs-contact .btn-submit:disabled { opacity: 0.5; cursor: default; }
+cs-contact .rgpd-info { font-size: 0.75rem; color: var(--contact-aide); line-height: 1.45; margin-top: 14px; text-align: center; }
+cs-contact .rgpd-info a { color: var(--accent); font-weight: 700; }
+
+/* ── Visiteur : se connecter d'abord ── */
+cs-contact .guard { text-align: center; padding: 10px 4px; }
+cs-contact .guard-emoji { font-size: 2.6rem; }
+cs-contact .guard-text { font-size: 0.95rem; color: #4a7a5a; font-weight: 700; margin: 10px 0 18px; line-height: 1.4; }
+cs-contact .guard-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+cs-contact .guard-btns a { background: var(--vert); color: #fff; text-decoration: none; padding: 11px 22px; border-radius: 50px; font-weight: 800; font-family: var(--police-titre); }
+cs-contact .guard-btns a.secondary { background: var(--contact-second-fond); color: var(--contact-second-texte); }

@@ -1,17 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark');</script>
-  <link rel="stylesheet" href="/assets/css/dark.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="icon" type="image/png" sizes="48x48" href="/assets/img/favicon-48.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16.png">
-  <link rel="shortcut icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
-  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CompoSmart — Composter n'a jamais été aussi simple</title>
   <meta name="description" content="Trouve un composteur près de chez toi, apprends les bons gestes et transforme tes déchets en ressource. Le tout en t'amusant !">
   <link rel="canonical" href="https://composmart.fr/">
@@ -33,156 +24,34 @@
   <meta name="twitter:title" content="Composmart — Composter n'a jamais été aussi simple">
   <meta name="twitter:description" content="Trouve un composteur près de chez toi, apprends les bons gestes et transforme tes déchets en ressource. Le tout en t'amusant !">
   <meta name="twitter:image" content="https://composmart.fr/assets/img/og-image.jpg">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body { background-color: #eef4ec; font-family: 'Nunito', Arial, sans-serif; min-height: 100vh; color: #1a3a25; overflow-x: hidden; display: flex; flex-direction: column; }
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="48x48" href="/assets/img/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
 
-    /* ── NAV ── */
-    nav { width: 100%; background: #1e6e3e; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; position: sticky; top: 0; z-index: 100; }
-    .nav-logo { font-family: 'Baloo 2', cursive; font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
-    .nav-logo span { color: #a8e6bf; }
-    .nav-right { display: flex; align-items: center; gap: 12px; }
-    .nav-profil { color: rgba(255,255,255,0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; transition: color 0.15s; }
-    .nav-profil:hover { color: #fff; }
-    .burger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 4px; }
-    .burger span { display: block; width: 26px; height: 3px; background: #fff; border-radius: 2px; transition: all 0.3s ease; }
-    .burger.open span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
-    .burger.open span:nth-child(2) { opacity: 0; }
-    .burger.open span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
-    .drawer { position: fixed; top: 0; right: -320px; width: 280px; max-width: 85vw; height: 100vh; background: #fff; z-index: 200; transition: right 0.32s cubic-bezier(.4,0,.2,1); box-shadow: -4px 0 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; }
-    .drawer.open { right: 0; }
-    .drawer-header { background: #1e6e3e; padding: 20px 20px 18px; display: flex; align-items: center; justify-content: space-between; }
-    .drawer-logo { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; }
-    .drawer-logo span { color: #a8e6bf; }
-    .drawer-close { background: none; border: none; cursor: pointer; color: #fff; font-size: 1.6rem; line-height: 1; padding: 2px 6px; }
-    .drawer-menu { list-style: none; padding: 8px 0; flex: 1; overflow-y: auto; }
-    .drawer-menu li a { display: flex; align-items: center; gap: 14px; padding: 15px 24px; font-size: 1rem; font-weight: 700; color: #1a3a25; text-decoration: none; transition: background 0.15s; border-left: 3px solid transparent; }
-    .drawer-menu li a:hover, .drawer-menu li a.active { background: #eef4ec; border-left-color: #1e6e3e; color: #1e6e3e; }
-    .menu-icon { font-size: 1.2rem; width: 24px; text-align: center; }
-    .drawer-divider { height: 1px; background: #e5ede8; margin: 4px 24px; }
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-    .overlay.open { opacity: 1; pointer-events: all; }
+  <!-- En-tête type des pages migrées (docs/front.md) : thème posé avant le
+       premier affichage, puis polices, couleurs et socle. -->
+  <script src="/ui/socle/amorce.js"></script>
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <link rel="stylesheet" href="/ui/styles/jetons.css">
+  <link rel="stylesheet" href="/ui/styles/base.css">
 
-    /* ── HERO ── */
-    .hero {
-      position: relative; text-align: center; padding: 72px 20px 88px; color: #fff; overflow: hidden;
-      background-color: #1e6e3e;
-      background-image: url('/assets/img/motif-branchage-light.svg'), linear-gradient(160deg, #145228 0%, #1e6e3e 55%, #2d9959 100%);
-      background-repeat: repeat, no-repeat;
-      background-size: 220px 220px, cover;
-    }
-    .hero::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 60px; background: #eef4ec; clip-path: ellipse(75% 100% at 50% 100%); }
-    .hero-inner { position: relative; z-index: 2; max-width: 780px; margin: 0 auto; }
-    .hero-badge { display: inline-block; background: rgba(255,255,255,0.15); color: #d8f5e2; font-size: 0.82rem; font-weight: 800; padding: 6px 16px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 18px; backdrop-filter: blur(4px); }
-    .hero h1 { font-family: 'Baloo 2', cursive; font-size: clamp(2rem, 6vw, 3.4rem); font-weight: 900; line-height: 1.12; }
-    .hero h1 .accent { color: #a8e6bf; }
-    .hero-sub { font-size: clamp(1rem, 2.5vw, 1.2rem); color: rgba(255,255,255,0.9); margin: 16px auto 0; max-width: 560px; font-weight: 600; line-height: 1.5; }
-    .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 32px; }
-    .btn, .btn:link, .btn:visited { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; border-radius: 50px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 1rem; text-decoration: none; cursor: pointer; border: none; transition: transform 0.4s cubic-bezier(.25,.8,.25,1), box-shadow 0.4s ease, background 0.4s ease; }
-    .btn-primary, .btn-primary:visited { background: #fff; color: #1e6e3e; box-shadow: 0 6px 18px rgba(0,0,0,0.18); }
-    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.25); }
-    .btn-ghost, .btn-ghost:visited { background: rgba(255,255,255,0.14); color: #fff; border: 1.5px solid rgba(255,255,255,0.45); }
-    .btn-ghost:hover { background: rgba(255,255,255,0.24); transform: translateY(-3px); }
-    /* Flèche du bouton "Découvrir" : ondulation douce et continue, invite au scroll sans à-coup */
-    .btn-ghost .arrow { display: inline-block; animation: float-down 2.2s ease-in-out infinite; }
-    @keyframes float-down {
-      0%, 100% { transform: translateY(0); }
-      50%      { transform: translateY(5px); }
-    }
-
-    /* ── SECTIONS ── */
-    /* scroll-margin-top : atterrissage sous la nav sticky, pas de coupe brusque en haut */
-    .section { max-width: 1120px; margin: 0 auto; padding: 56px 20px; scroll-margin-top: 90px; }
-    .section-tag { text-align: center; color: #1e6e3e; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
-    .section-title { text-align: center; font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 900; color: #1a3a25; margin-bottom: 8px; }
-    .section-lead { text-align: center; color: #4a7a5a; font-weight: 600; max-width: 620px; margin: 0 auto 36px; line-height: 1.55; }
-
-    /* Chiffres clés */
-    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 900px; margin: -56px auto 0; padding: 0 20px; position: relative; z-index: 5; }
-    .stat { background: #fff; border-radius: 20px; padding: 22px 16px; text-align: center; box-shadow: 0 6px 22px rgba(30,110,62,0.12); }
-    .stat-num { font-family: 'Baloo 2', cursive; font-size: clamp(1.7rem, 5vw, 2.6rem); font-weight: 900; color: #1e6e3e; line-height: 1; }
-    .stat-label { font-size: 0.82rem; color: #4a7a5a; font-weight: 700; margin-top: 6px; }
-
-    /* Fonctionnalités */
-    .features { display: grid; grid-template-columns: 1fr; gap: 18px; }
-    .feature { background: #fff; border-radius: 22px; padding: 26px 24px; display: flex; gap: 18px; align-items: flex-start; box-shadow: 0 4px 16px rgba(30,110,62,0.08); text-decoration: none; color: inherit; transition: transform 0.18s, box-shadow 0.18s; border: 1.5px solid transparent; }
-    .feature:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(30,110,62,0.16); border-color: #cfe6d6; }
-    .feature-emoji { font-size: 2.6rem; line-height: 1; flex-shrink: 0; }
-    .feature-body h3 { font-family: 'Baloo 2', cursive; font-size: 1.2rem; font-weight: 900; color: #1a3a25; margin-bottom: 5px; }
-    .feature-body p { font-size: 0.9rem; color: #4a7a5a; font-weight: 600; line-height: 1.5; }
-    .feature-arrow { margin-left: auto; align-self: center; color: #1e6e3e; font-size: 1.3rem; font-weight: 900; opacity: 0; transform: translateX(-6px); transition: all 0.18s; }
-    .feature:hover .feature-arrow { opacity: 1; transform: translateX(0); }
-
-    /* Pourquoi composter */
-    .why { background: #fff; }
-    .why-grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 1000px; margin: 0 auto; }
-    .why-item { text-align: center; padding: 8px; }
-    .why-emoji { font-size: 2.4rem; }
-    .why-item h4 { font-family: 'Baloo 2', cursive; font-size: 1.05rem; font-weight: 900; color: #1a3a25; margin: 8px 0 4px; }
-    .why-item p { font-size: 0.86rem; color: #4a7a5a; font-weight: 600; line-height: 1.5; }
-
-    /* CTA final */
-    .cta-final { text-align: center; background: linear-gradient(160deg, #1e6e3e, #2d9959); color: #fff; border-radius: 28px; max-width: 1000px; margin: 0 auto 56px; padding: 48px 24px; }
-    .cta-final h2 { font-family: 'Baloo 2', cursive; font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 900; }
-    .cta-final p { color: rgba(255,255,255,0.9); font-weight: 600; margin: 12px auto 26px; max-width: 500px; line-height: 1.5; }
-
-    /* Footer */
-    footer { background: #123d20; color: rgba(255,255,255,0.8); padding: 40px 20px 60px; }
-    .footer-inner { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 24px; }
-    .footer-logo { font-family: 'Baloo 2', cursive; font-size: 1.3rem; font-weight: 900; color: #fff; font-style: italic; letter-spacing: 1px; }
-    .footer-logo span { color: #a8e6bf; }
-    .footer-col h5 { color: #fff; font-size: 0.95rem; font-weight: 800; margin-bottom: 10px; }
-    .footer-col a { display: block; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.9rem; padding: 4px 0; }
-    .footer-col a:hover { color: #a8e6bf; }
-    .footer-bottom { text-align: center; color: rgba(255,255,255,0.5); font-size: 0.82rem; margin-top: 28px; }
-
-    .bottom-leaf { position: fixed; bottom: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #1e6e3e, #52b788, #a7c957, #52b788, #1e6e3e); z-index: 90; }
-
-    /* ── DESKTOP ── */
-    @media (min-width: 640px) {
-      .stats { grid-template-columns: repeat(4, 1fr); }
-      .why-grid { grid-template-columns: repeat(3, 1fr); }
-      .footer-inner { grid-template-columns: 2fr 1fr 1fr 1fr; }
-    }
-    @media (min-width: 900px) {
-      .features { grid-template-columns: 1fr 1fr; }
-    }
-
-    /* Dark mode */
-    html.dark body { background: #0f1811; color: #e8f5ee; }
-    html.dark body { background: #0f1811; color: #e8f5ee; }
-    /* Hero : dégradé assombri + courbe qui rejoint le fond sombre + motif teinté vert clair */
-    html.dark .hero {
-      background-color: #0d2f18;
-      background-image: url('/assets/img/motif-branchage-dark.svg'), linear-gradient(160deg, #0d2f18 0%, #12401f 55%, #1a5c33 100%);
-      background-repeat: repeat, no-repeat;
-      background-size: 220px 220px, cover;
-    }
-    html.dark .hero::after { background: #0f1811; }
-    html.dark .hero-badge { background: rgba(255,255,255,0.10); color: #cdeed9; }
-    html.dark .hero-sub { color: rgba(255,255,255,0.82); }
-    /* Titres et textes */
-    html.dark .section-title, html.dark .feature-body h3, html.dark .why-item h4 { color: #e8f5ee; }
-    html.dark .section-tag { color: #52b788; }
-    html.dark .stat-label, html.dark .feature-body p, html.dark .why-item p, html.dark .section-lead { color: #7ab88e; }
-    /* Cartes / panneaux */
-    html.dark .stat, html.dark .feature { background: #16211a; box-shadow: 0 4px 16px rgba(0,0,0,0.35); }
-    html.dark .stat-num { color: #52b788; }
-    html.dark .feature:hover { border-color: #2d4030; }
-    html.dark .why { background: #131d16; }
-    /* Boutons */
-    html.dark .btn-primary { background: #a8e6bf; color: #0d2f18; }
-    /* CTA final + footer restent verts foncés (déjà sombres, on ajuste un peu) */
-    html.dark .cta-final { background: linear-gradient(160deg, #12401f, #1a5c33); }
-    html.dark footer { background: #0a2413; }
-  </style>
-  <link rel="stylesheet" href="/assets/css/desktop.css">
+  <!-- Les morceaux de cette page. Chaque composant charge sa feuille lui-même ;
+       la citer ici la fait simplement arriver plus tôt. -->
+  <link rel="stylesheet" href="/ui/composants/bandeau/bandeau.css">
+  <link rel="stylesheet" href="/ui/composants/pied/pied.css">
+  <link rel="stylesheet" href="/ui/pages/accueil/accueil.css">
+  <script type="module" src="/ui/composants/bandeau/bandeau.js"></script>
+  <script type="module" src="/ui/composants/rappel-email/rappel-email.js"></script>
+  <script type="module" src="/ui/pages/accueil/accueil-chiffres.js"></script>
+  <script type="module" src="/ui/pages/accueil/accueil-appel.js"></script>
+  <script type="module" src="/ui/composants/pied/pied.js"></script>
 </head>
 <body>
-
-    <!-- Bandeau + sidebar partagés (injectés par site-nav.js) -->
-  <div id="site-nav"></div>
+  <cs-bandeau></cs-bandeau>
+  <cs-rappel-email></cs-rappel-email>
 
   <!-- HERO -->
   <header class="hero">
@@ -191,19 +60,19 @@
       <h1>Composter n'a jamais<br>été aussi <span class="accent">simple</span></h1>
       <p class="hero-sub">Trouve un composteur près de chez toi, apprends les bons gestes et transforme tes déchets en ressource. Le tout en t'amusant !</p>
       <div class="hero-cta">
-        <a href="carte.html" class="btn btn-primary">🗺️ Explorer la carte</a>
+        <a href="/carte" class="btn btn-primary">🗺️ Explorer la carte</a>
         <a href="#features" class="btn btn-ghost">Découvrir <span class="arrow">↓</span></a>
       </div>
     </div>
   </header>
 
   <!-- CHIFFRES -->
-  <div class="stats">
-    <div class="stat"><div class="stat-num" id="statComposts">5 800+</div><div class="stat-label">Composteurs recensés</div></div>
-    <div class="stat"><div class="stat-num" id="statCours">–</div><div class="stat-label">Cours interactifs</div></div>
-    <div class="stat"><div class="stat-num" id="statJeux">–</div><div class="stat-label">Mini-jeux</div></div>
+  <cs-accueil-chiffres class="stats">
+    <div class="stat"><div class="stat-num" data-chiffre="composts">5 800+</div><div class="stat-label">Composteurs recensés</div></div>
+    <div class="stat"><div class="stat-num" data-chiffre="cours">–</div><div class="stat-label">Cours interactifs</div></div>
+    <div class="stat"><div class="stat-num" data-chiffre="jeux">–</div><div class="stat-label">Mini-jeux</div></div>
     <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Gratuit &amp; open data</div></div>
-  </div>
+  </cs-accueil-chiffres>
 
   <!-- FONCTIONNALITÉS -->
   <section class="section" id="features">
@@ -211,22 +80,22 @@
     <h2 class="section-title">Que veux-tu faire ?</h2>
     <p class="section-lead">Composmart réunit tout ce qu'il te faut pour te lancer et progresser dans le compostage.</p>
     <div class="features">
-      <a href="carte.html" class="feature">
+      <a href="/carte" class="feature">
         <div class="feature-emoji">🗺️</div>
         <div class="feature-body"><h3>Carte interactive</h3><p>Localise les composteurs et points d'apport partout en France. Ajoute les tiens et signale une erreur.</p></div>
         <div class="feature-arrow">→</div>
       </a>
-      <a href="cours.html" class="feature">
+      <a href="/cours" class="feature">
         <div class="feature-emoji">📚</div>
         <div class="feature-body"><h3>Cours &amp; quiz</h3><p>Apprends les bases du compostage à ton rythme, valide des quiz et gagne de l'XP.</p></div>
         <div class="feature-arrow">→</div>
       </a>
-      <a href="jeux" class="feature">
+      <a href="/jeux" class="feature">
         <div class="feature-emoji">🎮</div>
         <div class="feature-body"><h3>Mini-jeux</h3><p>Teste tes connaissances en t'amusant et grimpe dans le classement de la communauté.</p></div>
         <div class="feature-arrow">→</div>
       </a>
-      <a href="materiel.html" class="feature">
+      <a href="/materiel" class="feature">
         <div class="feature-emoji">🧰</div>
         <div class="feature-body"><h3>Le matériel</h3><p>Bac, lombricomposteur, point d'apport : découvre l'équipement adapté à ta situation.</p></div>
         <div class="feature-arrow">→</div>
@@ -253,83 +122,11 @@
     <div class="cta-final">
       <h2>Prêt à te lancer ?</h2>
       <p>Crée ton compte gratuit, suis ta progression et rejoins une communauté qui composte malin.</p>
-      <a href="signin" class="btn btn-primary" id="ctaBtn">🌱 Créer mon compte</a>
+      <cs-accueil-appel><a href="/signin" class="btn btn-primary">🌱 Créer mon compte</a></cs-accueil-appel>
     </div>
   </section>
 
-  <!-- FOOTER -->
-  <!-- Footer partagé (injecté par site-footer.js) -->
-  <div id="site-footer"></div>
-
-  <div class="bottom-leaf"></div>
-
-  <script>
-    // Scroll animé "maison" pour les ancres internes : indépendant de scroll-behavior
-    // CSS (que certains OS/navigateurs désactivent via prefers-reduced-motion), donc
-    // le glissement est toujours visible et sa durée/allure contrôlées précisément.
-    function smoothScrollTo(targetY, duration) {
-      const startY = window.scrollY;
-      const diff = targetY - startY;
-      const startTime = performance.now();
-      function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
-      function step(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        window.scrollTo(0, startY + diff * easeInOutCubic(progress));
-        if (progress < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
-      a.addEventListener('click', function (e) {
-        const target = document.querySelector(a.getAttribute('href'));
-        if (!target) return;
-        e.preventDefault();
-        const navOffset = 90; // hauteur approx. de la nav sticky
-        const targetY = target.getBoundingClientRect().top + window.scrollY - navOffset;
-        smoothScrollTo(targetY, 900);
-      });
-    });
-
-    // Chiffre "composteurs" en temps réel (endpoint léger déjà existant)
-    fetch('/api/carte/count.php').then(r => r.json())
-      .then(d => { if (d && typeof d.composts === 'number') document.getElementById('statComposts').textContent = d.composts.toLocaleString('fr-FR') + '+'; })
-      .catch(() => {});
-
-    // Chiffre "cours" en temps réel : les cours s'ajoutent depuis /admin/themes
-    // sans déploiement, un nombre figé dans le HTML se périme donc de lui-même
-    // dès le premier cours créé après coup.
-    fetch('/api/cours/count.php').then(r => r.json())
-      .then(d => { if (d && typeof d.cours === 'number') document.getElementById('statCours').textContent = d.cours; })
-      .catch(() => {});
-
-    // Chiffre "mini-jeux" : compté depuis la base (jeux publiés), pas re-tapé en
-    // dur ici — c'est justement un chiffre codé en double qui avait fini par
-    // diverger (affichait encore 2 alors que le site en comptait 4). Un admin
-    // reçoit aussi les brouillons : ils ne comptent pas.
-    fetch('/api/jeux/catalogue.php?action=liste').then(r => r.json())
-      .then(d => {
-        if (d && Array.isArray(d.jeux)) {
-          document.getElementById('statJeux').textContent = d.jeux.filter(j => j.statut === 'publie').length;
-        }
-      })
-      .catch(() => {});
-
-    // Si déjà connecté, le CTA final invite à continuer plutôt qu'à s'inscrire
-    fetch('/api/auth/me.php').then(r => r.json())
-      .then(d => {
-        if (d && d.logged_in) {
-          const b = document.getElementById('ctaBtn');
-          b.textContent = '📚 Continuer mes cours';
-          b.setAttribute('href', 'cours.html');
-        }
-      })
-      .catch(() => {});
-  </script>
-  <script src="/assets/js/site-footer.js"></script>
-  <script src="/assets/js/site-nav.js"></script>
-  <script src="/assets/js/theme.js"></script>
-  <script src="/assets/js/verif-banner.js"></script>
-  <script src="/assets/js/admin-badge.js?v=3"></script>
+  <cs-pied></cs-pied>
+  <div class="cs-lisere"></div>
 </body>
 </html>
