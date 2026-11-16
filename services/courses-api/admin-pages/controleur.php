@@ -18,8 +18,6 @@
  *                                             (panel, cours, jeux, événements)
  *   /admin/panel                            → tableau de bord (signalements,
  *                                             ajouts, messages, comptes, journal)
- *   /admin/panel-v2                         → le même, reconstruit en composants
- *                                             (adresse provisoire)
  *   /admin/themes                           → thèmes + organisation des cours
  *   /admin/themes/<theme>/nouveau           → création d'un cours
  *   /admin/themes/<theme>/<cours>           → édition d'un cours existant
@@ -95,13 +93,10 @@ function rendre($vue, $vars = []) {
 // et sa propre vérification des droits.
 if (count($seg) === 0) rendre('accueil.html');
 
-// /admin/panel
-if ($seg[0] === 'panel' && count($seg) === 1) rendre('tableau-de-bord.html');
-
-// /admin/panel-v2 — le même panneau, reconstruit en composants (docs/front.md).
-// Adresse provisoire : les deux versions cohabitent le temps que tous les
-// onglets soient migrés et vérifiés ; la nouvelle prendra alors /admin/panel.
-if ($seg[0] === 'panel-v2' && count($seg) === 1) rendre('panel.html');
+// /admin/panel — la vue n'est qu'une coquille : l'interface est faite de
+// composants servis par « web » (services/web/front/ui/admin/panel/, cf.
+// docs/front.md), et les données ne viennent que des API.
+if ($seg[0] === 'panel' && count($seg) === 1) rendre('panel.html');
 
 // /admin/themes...
 if ($seg[0] !== 'themes') introuvable();

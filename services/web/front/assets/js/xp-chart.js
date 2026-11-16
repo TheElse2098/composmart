@@ -1,10 +1,15 @@
 /* ============================================================================
    xp-chart.js — courbe d'XP cumulée (SVG), extraite de compte.html.
 
-   Partagée avec la fiche joueur de l'admin (tableau-de-bord.html) : c'est la
-   MÊME courbe que celle qu'un joueur voit sur son propre profil, pas une
-   réinterprétation — un admin qui compare ce qu'un utilisateur lui décrit doit
-   voir exactement ce que cet utilisateur voit.
+   FICHIER EN FIN DE VIE : il ne sert plus qu'à compte.html. La fiche joueur
+   du panneau d'administration utilise son remplaçant, le composant
+   <cs-courbe-xp> (ui/composants/courbe-xp/), que la page de compte reprendra
+   à sa migration ; ce fichier sera alors supprimé.
+
+   Défaut connu, corrigé dans le composant et laissé ici : le cumul avance par
+   pas de 24 heures et non par jour du calendrier, si bien que le dernier jour
+   de gains n'est pas compté quand l'historique traverse le passage à l'heure
+   d'hiver.
    ============================================================================ */
 (function () {
   'use strict';

@@ -68,9 +68,10 @@ auth-api. Le journal se lit dans l'onglet 📜 de `/admin/panel`, une fenêtre d
 détail par entrée.
 
 - **Nom de l'action** : `<préfixe>_<verbe>` ; le préfixe range l'action dans
-  une catégorie du filtre (`AUDIT_CATEGORIES` dans `tableau-de-bord.html`).
-  Ajouter son libellé et son emoji dans `AUDIT_LABELS`, sinon elle s'affiche
-  avec ❔ et son code brut.
+  une catégorie du filtre (`CATEGORIES` dans
+  `services/web/front/ui/admin/panel/journal-libelles.js`). Ajouter son
+  libellé et son emoji dans `ACTIONS`, même fichier, sinon elle s'affiche avec
+  ❔ et son code brut ; si elle est annulable, son endpoint dans `ANNULATIONS`.
 - **`$details`** : ce qui rend la ligne lisible sans l'ouvrir (titre, nom).
 - **Snapshot** (`$extra['snapshot']`) :
   - `changements` : ce qui a changé, via `audit_changements($avant, $apres)`.

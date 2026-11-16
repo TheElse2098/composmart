@@ -1,5 +1,5 @@
 /* ============================================================================
-   Le panneau d'administration (/admin/panel-v2) : son cadre, ses onglets, la
+   Le panneau d'administration (/admin/panel) : son cadre, ses onglets, la
    vue d'ensemble et ses graphiques — gabarits, puis montage dans le faux DOM
    avec un faux serveur et un faux Chart.js.
    ============================================================================ */
