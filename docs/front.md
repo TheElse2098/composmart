@@ -58,7 +58,10 @@ tests/front/    contrôles : vérificateur, types, tests (hors des images Docker
 9. **Une classe seulement s'il y a un état et un cycle de vie.** Le reste est
    une fonction dans `outils.js`. Deux niveaux d'héritage au plus.
 10. **Le contenu éditorial reste dans le HTML** (accueil, matériel, pages
-    légales) : un composant sert à ce qui est dynamique ou partagé.
+    légales) : un composant sert à ce qui est dynamique ou partagé. Une page
+    de texte n'a pas de composant : sa feuille est dans
+    `ui/pages/<page>/<page>.css`, ses classes préfixées par le nom de la page
+    (`ui/pages/legal/legal.css`, `ui/pages/introuvable/introuvable.css`).
 11. **Jamais de boîte native** (`alert`, `confirm`, `prompt`) : `confirmer()`
     et `informer()` de `composants/dialogue/dialogue.js` les remplacent.
 

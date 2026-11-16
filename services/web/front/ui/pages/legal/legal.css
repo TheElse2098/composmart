@@ -1,0 +1,105 @@
+/* ============================================================================
+   legal.css — mise en page des pages légales (mentions légales,
+   confidentialité, CGU).
+
+   Ces pages sont du texte : il reste écrit dans leur HTML (docs/front.md,
+   règle 10), sans composant ; cette feuille ne fait que l'habiller. Une page
+   qui s'en sert la cite dans son en-tête, après base.css.
+
+   Téléphone : une colonne, sommaire repliable en tête.
+   Ordinateur (≥ 900px) : sommaire collant à gauche, texte sur la largeur
+   restante — pas de colonne étroite centrée.
+   ============================================================================ */
+
+.legal-hero,
+.legal-layout {
+  --legal-heros: #0f5028;
+  --legal-heros-titre: #fff;
+  --legal-pastille: #a8e6bf;
+  --legal-carte: #fff;
+  --legal-ombre: 0 4px 24px rgba(30, 110, 62, 0.10);
+  --legal-titre: #0f5028;
+  --legal-texte: #2c4a34;
+  --legal-fort: #1a3a25;
+  --legal-lien: #1e6e3e;
+  --legal-trait: #e5ede8;
+  --legal-creux: #eef4ec;
+  --legal-entete: #0f5028;
+  --legal-a-completer-fond: #fff3cd;
+  --legal-a-completer-texte: #7a5a00;
+}
+html.dark .legal-hero,
+html.dark .legal-layout {
+  --legal-heros: #0a2413;
+  --legal-heros-titre: #c8e6d4;
+  --legal-carte: #1a2b1e;
+  --legal-ombre: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --legal-titre: #7ab88e;
+  --legal-texte: #c8e6d4;
+  --legal-fort: #e8f5ee;
+  --legal-lien: #52b788;
+  --legal-trait: #2d4030;
+  --legal-creux: #243328;
+  --legal-entete: #7ab88e;
+  --legal-a-completer-fond: #4a3d10;
+  --legal-a-completer-texte: #ffe08a;
+}
+
+/* ── En-tête ── */
+.legal-hero { background: var(--legal-heros); padding: 30px 20px 46px; }
+.legal-hero-inner { max-width: 1240px; margin: 0 auto; }
+/* La pastille garde ses couleurs dans les deux thèmes : elle se lit sur le vert sombre. */
+.legal-badge { display: inline-block; background: var(--legal-pastille); color: #1a3a25; font-size: 0.8rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.legal-hero h1 { font-family: var(--police-titre); font-size: clamp(1.6rem, 5vw, 2.4rem); font-weight: 900; color: var(--legal-heros-titre); line-height: 1.15; }
+.legal-maj { color: var(--legal-pastille); font-size: 0.9rem; font-weight: 600; margin-top: 6px; }
+
+.legal-layout { width: 100%; max-width: 1240px; margin: -24px auto 40px; padding: 0 16px; display: grid; grid-template-columns: 1fr; gap: 16px; position: relative; }
+
+/* ── Sommaire ── */
+.legal-toc { background: var(--legal-carte); border-radius: 16px; box-shadow: var(--legal-ombre); padding: 14px 18px; }
+.legal-toc summary { font-weight: 800; color: var(--legal-titre); cursor: pointer; list-style: none; }
+.legal-toc summary::-webkit-details-marker { display: none; }
+.legal-toc summary::after { content: ' ▾'; }
+.legal-toc[open] summary::after { content: ' ▴'; }
+.legal-toc ol { list-style: none; margin-top: 10px; }
+.legal-toc a { display: block; padding: 6px 0; color: var(--legal-texte); text-decoration: none; font-size: 0.92rem; font-weight: 600; }
+.legal-toc a:hover { color: var(--legal-lien); text-decoration: underline; }
+
+/* ── Texte ── */
+.legal-body { background: var(--legal-carte); border-radius: 16px; box-shadow: var(--legal-ombre); padding: 24px 20px 32px; line-height: 1.65; }
+.legal-body section { scroll-margin-top: 80px; }
+.legal-body section + section { margin-top: 30px; padding-top: 24px; border-top: 1px solid var(--legal-trait); }
+.legal-body h2 { font-family: var(--police-titre); font-size: 1.35rem; font-weight: 900; color: var(--legal-titre); margin-bottom: 10px; }
+.legal-body h3 { font-size: 1.02rem; font-weight: 800; color: var(--legal-fort); margin: 18px 0 6px; }
+.legal-body p,
+.legal-body li { font-size: 0.97rem; color: var(--legal-texte); }
+.legal-body p + p { margin-top: 10px; }
+.legal-body ul { margin: 8px 0 8px 20px; }
+.legal-body li + li { margin-top: 4px; }
+.legal-body a { color: var(--legal-lien); font-weight: 700; }
+.legal-body strong { color: var(--legal-fort); }
+
+/* Encadré « en bref » */
+.legal-bref { background: var(--legal-creux); border-left: 4px solid var(--vert); border-radius: 0 12px 12px 0; padding: 16px 18px; }
+.legal-bref h2 { margin-bottom: 8px; }
+
+/* Tableaux (traitements, cookies) : défilement horizontal sur téléphone */
+.legal-table-wrap { overflow-x: auto; margin: 12px 0; }
+.legal-body table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 640px; }
+.legal-body th,
+.legal-body td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--legal-trait); color: var(--legal-texte); }
+.legal-body th { background: var(--legal-creux); color: var(--legal-entete); font-weight: 800; }
+
+/* Champ restant à compléter (identité de l'éditeur) */
+.a-completer { background: var(--legal-a-completer-fond); color: var(--legal-a-completer-texte); padding: 0 4px; border-radius: 4px; font-weight: 700; }
+
+@media (min-width: 900px) {
+  .legal-hero { padding: 40px 32px 56px; }
+  .legal-layout { grid-template-columns: 260px 1fr; gap: 28px; padding: 0 32px; align-items: start; }
+  .legal-toc { position: sticky; top: 84px; }
+  .legal-toc summary { pointer-events: none; }
+  .legal-toc summary::after { content: ''; }
+  .legal-body { padding: 36px 44px 44px; }
+  .legal-body p,
+  .legal-body li { max-width: 80ch; }
+}

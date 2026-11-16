@@ -35,6 +35,12 @@ RewriteRule ^ https://%{HTTP_HOST}/%1 [R=301,L]
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /(.+)\.html\ HTTP/
 RewriteRule ^ /%1 [R=301,L]
 
+# /parcours : ancienne adresse de la page de compte. Redirection permanente
+# plutôt qu'une page qui renvoie par script (supprimée le 16/11/2026).
+RewriteCond %{HTTP:X-Forwarded-Proto} =https
+RewriteRule ^parcours$ https://%{HTTP_HOST}/compte [R=301,L]
+RewriteRule ^parcours$ /compte [R=301,L]
+
 # /cours/{slug} → cours-detail.html (avant la règle générale)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

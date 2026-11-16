@@ -1,0 +1,35 @@
+/* ============================================================================
+   introuvable.css — la page d'erreur 404 (404.html).
+
+   Page de texte, sans composant. Elle sert aussi d'adresse « inexistante »
+   aux pages d'administration refusées : les contrôleurs de courses-api,
+   games-api et evenements-api renvoient ce même fichier, copié dans leur
+   image (cf. leurs Dockerfile). La modifier reconstruit donc ces trois
+   services en plus de web.
+   ============================================================================ */
+
+.introuvable {
+  --introuvable-code: #1e6e3e;
+  --introuvable-bord: #cfe6d6;
+  --introuvable-second: #1e6e3e;
+
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 48px 24px 80px;
+}
+html.dark .introuvable {
+  --introuvable-code: #52b788;
+  --introuvable-bord: #2d4030;
+  --introuvable-second: #7ab88e;
+}
+
+.introuvable-emoji { font-size: clamp(4rem, 16vw, 7rem); line-height: 1; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15)); }
+.introuvable-code { font-family: var(--police-titre); font-size: clamp(3rem, 14vw, 6rem); font-weight: 900; color: var(--introuvable-code); line-height: 1; margin-top: 8px; }
+.introuvable-titre { font-family: var(--police-titre); font-size: clamp(1.3rem, 5vw, 2rem); font-weight: 900; color: var(--texte); margin-top: 8px; }
+.introuvable-texte { font-size: 1rem; color: var(--texte-doux); font-weight: 600; margin-top: 12px; max-width: 460px; line-height: 1.5; }
+
+.introuvable-liens { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 30px; }
+.introuvable-lien { display: inline-flex; align-items: center; gap: 8px; padding: 13px 26px; border-radius: 50px; font-family: var(--police-titre); font-weight: 800; font-size: 1rem; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; }
+.introuvable-lien:hover { transform: translateY(-3px); }
+.introuvable-lien.principal { background: var(--vert); color: #fff; box-shadow: 0 6px 18px rgba(30, 110, 62, 0.3); }
+.introuvable-lien.principal:hover { box-shadow: 0 10px 24px rgba(30, 110, 62, 0.4); }
+.introuvable-lien.second { background: var(--surface); color: var(--introuvable-second); border: 1.5px solid var(--introuvable-bord); }
