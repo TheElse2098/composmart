@@ -70,12 +70,14 @@ function correspond(element, simple) {
 export class FauxEvenement {
   /**
    * @param {string} type
-   * @param {{ detail?: unknown, key?: string, bubbles?: boolean }} [options]
+   * @param {{ detail?: unknown, key?: string, ctrlKey?: boolean, metaKey?: boolean, bubbles?: boolean }} [options]
    */
   constructor(type, options = {}) {
     this.type = type;
     this.detail = options.detail;
     this.key = options.key;
+    this.ctrlKey = options.ctrlKey ?? false;
+    this.metaKey = options.metaKey ?? false;
     this.bubbles = options.bubbles ?? true;
     /** @type {FauxElement | null} */
     this.target = null;
@@ -395,6 +397,18 @@ class HTMLInputElement extends HTMLElement {
   }
 }
 
+/** Zone de texte : une valeur, rien d'autre. */
+class HTMLTextAreaElement extends HTMLElement {
+  value = '';
+  placeholder = '';
+
+  /** Ce que fait quelqu'un qui écrit dans la zone. @param {string} valeur */
+  saisir(valeur) {
+    this.value = valeur;
+    this.dispatchEvent(new FauxEvenement('input'));
+  }
+}
+
 /** Menu déroulant : sa valeur est celle qu'on lui donne si une option la porte,
  *  sinon celle de l'option `selected`, sinon de la première. Réécrire ses
  *  options oublie le choix fait, comme dans un navigateur. */
@@ -443,6 +457,7 @@ const NATIFS = {
   link: HTMLLinkElement,
   script: HTMLScriptElement,
   select: HTMLSelectElement,
+  textarea: HTMLTextAreaElement,
 };
 
 /** Composants enregistrés par customElements.define(). @type {Map<string, new () => FauxElement>} */
@@ -618,6 +633,7 @@ export function installerFauxDom() {
   g.HTMLAnchorElement = HTMLAnchorElement;
   g.HTMLInputElement = HTMLInputElement;
   g.HTMLSelectElement = HTMLSelectElement;
+  g.HTMLTextAreaElement = HTMLTextAreaElement;
   g.HTMLLinkElement = HTMLLinkElement;
   g.HTMLScriptElement = HTMLScriptElement;
   g.CustomEvent = FauxEvenement;

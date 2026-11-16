@@ -213,7 +213,7 @@ test('graphique : changer de période redemande et garde le choix au retour sur 
   assert.deepEqual(FauxChart.crees[0].data.datasets.map((/** @type {any} */ d) => d.label), ['Inscriptions'], 'sans connexions, une seule série');
   assert.deepEqual(panneau.querySelector('[data-graphe="parc"]').querySelectorAll('.evo-btn.active').map((b) => b.dataset.periode), ['30d'], 'l’autre graphique n’a pas bougé');
 
-  panneau.querySelector('[data-onglet="messages"]').click();
+  panneau.querySelector('[data-onglet="utilisateurs"]').click();
   panneau.querySelector('[data-onglet="ensemble"]').click();
   await dom.stabiliser();
   assert.equal(appels.filter((a) => a.adresse === '/api/admin/evolution.php?period=7d').length, 2, 'la période choisie est conservée');

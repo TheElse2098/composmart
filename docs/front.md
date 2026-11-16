@@ -252,6 +252,28 @@ export class AdminAjoutEdition extends Fenetre {
 
 Le parent pose la balise dans son gabarit et ouvre par une méthode :
 `this.trouver('cs-admin-ajout-edition', AdminAjoutEdition).ouvrir(demande)`.
+
+### Un même composant pour deux usages
+
+Quand deux pages affichent le même morceau avec des mots, des droits ou un
+service différents, le composant ne connaît ni l'un ni l'autre : son parent
+lui donne un objet qui décrit son usage. `<cs-fil-discussion>` (la discussion
+d'un ticket) sert ainsi à l'administrateur dans le panneau et au titulaire sur
+sa page de compte :
+
+```js
+this.trouver('cs-fil-discussion', FilDiscussion).configurer({
+  admin: true,                                         // quels messages sont « les miens »
+  lire: (id) => api.admin.get('tickets.php', { id }),  // à quel service parler
+  actions: (statut) => […],                            // quels boutons proposer
+  …
+});
+```
+
+Le type `PointDeVue`, en tête de `fil-discussion.js`, liste ce qu'il faut
+fournir ; l'exemple complet est `VUE_ADMIN` dans `admin/panel/messages.js`.
+Ne jamais ajouter au composant un `if (admin)` : ajouter un champ au point de
+vue.
 Une feuille de fenêtre ne contient que ses écarts au cadre commun, sous sa
 balise. Pour une question oui / non ou un message, c'est `confirmer()` et
 `informer()` (règle 11), pas une fenêtre.

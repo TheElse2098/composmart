@@ -26,6 +26,7 @@ import { Composant } from '../../socle/composant.js';
 import { html } from '../../socle/outils.js';
 import './ajouts.js';
 import './journal.js';
+import './messages.js';
 import './signalements.js';
 import './vue-ensemble.js';
 
@@ -156,6 +157,8 @@ export class AdminPanel extends Composant {
         return html`<cs-admin-signalements></cs-admin-signalements>`;
       case 'ajouts':
         return html`<cs-admin-ajouts></cs-admin-ajouts>`;
+      case 'messages':
+        return html`<cs-admin-messages></cs-admin-messages>`;
       case 'journal':
         return html`<cs-admin-journal></cs-admin-journal>`;
       default:

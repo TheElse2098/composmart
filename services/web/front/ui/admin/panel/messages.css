@@ -1,0 +1,34 @@
+/* ============================================================================
+   messages.css — habillage de <cs-admin-messages> : filtres par état, lignes
+   des tickets.
+
+   Le titre de section, son compteur, le message « rien à afficher » et la
+   pagination sont ceux du panneau : panel.css. La pastille d'état d'un ticket
+   et la fenêtre de discussion sont habillées par
+   composants/fil-discussion/fil-discussion.css.
+   ============================================================================ */
+
+cs-admin-messages {
+  display: block;
+
+  --messages-texte: #1a3a25;
+  --messages-bord: #d4e6d8;
+}
+html.dark cs-admin-messages {
+  --messages-texte: #cfe8d8;
+  --messages-bord: #2d4030;
+}
+
+/* ── Filtres ── */
+cs-admin-messages .contact-filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+cs-admin-messages .contact-filter { background: var(--surface); border: 1.5px solid var(--messages-bord); color: var(--texte-doux); border-radius: 20px; padding: 6px 14px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+cs-admin-messages .contact-filter:hover { border-color: var(--vert); color: var(--vert); }
+cs-admin-messages .contact-filter.active { background: var(--vert); border-color: var(--vert); color: #fff; }
+
+/* ── Un ticket : toute la ligne ouvre la discussion ── */
+cs-admin-messages .ticket { display: block; width: 100%; text-align: left; font: inherit; border: none; cursor: pointer; background: var(--surface); border-radius: 12px; padding: 12px 14px; font-size: 0.82rem; color: var(--messages-texte); box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05); margin-bottom: 10px; }
+/* Le liseré rouge reste rouge dans les deux thèmes : il signale un ticket à répondre. */
+cs-admin-messages .ticket.non-lu { border-left: 4px solid var(--rouge); }
+cs-admin-messages .ticket-sujet { display: block; font-weight: 800; margin-bottom: 2px; }
+cs-admin-messages .ticket-meta { display: block; color: #888; font-size: 0.7rem; margin-bottom: 5px; }
+cs-admin-messages .ticket-arepondre { display: inline-block; background: var(--rouge); color: #fff; font-size: 0.62rem; font-weight: 900; padding: 2px 7px; border-radius: 20px; margin-left: 6px; text-transform: uppercase; }
