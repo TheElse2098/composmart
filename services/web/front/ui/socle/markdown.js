@@ -1,12 +1,12 @@
 /* ============================================================================
    markdown.js — rendu du markdown des cours, assaini.
 
-   Reprend assets/js/markdown-sur.js pour les pages migrées. Les deux doivent
-   produire exactement le même HTML : l'aperçu de l'éditeur d'admin (pas
-   encore migré, il utilise l'ancien fichier) montre ce que verront les
-   lecteurs, et deux moteurs différents mentiraient sur le résultat, en
-   particulier pour le LaTeX et les schémas. Un test compare les deux
-   configurations tant qu'elles coexistent (tests/front/lecteur-cours.test.mjs).
+   Seul moteur de rendu des cours : le lecteur et l'aperçu de l'éditeur
+   d'admin s'en servent tous les deux. C'est ce qui garantit qu'un
+   administrateur voit exactement ce que verront les lecteurs ; deux moteurs
+   différents mentiraient sur le résultat, en particulier pour le LaTeX et les
+   schémas. (Il a remplacé assets/js/markdown-sur.js, supprimé le 17/11/2026,
+   dont il reprend la configuration à l'identique.)
 
    POURQUOI ASSAINIR
    Le markdown des cours contient volontairement du HTML : les schémas dessinés
@@ -68,7 +68,7 @@ let moteur = null;
  *
  * Ne lève jamais : une bibliothèque absente est signalée dans la console, et
  * le rendu se dégrade sans danger (texte brut sans DOMPurify, formules en
- * clair sans KaTeX) — c'était déjà le comportement de markdown-sur.js.
+ * clair sans KaTeX) — c'était déjà le comportement de l'ancien moteur.
  * @returns {Promise<void>}
  */
 export function chargerMoteur() {

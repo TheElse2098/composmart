@@ -6,9 +6,10 @@
    découper à l'ouverture et le recomposer à l'enregistrement — aucune
    conversion de format, donc aucune perte possible sur un aller-retour.
 
-   Reprise exacte de l'ancien éditeur (courses-api/admin-pages/vues/cours.html) :
-   un test compare les deux sur tous les cours de content/cours/
-   (tests/front/admin-editeur.test.mjs). Fonctions pures, sans DOM.
+   Reprise exacte de l'ancien éditeur, remplacé le 17/11/2026 et dont une
+   copie gelée sert de référence : un test compare les deux sur tous les cours
+   de content/cours/ (tests/front/admin-editeur.test.mjs). Fonctions pures,
+   sans DOM.
    ============================================================================ */
 
 /**

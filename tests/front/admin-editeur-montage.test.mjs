@@ -59,7 +59,7 @@ async function stabiliser() {
 const apresApercu = () => new Promise((resoudre) => setTimeout(resoudre, 320));
 
 /** @param {string} [adresse] @param {ReturnType<typeof serveur>} [reseau] */
-async function ouvrir(adresse = '/admin/themes-v2/bases/les-bruns', reseau = serveur()) {
+async function ouvrir(adresse = '/admin/themes/bases/les-bruns', reseau = serveur()) {
   dom.aller(adresse);
   const editeur = dom.monter('<cs-admin-editeur></cs-admin-editeur>');
   await stabiliser();
@@ -85,10 +85,11 @@ afterEach(async () => {
   await dom.stabiliser();
 });
 
-test('routeEditeur : thème et cours lus dans l’adresse, adresse provisoire comprise', () => {
+test('routeEditeur : thème et cours lus dans l’adresse', () => {
   assert.deepEqual(routeEditeur('/admin/themes/bases/les-bruns'), { prefixe: '/admin/themes', theme: 'bases', cours: 'les-bruns' });
-  assert.deepEqual(routeEditeur('/admin/themes-v2/bases/nouveau'), { prefixe: '/admin/themes-v2', theme: 'bases', cours: null });
+  assert.deepEqual(routeEditeur('/admin/themes/bases/nouveau'), { prefixe: '/admin/themes', theme: 'bases', cours: null });
   assert.equal(routeEditeur('/admin/themes'), null);
+  assert.equal(routeEditeur('/admin/themes-v2/bases/les-bruns'), null, 'l’adresse provisoire n’existe plus');
   assert.equal(routeEditeur('/admin/themes/bases'), null);
 });
 
@@ -244,7 +245,7 @@ test('« Publier » bascule le statut, le badge suit la réponse du serveur', as
 });
 
 test('nouveau cours : titre obligatoire, puis l’adresse devient celle du cours', async () => {
-  const { editeur, reseau } = await ouvrir('/admin/themes-v2/bases/nouveau', serveur({ sauver: () => ({ corps: { ok: true, id: 9, slug: 'mon-cours', statut: 'brouillon' } }) }));
+  const { editeur, reseau } = await ouvrir('/admin/themes/bases/nouveau', serveur({ sauver: () => ({ corps: { ok: true, id: 9, slug: 'mon-cours', statut: 'brouillon' } }) }));
   assert.equal(envois(reseau, 'cours_get.php').length, 0);
   assert.equal(editeur.querySelector('h1').textContent, 'Nouveau cours');
   assert.equal(editeur.querySelectorAll('[data-corps]').length, 1);
@@ -265,7 +266,7 @@ test('nouveau cours : titre obligatoire, puis l’adresse devient celle du cours
   assert.equal(corps.id, 0);
   assert.equal(corps.theme_id, 1);
   assert.equal(corps.statut, 'brouillon');
-  assert.equal(g.location.pathname, '/admin/themes-v2/bases/mon-cours');
+  assert.equal(g.location.pathname, '/admin/themes/bases/mon-cours');
   assert.equal(fiche.querySelector('[data-champ="slug"]').disabled, true);
   assert.equal(fiche.querySelector('.carte-suppression').hidden, false);
   assert.equal(editeur.querySelector('h1').textContent, 'Mon cours');
@@ -343,7 +344,7 @@ test('suppression confirmée par l’adresse, retour à la page des thèmes', as
     fiche.querySelector('[data-action="supprimer"]').click();
     await stabiliser();
     assert.deepEqual(demandes.at(-1), { id: 5, confirmation: 'les-bruns' });
-    assert.equal(g.location.href, '/admin/themes-v2');
+    assert.equal(g.location.href, '/admin/themes');
   });
 });
 

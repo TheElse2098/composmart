@@ -48,11 +48,8 @@ import { AdminThemeEdition } from './theme-edition.js';
  * @typedef {{ top: number, left: number, width: number, height: number }} Boite
  */
 
-/**
- * Préfixe des pages de l'éditeur de cours : l'adresse provisoire du nouvel
- * éditeur, le temps de le valider. Redevient /admin/themes à la bascule.
- */
-export const EDITEUR = '/admin/themes-v2';
+/** Préfixe des pages de l'éditeur de cours : /admin/themes/<thème>/<cours>. */
+export const EDITEUR = '/admin/themes';
 
 const COULEUR_PAR_DEFAUT = '#1e6e3e';
 

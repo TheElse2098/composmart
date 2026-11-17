@@ -1,7 +1,8 @@
 /* ============================================================================
    L'éditeur de cours (/admin/themes/<thème>/<cours>) : découpage du texte en
-   panneaux et recomposition, comparés à l'ancien éditeur sur tous les vrais
-   cours ; édition du quiz ; montage de l'éditeur.
+   panneaux et recomposition, comparés à l'ancien éditeur (copie gelée dans
+   reference/) sur tous les vrais cours ; édition du quiz. Le montage :
+   admin-editeur-montage.test.mjs.
    ============================================================================ */
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
@@ -12,24 +13,25 @@ const panneaux = await import('../../services/web/front/ui/admin/cours/panneaux-
 const quiz = await import('../../services/web/front/ui/admin/cours/quiz-edition.js');
 
 const RACINE = new URL('../../', import.meta.url);
-const ANCIEN_EDITEUR = new URL('services/courses-api/admin-pages/vues/cours.html', RACINE);
+/** Copie gelée des fonctions de l'ancien éditeur, remplacé le 17/11/2026. */
+const ANCIEN_EDITEUR = new URL('reference/ancien-editeur-cours.js', import.meta.url);
 const COURS = new URL('content/cours/', RACINE);
 
 /**
- * Les fonctions de l'ancien éditeur, telles qu'écrites dans sa page : du
- * bloc « MARKDOWN ↔ PANNEAUX » jusqu'au bloc « PANNEAUX ».
+ * Les fonctions de l'ancien éditeur, exécutées dans un contexte isolé.
+ * @param {{ sansCorrection?: boolean }} [options]  sansCorrection : telles
+ *   quelles, défaut compris
  * @returns {{ parserMarkdown: (md: string) => any[], composer: (p: any[]) => string }}
  */
-function ancienEditeur() {
-  const source = readFileSync(ANCIEN_EDITEUR, 'utf8');
-  const debut = source.indexOf('var RE_SOURCES');
-  const fin = source.indexOf('/* ══ PANNEAUX');
-  assert.ok(debut > 0 && fin > debut, 'fonctions de l’ancien éditeur introuvables');
+function ancienEditeur({ sansCorrection = false } = {}) {
   /** @type {any} */
-  const contexte = { panneaux: [] };
-  vm.runInNewContext('var panneaux = [];\n' + source.slice(debut, fin) + '\nthis.parserMarkdown = parserMarkdown; this.composerMarkdown = composerMarkdown; this.fixer = function (p) { panneaux = p; };', contexte);
+  const contexte = {};
+  vm.runInNewContext(readFileSync(ANCIEN_EDITEUR, 'utf8') + '\nthis.parserMarkdown = parserMarkdown; this.composerMarkdown = composerMarkdown; this.fixer = function (p) { panneaux = p; };', contexte);
   return {
-    parserMarkdown: (md) => corrige(JSON.parse(JSON.stringify(contexte.parserMarkdown(md)))),
+    parserMarkdown: (md) => {
+      const decoupe = JSON.parse(JSON.stringify(contexte.parserMarkdown(md)));
+      return sansCorrection ? decoupe : corrige(decoupe);
+    },
     composer: (p) => { contexte.fixer(JSON.parse(JSON.stringify(p))); return contexte.composerMarkdown(); },
   };
 }
@@ -103,10 +105,8 @@ test('panneaux : une source sans lien ne gagne plus un tiret à chaque enregistr
   for (let i = 0; i < 3; i++) courant = panneaux.composerPanneaux(panneaux.decouperPanneaux(courant));
   assert.equal(courant, texte);
   // L'ancien éditeur, lui, en ajoutait un à chaque passage.
-  const ancien = ancienEditeur();
-  const brut = readFileSync(ANCIEN_EDITEUR, 'utf8');
-  assert.ok(brut.includes("sources.push({ libelle: l.trim(), url: '' })"), 'défaut de l’ancien éditeur toujours là, pour mémoire');
-  assert.equal(typeof ancien.composer, 'function');
+  const ancien = ancienEditeur({ sansCorrection: true });
+  assert.match(ancien.composer(ancien.parserMarkdown(texte)), /^- - Antoine Doré/m);
 });
 
 test('panneaux : sources ajoutées dans l’éditeur, intitulé ou adresse manquants', () => {

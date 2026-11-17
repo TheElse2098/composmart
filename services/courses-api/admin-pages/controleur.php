@@ -19,8 +19,6 @@
  *   /admin/panel                            → tableau de bord (signalements,
  *                                             ajouts, messages, comptes, journal)
  *   /admin/themes                           → thèmes + organisation des cours
- *   /admin/themes-v2[/<theme>/<cours>]      → les mêmes, refaites en composants
- *                                             (adresse provisoire)
  *   /admin/themes/<theme>/nouveau           → création d'un cours
  *   /admin/themes/<theme>/<cours>           → édition d'un cours existant
  */
@@ -73,15 +71,13 @@ $seg    = $chemin === '' ? [] : array_map('rawurldecode', explode('/', $chemin))
 
 function propre($s) { return preg_replace('/[^a-z0-9\-]/', '', strtolower($s)); }
 
-function rendre($vue, $vars = []) {
+// Les vues ne sont que des coquilles de composants (services/web/front/ui/) :
+// rien à y injecter. Les pages lisent le thème et le cours dans l'adresse,
+// que ce contrôleur a déjà validée en base.
+function rendre($vue) {
     $page = VUES . '/' . $vue;
     if (!is_file($page)) introuvable();
     $html = file_get_contents($page);
-    // Injection des données de route : la page n'a pas à re-parser l'URL, et
-    // les valeurs sont déjà validées en base ici. JSON_HEX_TAG évite qu'un nom
-    // de thème contenant « </script> » ne referme le bloc.
-    $json = json_encode($vars, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-    $html = str_replace('/*__ROUTE__*/', 'window.ROUTE = ' . $json . ';', $html);
     ob_clean();
     header('Content-Type: text/html; charset=utf-8');
     // Page personnalisée par la session : ni cache partagé, ni cache navigateur.
@@ -100,16 +96,11 @@ if (count($seg) === 0) rendre('accueil.html');
 // docs/front.md), et les données ne viennent que des API.
 if ($seg[0] === 'panel' && count($seg) === 1) rendre('panel.html');
 
-// /admin/themes... et /admin/themes-v2... — la seconde est l'adresse
-// provisoire des nouvelles pages (thèmes et éditeur), faites de composants
-// servis par « web » (services/web/front/ui/admin/cours/), le temps de les
-// valider ; /admin/themes reste en service jusqu'à la bascule. Mêmes
-// vérifications pour les deux. Les nouvelles pages lisent le thème et le
-// cours dans l'adresse : les données de route ne leur servent pas.
-if ($seg[0] !== 'themes' && $seg[0] !== 'themes-v2') introuvable();
-$nouvelles = $seg[0] === 'themes-v2';
+// /admin/themes... — la page des thèmes et l'éditeur de cours, faits de
+// composants servis par « web » (services/web/front/ui/admin/cours/).
+if ($seg[0] !== 'themes') introuvable();
 
-if (count($seg) === 1) rendre($nouvelles ? 'themes-v2.html' : 'themes.html');
+if (count($seg) === 1) rendre('themes.html');
 
 // /admin/themes/<theme>/...
 if (count($seg) !== 3) introuvable();
@@ -122,15 +113,7 @@ $theme = $stmt->get_result()->fetch_assoc();
 if (!$theme) introuvable();
 
 // /admin/themes/<theme>/nouveau
-if ($seg[2] === 'nouveau') {
-    rendre($nouvelles ? 'cours-v2.html' : 'cours.html', [
-        'mode'       => 'nouveau',
-        'theme_id'   => (int)$theme['id'],
-        'theme_slug' => $theme_slug,
-        'theme_nom'  => $theme['nom'],
-        'slug'       => null,
-    ]);
-}
+if ($seg[2] === 'nouveau') rendre('cours.html');
 
 // /admin/themes/<theme>/<cours> — le cours doit exister ET appartenir au thème,
 // sinon l'URL n'a pas de sens et vaut une 404 comme une autre.
@@ -141,11 +124,4 @@ $stmt->execute();
 $cours = $stmt->get_result()->fetch_assoc();
 if (!$cours || (int)$cours['theme_id'] !== (int)$theme['id']) introuvable();
 
-rendre($nouvelles ? 'cours-v2.html' : 'cours.html', [
-    'mode'       => 'edition',
-    'theme_id'   => (int)$theme['id'],
-    'theme_slug' => $theme_slug,
-    'theme_nom'  => $theme['nom'],
-    'slug'       => $cours_slug,
-    'cours_id'   => (int)$cours['id'],
-]);
+rendre('cours.html');

@@ -4,9 +4,7 @@
    envoyés au serveur), fin de cours et barre d'XP.
    ============================================================================ */
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { afterEach, test } from 'node:test';
-import vm from 'node:vm';
 import { fauxFetch, installerFauxDom } from './faux-dom.mjs';
 
 const dom = installerFauxDom();
@@ -175,14 +173,15 @@ test('integration : YouTube (court, Shorts, watch) et Vimeo derrière un préfix
 
 // ── Rendu du markdown ───────────────────────────────────────────────────────
 
-test('markdown : même configuration de nettoyage que markdown-sur.js (aperçu de l’éditeur)', () => {
-  const source = readFileSync(new URL('../../services/web/front/assets/js/markdown-sur.js', import.meta.url), 'utf8');
-  /** @type {unknown} */
-  let config = null;
-  const contexte = { window: {}, marked: { parse: (/** @type {string} */ t) => t }, DOMPurify: { sanitize: (/** @type {string} */ h, /** @type {unknown} */ c) => { config = c; return h; } } };
-  vm.runInNewContext(source, contexte);
-  /** @type {any} */ (contexte.window).MarkdownSur.rendre('x');
-  assert.deepEqual(JSON.parse(JSON.stringify(config)), markdown.NETTOYAGE);
+test('markdown : configuration de nettoyage figée (celle de l’ancien moteur, à ne relâcher que sciemment)', () => {
+  // Toute balise ou tout attribut ajouté ici passe dans les cours de tous les
+  // lecteurs : ce test oblige à le décider, pas à le laisser filer.
+  assert.deepEqual(markdown.NETTOYAGE, {
+    ADD_TAGS: ['figure', 'figcaption'],
+    ADD_ATTR: ['class', 'style', 'colspan', 'rowspan', 'target', 'rel'],
+    FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'link', 'meta', 'base'],
+    FORBID_ATTR: ['srcdoc', 'formaction', 'ping'],
+  });
 });
 
 test('markdown : sortie de DOMPurify telle quelle ; sans DOMPurify, texte échappé', () => {

@@ -36,7 +36,7 @@ import { questionsDuServeur } from './quiz-edition.js';
  * @typedef {{ id: number }} ContexteEditeur
  *
  * @typedef {object} Route
- * @property {string} prefixe  `/admin/themes`, ou l'adresse provisoire `/admin/themes-v2`
+ * @property {string} prefixe  `/admin/themes`, la page des thèmes
  * @property {string} theme    slug du thème
  * @property {string | null} cours  slug du cours ; null pour un nouveau cours
  *
@@ -57,7 +57,7 @@ const ONGLETS = [
  * @returns {Route | null}
  */
 export function routeEditeur(chemin) {
-  const m = /^(\/admin\/themes(?:-v2)?)\/([^/]+)\/([^/]+)\/?$/.exec(chemin);
+  const m = /^(\/admin\/themes)\/([^/]+)\/([^/]+)\/?$/.exec(chemin);
   if (!m) return null;
   return { prefixe: m[1], theme: decodeURIComponent(m[2]), cours: m[3] === 'nouveau' ? null : decodeURIComponent(m[3]) };
 }
