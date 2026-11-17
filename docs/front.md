@@ -473,7 +473,11 @@ en une livraison à part : la bascule.
 Plusieurs pages qui se ressemblent partagent une classe de base dans leur
 dossier : les six pages d'authentification (`ui/pages/auth/`) héritent de
 `CarteAuth` (`carte-auth.js` : la carte, les messages, le bouton 👁 des mots
-de passe) et ne gardent que leur formulaire et leurs envois.
+de passe) et ne gardent que leur formulaire et leurs envois. Les quatre
+mini-jeux (`ui/pages/jeu/`) héritent de `Jeu` (`jeu.js` : chargement du jeu,
+en-tête, écran de fin, score enregistré, top 5, attentes annulées si la page
+est quittée) et n'écrivent que leur mécanique : `gabaritZone()`,
+`preparer()`, `nouvellePartie()`, puis `this.terminer(score)`.
 
 Exemple de page découpée en parties : `ui/pages/compte/` — la page
 (`compte.js`) n'affiche que ce qui est simple ; chaque partie qui a son propre

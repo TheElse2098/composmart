@@ -1,0 +1,71 @@
+/* ============================================================================
+   mot-mystere.css — ce qui est propre à <cs-mot-mystere> : l'indice, les
+   cases du mot, les tuiles de lettres. Le reste : jeu.css.
+   ============================================================================ */
+
+cs-mot-mystere {
+  display: block;
+
+  --mot-case-fond: #f6faf6;
+  --mot-case-bord: #c8dfc8;
+  --mot-case-texte: #1a3a25;
+  --mot-case-remplie: #e8f5e9;
+  --mot-case-ratee: #ffebee;
+  --mot-case-juste: #c8e6c9;
+  --mot-effacer-fond: #eef4ec;
+  --mot-effacer-texte: #1e6e3e;
+  --mot-passer-fond: #fff8e1;
+  --mot-passer-texte: #b26a00;
+}
+html.dark cs-mot-mystere {
+  --mot-case-fond: #1e2d22;
+  --mot-case-bord: #3a5c42;
+  --mot-case-texte: #e8f5ee;
+  --mot-case-remplie: #1e3a26;
+  --mot-case-ratee: #3d1a1a;
+  --mot-case-juste: #1e3a26;
+  --mot-effacer-fond: #1e2d22;
+  --mot-effacer-texte: #7fc99a;
+  --mot-passer-fond: #2e2410;
+  --mot-passer-texte: #e8b931;
+}
+
+/* Un peu moins de marge que les autres jeux (.jeu : sélecteur assez précis pour l'emporter sur jeu.css). */
+cs-mot-mystere.jeu .game-card { padding: 22px 18px; }
+cs-mot-mystere .indice { font-size: 0.9rem; color: #4a7a5a; font-weight: 700; line-height: 1.45; min-height: 42px; }
+cs-mot-mystere .indice b { color: var(--vert); }
+
+/* ── Les cases du mot ── */
+cs-mot-mystere .slots { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin: 20px 0 16px; }
+cs-mot-mystere .slot {
+  width: 38px; height: 44px; border-radius: 10px;
+  border: 2px dashed var(--mot-case-bord); background: var(--mot-case-fond);
+  font-family: var(--police-titre); font-size: 1.3rem; font-weight: 900; color: var(--mot-case-texte);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.15s;
+}
+cs-mot-mystere .slot.filled { border-style: solid; border-color: #1e6e3e; background: var(--mot-case-remplie); }
+cs-mot-mystere .slots.good .slot { border-color: #1e6e3e; background: var(--mot-case-juste); }
+cs-mot-mystere .slots.bad .slot { border-color: #e53935; background: var(--mot-case-ratee); animation: mot-secouer 0.4s; }
+@keyframes mot-secouer {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* ── Les tuiles de lettres ── */
+cs-mot-mystere .tiles { display: flex; justify-content: center; gap: 7px; flex-wrap: wrap; }
+cs-mot-mystere .tile {
+  width: 42px; height: 48px; border-radius: 10px; border: none;
+  background: var(--vert); color: #fff;
+  font-family: var(--police-titre); font-size: 1.35rem; font-weight: 900;
+  cursor: pointer; transition: all 0.15s;
+  box-shadow: 0 3px 0 #14502c;
+}
+cs-mot-mystere .tile:hover:not(:disabled) { transform: translateY(-2px); }
+cs-mot-mystere .tile:disabled { opacity: 0.25; cursor: default; box-shadow: none; }
+
+cs-mot-mystere .game-actions { display: flex; justify-content: center; gap: 10px; margin-top: 18px; }
+cs-mot-mystere .game-actions button { border: none; border-radius: 20px; padding: 8px 16px; font-size: 0.8rem; font-weight: 800; cursor: pointer; font-family: inherit; }
+cs-mot-mystere .btn-effacer { background: var(--mot-effacer-fond); color: var(--mot-effacer-texte); }
+cs-mot-mystere .btn-passer { background: var(--mot-passer-fond); color: var(--mot-passer-texte); }

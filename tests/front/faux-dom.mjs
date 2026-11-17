@@ -356,6 +356,22 @@ export class FauxElement {
     return true;
   }
 
+  // Mesures : aucune mise en page ici, un test les fixe s'il en a besoin.
+  /** Le rectangle de l'élément à l'écran ; un test le fixe dans `rectangle`.
+   *  @type {{ left: number, top: number, right: number, bottom: number, width: number, height: number }} */
+  rectangle = { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 };
+  getBoundingClientRect() { return this.rectangle; }
+  get offsetWidth() { return this.rectangle.width; }
+
+  /** Les pointeurs capturés par l'élément. @type {Set<number>} */
+  captures = new Set();
+  /** @param {number} pointeur */
+  setPointerCapture(pointeur) { this.captures.add(pointeur); }
+  /** @param {number} pointeur */
+  releasePointerCapture(pointeur) {
+    if (!this.captures.delete(pointeur)) throw new Error('NotFoundError : pointeur non capturé');
+  }
+
   /** Un clic, comme celui d'un visiteur : il remonte jusqu'aux écoutes des parents. */
   click() {
     this.dispatchEvent(new FauxEvenement('click'));
@@ -653,6 +669,23 @@ export function installerFauxDom() {
   g.HTMLScriptElement = HTMLScriptElement;
   g.CustomEvent = FauxEvenement;
   g.KeyboardEvent = class KeyboardEvent extends FauxEvenement {};
+  /** Un geste de souris ou de doigt, à une position de l'écran. */
+  g.PointerEvent = class PointerEvent extends FauxEvenement {
+    /** @param {string} type @param {{ pointerId?: number, clientX?: number, clientY?: number }} [options] */
+    constructor(type, options = {}) {
+      super(type);
+      this.pointerId = options.pointerId ?? 1;
+      this.clientX = options.clientX ?? 0;
+      this.clientY = options.clientY ?? 0;
+    }
+  };
+  // Le style calculé : celui écrit sur l'élément, faute de vraie mise en page.
+  g.getComputedStyle = (/** @type {FauxElement} */ element) => ({ width: element.style.width || '0px' });
+  // La fenêtre elle-même reçoit des évènements (resize).
+  const fenetre = new FauxElement('#window');
+  g.addEventListener = fenetre.addEventListener.bind(fenetre);
+  g.removeEventListener = fenetre.removeEventListener.bind(fenetre);
+  g.dispatchEvent = fenetre.dispatchEvent.bind(fenetre);
   g.document = document;
   g.window = g;
   g.location = { pathname: '/', search: '' };

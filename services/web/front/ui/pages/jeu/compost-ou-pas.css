@@ -1,0 +1,29 @@
+/* ============================================================================
+   compost-ou-pas.css — ce qui est propre à <cs-compost-ou-pas> : le nom du
+   déchet et les trois boutons de réponse. Le reste : jeu.css.
+   ============================================================================ */
+
+cs-compost-ou-pas {
+  display: block;
+
+  --compost-nom: #1a3a25;
+}
+html.dark cs-compost-ou-pas {
+  --compost-nom: #e8f5ee;
+}
+
+cs-compost-ou-pas .item-nom { font-family: var(--police-titre); font-size: 1.25rem; font-weight: 900; color: var(--compost-nom); min-height: 36px; }
+
+/* Trois choix qui se partagent la largeur (min-width: 0, sinon un bouton
+   refuse de descendre sous la largeur de son texte et déborde), en colonne
+   sur les petits écrans où trois côte à côte deviennent illisibles. */
+cs-compost-ou-pas .choices { display: flex; justify-content: center; gap: 9px; margin-top: 20px; }
+cs-compost-ou-pas .choices button { border: none; border-radius: 16px; padding: 13px 10px; font-family: var(--police-titre); font-size: 0.92rem; font-weight: 900; cursor: pointer; transition: transform 0.12s; flex: 1; min-width: 0; color: #fff; }
+cs-compost-ou-pas .choices button:hover { transform: translateY(-2px); }
+cs-compost-ou-pas .choices button:disabled { opacity: 0.45; cursor: default; transform: none; }
+cs-compost-ou-pas .btn-oui { background: #1e6e3e; box-shadow: 0 3px 0 #14502c; }
+cs-compost-ou-pas .btn-attention { background: #ef8f1c; box-shadow: 0 3px 0 #b96a09; }
+cs-compost-ou-pas .btn-non { background: #e53935; box-shadow: 0 3px 0 #a02622; }
+@media (max-width: 430px) {
+  cs-compost-ou-pas .choices { flex-direction: column; }
+}

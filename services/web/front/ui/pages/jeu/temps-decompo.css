@@ -1,0 +1,85 @@
+/* ============================================================================
+   temps-decompo.css — ce qui est propre à <cs-temps-decompo> : la question et
+   le curseur sur l'échelle des durées. Le reste : jeu.css.
+   ============================================================================ */
+
+cs-temps-decompo {
+  display: block;
+
+  --temps-question: #1a3a25;
+  --temps-ligne: #c8e6c9;
+  --temps-repere: #4a7a5a;
+}
+html.dark cs-temps-decompo {
+  --temps-question: #e8f5ee;
+  --temps-ligne: #2d4030;
+  --temps-repere: #7fc99a;
+}
+
+cs-temps-decompo .item-question { font-family: var(--police-titre); font-size: 1.1rem; font-weight: 900; color: var(--temps-question); min-height: 52px; line-height: 1.35; padding: 0 4px; }
+
+/* ── Curseur ── */
+cs-temps-decompo .slider-zone { margin: 26px 0 6px; }
+cs-temps-decompo .bubble-wrap { text-align: left; height: 44px; }
+cs-temps-decompo .bubble {
+  display: inline-block; position: relative; left: 0;
+  background: var(--vert); color: #fff; font-family: var(--police-titre);
+  font-size: 0.95rem; font-weight: 900; padding: 6px 14px; border-radius: 14px;
+  transform: translateX(-50%); white-space: nowrap; margin-bottom: 10px;
+  transition: background 0.2s;
+}
+cs-temps-decompo .bubble::after {
+  content: ''; position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: var(--vert); border-bottom: none;
+}
+cs-temps-decompo .track-wrap { position: relative; padding: 6px 0 2px; }
+cs-temps-decompo input[type=range] {
+  -webkit-appearance: none; appearance: none; width: 100%;
+  height: 8px; border-radius: 4px; background: var(--temps-ligne); outline: none; display: block;
+  cursor: pointer;
+}
+/* Pion large : facile à attraper au doigt comme à la souris. Sa largeur est
+   reprise dans temps-decompo.js (PION). */
+cs-temps-decompo input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 46px; height: 46px; border-radius: 50%;
+  background: var(--vert); border: 5px solid #fff;
+  box-shadow: 0 3px 10px rgba(30, 110, 62, 0.45); cursor: grab;
+}
+cs-temps-decompo input[type=range]:active::-webkit-slider-thumb { cursor: grabbing; }
+cs-temps-decompo input[type=range]::-moz-range-thumb {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: var(--vert); border: 5px solid #fff;
+  box-shadow: 0 3px 10px rgba(30, 110, 62, 0.45); cursor: grab;
+}
+cs-temps-decompo input[type=range]:disabled::-webkit-slider-thumb { background: #9bb8a5; cursor: default; }
+cs-temps-decompo input[type=range]:disabled::-moz-range-thumb { background: #9bb8a5; cursor: default; }
+
+/* La vraie réponse, posée sur la ligne après validation */
+cs-temps-decompo .true-marker {
+  position: absolute; top: -14px; transform: translateX(-50%);
+  font-size: 1.5rem; line-height: 1; display: none; pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+}
+cs-temps-decompo .true-marker.show { display: block; animation: temps-tomber 0.45s cubic-bezier(0.2, 1.4, 0.4, 1); }
+@keyframes temps-tomber {
+  from { opacity: 0; transform: translateX(-50%) translateY(-14px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+cs-temps-decompo .ticks { position: relative; height: 34px; margin-top: 8px; }
+cs-temps-decompo .tick { position: absolute; transform: translateX(-50%); text-align: center; font-size: 0.68rem; font-weight: 800; color: var(--temps-repere); white-space: nowrap; }
+cs-temps-decompo .tick::before { content: ''; display: block; width: 2px; height: 8px; background: #9bb8a5; margin: 0 auto 3px; border-radius: 1px; }
+
+/* ── Boutons ── */
+cs-temps-decompo .btn-valider,
+cs-temps-decompo .btn-continuer {
+  border: none; border-radius: 16px; font-family: var(--police-titre); font-weight: 900; cursor: pointer;
+  background: var(--vert); color: #fff; box-shadow: 0 3px 0 #14502c;
+}
+cs-temps-decompo .btn-valider { padding: 14px 34px; margin-top: 16px; font-size: 1rem; transition: transform 0.12s; }
+cs-temps-decompo .btn-valider:hover:not(:disabled) { transform: translateY(-2px); }
+cs-temps-decompo .btn-valider:disabled { opacity: 0.45; cursor: default; transform: none; }
+cs-temps-decompo .btn-continuer { padding: 12px 28px; margin-top: 14px; font-size: 0.95rem; }
+cs-temps-decompo .btn-valider[hidden],
+cs-temps-decompo .btn-continuer[hidden] { display: none; }

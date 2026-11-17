@@ -1,0 +1,23 @@
+/* ============================================================================
+   barre-jeu.css — habillage de <cs-barre-jeu>.
+   ============================================================================ */
+
+cs-barre-jeu {
+  display: block;
+  width: 100%;
+
+  --barre-jeu-fond: #1e6e3e;
+}
+html.dark cs-barre-jeu {
+  --barre-jeu-fond: #174f30;
+}
+
+cs-barre-jeu .barre-jeu { width: 100%; background: var(--barre-jeu-fond); display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
+cs-barre-jeu .barre-jeu__logo { font-family: var(--police-titre); font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; text-transform: uppercase; font-style: italic; text-decoration: none; }
+cs-barre-jeu .barre-jeu__logo span { color: var(--menthe); }
+cs-barre-jeu .barre-jeu__droite { display: flex; align-items: center; gap: 12px; }
+cs-barre-jeu .barre-jeu__compte { color: rgba(255, 255, 255, 0.85); font-size: 1.3rem; text-decoration: none; line-height: 1; }
+cs-barre-jeu .barre-jeu__compte:hover { color: #fff; }
+cs-barre-jeu .barre-jeu__theme { background: none; border: none; cursor: pointer; font-size: 1.15rem; padding: 4px; line-height: 1; opacity: 0.85; transition: opacity 0.15s; }
+cs-barre-jeu .barre-jeu__theme:hover { opacity: 1; }
+cs-barre-jeu .barre-jeu__quitter { color: #fff; font-size: 0.82rem; font-weight: 800; text-decoration: none; }

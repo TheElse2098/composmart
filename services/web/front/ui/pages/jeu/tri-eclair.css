@@ -1,0 +1,51 @@
+/* ============================================================================
+   tri-eclair.css — ce qui est propre à <cs-tri-eclair> : le chrono, le
+   déchet à glisser, les trois bacs. Le reste : jeu.css.
+   ============================================================================ */
+
+cs-tri-eclair {
+  display: block;
+
+  --tri-chrono-fond: #eef4ec;
+  --tri-nom: #1a3a25;
+}
+html.dark cs-tri-eclair {
+  --tri-chrono-fond: #1e2d22;
+  --tri-nom: #e8f5ee;
+}
+
+/* ── Chrono : une transition CSS sur la largeur, lancée par le script ── */
+cs-tri-eclair .timer-wrap { width: 100%; height: 8px; background: var(--tri-chrono-fond); border-radius: 10px; overflow: hidden; }
+cs-tri-eclair .timer-bar { height: 100%; width: 100%; background: linear-gradient(90deg, #1e6e3e, #52b788); border-radius: 10px; }
+
+/* ── Le déchet à glisser ── */
+cs-tri-eclair .item-chip-slot { display: flex; justify-content: center; margin: 14px 0 4px; }
+cs-tri-eclair .item-chip {
+  /* touch-action: none est indispensable : sans lui, un doigt qui commence à
+     glisser l'objet fait défiler la page sur mobile. user-select: none évite
+     de sélectionner le nom pendant le geste. */
+  cursor: grab; touch-action: none; user-select: none;
+  padding: 8px 14px; border-radius: 16px;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+cs-tri-eclair .item-chip.en-cours { cursor: grabbing; z-index: 500; box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28); transform: scale(1.08) rotate(-2deg); }
+cs-tri-eclair .item-nom { font-family: var(--police-titre); font-size: 1.2rem; font-weight: 900; color: var(--tri-nom); min-height: 30px; }
+
+/* ── Les bacs ── */
+cs-tri-eclair .bacs { display: flex; gap: 9px; margin-top: 16px; }
+cs-tri-eclair .bac {
+  flex: 1; min-width: 0; border: none; border-radius: 16px; padding: 13px 6px;
+  font-family: var(--police-titre); font-weight: 900; font-size: 0.78rem; color: #fff;
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: transform 0.12s; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18);
+}
+cs-tri-eclair .bac-emoji { font-size: 1.5rem; }
+cs-tri-eclair .bac:hover,
+cs-tri-eclair .bac.survole { transform: translateY(-3px) scale(1.05); }
+cs-tri-eclair .bac:disabled { opacity: 0.5; cursor: default; transform: none; }
+cs-tri-eclair .bac-compost { background: #1e6e3e; }
+cs-tri-eclair .bac-recyclage { background: #f9a825; }
+cs-tri-eclair .bac-poubelle { background: #e53935; }
+
+/* Le retour, un peu plus serré qu'ailleurs (.jeu : pour l'emporter sur jeu.css). */
+cs-tri-eclair.jeu .feedback { margin-top: 14px; padding: 11px 14px; line-height: 1.4; min-height: 20px; }

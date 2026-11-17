@@ -1,0 +1,109 @@
+/* ============================================================================
+   jeu.css — ce que les quatre mini-jeux ont en commun : en-tête, carte de
+   jeu, barre d'état, retours après une réponse, écran de fin.
+
+   Chargée par la classe de base (jeu.js), qui pose la classe `jeu` sur la
+   balise de chaque jeu : toutes les règles sont sous `.jeu`. Ce qui est
+   propre à un jeu est dans sa feuille (compost-ou-pas.css…).
+   ============================================================================ */
+
+.jeu {
+  display: block; width: 100%; padding-bottom: 70px;
+
+  --jeu-titre: #1a3a25;
+  --jeu-pastille-fond: #a8e6bf;
+  --jeu-pastille-texte: #1a3a25;
+  --jeu-carte: #fff;
+  --jeu-regle: #7a8f80;
+  --jeu-regle-fort: #ef8f1c;
+  --jeu-ok-fond: #e8f5e9;
+  --jeu-ok-texte: #1e6e3e;
+  --jeu-moyen-fond: #fff8e1;
+  --jeu-moyen-texte: #b26a00;
+  --jeu-ko-fond: #ffebee;
+  --jeu-ko-texte: #c0392b;
+  --jeu-record-fond: #fff9c4;
+  --jeu-record-texte: #b26a00;
+  --jeu-ligne-paire: #f6faf6;
+  --jeu-classement: #1a3a25;
+  --jeu-creux: #eef4ec;
+  --jeu-retour-texte: #1e6e3e;
+  --jeu-inscription-fond: #fff;
+  --jeu-inscription-texte: #1e6e3e;
+  --jeu-inscription-bord: #a8e6bf;
+}
+html.dark .jeu {
+  --jeu-titre: #e8f5ee;
+  --jeu-pastille-fond: #243328;
+  --jeu-pastille-texte: #7ab88e;
+  --jeu-carte: #16211a;
+  --jeu-regle: #7ab88e;
+  --jeu-regle-fort: #f0a94a;
+  --jeu-ok-fond: #16291c;
+  --jeu-ok-texte: #7fc99a;
+  --jeu-moyen-fond: #2e2410;
+  --jeu-moyen-texte: #e8b931;
+  --jeu-ko-fond: #3d1a1a;
+  --jeu-ko-texte: #ef9a9a;
+  --jeu-record-fond: #2e2410;
+  --jeu-record-texte: #e8b931;
+  --jeu-ligne-paire: #1e2d22;
+  --jeu-classement: #e8f5ee;
+  --jeu-creux: #1e2d22;
+  --jeu-retour-texte: #7fc99a;
+  --jeu-inscription-fond: #1e2d22;
+  --jeu-inscription-texte: #52b788;
+  --jeu-inscription-bord: #2d4030;
+}
+
+/* ── En-tête ── */
+.jeu .hero { text-align: center; padding: 24px 20px 10px; }
+.jeu .hero-badge { display: inline-block; background: var(--jeu-pastille-fond); color: var(--jeu-pastille-texte); font-size: 0.82rem; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.jeu h1 { font-family: var(--police-titre); font-size: clamp(1.4rem, 5vw, 2rem); font-weight: 900; color: var(--jeu-titre); }
+/* Même couleurs dans les deux thèmes : un avertissement pour l'administrateur. */
+.jeu .jeu-brouillon { display: block; width: fit-content; margin: 10px auto 0; background: #fff3e0; color: #b26a00; font-weight: 800; font-size: 0.8rem; padding: 6px 14px; border-radius: 14px; }
+.jeu .jeu-brouillon[hidden] { display: none; }
+
+/* ── Carte de jeu ── */
+.jeu .page-content { width: 100%; max-width: 520px; margin: 0 auto; padding: 0 16px; }
+.jeu .game-status { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: 800; color: #4a7a5a; padding: 10px 4px; }
+.jeu .game-card { background: var(--jeu-carte); border-radius: 18px; padding: 26px 18px; box-shadow: 0 2px 12px rgba(30, 110, 62, 0.1); text-align: center; }
+.jeu .jeu-etat { text-align: center; padding: 36px 12px; font-weight: 700; color: #4a7a5a; line-height: 1.6; }
+.jeu .jeu-etat a { color: var(--vert); font-weight: 800; }
+.jeu .item-emoji { font-size: 4rem; margin: 6px 0 4px; }
+
+/* Consigne sous la zone de jeu */
+.jeu .regle { font-size: 0.76rem; font-weight: 700; color: var(--jeu-regle); line-height: 1.45; margin-top: 14px; }
+.jeu .regle b { color: var(--jeu-regle-fort); }
+
+/* Retour après une réponse : bon, à moitié, raté */
+.jeu .feedback { margin-top: 16px; border-radius: 14px; padding: 12px 14px; font-size: 0.84rem; font-weight: 700; line-height: 1.45; display: none; text-align: left; }
+.jeu .feedback.ok { display: block; background: var(--jeu-ok-fond); color: var(--jeu-ok-texte); border-left: 4px solid #1e6e3e; }
+.jeu .feedback.mid { display: block; background: var(--jeu-moyen-fond); color: var(--jeu-moyen-texte); border-left: 4px solid #f9a825; }
+.jeu .feedback.ko { display: block; background: var(--jeu-ko-fond); color: var(--jeu-ko-texte); border-left: 4px solid #e53935; }
+
+/* ── Écran de fin ── */
+.jeu .end-screen { text-align: center; }
+.jeu .end-emoji { font-size: 3.2rem; margin: 8px 0; }
+.jeu .end-score { font-family: var(--police-titre); font-size: 2rem; font-weight: 900; color: var(--vert); }
+.jeu .end-msg { font-size: 0.9rem; color: #4a7a5a; font-weight: 700; margin: 6px 0 14px; }
+.jeu .end-record { display: inline-block; background: var(--jeu-record-fond); color: var(--jeu-record-texte); font-size: 0.78rem; font-weight: 800; padding: 5px 14px; border-radius: 14px; margin-bottom: 12px; }
+.jeu .end-xp { display: inline-block; background: var(--jeu-ok-fond); color: var(--jeu-ok-texte); font-size: 0.78rem; font-weight: 800; padding: 5px 14px; border-radius: 14px; margin-bottom: 12px; margin-left: 6px; }
+.jeu .end-record[hidden],
+.jeu .end-xp[hidden] { display: none; }
+.jeu .leaderboard { text-align: left; margin: 14px auto 0; max-width: 300px; }
+.jeu .lb-title { font-family: var(--police-titre); font-size: 0.9rem; font-weight: 900; color: var(--jeu-classement); margin-bottom: 8px; text-align: center; }
+.jeu .lb-row { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 700; color: var(--jeu-classement); padding: 5px 10px; border-radius: 8px; }
+.jeu .lb-row:nth-child(even) { background: var(--jeu-ligne-paire); }
+.jeu .end-actions { display: flex; justify-content: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.jeu .end-actions a,
+.jeu .end-actions button { border: none; border-radius: 20px; padding: 10px 20px; text-decoration: none; font-family: var(--police-titre); font-size: 0.88rem; font-weight: 900; cursor: pointer; }
+.jeu .btn-rejouer { background: var(--vert); color: #fff; }
+.jeu .btn-retour { background: var(--jeu-creux); color: var(--jeu-retour-texte); }
+
+/* Visiteur : se connecter pour garder son score */
+.jeu .save-info { background: var(--jeu-creux); border-radius: 16px; padding: 16px; margin-top: 14px; text-align: center; }
+.jeu .save-info-text { font-size: 0.84rem; color: #4a7a5a; font-weight: 700; margin-bottom: 12px; }
+.jeu .save-info-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.jeu .save-info-btn-login { display: inline-block; background: linear-gradient(135deg, #1e6e3e, #2d9959); color: #fff; font-family: var(--police-titre); font-weight: 900; font-size: 0.85rem; padding: 9px 18px; border-radius: 12px; text-decoration: none; box-shadow: 0 2px 8px rgba(30, 110, 62, 0.3); }
+.jeu .save-info-btn-register { display: inline-block; background: var(--jeu-inscription-fond); color: var(--jeu-inscription-texte); border: 2px solid var(--jeu-inscription-bord); font-family: var(--police-titre); font-weight: 900; font-size: 0.85rem; padding: 8px 16px; border-radius: 12px; text-decoration: none; }
