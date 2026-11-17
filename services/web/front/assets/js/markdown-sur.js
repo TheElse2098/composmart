@@ -1,10 +1,12 @@
 /* ============================================================================
    markdown-sur.js — rendu du markdown des cours, assaini.
 
-   Partagé par la page de lecture (cours-detail.html) et par l'aperçu de
-   l'éditeur d'admin : c'est ce qui garantit qu'un administrateur voit
-   exactement ce que verront les lecteurs. Deux moteurs différents mentiraient
-   sur le résultat, en particulier pour le LaTeX et les schémas.
+   Ne sert plus qu'à l'aperçu de l'éditeur d'admin (vues/cours.html). Le
+   lecteur de cours utilise ui/socle/markdown.js depuis la refonte du front ;
+   un test (tests/front/lecteur-cours.test.mjs) vérifie que les deux
+   configurations de nettoyage restent identiques, pour qu'un administrateur
+   voie exactement ce que verront les lecteurs. Ce fichier disparaîtra avec
+   la migration de l'éditeur (phase 7b).
 
    POURQUOI ASSAINIR
    Le markdown des cours contient volontairement du HTML : les schémas dessinés

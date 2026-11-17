@@ -63,7 +63,7 @@ const QUIZ = [
 ];
 
 /**
- * Monte le lecteur sur /cours-v2/<slug>.
+ * Monte le lecteur sur /cours/<slug>.
  * @param {{ cours?: any, moi?: any, complete?: any, slug?: string }} [options]
  */
 async function monterLecteur({ cours = {}, moi = MEMBRE, complete = { corps: { success: true, xp_earned: 0, score: null } }, slug = 'compost' } = {}) {
@@ -72,7 +72,7 @@ async function monterLecteur({ cours = {}, moi = MEMBRE, complete = { corps: { s
     '/api/cours/get.php': 'statut' in cours ? cours : { corps: { slug, meta: { titre: 'Le compost', emoji: '🌱', niveau: 'debutant', xp: 20 }, texte: TEXTE, ...cours } },
     '/api/cours/complete.php': complete,
   });
-  dom.aller('/cours-v2/' + slug);
+  dom.aller('/cours/' + slug);
   const lecteur = dom.monter('<cs-lecteur-cours></cs-lecteur-cours>');
   await stabiliser();
   return { lecteur, reseau };
@@ -88,9 +88,10 @@ afterEach(async () => {
 
 // ── Fonctions pures ─────────────────────────────────────────────────────────
 
-test('slugDe : /cours/<slug> et l’adresse provisoire /cours-v2/<slug>, rien d’autre', () => {
+test('slugDe : /cours/<slug>, rien d’autre', () => {
   assert.equal(slugDe('/cours/le-compost'), 'le-compost');
-  assert.equal(slugDe('/cours-v2/le-compost/'), 'le-compost');
+  assert.equal(slugDe('/cours/le-compost/'), 'le-compost');
+  assert.equal(slugDe('/cours-v2/le-compost'), '');
   assert.equal(slugDe('/cours'), '');
   assert.equal(slugDe('/cours/a/b'), '');
   assert.equal(slugDe('/cours-detail'), '');
@@ -338,7 +339,7 @@ test('lecteur : cours inconnu, panne, adresse sans cours', async () => {
   });
   dom.vider();
   const reseau = serveur({});
-  dom.aller('/cours-v2/');
+  dom.aller('/cours/');
   const lecteur = dom.monter('<cs-lecteur-cours></cs-lecteur-cours>');
   await stabiliser();
   assert.equal(lecteur.querySelector('.introuvable h1').textContent, 'Cours introuvable');

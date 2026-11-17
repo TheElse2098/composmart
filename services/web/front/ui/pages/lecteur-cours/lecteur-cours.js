@@ -50,13 +50,12 @@ import { QuizCours } from './quiz-cours.js';
 const NIVEAUX = { debutant: '🌿 Débutant', intermediaire: '🌿 Intermédiaire', expert: '🔥 Expert' };
 
 /**
- * Le cours demandé par l'adresse : `/cours/<slug>`. `/cours-v2/<slug>` est
- * l'adresse provisoire de cette page, le temps de la valider.
+ * Le cours demandé par l'adresse : `/cours/<slug>`.
  * @param {string} chemin
  * @returns {string}  vide si l'adresse ne désigne pas un cours
  */
 export function slugDe(chemin) {
-  const m = /^\/cours(?:-v2)?\/([^/]+)\/?$/.exec(chemin);
+  const m = /^\/cours\/([^/]+)\/?$/.exec(chemin);
   return m ? m[1] : '';
 }
 
