@@ -19,6 +19,8 @@
  *   /admin/panel                            → tableau de bord (signalements,
  *                                             ajouts, messages, comptes, journal)
  *   /admin/themes                           → thèmes + organisation des cours
+ *   /admin/themes-v2                        → la même, refaite en composants
+ *                                             (adresse provisoire)
  *   /admin/themes/<theme>/nouveau           → création d'un cours
  *   /admin/themes/<theme>/<cours>           → édition d'un cours existant
  */
@@ -97,6 +99,11 @@ if (count($seg) === 0) rendre('accueil.html');
 // composants servis par « web » (services/web/front/ui/admin/panel/, cf.
 // docs/front.md), et les données ne viennent que des API.
 if ($seg[0] === 'panel' && count($seg) === 1) rendre('panel.html');
+
+// /admin/themes-v2 — adresse provisoire de la nouvelle page des thèmes, faite
+// de composants servis par « web » (services/web/front/ui/admin/cours/), le
+// temps de la valider ; /admin/themes reste en service jusqu'à la bascule.
+if ($seg[0] === 'themes-v2' && count($seg) === 1) rendre('themes-v2.html');
 
 // /admin/themes...
 if ($seg[0] !== 'themes') introuvable();

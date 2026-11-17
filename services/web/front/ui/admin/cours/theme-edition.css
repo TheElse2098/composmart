@@ -1,0 +1,15 @@
+/* ============================================================================
+   theme-edition.css — habillage de <cs-admin-theme-edition> : l'aperçu du
+   dégradé et le bouton de suppression. Le cadre (fond, boîte, titre, champs,
+   boutons du bas) est commun à toutes les fenêtres : styles/fenetre.css.
+   ============================================================================ */
+
+cs-admin-theme-edition { display: block; }
+
+cs-admin-theme-edition textarea.fenetre__champ { resize: vertical; }
+cs-admin-theme-edition .fenetre__champ:disabled { opacity: 0.6; cursor: not-allowed; }
+cs-admin-theme-edition .apercu-couleur { height: 34px; margin-top: 6px; border-radius: 9px; }
+
+cs-admin-theme-edition .theme-suppression[hidden] { display: none; }
+cs-admin-theme-edition .theme-supprimer { background: #c0392b; color: #fff; }
+cs-admin-theme-edition .theme-supprimer:hover { background: #a5301f; }

@@ -1,0 +1,114 @@
+/* ============================================================================
+   themes.css — habillage de <cs-admin-themes> (page /admin/themes) : en-tête,
+   boutons, grille des thèmes, cours à faire glisser.
+   ============================================================================ */
+
+cs-admin-themes {
+  display: block;
+  padding-bottom: 40px;
+
+  --th-vert-survol: #17572f;
+  --th-clair-bord: #a8e6bf;
+  --th-clair-survol: #e4f6ea;
+  --th-modifie: #b26a00;
+  --th-ombre: 0 2px 12px rgba(30, 110, 62, 0.09);
+  --th-survol-fond: #e4f6ea;
+  --th-survol-trait: #52b788;
+  --th-vide: #9ab3a4;
+  --th-cours-fond: #f6faf6;
+  --th-cours-bord: #e0eee4;
+  --th-cours-survol: #a8e6bf;
+  --th-brouillon-fond: #fdf1d8;
+  --th-brouillon-texte: #8a6100;
+  --th-archive-fond: #eceff1;
+  --th-archive-texte: #607d8b;
+}
+html.dark cs-admin-themes {
+  --th-vert-survol: #2d9959;
+  --th-clair-bord: #2d4030;
+  --th-clair-survol: #1e2d22;
+  --th-ombre: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --th-survol-fond: #14301f;
+  --th-survol-trait: #2d9959;
+  --th-vide: #4e6656;
+  --th-cours-fond: #101a13;
+  --th-cours-bord: #243328;
+  --th-cours-survol: #2d6b45;
+  --th-brouillon-fond: #2e2410;
+  --th-brouillon-texte: #e0b95f;
+  --th-archive-fond: #1e2d22;
+  --th-archive-texte: #8fa398;
+}
+
+/* ── En-tête ── */
+cs-admin-themes .entete { max-width: 1180px; margin: 0 auto; padding: 22px 20px 6px; }
+cs-admin-themes .liens { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 10px; }
+cs-admin-themes .liens a { color: var(--accent); font-size: 0.84rem; font-weight: 800; text-decoration: none; }
+cs-admin-themes .liens a:hover { text-decoration: underline; }
+cs-admin-themes h1 { font-family: var(--police-titre); font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 900; color: var(--texte); }
+cs-admin-themes .entete p { margin-top: 6px; color: var(--texte-doux); font-size: 0.9rem; font-weight: 600; line-height: 1.55; }
+
+/* ── Boutons et état ── */
+cs-admin-themes .actions { max-width: 1180px; margin: 0 auto; padding: 16px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+cs-admin-themes .btn {
+  display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border: none; border-radius: 50px;
+  font-family: var(--police-titre); font-size: 0.88rem; font-weight: 800; cursor: pointer; text-decoration: none;
+  transition: background 0.18s, transform 0.15s;
+}
+cs-admin-themes .btn-vert { background: var(--action); color: #fff; }
+cs-admin-themes .btn-vert:hover { background: var(--th-vert-survol); }
+cs-admin-themes .btn-clair { background: var(--surface); color: var(--accent); border: 1.5px solid var(--th-clair-bord); }
+cs-admin-themes .btn-clair:hover { background: var(--th-clair-survol); }
+cs-admin-themes .btn:disabled { opacity: 0.5; cursor: default; }
+cs-admin-themes .etat { margin-left: auto; color: var(--texte-pale); font-size: 0.82rem; font-weight: 800; }
+cs-admin-themes .etat.modifie { color: var(--th-modifie); }
+cs-admin-themes .etat.ok { color: var(--accent); }
+
+/* ── Grille : une colonne, deux sur grand écran ── */
+cs-admin-themes .grille { max-width: 1180px; margin: 0 auto; padding: 0 20px; display: grid; gap: 16px; }
+@media (min-width: 900px) {
+  cs-admin-themes .grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+cs-admin-themes .theme { display: flex; flex-direction: column; overflow: hidden; border-radius: 16px; background: var(--surface); box-shadow: var(--th-ombre); }
+cs-admin-themes .theme-tete { display: flex; align-items: center; gap: 11px; padding: 14px 16px; color: #fff; cursor: grab; }
+cs-admin-themes .theme-tete:active { cursor: grabbing; }
+cs-admin-themes .theme-emoji { font-size: 1.5rem; line-height: 1; }
+cs-admin-themes .theme-nom { flex: 1; min-width: 0; font-family: var(--police-titre); font-size: 1.05rem; font-weight: 900; }
+cs-admin-themes .theme-desc { margin-top: 2px; font-family: var(--police); font-size: 0.75rem; font-weight: 700; opacity: 0.9; }
+cs-admin-themes .theme-outils { display: flex; flex-shrink: 0; gap: 6px; }
+cs-admin-themes .mini {
+  display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+  border: none; border-radius: 8px; background: rgba(255, 255, 255, 0.22); color: #fff;
+  font-size: 0.85rem; line-height: 1; cursor: pointer; text-decoration: none;
+}
+cs-admin-themes .mini:hover { background: rgba(255, 255, 255, 0.38); }
+
+/* La liste reste survolable même vide, sinon on ne pourrait jamais déposer
+   un cours dans un thème qu'on vient de créer. */
+cs-admin-themes .liste { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 74px; padding: 10px; }
+cs-admin-themes .liste.survol { background: var(--th-survol-fond); outline: 2px dashed var(--th-survol-trait); outline-offset: -6px; border-radius: 10px; }
+cs-admin-themes .vide { padding: 20px 8px; color: var(--th-vide); font-size: 0.8rem; font-weight: 700; text-align: center; }
+
+cs-admin-themes .cours {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: grab;
+  background: var(--th-cours-fond); border: 1.5px solid var(--th-cours-bord); border-radius: 11px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+cs-admin-themes .cours:hover { border-color: var(--th-cours-survol); box-shadow: 0 2px 8px rgba(30, 110, 62, 0.1); }
+cs-admin-themes .cours.attrape { opacity: 0.4; }
+cs-admin-themes .cours-poignee { flex-shrink: 0; color: #b7cfc0; font-size: 1rem; }
+cs-admin-themes .cours-emoji { flex-shrink: 0; font-size: 1.15rem; }
+cs-admin-themes .cours-corps { flex: 1; min-width: 0; }
+cs-admin-themes .cours-titre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--texte); font-size: 0.86rem; font-weight: 800; }
+cs-admin-themes .cours-meta { margin-top: 2px; color: var(--texte-pale); font-size: 0.72rem; font-weight: 700; }
+cs-admin-themes .puce {
+  display: inline-block; margin-left: 6px; padding: 2px 7px; border-radius: 20px;
+  font-size: 0.66rem; font-weight: 900; letter-spacing: 0.4px; text-transform: uppercase;
+}
+cs-admin-themes .puce.brouillon { background: var(--th-brouillon-fond); color: var(--th-brouillon-texte); }
+cs-admin-themes .puce.archive { background: var(--th-archive-fond); color: var(--th-archive-texte); }
+cs-admin-themes .cours-modifier {
+  flex-shrink: 0; color: var(--accent); font-size: 0.78rem; font-weight: 800;
+  text-decoration: underline; text-underline-offset: 3px;
+}
