@@ -194,6 +194,24 @@ elle est chargée avant `monter()`, et la page n'a pas à le savoir :
 static scripts = [new URL('../../../assets/vendor/chartjs-4.6.1/chart.umd.min.js', import.meta.url)];
 ```
 
+Les bibliothèques de `static scripts` se chargent en parallèle, dans un ordre
+quelconque. Quand l'une dépend d'une autre au moment où elle s'exécute (le
+rendu automatique de KaTeX a besoin de KaTeX), le module qui s'en sert les
+enchaîne lui-même avec `chargerScript()` : c'est ce que fait
+`socle/markdown.js`.
+
+Markdown des cours : `socle/markdown.js`. `await chargerMoteur()` (marked,
+DOMPurify, KaTeX, une fois par page), `markdownEnHtml(texte)` dans le gabarit
+(HTML assaini par DOMPurify, avec la configuration `NETTOYAGE`), puis
+`finaliser(zone)` une fois la zone dans la page (formules, tableaux qui
+défilent). L'aperçu de l'éditeur d'admin utilise encore
+`assets/js/markdown-sur.js` jusqu'à sa migration : un test vérifie que les
+deux configurations restent identiques.
+
+Vidéo : `<cs-video adresse="…">` (`composants/video/`). Une adresse YouTube ou
+Vimeo s'affiche en façade, sans aucune requête vers la plateforme avant le
+clic (RGPD) ; une autre adresse est lue par `<video>`.
+
 ### Un composant fait d'autres composants
 
 Le panneau d'administration (`ui/admin/panel/`) sert de modèle :
@@ -465,7 +483,8 @@ d'après. La convention `?v=N` n'a plus lieu d'être sur les fichiers de `ui/`.
 
 Une page importante se reconstruit à côté de l'ancienne, à une adresse
 provisoire (le panneau d'administration a été refait à `/admin/panel-v2`, la
-page de compte à `/compte-v2.html`, avec `<meta name="robots"
+page de compte à `/compte-v2.html`, le lecteur de cours à `/cours-v2/<slug>`,
+avec `<meta name="robots"
 content="noindex">`), qu'on compare à l'ancienne en production. Une fois
 validée, elle prend l'adresse définitive et l'ancienne page est supprimée,
 en une livraison à part : la bascule.
@@ -484,5 +503,13 @@ Exemple de page découpée en parties : `ui/pages/compte/` — la page
 comportement (`compte-tickets.js`, `compte-reglages.js`, `compte-sortie.js`)
 est un composant que la page pose dans son gabarit et règle par
 `configurer()`.
+
+Le lecteur de cours (`ui/pages/lecteur-cours/`) suit la même forme :
+`<cs-lecteur-cours>` (en-tête, onglets, sections), `<cs-quiz-cours>` (le
+quiz, notation identique à `complete.php`), `<cs-fin-cours>` (fin de cours :
+XP gagnée ou invitation à se connecter, le même bloc avec et sans quiz) et
+`<cs-barre-xp>`. Le lecteur et le quiz partagent un `ContexteCours` (slug,
+membre, XP) ; les classes communes (diapositive, barre de progression,
+boutons) sont dans la feuille du lecteur, qui contient toujours le quiz.
 
 Le rendu ne change pas. Toute différence volontaire est décidée avant.

@@ -1,0 +1,102 @@
+/* ============================================================================
+   quiz-cours.css — <cs-quiz-cours> : carte de question, options, correction,
+   carte de résultat, confettis. Diapositive, barre de progression et boutons :
+   lecteur-cours.css.
+   ============================================================================ */
+
+cs-quiz-cours {
+  display: block;
+
+  --qz-carte: #fff;
+  --qz-ombre: 0 4px 18px rgba(30, 110, 62, 0.09);
+  --qz-titre: #1a3a25;
+  --qz-opt-fond: #fff;
+  --qz-opt-bord: #c8e6c9;
+  --qz-opt-texte: #1a3a25;
+  --qz-opt-survol: #eef4ec;
+  --qz-opt-actif: #1e6e3e;
+  --qz-choisi-halo: rgba(30, 110, 62, 0.15);
+  --qz-juste-fond: #e8f5e9;
+  --qz-juste-texte: #1b5e20;
+  --qz-faux-fond: #ffebee;
+  --qz-faux-texte: #b71c1c;
+  --qz-retour-ok-fond: #e8f5e9;
+  --qz-retour-ok-texte: #1b5e20;
+  --qz-retour-ko-fond: #ffebee;
+  --qz-retour-ko-texte: #b71c1c;
+  --qz-score: #1e6e3e;
+  --qz-message: #4a7a5a;
+}
+html.dark cs-quiz-cours {
+  --qz-carte: #1a2b1e;
+  --qz-ombre: 0 4px 18px rgba(0, 0, 0, 0.35);
+  --qz-titre: #c8e6d4;
+  --qz-opt-fond: #1e2d22;
+  --qz-opt-bord: #2a4d35;
+  --qz-opt-texte: #c8e6d4;
+  --qz-opt-survol: #243328;
+  --qz-opt-actif: #52b788;
+  --qz-choisi-halo: rgba(82, 183, 136, 0.22);
+  --qz-juste-fond: #16291c;
+  --qz-juste-texte: #7fc99a;
+  --qz-faux-fond: #3d1a1a;
+  --qz-faux-texte: #ef9a9a;
+  --qz-retour-ok-fond: #1a2f20;
+  --qz-retour-ok-texte: #52b788;
+  --qz-retour-ko-fond: #2d1a1a;
+  --qz-retour-ko-texte: #e57373;
+  --qz-score: #52b788;
+  --qz-message: #5a8a6a;
+}
+
+/* ── Question ── */
+cs-quiz-cours .quiz-card,
+cs-quiz-cours .result-card {
+  background: var(--qz-carte); border-radius: 22px; margin-top: 14px; box-shadow: var(--qz-ombre);
+}
+cs-quiz-cours .quiz-card { padding: 22px 18px 18px; }
+cs-quiz-cours .quiz-badge {
+  display: inline-block; margin-bottom: 11px; padding: 3px 11px; border-radius: 20px;
+  background: #a8e6bf; color: #1a3a25;
+  font-size: 0.73rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+}
+cs-quiz-cours .quiz-question {
+  margin-bottom: 14px; line-height: 1.3; color: var(--qz-titre);
+  font-family: var(--police-titre); font-size: 1.08rem; font-weight: 900;
+}
+cs-quiz-cours .quiz-options { display: flex; flex-direction: column; gap: 9px; }
+
+cs-quiz-cours .quiz-opt {
+  padding: 12px 15px; border: 2.5px solid var(--qz-opt-bord); border-radius: 14px;
+  background: var(--qz-opt-fond); color: var(--qz-opt-texte); text-align: left;
+  font-family: var(--police); font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: all 0.18s;
+}
+cs-quiz-cours .quiz-opt:hover:not(:disabled) { background: var(--qz-opt-survol); border-color: var(--qz-opt-actif); }
+/* Choisie mais pas encore validée : mise en avant neutre, surtout pas verte
+   ni rouge — la couleur ne doit rien révéler avant correction. */
+cs-quiz-cours .quiz-opt.choisi {
+  background: var(--qz-opt-survol); border-color: var(--qz-opt-actif); box-shadow: 0 0 0 3px var(--qz-choisi-halo);
+}
+cs-quiz-cours .quiz-opt.correct { background: var(--qz-juste-fond); border-color: #43a047; color: var(--qz-juste-texte); }
+cs-quiz-cours .quiz-opt.wrong { background: var(--qz-faux-fond); border-color: #e53935; color: var(--qz-faux-texte); }
+cs-quiz-cours .quiz-opt:disabled { cursor: default; }
+
+cs-quiz-cours .quiz-feedback { margin-top: 12px; padding: 11px 14px; border-radius: 12px; font-size: 0.86rem; font-weight: 700; line-height: 1.4; }
+cs-quiz-cours .quiz-feedback.ok { background: var(--qz-retour-ok-fond); color: var(--qz-retour-ok-texte); }
+cs-quiz-cours .quiz-feedback.ko { background: var(--qz-retour-ko-fond); color: var(--qz-retour-ko-texte); }
+
+/* ── Résultat ── */
+cs-quiz-cours .result-card { padding: 28px 18px 22px; text-align: center; }
+cs-quiz-cours .result-emoji { display: block; margin-bottom: 10px; font-size: 3.5rem; }
+cs-quiz-cours .result-title { margin-bottom: 5px; color: var(--qz-titre); font-family: var(--police-titre); font-size: 1.4rem; font-weight: 900; }
+cs-quiz-cours .result-score { margin: 10px 0; color: var(--qz-score); font-family: var(--police-titre); font-size: 2.2rem; font-weight: 900; }
+cs-quiz-cours .result-msg { margin-bottom: 18px; color: var(--qz-message); font-size: 0.9rem; font-weight: 600; line-height: 1.5; }
+
+/* ── Confettis (score parfait) ── */
+cs-quiz-cours .confettis { position: fixed; inset: 0; pointer-events: none; z-index: 999; overflow: hidden; }
+cs-quiz-cours .confetti { position: absolute; top: 0; width: 10px; height: 10px; border-radius: 2px; animation: quiz-cours-confetti linear forwards; }
+@keyframes quiz-cours-confetti {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}

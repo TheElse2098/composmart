@@ -1,0 +1,31 @@
+/* ============================================================================
+   barre-xp.css — <cs-barre-xp> : niveau, XP dans le niveau, barre animée.
+   ============================================================================ */
+
+cs-barre-xp {
+  display: block;
+  text-align: left;
+
+  --bx-piste: #c8e6c9;
+}
+html.dark cs-barre-xp {
+  --bx-piste: #243328;
+}
+
+cs-barre-xp .xp-ligne { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+cs-barre-xp .xp-niveau,
+cs-barre-xp .xp-texte { font-family: var(--police-titre); font-weight: 900; font-size: 0.82rem; }
+cs-barre-xp .xp-niveau { color: var(--texte-doux); }
+cs-barre-xp .xp-texte { color: var(--accent); }
+
+cs-barre-xp .xp-piste { width: 100%; height: 8px; background: var(--bx-piste); border-radius: 10px; overflow: hidden; }
+cs-barre-xp .xp-barre { width: 0; height: 100%; background: linear-gradient(90deg, #1e6e3e, #52b788); border-radius: 10px; }
+
+cs-barre-xp .xp-bravo {
+  margin-top: 10px; text-align: center;
+  font-family: var(--police-titre); font-size: 1rem; font-weight: 900; color: var(--accent);
+  animation: barre-xp-bravo 0.4s ease;
+}
+cs-barre-xp .xp-bravo[hidden] { display: none; }
+
+@keyframes barre-xp-bravo { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }

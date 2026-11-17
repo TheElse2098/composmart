@@ -686,6 +686,10 @@ export function installerFauxDom() {
   g.addEventListener = fenetre.addEventListener.bind(fenetre);
   g.removeEventListener = fenetre.removeEventListener.bind(fenetre);
   g.dispatchEvent = fenetre.dispatchEvent.bind(fenetre);
+  // Défilement de la page : noté, faute de mise en page à faire défiler.
+  /** @type {unknown[]} */
+  const defilements = [];
+  g.scrollTo = (/** @type {unknown} */ options) => { defilements.push(options); };
   g.document = document;
   g.window = g;
   g.location = { pathname: '/', search: '' };
@@ -713,6 +717,7 @@ export function installerFauxDom() {
     liensAjoutes,
     modulesDemandes,
     bibliothequesDemandees,
+    defilements,
     /** Écrit du HTML dans <body> et rend son premier élément. */
     monter(/** @type {string} */ source) {
       const conteneur = creerElement('div');

@@ -1,0 +1,291 @@
+/* ============================================================================
+   lecteur-cours.css — <cs-lecteur-cours> : en-tête du cours, onglets,
+   sections, vidéo et podcast. Aussi ce que le quiz partage avec le lecteur,
+   qui le contient toujours : diapositive, barre de progression, boutons.
+
+   Le texte des cours est du markdown qui contient volontairement du HTML
+   (schémas dessinés, citations centrées) : ses classes sont stylées ici,
+   sous .lesson-body.
+   ============================================================================ */
+
+cs-lecteur-cours {
+  display: flex; flex-direction: column; align-items: center; width: 100%;
+
+  --lc-carte: #fff;
+  --lc-ombre: 0 4px 18px rgba(30, 110, 62, 0.09);
+  --lc-titre: #1a3a25;
+  --lc-texte: #2d5a3d;
+  --lc-fort: #1e6e3e;
+  --lc-lien: #1e6e3e;
+  --lc-lien-trait: rgba(30, 110, 62, 0.4);
+  --lc-lien-vu: #2d6a4f;
+  --lc-lien-survol: #163f26;
+  --lc-creux: #eef4ec;
+  --lc-citation: #2d6a4f;
+  --lc-filet: #1e6e3e;
+  --lc-code: currentColor;
+  --lc-entete-tableau: #1e6e3e;
+  --lc-schema-fond: #f4f9f4;
+  --lc-schema-trait: #e3efe5;
+  --lc-schema-prox: #16a34a;
+  --lc-schema-coll: #7fb519;
+  --lc-duo-titre: #1e6e3e;
+  --lc-doux: #4a7a5a;
+  --lc-pastille-fond: #eef4ec;
+  --lc-pastille-texte: #1e6e3e;
+  --lc-niveau-fond: rgba(30, 110, 62, 0.1);
+  --lc-niveau-texte: #1e6e3e;
+  --lc-xp-fond: #fff3e0;
+  --lc-xp-texte: #e65100;
+  --lc-onglets: #d4ead9;
+  --lc-onglet-texte: #4a7a5a;
+  --lc-onglet-actif-fond: #fff;
+  --lc-onglet-actif-texte: #1e6e3e;
+  --lc-onglet-survol: rgba(255, 255, 255, 0.5);
+  --lc-piste: #c8e6c9;
+  --lc-second-fond: #fff;
+  --lc-second-texte: #1e6e3e;
+  --lc-second-bord: #a8e6bf;
+  --lc-second-survol: #eef4ec;
+  --lc-bouton-off-fond: #dbe7dd;
+  --lc-bouton-off-texte: #8aa694;
+}
+html.dark cs-lecteur-cours {
+  --lc-carte: #1a2b1e;
+  --lc-ombre: 0 4px 18px rgba(0, 0, 0, 0.35);
+  --lc-titre: #c8e6d4;
+  --lc-texte: #b0d4be;
+  --lc-fort: #a8e6bf;
+  --lc-lien: #52b788;
+  --lc-lien-trait: rgba(82, 183, 136, 0.4);
+  --lc-lien-vu: #7ab88e;
+  --lc-lien-survol: #a8e6bf;
+  --lc-creux: #1e2d22;
+  --lc-citation: #7ab88e;
+  --lc-filet: #52b788;
+  --lc-code: #a8e6bf;
+  --lc-entete-tableau: #243328;
+  --lc-schema-fond: #16241a;
+  --lc-schema-trait: #243a2c;
+  --lc-schema-prox: #4ade80;
+  --lc-schema-coll: #a3e635;
+  --lc-duo-titre: #a8e6bf;
+  --lc-doux: #5a8a6a;
+  --lc-pastille-fond: #243328;
+  --lc-pastille-texte: #52b788;
+  --lc-niveau-fond: rgba(82, 183, 136, 0.12);
+  --lc-niveau-texte: #52b788;
+  --lc-xp-fond: rgba(249, 168, 37, 0.15);
+  --lc-xp-texte: #f9a825;
+  --lc-onglets: #1e2d22;
+  --lc-onglet-texte: #5a8a6a;
+  --lc-onglet-actif-fond: #1a2b1e;
+  --lc-onglet-actif-texte: #52b788;
+  --lc-onglet-survol: rgba(255, 255, 255, 0.05);
+  --lc-piste: #243328;
+  --lc-second-fond: #1a2b1e;
+  --lc-second-texte: #52b788;
+  --lc-second-bord: #2d4030;
+  --lc-second-survol: #243328;
+  --lc-bouton-off-fond: #22301f;
+  --lc-bouton-off-texte: #5a7a63;
+}
+
+/* ── En-tête du cours ── */
+cs-lecteur-cours .course-header { width: 100%; max-width: 640px; padding: 18px 20px 0; }
+cs-lecteur-cours .course-hero { display: flex; align-items: flex-start; gap: 14px; }
+cs-lecteur-cours .course-emoji-big { flex-shrink: 0; font-size: 2.8rem; line-height: 1; }
+cs-lecteur-cours .course-meta { flex: 1; }
+cs-lecteur-cours .course-title-main {
+  margin-bottom: 6px; line-height: 1.2; color: var(--lc-titre);
+  font-family: var(--police-titre); font-size: 1.3rem; font-weight: 900;
+}
+cs-lecteur-cours .course-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+cs-lecteur-cours .badge { padding: 3px 10px; border-radius: 20px; font-size: 0.73rem; font-weight: 800; }
+cs-lecteur-cours .badge-niveau { background: var(--lc-niveau-fond); color: var(--lc-niveau-texte); }
+cs-lecteur-cours .badge-xp { background: var(--lc-xp-fond); color: var(--lc-xp-texte); }
+
+/* ── Onglets ── collés sous le bandeau (54 px) quand on fait défiler. */
+cs-lecteur-cours .tabs-wrap {
+  width: 100%; max-width: 640px; padding: 14px 20px 0;
+  position: sticky; top: 54px; z-index: 50; background: var(--fond);
+}
+cs-lecteur-cours .tabs-nav { display: flex; gap: 4px; padding: 4px; border-radius: 16px; background: var(--lc-onglets); }
+cs-lecteur-cours .tab-btn {
+  flex: 1; padding: 9px 4px; border: none; border-radius: 12px; background: none; cursor: pointer;
+  color: var(--lc-onglet-texte); font-family: var(--police); font-size: 0.82rem; font-weight: 800;
+  white-space: nowrap; transition: all 0.18s;
+}
+cs-lecteur-cours .tab-btn.active {
+  background: var(--lc-onglet-actif-fond); color: var(--lc-onglet-actif-texte); box-shadow: 0 2px 8px rgba(30, 110, 62, 0.13);
+}
+cs-lecteur-cours .tab-btn:hover:not(.active):not(.disabled) { background: var(--lc-onglet-survol); }
+cs-lecteur-cours .tab-btn.disabled { opacity: 0.38; cursor: not-allowed; }
+
+/* ── Barre de progression (sections, et questions du quiz) ── */
+cs-lecteur-cours .progress-wrap { padding: 12px 0 0; }
+cs-lecteur-cours .progress-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+cs-lecteur-cours .progress-label { color: #4a7a5a; font-size: 0.78rem; font-weight: 800; }
+cs-lecteur-cours .progress-bar { width: 100%; height: 8px; overflow: hidden; border-radius: 10px; background: var(--lc-piste); }
+cs-lecteur-cours .progress-fill {
+  width: 0; height: 100%; border-radius: 10px;
+  background: linear-gradient(90deg, #1e6e3e, #52b788); transition: width 0.55s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ── Contenu ──
+   padding-bottom : .lesson-nav et .btn-next mordent sur la carte au-dessus
+   (margin-top négatif, voulu) ; rien ne compensait quand le bouton est le
+   dernier élément de la page, il finissait collé au pied de page. */
+cs-lecteur-cours .page-content { width: 100%; max-width: 640px; padding: 0 16px 40px; }
+cs-lecteur-cours .tab-panel { display: none; }
+cs-lecteur-cours .tab-panel.active { display: block; }
+
+cs-lecteur-cours .lesson-slide { display: none; animation: lecteur-cours-arrivee 0.35s ease; }
+cs-lecteur-cours .lesson-slide.active { display: block; }
+@keyframes lecteur-cours-arrivee { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ── Carte d'une section ── */
+cs-lecteur-cours .lesson-card,
+cs-lecteur-cours .media-card { margin-top: 14px; border-radius: 22px; background: var(--lc-carte); box-shadow: var(--lc-ombre); }
+cs-lecteur-cours .lesson-card { padding: 22px 18px 32px; }
+cs-lecteur-cours .lesson-title {
+  margin-bottom: 12px; text-align: center; line-height: 1.25; color: var(--lc-titre);
+  font-family: var(--police-titre); font-size: 1.15rem; font-weight: 900;
+}
+
+/* ── Texte du cours (markdown rendu) ── */
+cs-lecteur-cours .lesson-body { color: var(--lc-texte); font-size: 0.92rem; font-weight: 600; line-height: 1.65; }
+cs-lecteur-cours .lesson-body p { margin-bottom: 11px; }
+cs-lecteur-cours .lesson-body p:last-child { margin-bottom: 0; }
+cs-lecteur-cours .lesson-body strong { color: var(--lc-fort); }
+cs-lecteur-cours .lesson-body a { color: var(--lc-lien); font-weight: 700; text-decoration-color: var(--lc-lien-trait); }
+cs-lecteur-cours .lesson-body a:visited { color: var(--lc-lien-vu); }
+cs-lecteur-cours .lesson-body a:hover { color: var(--lc-lien-survol); }
+cs-lecteur-cours .lesson-body h1,
+cs-lecteur-cours .lesson-body h2,
+cs-lecteur-cours .lesson-body h3 { margin: 14px 0 7px; color: var(--lc-titre); font-family: var(--police-titre); }
+cs-lecteur-cours .lesson-body h2 { font-size: 1.05rem; }
+cs-lecteur-cours .lesson-body h3 { font-size: 0.95rem; }
+cs-lecteur-cours .lesson-body ul,
+cs-lecteur-cours .lesson-body ol { margin-bottom: 11px; padding-left: 20px; }
+cs-lecteur-cours .lesson-body li { margin-bottom: 4px; }
+/* Boîte posée par finaliser() (socle/markdown.js) : un tableau large défile
+   dans sa boîte plutôt que de pousser la page au-delà de l'écran. */
+cs-lecteur-cours .lesson-body .table-scroll { margin: 11px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+cs-lecteur-cours .lesson-body .table-scroll table { margin: 0; }
+cs-lecteur-cours .lesson-body table { width: 100%; margin: 11px 0; border-collapse: collapse; font-size: 0.82rem; }
+cs-lecteur-cours .lesson-body th { padding: 7px 10px; background: var(--lc-entete-tableau); color: #fff; text-align: left; white-space: nowrap; }
+cs-lecteur-cours .lesson-body td { padding: 7px 10px; border-bottom: 1px solid var(--trait); white-space: nowrap; }
+cs-lecteur-cours .lesson-body blockquote {
+  margin: 11px 0; padding: 10px 13px; border-left: 4px solid var(--lc-filet); border-radius: 0 10px 10px 0;
+  background: var(--lc-creux); color: var(--lc-citation); font-style: italic;
+}
+cs-lecteur-cours .lesson-body code { padding: 2px 5px; border-radius: 4px; background: var(--lc-creux); color: var(--lc-code); font-size: 0.84em; }
+
+/* Citation centrée : sans le filet ni le fond du blockquote standard, qui
+   supposent un texte aligné à gauche. */
+cs-lecteur-cours .lesson-body .citation {
+  max-width: 34rem; margin: 16px auto; padding: 4px 10px;
+  border-left: none; border-radius: 0; background: none;
+  text-align: center; font-style: italic; font-size: 0.9rem; line-height: 1.65; color: var(--lc-citation);
+}
+html.dark cs-lecteur-cours .lesson-body .citation { --lc-citation: #a8c9b5; }
+cs-lecteur-cours .lesson-body .citation-source { display: inline-block; margin-top: 8px; color: #7aaa8a; font-style: normal; font-size: 0.78rem; font-weight: 700; }
+
+/* Schéma « familles de solutions », dessiné en HTML dans le texte du cours :
+   lisible au zoom, adapté au mobile, et il suit le thème. Les pastilles
+   gardent leurs verts vifs dans les deux thèmes (texte sombre dessus). */
+cs-lecteur-cours .schema-solutions { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 4px 0 16px; }
+cs-lecteur-cours .sch-branche { padding: 16px 12px 14px; border-radius: 16px; background: var(--lc-schema-fond); text-align: center; }
+cs-lecteur-cours .sch-tete {
+  display: inline-block; padding: 7px 16px; border-radius: 20px; line-height: 1.2;
+  font-family: var(--police-titre); font-size: 0.86rem; font-weight: 900;
+}
+cs-lecteur-cours .sch-prox .sch-tete { background: #22c55e; color: #08290f; }
+cs-lecteur-cours .sch-coll .sch-tete { background: #bbf451; color: #22330a; }
+/* Trait de rattachement tête → feuilles, pour lire l'arborescence */
+cs-lecteur-cours .sch-feuilles {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-top: 14px; padding-top: 14px; border-top: 2px solid var(--lc-schema-trait);
+}
+cs-lecteur-cours .sch-feuille { font-size: 0.78rem; font-weight: 800; line-height: 1.35; }
+cs-lecteur-cours .sch-prox .sch-feuille { color: var(--lc-schema-prox); }
+cs-lecteur-cours .sch-coll .sch-feuille { color: var(--lc-schema-coll); }
+
+/* Bloc « 2 options », même principe. Sous .lesson-body : sans ça,
+   .lesson-body p l'emporterait et rajouterait sa marge de paragraphe. */
+cs-lecteur-cours .lesson-body .duo-bloc { margin: 4px 0 16px; }
+cs-lecteur-cours .lesson-body .duo-intro {
+  margin-bottom: 14px; text-align: center; color: var(--lc-titre);
+  font-family: var(--police-titre); font-size: 1rem; font-weight: 900;
+}
+cs-lecteur-cours .lesson-body .duo-options { display: grid; grid-template-columns: 1fr; gap: 12px; }
+cs-lecteur-cours .lesson-body .duo-carte { padding: 16px 14px; border-left: 4px solid var(--lc-filet); border-radius: 16px; background: var(--lc-schema-fond); }
+cs-lecteur-cours .lesson-body .duo-titre {
+  margin-bottom: 8px; line-height: 1.3; color: var(--lc-duo-titre);
+  font-family: var(--police-titre); font-size: 0.9rem; font-weight: 900;
+}
+cs-lecteur-cours .lesson-body .duo-texte { margin: 0; color: var(--lc-texte); font-size: 0.82rem; font-weight: 600; line-height: 1.5; }
+
+@media (min-width: 560px) {
+  cs-lecteur-cours .schema-solutions { grid-template-columns: 1fr 1fr; gap: 16px; }
+  cs-lecteur-cours .lesson-body .duo-options { grid-template-columns: 1fr 1fr; gap: 14px; }
+}
+
+/* ── Vidéo, podcast ── */
+cs-lecteur-cours .media-card { padding: 22px 18px 18px; }
+cs-lecteur-cours .media-title { color: var(--lc-titre); font-family: var(--police-titre); font-size: 1.05rem; font-weight: 900; }
+cs-lecteur-cours .media-author { margin-top: 2px; color: var(--lc-doux); font-size: 0.78rem; font-weight: 700; }
+cs-lecteur-cours .media-duration {
+  display: inline-block; margin-top: 5px; padding: 3px 10px; border-radius: 10px;
+  background: var(--lc-pastille-fond); color: var(--lc-pastille-texte); font-size: 0.73rem; font-weight: 800;
+}
+cs-lecteur-cours .media-desc { margin-top: 8px; color: var(--lc-doux); font-size: 0.82rem; line-height: 1.5; }
+cs-lecteur-cours .video-wrapper { margin-top: 14px; overflow: hidden; border-radius: 14px; }
+cs-lecteur-cours .podcast-inner { margin-top: 12px; padding: 14px; border-radius: 14px; background: var(--lc-creux); }
+cs-lecteur-cours audio { width: 100%; margin-top: 10px; border-radius: 8px; }
+
+/* ── Boutons ──
+   margin-top négatif voulu : le bouton mord légèrement sur le bas arrondi de
+   la carte au-dessus ; -8px laisse 24px nets sous la dernière ligne. */
+cs-lecteur-cours .btn-next {
+  display: block; width: 100%; margin-top: -8px; padding: 15px; position: relative; z-index: 1;
+  border: none; border-radius: 16px; cursor: pointer;
+  background: linear-gradient(135deg, #1e6e3e, #2d9959); color: #fff; box-shadow: 0 4px 12px rgba(30, 110, 62, 0.32);
+  font-family: var(--police-titre); font-size: 1rem; font-weight: 900; text-align: center; text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+cs-lecteur-cours .btn-next:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(30, 110, 62, 0.4); }
+cs-lecteur-cours .btn-next:active { transform: scale(0.97); }
+cs-lecteur-cours .btn-next:disabled {
+  background: var(--lc-bouton-off-fond); color: var(--lc-bouton-off-texte); box-shadow: none; cursor: not-allowed; transform: none;
+}
+/* Navigation des sections : le décalage porte sur la rangée, sinon les deux
+   boutons se désaligneraient. */
+cs-lecteur-cours .lesson-nav { display: flex; gap: 10px; margin-top: -8px; position: relative; z-index: 1; }
+cs-lecteur-cours .lesson-nav .btn-next { flex: 1; margin-top: 0; }
+cs-lecteur-cours .btn-prev,
+cs-lecteur-cours .btn-secondary {
+  border: 2px solid var(--lc-second-bord); border-radius: 16px; cursor: pointer;
+  background: var(--lc-second-fond); color: var(--lc-second-texte);
+  font-family: var(--police-titre); font-weight: 900;
+}
+cs-lecteur-cours .btn-prev { flex: 0 0 auto; padding: 15px 16px; font-size: 0.92rem; transition: background 0.15s ease, transform 0.15s ease; }
+cs-lecteur-cours .btn-prev:hover { background: var(--lc-second-survol); transform: translateY(-2px); }
+cs-lecteur-cours .btn-prev:active { transform: scale(0.97); }
+cs-lecteur-cours .btn-secondary { width: 100%; margin-top: 9px; padding: 13px; border-width: 2.5px; font-size: 0.95rem; transition: background 0.15s; }
+cs-lecteur-cours .btn-secondary:hover { background: var(--lc-second-survol); }
+
+/* ── Cours introuvable ── */
+cs-lecteur-cours .introuvable { padding: 40px 20px; text-align: center; color: var(--alerte-texte); }
+cs-lecteur-cours .introuvable h1 { margin-bottom: 12px; font-family: var(--police-titre); font-size: 1.5rem; }
+cs-lecteur-cours .introuvable a { color: var(--accent); font-weight: 700; }
+
+/* ── Grand écran : le contenu prend de la largeur, l'en-tête et les onglets
+   restent à leur largeur de lecture. ── */
+@media (min-width: 900px) {
+  cs-lecteur-cours .page-content { max-width: 1100px; }
+}
+@media (min-width: 1400px) {
+  cs-lecteur-cours .page-content { max-width: 1240px; }
+}

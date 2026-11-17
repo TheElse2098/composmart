@@ -1,0 +1,57 @@
+/* ============================================================================
+   fin-cours.css — <cs-fin-cours> : XP gagnée et barre de niveau, ou
+   invitation à se connecter. Avec l'attribut `encadre` (cours sans quiz), le
+   gain est posé dans une boîte sous la dernière section ; sans, il prend
+   place dans la carte de résultat du quiz.
+   ============================================================================ */
+
+cs-fin-cours {
+  display: block;
+
+  --fc-creux: #eef4ec;
+  --fc-ou: #aaa;
+  --fc-second-fond: #fff;
+  --fc-second-texte: #1e6e3e;
+  --fc-second-bord: #a8e6bf;
+}
+html.dark cs-fin-cours {
+  --fc-creux: #1e2d22;
+  --fc-ou: #5a8a6a;
+  --fc-second-fond: #1a2b1e;
+  --fc-second-texte: #52b788;
+  --fc-second-bord: #2d4030;
+}
+
+/* ── XP gagnée ── */
+cs-fin-cours .xp-gained {
+  display: inline-block; margin-bottom: 18px; padding: 8px 20px; border-radius: 20px;
+  background: linear-gradient(135deg, #f9a825, #ff8f00); color: #fff;
+  font-family: var(--police-titre); font-size: 0.95rem; font-weight: 900;
+}
+cs-fin-cours .xp-gained.deja { background: #c8e6c9; color: #1b5e20; }
+cs-fin-cours cs-barre-xp { margin-top: 18px; }
+
+cs-fin-cours[encadre] .fin-gain { margin-top: 14px; padding: 14px 16px; background: var(--fc-creux); border-radius: 14px; }
+cs-fin-cours[encadre] .xp-gained { margin-bottom: 12px; }
+cs-fin-cours[encadre] cs-barre-xp { margin-top: 0; }
+
+/* ── Visiteur ── */
+cs-fin-cours .fin-invitation { margin-top: 16px; padding: 14px; background: var(--fc-creux); border-radius: 14px; text-align: center; }
+cs-fin-cours .fin-invitation-texte { margin-bottom: 10px; font-size: 0.82rem; font-weight: 700; color: #4a7a5a; }
+cs-fin-cours .fin-connexion,
+cs-fin-cours .fin-inscription {
+  display: inline-block; border-radius: 14px; text-decoration: none;
+  font-family: var(--police-titre); font-weight: 900; font-size: 0.9rem;
+}
+cs-fin-cours .fin-connexion {
+  padding: 10px 24px; color: #fff;
+  background: linear-gradient(135deg, #1e6e3e, #2d9959); box-shadow: 0 3px 10px rgba(30, 110, 62, 0.3);
+}
+cs-fin-cours .fin-inscription {
+  padding: 9px 18px;
+  background: var(--fc-second-fond); color: var(--fc-second-texte); border: 2px solid var(--fc-second-bord);
+}
+cs-fin-cours .fin-ou { display: inline-block; margin: 0 8px; font-size: 0.8rem; color: var(--fc-ou); }
+
+/* ── Panne ── */
+cs-fin-cours .fin-erreur { margin-top: 14px; font-size: 0.85rem; font-weight: 700; line-height: 1.4; color: var(--alerte-texte); }

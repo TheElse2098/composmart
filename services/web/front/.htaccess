@@ -46,6 +46,12 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^cours/([^./]+)$ cours-detail.html [L]
 
+# /cours-v2/{slug} → cours-detail-v2.html : adresse provisoire du nouveau
+# lecteur de cours, le temps de le valider (refonte du front, phase 7).
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^cours-v2/([^./]+)$ cours-detail-v2.html [L]
+
 # /carte → sert carte.html en interne (seulement si le .html existe,
 # sinon on laisse Apache renvoyer un 404 → ErrorDocument /404.html)
 RewriteCond %{REQUEST_FILENAME} !-f
