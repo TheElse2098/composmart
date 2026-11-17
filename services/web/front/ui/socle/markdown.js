@@ -102,6 +102,37 @@ export function markdownEnHtml(markdown) {
 }
 
 /**
+ * Une diapositive du lecteur : un titre « ## » et ce qui le suit.
+ * @typedef {{ titre: string, contenu: string }} Section
+ */
+
+/**
+ * Découpe le texte d'un cours en sections, sur ses titres « ## », comme le
+ * lecteur l'affiche. Ce qui précède le premier « ## » forme une section sans
+ * titre, débarrassée du titre principal « # ». Une section sans contenu est
+ * ignorée. L'aperçu de l'éditeur s'en sert aussi : c'est ce qui le rend fidèle.
+ * @param {string} texte
+ * @returns {Section[]}
+ */
+export function sectionsDuCours(texte) {
+  /** @type {Section[]} */
+  const sections = [];
+  for (const morceau of texte.split(/(?=^## )/m)) {
+    const bloc = morceau.trim();
+    if (!bloc) continue;
+    if (bloc.startsWith('## ')) {
+      const lignes = bloc.split('\n');
+      const contenu = lignes.slice(1).join('\n').trim();
+      if (contenu) sections.push({ titre: lignes[0].slice(3).trim(), contenu });
+    } else {
+      const contenu = bloc.replace(/^# .+\n?/, '').trim();
+      if (contenu) sections.push({ titre: '', contenu });
+    }
+  }
+  return sections;
+}
+
+/**
  * Termine un fragment DÉJÀ inséré dans la page : formules, puis tableaux.
  * @param {Element} zone
  */

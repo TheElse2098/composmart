@@ -19,7 +19,7 @@
  *   /admin/panel                            → tableau de bord (signalements,
  *                                             ajouts, messages, comptes, journal)
  *   /admin/themes                           → thèmes + organisation des cours
- *   /admin/themes-v2                        → la même, refaite en composants
+ *   /admin/themes-v2[/<theme>/<cours>]      → les mêmes, refaites en composants
  *                                             (adresse provisoire)
  *   /admin/themes/<theme>/nouveau           → création d'un cours
  *   /admin/themes/<theme>/<cours>           → édition d'un cours existant
@@ -100,15 +100,16 @@ if (count($seg) === 0) rendre('accueil.html');
 // docs/front.md), et les données ne viennent que des API.
 if ($seg[0] === 'panel' && count($seg) === 1) rendre('panel.html');
 
-// /admin/themes-v2 — adresse provisoire de la nouvelle page des thèmes, faite
-// de composants servis par « web » (services/web/front/ui/admin/cours/), le
-// temps de la valider ; /admin/themes reste en service jusqu'à la bascule.
-if ($seg[0] === 'themes-v2' && count($seg) === 1) rendre('themes-v2.html');
+// /admin/themes... et /admin/themes-v2... — la seconde est l'adresse
+// provisoire des nouvelles pages (thèmes et éditeur), faites de composants
+// servis par « web » (services/web/front/ui/admin/cours/), le temps de les
+// valider ; /admin/themes reste en service jusqu'à la bascule. Mêmes
+// vérifications pour les deux. Les nouvelles pages lisent le thème et le
+// cours dans l'adresse : les données de route ne leur servent pas.
+if ($seg[0] !== 'themes' && $seg[0] !== 'themes-v2') introuvable();
+$nouvelles = $seg[0] === 'themes-v2';
 
-// /admin/themes...
-if ($seg[0] !== 'themes') introuvable();
-
-if (count($seg) === 1) rendre('themes.html');
+if (count($seg) === 1) rendre($nouvelles ? 'themes-v2.html' : 'themes.html');
 
 // /admin/themes/<theme>/...
 if (count($seg) !== 3) introuvable();
@@ -122,7 +123,7 @@ if (!$theme) introuvable();
 
 // /admin/themes/<theme>/nouveau
 if ($seg[2] === 'nouveau') {
-    rendre('cours.html', [
+    rendre($nouvelles ? 'cours-v2.html' : 'cours.html', [
         'mode'       => 'nouveau',
         'theme_id'   => (int)$theme['id'],
         'theme_slug' => $theme_slug,
@@ -140,7 +141,7 @@ $stmt->execute();
 $cours = $stmt->get_result()->fetch_assoc();
 if (!$cours || (int)$cours['theme_id'] !== (int)$theme['id']) introuvable();
 
-rendre('cours.html', [
+rendre($nouvelles ? 'cours-v2.html' : 'cours.html', [
     'mode'       => 'edition',
     'theme_id'   => (int)$theme['id'],
     'theme_slug' => $theme_slug,

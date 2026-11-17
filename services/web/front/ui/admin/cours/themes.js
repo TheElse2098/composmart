@@ -49,10 +49,10 @@ import { AdminThemeEdition } from './theme-edition.js';
  */
 
 /**
- * Préfixe des pages de l'éditeur de cours. Il deviendra /admin/themes-v2 le
- * temps de valider le nouvel éditeur, puis reviendra ici à la bascule.
+ * Préfixe des pages de l'éditeur de cours : l'adresse provisoire du nouvel
+ * éditeur, le temps de le valider. Redevient /admin/themes à la bascule.
  */
-export const EDITEUR = '/admin/themes';
+export const EDITEUR = '/admin/themes-v2';
 
 const COULEUR_PAR_DEFAUT = '#1e6e3e';
 

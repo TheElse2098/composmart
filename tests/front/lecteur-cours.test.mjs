@@ -16,7 +16,7 @@ const { integration } = await import('../../services/web/front/ui/composants/vid
 const { etapesXp } = await import('../../services/web/front/ui/pages/lecteur-cours/barre-xp.js');
 const { bilanFin } = await import('../../services/web/front/ui/pages/lecteur-cours/fin-cours.js');
 const { ordreMelange, estMultiple, corriger, noter, progression } = await import('../../services/web/front/ui/pages/lecteur-cours/quiz-cours.js');
-const { slugDe, decouper, progressionSection } = await import('../../services/web/front/ui/pages/lecteur-cours/lecteur-cours.js');
+const { slugDe, progressionSection } = await import('../../services/web/front/ui/pages/lecteur-cours/lecteur-cours.js');
 
 const g = /** @type {any} */ (globalThis);
 
@@ -97,19 +97,19 @@ test('slugDe : /cours/<slug>, rien d’autre', () => {
   assert.equal(slugDe('/cours-detail'), '');
 });
 
-test('decouper : une section par « ## », l’introduction sans le titre « # », sections vides ignorées', () => {
-  assert.deepEqual(decouper(TEXTE), [
+test('sectionsDuCours : une section par « ## », l’introduction sans le titre « # », sections vides ignorées', () => {
+  assert.deepEqual(markdown.sectionsDuCours(TEXTE), [
     { titre: '', contenu: 'Introduction.' },
     { titre: 'Les bruns', contenu: 'Carton et feuilles.' },
     { titre: 'Les verts', contenu: 'Tonte, épluchures.' },
   ]);
   // « ### » ne coupe pas, une fin de ligne Windows ne reste pas dans le titre,
   // un titre sans contenu disparaît.
-  assert.deepEqual(decouper('## A\r\nUn\n### sous-titre\nDeux\n## Vide\n\n## B\nTrois'), [
+  assert.deepEqual(markdown.sectionsDuCours('## A\r\nUn\n### sous-titre\nDeux\n## Vide\n\n## B\nTrois'), [
     { titre: 'A', contenu: 'Un\n### sous-titre\nDeux' },
     { titre: 'B', contenu: 'Trois' },
   ]);
-  assert.deepEqual(decouper('# Seulement le titre\n'), []);
+  assert.deepEqual(markdown.sectionsDuCours('# Seulement le titre\n'), []);
 });
 
 test('barres de progression : sections de 0 à 100 %, questions comme avant', () => {

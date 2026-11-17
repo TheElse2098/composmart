@@ -1,0 +1,8 @@
+/* ============================================================================
+   editeur-medias.css — <cs-admin-editeur-medias> : l'aperçu du podcast.
+   Cartes, champs et boutons : editeur.css.
+   ============================================================================ */
+
+cs-admin-editeur-medias { display: block; }
+
+cs-admin-editeur-medias .apercu-audio audio { display: block; width: 100%; margin-top: 10px; }

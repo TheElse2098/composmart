@@ -1,0 +1,48 @@
+/* ============================================================================
+   editeur-panneaux.css — <cs-admin-editeur-panneaux> : la colonne des
+   panneaux, la barre d'outils, et l'aperçu à côté. Cartes, champs et boutons :
+   editeur.css ; les cartes de l'aperçu : styles/texte-cours.css, comme le
+   lecteur.
+   ============================================================================ */
+
+cs-admin-editeur-panneaux {
+  display: block;
+
+  --ed-outil-fond: #eef4ec;
+  --ed-outil-bord: #dbeade;
+  --ed-outil-survol: #d9ecdd;
+}
+html.dark cs-admin-editeur-panneaux {
+  --ed-outil-fond: #1e2d22;
+  --ed-outil-bord: #2d4030;
+  --ed-outil-survol: #243328;
+}
+
+/* Deux colonnes sur grand écran : on écrit à gauche, on lit à droite. */
+cs-admin-editeur-panneaux .split { display: grid; gap: 14px; }
+@media (min-width: 1100px) {
+  cs-admin-editeur-panneaux .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+}
+
+cs-admin-editeur-panneaux textarea.corps {
+  min-height: 200px; line-height: 1.6;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; font-size: 0.84rem;
+}
+
+/* Barre d'outils : insertions markdown les plus fréquentes. */
+cs-admin-editeur-panneaux .outils { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 7px; }
+cs-admin-editeur-panneaux .outil {
+  padding: 4px 9px; border: 1px solid var(--ed-outil-bord); border-radius: 7px; cursor: pointer;
+  background: var(--ed-outil-fond); color: var(--texte-doux); font-family: inherit; font-size: 0.75rem; font-weight: 800;
+}
+cs-admin-editeur-panneaux .outil:hover { background: var(--ed-outil-survol); color: var(--accent); }
+
+cs-admin-editeur-panneaux .champ-sources { margin-top: 11px; }
+cs-admin-editeur-panneaux .source { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+
+/* ── Aperçu ── les cartes du lecteur, sur le fond de la page. */
+cs-admin-editeur-panneaux .apercu-titre {
+  margin-bottom: 4px; color: var(--texte-pale);
+  font-family: var(--police-titre); font-size: 0.8rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;
+}
+cs-admin-editeur-panneaux .apercu-sections .lesson-card:first-child { margin-top: 0; }

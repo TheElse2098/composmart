@@ -1,0 +1,15 @@
+/* ============================================================================
+   editeur-fiche.css — <cs-admin-editeur-fiche> : images téléversées,
+   historique, suppression. Cartes, champs et boutons : editeur.css.
+   ============================================================================ */
+
+cs-admin-editeur-fiche { display: block; }
+
+cs-admin-editeur-fiche .aide { margin-bottom: 10px; }
+cs-admin-editeur-fiche .choix-image { margin-bottom: 10px; }
+cs-admin-editeur-fiche .images-vide,
+cs-admin-editeur-fiche .historique { color: var(--texte-pale); font-size: 0.83rem; font-weight: 700; }
+cs-admin-editeur-fiche .image { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+cs-admin-editeur-fiche .image img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+cs-admin-editeur-fiche .image-nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.83rem; font-weight: 700; }
+cs-admin-editeur-fiche .carte-suppression[hidden] { display: none; }

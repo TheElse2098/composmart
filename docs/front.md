@@ -204,9 +204,19 @@ Markdown des cours : `socle/markdown.js`. `await chargerMoteur()` (marked,
 DOMPurify, KaTeX, une fois par page), `markdownEnHtml(texte)` dans le gabarit
 (HTML assaini par DOMPurify, avec la configuration `NETTOYAGE`), puis
 `finaliser(zone)` une fois la zone dans la page (formules, tableaux qui
-défilent). L'aperçu de l'éditeur d'admin utilise encore
-`assets/js/markdown-sur.js` jusqu'à sa migration : un test vérifie que les
-deux configurations restent identiques.
+défilent). `sectionsDuCours(texte)` découpe le texte en diapositives comme le
+lecteur. L'aperçu de l'éditeur d'admin (`ui/admin/cours/editeur-panneaux.js`)
+utilise les mêmes fonctions et la même feuille `styles/texte-cours.css`
+(carte, titre et texte d'une section) : c'est ce qui le rend fidèle. Tant que
+l'ancien éditeur existe, `assets/js/markdown-sur.js` aussi : un test vérifie
+que les deux configurations de nettoyage restent identiques.
+
+Éditeur de cours (`ui/admin/cours/`) : `<cs-admin-editeur>` (cadre, onglets,
+enregistrement) et un composant par onglet (`editeur-panneaux`,
+`editeur-medias`, `editeur-quiz`, `editeur-fiche`). Le passage du markdown aux
+panneaux (`panneaux-markdown.js`) et l'édition du quiz (`quiz-edition.js`)
+sont des fonctions pures ; `tests/front/admin-editeur.test.mjs` compare le
+découpage à l'ancien éditeur sur tous les cours de `content/cours/`.
 
 Vidéo : `<cs-video adresse="…">` (`composants/video/`). Une adresse YouTube ou
 Vimeo s'affiche en façade, sans aucune requête vers la plateforme avant le

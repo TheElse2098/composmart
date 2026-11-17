@@ -1,0 +1,150 @@
+/* ============================================================================
+   editeur.css — habillage de <cs-admin-editeur> : en-tête, onglets, barre
+   d'enregistrement, et ce que ses quatre onglets ont en commun (cartes,
+   champs, boutons, aide, barre d'outils). Les onglets sont toujours dans
+   l'éditeur : leurs feuilles ne contiennent que ce qui leur est propre.
+   ============================================================================ */
+
+cs-admin-editeur {
+  display: block;
+  /* La barre d'enregistrement est fixée en bas : la page lui laisse sa place. */
+  padding-bottom: 90px;
+
+  --ed-ombre: 0 2px 10px rgba(30, 110, 62, 0.08);
+  --ed-trait: #dbeade;
+  --ed-champ-fond: #f7fbf8;
+  --ed-champ-bord: #c8dfc8;
+  --ed-champ-focus: #fff;
+  --ed-vert-survol: #17572f;
+  --ed-clair-bord: #a8e6bf;
+  --ed-clair-survol: #e4f6ea;
+  --ed-aide-fond: #f1f8f2;
+  --ed-aide-filet: #a8e6bf;
+  --ed-aide-code: #e0eee4;
+  --ed-modifie: #b26a00;
+  --ed-publie-fond: #e4f6ea;
+  --ed-publie-texte: #1e6e3e;
+  --ed-brouillon-fond: #fdf1d8;
+  --ed-brouillon-texte: #8a6100;
+  --ed-archive-fond: #eceff1;
+  --ed-archive-texte: #607d8b;
+}
+html.dark cs-admin-editeur {
+  --ed-ombre: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --ed-trait: #243328;
+  --ed-champ-fond: #101a13;
+  --ed-champ-bord: #2d4030;
+  --ed-champ-focus: #1e2d22;
+  --ed-vert-survol: #2d9959;
+  --ed-clair-bord: #2d4030;
+  --ed-clair-survol: #1e2d22;
+  --ed-aide-fond: #14231a;
+  --ed-aide-filet: #2d6b45;
+  --ed-aide-code: #1e2d22;
+  --ed-publie-fond: #14301f;
+  --ed-publie-texte: #52b788;
+  --ed-brouillon-fond: #2e2410;
+  --ed-brouillon-texte: #e0b95f;
+  --ed-archive-fond: #1e2d22;
+  --ed-archive-texte: #8fa398;
+}
+
+/* ── En-tête ── */
+cs-admin-editeur .page { max-width: 1400px; margin: 0 auto; padding: 22px 20px 0; }
+cs-admin-editeur .liens { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 10px; }
+cs-admin-editeur .liens a { color: var(--accent); font-size: 0.84rem; font-weight: 800; text-decoration: none; }
+cs-admin-editeur .liens a:hover { text-decoration: underline; }
+cs-admin-editeur .liens a[hidden] { display: none; }
+cs-admin-editeur .fil { margin-bottom: 8px; color: var(--texte-pale); font-size: 0.78rem; font-weight: 800; }
+cs-admin-editeur .fil a { color: var(--accent); text-decoration: none; }
+cs-admin-editeur .fil a:hover { text-decoration: underline; }
+cs-admin-editeur h1 { color: var(--texte); font-family: var(--police-titre); font-size: clamp(1.4rem, 4vw, 1.9rem); font-weight: 900; }
+
+/* ── Onglets ── */
+cs-admin-editeur .onglets { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 14px; border-bottom: 2px solid var(--ed-trait); }
+cs-admin-editeur .onglet {
+  margin-bottom: -2px; padding: 9px 15px; border: none; border-bottom: 3px solid transparent; background: none; cursor: pointer;
+  color: var(--texte-pale); font-family: var(--police-titre); font-size: 0.9rem; font-weight: 800;
+}
+cs-admin-editeur .onglet:hover { color: var(--accent); }
+cs-admin-editeur .onglet.actif { color: var(--accent); border-bottom-color: var(--accent); }
+cs-admin-editeur .vue { display: none; }
+cs-admin-editeur .vue.actif { display: block; }
+
+/* ── Erreur, aide ── */
+cs-admin-editeur .erreur { margin-bottom: 12px; padding: 10px 13px; border-radius: 10px; background: var(--alerte-fond); color: var(--alerte-texte); font-size: 0.83rem; font-weight: 700; }
+cs-admin-editeur .erreur[hidden] { display: none; }
+cs-admin-editeur .aide {
+  margin-bottom: 13px; padding: 10px 13px; border-left: 4px solid var(--ed-aide-filet); border-radius: 8px;
+  background: var(--ed-aide-fond); color: var(--texte-doux); font-size: 0.8rem; font-weight: 600; line-height: 1.6;
+}
+cs-admin-editeur .aide code { padding: 1px 5px; border-radius: 4px; background: var(--ed-aide-code); font-size: 0.9em; }
+
+/* ── Cartes ── */
+cs-admin-editeur .carte { margin-bottom: 14px; padding: 18px; border-radius: 15px; background: var(--surface); box-shadow: var(--ed-ombre); }
+cs-admin-editeur .carte-tete { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+cs-admin-editeur .carte-titre { flex: 1; min-width: 0; color: var(--texte); font-family: var(--police-titre); font-size: 1rem; font-weight: 900; }
+cs-admin-editeur .carte-titre.danger { color: #c0392b; }
+
+/* ── Champs ── */
+cs-admin-editeur .champs { display: grid; gap: 12px; }
+@media (min-width: 760px) {
+  cs-admin-editeur .champs.deux { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  cs-admin-editeur .champs.trois { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+cs-admin-editeur .espace { margin-top: 12px; }
+cs-admin-editeur .champ-espace { margin-bottom: 11px; }
+cs-admin-editeur .champ-titre {
+  display: block; margin-bottom: 5px; color: var(--texte-doux);
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+}
+cs-admin-editeur .champ input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+cs-admin-editeur .champ textarea,
+cs-admin-editeur .champ select {
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--ed-champ-bord); border-radius: 10px;
+  background: var(--ed-champ-fond); color: var(--texte); font-family: inherit; font-size: 0.9rem;
+}
+cs-admin-editeur .champ input:focus,
+cs-admin-editeur .champ textarea:focus,
+cs-admin-editeur .champ select:focus { outline: none; border-color: var(--accent); background: var(--ed-champ-focus); }
+cs-admin-editeur .champ input:disabled { opacity: 0.6; cursor: not-allowed; }
+cs-admin-editeur .champ small { display: block; margin-top: 4px; color: var(--texte-pale); font-size: 0.72rem; font-weight: 700; }
+cs-admin-editeur textarea { resize: vertical; }
+
+/* ── Boutons ── */
+cs-admin-editeur .btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: 50px; cursor: pointer;
+  font-family: var(--police-titre); font-size: 0.85rem; font-weight: 800; text-decoration: none;
+}
+cs-admin-editeur .btn-vert { background: var(--action); color: #fff; }
+cs-admin-editeur .btn-vert:hover { background: var(--ed-vert-survol); }
+cs-admin-editeur .btn-clair { background: var(--surface); color: var(--accent); border: 1.5px solid var(--ed-clair-bord); }
+cs-admin-editeur .btn-clair:hover { background: var(--ed-clair-survol); }
+cs-admin-editeur .btn-danger { background: #c0392b; color: #fff; }
+cs-admin-editeur .btn-danger:hover { background: #a5301f; }
+cs-admin-editeur .btn:disabled { opacity: 0.5; cursor: default; }
+cs-admin-editeur .btn-petit { padding: 5px 11px; border-radius: 8px; font-size: 0.76rem; }
+cs-admin-editeur .btn-retirer { color: #c0392b; }
+cs-admin-editeur .sup { flex-shrink: 0; padding: 0 4px; border: none; background: none; color: #c0392b; font-size: 1rem; cursor: pointer; }
+
+/* Lignes à plusieurs champs (sources, réponses du quiz) */
+cs-admin-editeur .source input,
+cs-admin-editeur .option input[type="text"] {
+  flex: 1; min-width: 0; padding: 7px 10px; border: 1.5px solid var(--ed-champ-bord); border-radius: 8px;
+  background: var(--ed-champ-fond); color: var(--texte); font-family: inherit; font-size: 0.82rem;
+}
+
+/* ── Barre d'enregistrement : fixée, on ne perd jamais le bouton de vue ── */
+cs-admin-editeur .barre-enregistrement {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; padding: 11px 20px 14px;
+  background: var(--surface); border-top: 1.5px solid var(--ed-trait); box-shadow: var(--ed-ombre);
+}
+cs-admin-editeur .barre-dedans { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; max-width: 1400px; margin: 0 auto; }
+cs-admin-editeur .etat { margin-left: auto; color: var(--texte-pale); font-size: 0.8rem; font-weight: 800; }
+cs-admin-editeur .etat.modifie { color: var(--ed-modifie); }
+cs-admin-editeur .etat.ok { color: var(--accent); }
+cs-admin-editeur .etat.ko { color: var(--alerte-texte); }
+cs-admin-editeur .badge-statut { padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; }
+cs-admin-editeur .badge-statut.publie { background: var(--ed-publie-fond); color: var(--ed-publie-texte); }
+cs-admin-editeur .badge-statut.brouillon { background: var(--ed-brouillon-fond); color: var(--ed-brouillon-texte); }
+cs-admin-editeur .badge-statut.archive { background: var(--ed-archive-fond); color: var(--ed-archive-texte); }

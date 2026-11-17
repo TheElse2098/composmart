@@ -1,0 +1,16 @@
+/* ============================================================================
+   editeur-quiz.css — <cs-admin-editeur-quiz> : réponses et bascule « Réponses
+   multiples ». Cartes, champs et boutons : editeur.css.
+   ============================================================================ */
+
+cs-admin-editeur-quiz { display: block; }
+
+cs-admin-editeur-quiz .q-multi-toggle {
+  display: flex; align-items: center; gap: 5px; white-space: nowrap; cursor: pointer;
+  color: var(--texte-doux); font-size: 0.82rem; font-weight: 700;
+}
+cs-admin-editeur-quiz .q-multi-toggle input { cursor: pointer; }
+
+cs-admin-editeur-quiz .option { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+cs-admin-editeur-quiz .option input[type="radio"],
+cs-admin-editeur-quiz .option input[type="checkbox"] { flex-shrink: 0; width: 17px; height: 17px; accent-color: #1e6e3e; }

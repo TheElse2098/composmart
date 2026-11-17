@@ -396,8 +396,12 @@ class HTMLInputElement extends HTMLElement {
   /** Le type du champ, lu et écrit dans son attribut (`password`, `text`…). */
   get type() { return this.getAttribute('type') || 'text'; }
   set type(valeur) { this.setAttribute('type', valeur); }
-  /** Case à cocher : cochée, ou « à moitié » (une partie de la sélection). */
-  checked = false;
+  /** Case à cocher : cochée (d'après son attribut `checked`, jusqu'à ce qu'on
+   *  la coche ou la décoche), ou « à moitié » (une partie de la sélection). */
+  /** @type {boolean | null} */
+  #coche = null;
+  get checked() { return this.#coche ?? this.hasAttribute('checked'); }
+  set checked(valeur) { this.#coche = !!valeur; }
   indeterminate = false;
   get value() { return this.#valeur ?? this.getAttribute('value') ?? ''; }
   set value(valeur) { this.#valeur = String(valeur); }
@@ -426,10 +430,16 @@ class HTMLFormElement extends HTMLElement {
   }
 }
 
-/** Zone de texte : une valeur, rien d'autre. */
+/** Zone de texte : sa valeur est le texte écrit entre ses balises, jusqu'à ce
+ *  qu'on lui en donne une autre ; une sélection (début, fin) qu'un test fixe. */
 class HTMLTextAreaElement extends HTMLElement {
-  value = '';
+  /** @type {string | null} */
+  #valeur = null;
   placeholder = '';
+  selectionStart = 0;
+  selectionEnd = 0;
+  get value() { return this.#valeur ?? this.textContent; }
+  set value(valeur) { this.#valeur = String(valeur); }
 
   /** Ce que fait quelqu'un qui écrit dans la zone. @param {string} valeur */
   saisir(valeur) {
@@ -690,6 +700,8 @@ export function installerFauxDom() {
   /** @type {unknown[]} */
   const defilements = [];
   g.scrollTo = (/** @type {unknown} */ options) => { defilements.push(options); };
+  // Historique : replaceState change l'adresse de la page, sans la recharger.
+  g.history = { replaceState: (/** @type {unknown} */ _etat, /** @type {string} */ _titre, /** @type {string} */ adresse) => { g.location.pathname = adresse; } };
   g.document = document;
   g.window = g;
   g.location = { pathname: '/', search: '' };

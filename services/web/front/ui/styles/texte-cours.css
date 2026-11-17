@@ -1,0 +1,146 @@
+/* ============================================================================
+   texte-cours.css — une section de cours telle que les lecteurs la voient :
+   la carte (.lesson-card), son titre (.lesson-title) et le texte rendu du
+   markdown (.lesson-body).
+
+   Partagé par le lecteur (<cs-lecteur-cours>) et par l'aperçu de l'éditeur
+   d'admin : c'est ce qui garantit qu'un administrateur voit exactement ce que
+   verront les lecteurs. Chargé par les composants qui en ont besoin
+   (`static styles`), jamais cité seul par une page.
+
+   Le texte des cours contient volontairement du HTML (schémas dessinés,
+   citations centrées) : ses classes sont stylées ici, sous .lesson-body.
+   ============================================================================ */
+
+.lesson-card,
+.lesson-body {
+  --tc-carte: #fff;
+  --tc-ombre: 0 4px 18px rgba(30, 110, 62, 0.09);
+  --tc-titre: #1a3a25;
+  --tc-texte: #2d5a3d;
+  --tc-fort: #1e6e3e;
+  --tc-lien: #1e6e3e;
+  --tc-lien-trait: rgba(30, 110, 62, 0.4);
+  --tc-lien-vu: #2d6a4f;
+  --tc-lien-survol: #163f26;
+  --tc-creux: #eef4ec;
+  --tc-citation: #2d6a4f;
+  --tc-citation-centree: #2d6a4f;
+  --tc-filet: #1e6e3e;
+  --tc-code: currentColor;
+  --tc-entete-tableau: #1e6e3e;
+  --tc-schema-fond: #f4f9f4;
+  --tc-schema-trait: #e3efe5;
+  --tc-schema-prox: #16a34a;
+  --tc-schema-coll: #7fb519;
+  --tc-duo-titre: #1e6e3e;
+}
+html.dark .lesson-card,
+html.dark .lesson-body {
+  --tc-carte: #1a2b1e;
+  --tc-ombre: 0 4px 18px rgba(0, 0, 0, 0.35);
+  --tc-titre: #c8e6d4;
+  --tc-texte: #b0d4be;
+  --tc-fort: #a8e6bf;
+  --tc-lien: #52b788;
+  --tc-lien-trait: rgba(82, 183, 136, 0.4);
+  --tc-lien-vu: #7ab88e;
+  --tc-lien-survol: #a8e6bf;
+  --tc-creux: #1e2d22;
+  --tc-citation: #7ab88e;
+  --tc-citation-centree: #a8c9b5;
+  --tc-filet: #52b788;
+  --tc-code: #a8e6bf;
+  --tc-entete-tableau: #243328;
+  --tc-schema-fond: #16241a;
+  --tc-schema-trait: #243a2c;
+  --tc-schema-prox: #4ade80;
+  --tc-schema-coll: #a3e635;
+  --tc-duo-titre: #a8e6bf;
+}
+
+/* ── Carte d'une section ── */
+.lesson-card { margin-top: 14px; padding: 22px 18px 32px; border-radius: 22px; background: var(--tc-carte); box-shadow: var(--tc-ombre); }
+.lesson-title {
+  margin-bottom: 12px; text-align: center; line-height: 1.25; color: var(--tc-titre);
+  font-family: var(--police-titre); font-size: 1.15rem; font-weight: 900;
+}
+
+/* ── Texte du cours (markdown rendu) ── */
+.lesson-body { color: var(--tc-texte); font-size: 0.92rem; font-weight: 600; line-height: 1.65; }
+.lesson-body p { margin-bottom: 11px; }
+.lesson-body p:last-child { margin-bottom: 0; }
+.lesson-body strong { color: var(--tc-fort); }
+.lesson-body a { color: var(--tc-lien); font-weight: 700; text-decoration-color: var(--tc-lien-trait); }
+.lesson-body a:visited { color: var(--tc-lien-vu); }
+.lesson-body a:hover { color: var(--tc-lien-survol); }
+.lesson-body h1,
+.lesson-body h2,
+.lesson-body h3 { margin: 14px 0 7px; color: var(--tc-titre); font-family: var(--police-titre); }
+.lesson-body h2 { font-size: 1.05rem; }
+.lesson-body h3 { font-size: 0.95rem; }
+.lesson-body ul,
+.lesson-body ol { margin-bottom: 11px; padding-left: 20px; }
+.lesson-body li { margin-bottom: 4px; }
+.lesson-body img { max-width: 100%; height: auto; }
+/* Boîte posée par finaliser() (socle/markdown.js) : un tableau large défile
+   dans sa boîte plutôt que de pousser la page au-delà de l'écran. */
+.lesson-body .table-scroll { margin: 11px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.lesson-body .table-scroll table { margin: 0; }
+.lesson-body table { width: 100%; margin: 11px 0; border-collapse: collapse; font-size: 0.82rem; }
+.lesson-body th { padding: 7px 10px; background: var(--tc-entete-tableau); color: #fff; text-align: left; white-space: nowrap; }
+.lesson-body td { padding: 7px 10px; border-bottom: 1px solid var(--trait); white-space: nowrap; }
+.lesson-body blockquote {
+  margin: 11px 0; padding: 10px 13px; border-left: 4px solid var(--tc-filet); border-radius: 0 10px 10px 0;
+  background: var(--tc-creux); color: var(--tc-citation); font-style: italic;
+}
+.lesson-body code { padding: 2px 5px; border-radius: 4px; background: var(--tc-creux); color: var(--tc-code); font-size: 0.84em; }
+
+/* Citation centrée : sans le filet ni le fond du blockquote standard, qui
+   supposent un texte aligné à gauche. */
+.lesson-body .citation {
+  max-width: 34rem; margin: 16px auto; padding: 4px 10px;
+  border-left: none; border-radius: 0; background: none;
+  text-align: center; font-style: italic; font-size: 0.9rem; line-height: 1.65; color: var(--tc-citation-centree);
+}
+.lesson-body .citation-source { display: inline-block; margin-top: 8px; color: #7aaa8a; font-style: normal; font-size: 0.78rem; font-weight: 700; }
+
+/* Schéma « familles de solutions », dessiné en HTML dans le texte du cours :
+   lisible au zoom, adapté au mobile, et il suit le thème. Les pastilles
+   gardent leurs verts vifs dans les deux thèmes (texte sombre dessus). */
+.lesson-body .schema-solutions { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 4px 0 16px; }
+.lesson-body .sch-branche { padding: 16px 12px 14px; border-radius: 16px; background: var(--tc-schema-fond); text-align: center; }
+.lesson-body .sch-tete {
+  display: inline-block; padding: 7px 16px; border-radius: 20px; line-height: 1.2;
+  font-family: var(--police-titre); font-size: 0.86rem; font-weight: 900;
+}
+.lesson-body .sch-prox .sch-tete { background: #22c55e; color: #08290f; }
+.lesson-body .sch-coll .sch-tete { background: #bbf451; color: #22330a; }
+/* Trait de rattachement tête → feuilles, pour lire l'arborescence */
+.lesson-body .sch-feuilles {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-top: 14px; padding-top: 14px; border-top: 2px solid var(--tc-schema-trait);
+}
+.lesson-body .sch-feuille { font-size: 0.78rem; font-weight: 800; line-height: 1.35; }
+.lesson-body .sch-prox .sch-feuille { color: var(--tc-schema-prox); }
+.lesson-body .sch-coll .sch-feuille { color: var(--tc-schema-coll); }
+
+/* Bloc « 2 options », même principe. Sous .lesson-body : sans ça,
+   .lesson-body p l'emporterait et rajouterait sa marge de paragraphe. */
+.lesson-body .duo-bloc { margin: 4px 0 16px; }
+.lesson-body .duo-intro {
+  margin-bottom: 14px; text-align: center; color: var(--tc-titre);
+  font-family: var(--police-titre); font-size: 1rem; font-weight: 900;
+}
+.lesson-body .duo-options { display: grid; grid-template-columns: 1fr; gap: 12px; }
+.lesson-body .duo-carte { padding: 16px 14px; border-left: 4px solid var(--tc-filet); border-radius: 16px; background: var(--tc-schema-fond); }
+.lesson-body .duo-titre {
+  margin-bottom: 8px; line-height: 1.3; color: var(--tc-duo-titre);
+  font-family: var(--police-titre); font-size: 0.9rem; font-weight: 900;
+}
+.lesson-body .duo-texte { margin: 0; color: var(--tc-texte); font-size: 0.82rem; font-weight: 600; line-height: 1.5; }
+
+@media (min-width: 560px) {
+  .lesson-body .schema-solutions { grid-template-columns: 1fr 1fr; gap: 16px; }
+  .lesson-body .duo-options { grid-template-columns: 1fr 1fr; gap: 14px; }
+}

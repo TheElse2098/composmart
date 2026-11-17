@@ -19,7 +19,7 @@
    ============================================================================ */
 import { api, ErreurApi } from '../../socle/api.js';
 import { Composant } from '../../socle/composant.js';
-import { chargerMoteur, finaliser, markdownEnHtml } from '../../socle/markdown.js';
+import { chargerMoteur, finaliser, markdownEnHtml, sectionsDuCours } from '../../socle/markdown.js';
 import { html } from '../../socle/outils.js';
 import { session } from '../../socle/session.js';
 import '../../composants/video/video.js';
@@ -43,7 +43,7 @@ import { QuizCours } from './quiz-cours.js';
  * @property {Media} [video]
  * @property {Media} [podcast]
  *
- * @typedef {{ titre: string, contenu: string }} Section  une diapositive du cours
+ * @typedef {import('../../socle/markdown.js').Section} Section  une diapositive du cours
  */
 
 /** @type {Record<string, string>} */
@@ -60,32 +60,6 @@ export function slugDe(chemin) {
 }
 
 /**
- * Découpe le texte d'un cours en sections, sur ses titres « ## ». Ce qui
- * précède le premier « ## » forme une section sans titre, débarrassée du
- * titre principal « # » (déjà affiché dans l'en-tête). Une section sans
- * contenu est ignorée.
- * @param {string} texte
- * @returns {Section[]}
- */
-export function decouper(texte) {
-  /** @type {Section[]} */
-  const sections = [];
-  for (const morceau of texte.split(/(?=^## )/m)) {
-    const bloc = morceau.trim();
-    if (!bloc) continue;
-    if (bloc.startsWith('## ')) {
-      const lignes = bloc.split('\n');
-      const contenu = lignes.slice(1).join('\n').trim();
-      if (contenu) sections.push({ titre: lignes[0].slice(3).trim(), contenu });
-    } else {
-      const contenu = bloc.replace(/^# .+\n?/, '').trim();
-      if (contenu) sections.push({ titre: '', contenu });
-    }
-  }
-  return sections;
-}
-
-/**
  * Remplissage de la barre de progression à la section `i` (0 pour la première).
  * @param {number} i
  * @param {number} total
@@ -96,7 +70,7 @@ export function progressionSection(i, total) {
 
 export class LecteurCours extends Composant {
   static balise = 'cs-lecteur-cours';
-  static styles = [new URL('./lecteur-cours.css', import.meta.url)];
+  static styles = [new URL('../../styles/texte-cours.css', import.meta.url), new URL('./lecteur-cours.css', import.meta.url)];
 
   /** @type {Section[]} */
   #sections = [];
@@ -133,7 +107,7 @@ export class LecteurCours extends Composant {
     }
 
     this.#contexte = { slug, membre: moi.logged_in, xp: moi.logged_in ? Number(moi.xp) || 0 : 0 };
-    this.#sections = cours.texte ? decouper(cours.texte) : [];
+    this.#sections = cours.texte ? sectionsDuCours(cours.texte) : [];
     const quiz = Array.isArray(cours.quiz) && cours.quiz.length ? cours.quiz : null;
     document.title = 'CompoSmart – ' + (cours.meta.titre || slug);
 
