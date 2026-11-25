@@ -30,3 +30,13 @@ export const ACCES_COMPOSTEUR = ['public', 'privé', 'institution'];
 export function libelleMotif(motif) {
   return MOTIFS[motif] || motif;
 }
+
+/**
+ * Ce qu'on peut autoriser ou interdire dans un composteur, proposé dans le
+ * formulaire de la carte. Mêmes noms que la table `elements` de la base : le
+ * serveur ignore un nom qu'elle ne connaît pas.
+ */
+export const ELEMENTS_REGLES = [
+  'produits laitiers', 'tonte de pelouse', 'reste de repas', 'os', 'poisson', 'huile',
+  'sac biodégradable', 'viande', 'cendres', 'essuie-tout', 'marc de café',
+];

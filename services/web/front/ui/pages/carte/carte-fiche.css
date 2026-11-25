@@ -34,6 +34,10 @@ cs-carte-fiche {
   --cf-champ-bord: #e0d4b0;
   --cf-rgpd: #7aaa8a;
   --cf-rgpd-lien: #1e6e3e;
+  --cf-supprimer: #c0392b;
+  --cf-edit-texte: #1a3a25;
+  --cf-edit-bord: #c8dfc8;
+  --cf-edit-focus: #1e6e3e;
 }
 html.dark cs-carte-fiche {
   --cf-fond: #1a2b1e;
@@ -63,6 +67,10 @@ html.dark cs-carte-fiche {
   --cf-champ-bord: #3a5c42;
   --cf-rgpd: #5a8a6a;
   --cf-rgpd-lien: #52b788;
+  --cf-supprimer: #ef9a9a;
+  --cf-edit-texte: #e8f5ee;
+  --cf-edit-bord: #3a5c42;
+  --cf-edit-focus: #52b788;
 }
 
 cs-carte-fiche .tabl {
@@ -147,6 +155,36 @@ cs-carte-fiche .signal-envoyer:disabled { opacity: 0.6; cursor: default; }
 cs-carte-fiche .signal-msg { font-size: 0.76rem; font-weight: 700; }
 cs-carte-fiche .signal-msg.ok { color: #1e6e3e; }
 cs-carte-fiche .signal-msg.err { color: #c0392b; }
+
+/* ── Boutons d'action : modifier, enregistrer, supprimer ── */
+cs-carte-fiche .btn-principal {
+  max-width: 100%; margin: 4px 2px; padding: 6px 12px; border: none; border-radius: 8px; cursor: pointer;
+  background: #1e6e3e; color: #fff; font-size: 0.82rem; font-weight: 700;
+}
+cs-carte-fiche .btn-supprimer {
+  max-width: 100%; margin: 4px 2px; padding: 6px 12px; border: 1.5px solid #c0392b; border-radius: 8px; cursor: pointer;
+  background: var(--cf-fond); color: var(--cf-supprimer); font-size: 0.82rem; font-weight: 700;
+}
+cs-carte-fiche .btn-principal:disabled,
+cs-carte-fiche .btn-supprimer:disabled { opacity: 0.6; cursor: default; }
+cs-carte-fiche .fiche-erreur { padding: 8px 16px 0; color: var(--cf-nok-texte); font-size: 0.78rem; font-weight: 700; }
+cs-carte-fiche .fiche-erreur[hidden] { display: none; }
+
+/* ── Formulaire (modification, proposition) ── même fond que le panneau : seule
+   la bordure signale un champ. */
+cs-carte-fiche .tabl-edition { display: flex; flex-direction: column; gap: 6px; padding: 8px 16px 0; }
+cs-carte-fiche .edit-select,
+cs-carte-fiche .edit-input {
+  display: block; width: 100%; padding: 5px 8px; border: 1.5px solid var(--cf-edit-bord); border-radius: 8px; outline: none;
+  background: var(--cf-fond); color: var(--cf-edit-texte); font-size: 0.82rem; font-weight: 600;
+}
+cs-carte-fiche .edit-select { padding: 3px 6px; border-width: 1px; border-radius: 6px; cursor: pointer; }
+cs-carte-fiche .edit-input:focus { border-color: var(--cf-edit-focus); }
+cs-carte-fiche .edit-check {
+  display: flex; align-items: center; gap: 7px; width: 100%; padding: 3px 0; cursor: pointer;
+  color: var(--cf-edit-texte); font-size: 0.78rem; line-height: 1.4;
+}
+cs-carte-fiche .edit-check input { flex-shrink: 0; width: 15px; height: 15px; accent-color: #1e6e3e; cursor: pointer; }
 
 /* ── Ordinateur : une colonne à droite ── */
 @media (min-width: 700px) {

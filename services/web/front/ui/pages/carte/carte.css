@@ -17,6 +17,12 @@ cs-carte {
   --ca-champ-fond: #fff;
   --ca-champ-texte: #1a3a25;
   --ca-champ-bord: #1e6e3e;
+  --ca-rajouter-fond: #fff;
+  --ca-rajouter-bord: #1e6e3e;
+  --ca-rajouter-texte: #2c4a34;
+  --ca-rajouter-lien: #1e6e3e;
+  --ca-rajouter-bouton-fond: #1e6e3e;
+  --ca-rajouter-bouton-texte: #fff;
   /* Contrôles de Leaflet : en clair, ses valeurs d'origine. */
   --ca-ctrl-fond: #fff;
   --ca-ctrl-texte: #000;
@@ -36,6 +42,12 @@ html.dark cs-carte {
   --ca-champ-fond: #1e2d22;
   --ca-champ-texte: #c8e6d4;
   --ca-champ-bord: #2d9959;
+  --ca-rajouter-fond: #1a2b1e;
+  --ca-rajouter-bord: #2d9959;
+  --ca-rajouter-texte: #c8e6d4;
+  --ca-rajouter-lien: #52b788;
+  --ca-rajouter-bouton-fond: #1e2d22;
+  --ca-rajouter-bouton-texte: #52b788;
   --ca-ctrl-fond: #1e2d22;
   --ca-ctrl-texte: #c8e6d4;
   --ca-ctrl-bord: #2a3d2e;
@@ -79,6 +91,10 @@ cs-carte .leaflet-bar a:focus { background-color: var(--ca-ctrl-survol); }
 cs-carte .leaflet-control-layers { background: var(--ca-calques-fond); color: var(--ca-calques-texte); }
 cs-carte .leaflet-control-layers-separator { border-color: var(--ca-calques-trait); }
 cs-carte .leaflet-control-scale-line { background: var(--ca-echelle-fond); color: var(--ca-echelle-texte); border-color: var(--ca-echelle-bord); }
+/* Le petit drapeau que Leaflet 1.9 place devant son nom dans les crédits.
+   !important : Leaflet l'affiche lui-même avec !important. Les crédits
+   (Leaflet, OpenStreetMap, obligatoire) restent. */
+cs-carte .leaflet-attribution-flag { display: none !important; }
 /* Bouton « vue par défaut » : le cadre .leaflet-bar, on n'ajuste que le glyphe. */
 cs-carte .reset-vue { font-size: 17px; font-weight: 700; }
 /* Icône plein écran : un masque SVG teinté en currentColor, donc toujours
@@ -125,6 +141,22 @@ cs-carte .pile-bas {
 }
 cs-carte .pile-bas > * { pointer-events: auto; }
 
+/* Panneau d'ajout, au clic sur la carte. */
+cs-carte .rajouter {
+  padding: 8px 16px; border: 2px solid var(--ca-rajouter-bord); border-radius: 12px; text-align: center;
+  background: var(--ca-rajouter-fond); color: var(--ca-rajouter-texte); font-size: 0.9rem;
+}
+cs-carte .rajouter[hidden] { display: none; }
+cs-carte .rajouter-connexion { color: var(--ca-rajouter-texte); font-weight: 600; }
+cs-carte .rajouter-connexion a { color: var(--ca-rajouter-lien); font-weight: 800; text-decoration: underline; }
+cs-carte .rajouter button {
+  width: 100%; padding: 10px 20px; border: none; border-radius: 50px; cursor: pointer;
+  background: var(--ca-rajouter-bouton-fond); color: var(--ca-rajouter-bouton-texte); font-size: 0.9rem; font-weight: 700;
+  transition: opacity 0.2s;
+}
+cs-carte .rajouter button:hover { opacity: 0.85; }
+cs-carte .rajouter button:disabled { opacity: 0.6; cursor: default; }
+
 cs-carte .compteur {
   padding: 6px 16px; border-radius: 10px; text-align: center;
   background: var(--ca-compteur-fond); color: var(--ca-compteur-texte); font-size: 0.82rem; font-weight: 600;
@@ -158,4 +190,6 @@ cs-carte .trouver button:hover { opacity: 0.85; }
   /* La pile se recentre et reprend une largeur de contenu. */
   cs-carte .pile-bas { align-items: center; padding: 0 0 12px; }
   cs-carte .trouver button { width: auto; }
+  cs-carte .rajouter { width: auto; max-width: 400px; }
+  cs-carte .rajouter button { width: auto; }
 }

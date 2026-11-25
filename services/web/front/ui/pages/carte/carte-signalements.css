@@ -1,0 +1,65 @@
+/* ============================================================================
+   carte-signalements.css — <cs-carte-signalements> : le bouton 🚩 et la liste
+   des signalements, en haut à droite de la carte. En haut plutôt qu'en bas :
+   la pile du bas grandit jusqu'à trois lignes, aucune marge fixe ne suffirait
+   à les séparer. Positionnés par rapport à la zone de carte de <cs-carte>.
+   ============================================================================ */
+
+cs-carte-signalements {
+  display: block;
+
+  --sg-fond: #fff;
+  --sg-texte: #1a3a25;
+  --sg-bord: #eee;
+  --sg-meta: #888;
+  --sg-voir-fond: #eef4ec;
+  --sg-voir-texte: #1e6e3e;
+  --sg-rej-fond: #fdecea;
+  --sg-rej-texte: #c0392b;
+}
+html.dark cs-carte-signalements {
+  --sg-fond: #16211a;
+  --sg-texte: #e8f5ee;
+  --sg-bord: #2b3c30;
+  --sg-meta: #9bb3a3;
+  --sg-voir-fond: #1e2d22;
+  --sg-voir-texte: #7fc99a;
+  --sg-rej-fond: #3d1a1a;
+  --sg-rej-texte: #ef9a9a;
+}
+
+/* Rouge dans les deux thèmes : il signale l'administration. */
+cs-carte-signalements .signal-bouton {
+  position: absolute; top: 12px; right: 12px; z-index: 1000;
+  padding: 10px 16px; border: none; border-radius: 50px; cursor: pointer;
+  background: #e53935; color: #fff; font-size: 0.85rem; font-weight: 800;
+  box-shadow: 0 3px 10px rgba(229, 57, 53, 0.4);
+}
+cs-carte-signalements .signal-bouton[hidden] { display: none; }
+
+cs-carte-signalements .signal-panneau {
+  position: absolute; top: 60px; right: 12px; z-index: 1001;
+  display: flex; flex-direction: column; overflow: hidden;
+  width: 300px; max-width: calc(100% - 24px); max-height: 55vh;
+  border-radius: 14px; background: var(--sg-fond); box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+cs-carte-signalements .signal-panneau[hidden] { display: none; }
+cs-carte-signalements .signal-tete {
+  display: flex; justify-content: space-between; align-items: center; padding: 9px 14px;
+  background: #e53935; color: #fff; font-size: 0.85rem; font-weight: 800;
+}
+cs-carte-signalements .signal-tete button { border: none; background: none; color: #fff; font-size: 0.95rem; cursor: pointer; }
+cs-carte-signalements .signal-liste { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding: 8px; }
+
+cs-carte-signalements .signal-item { padding: 8px 10px; border: 1px solid var(--sg-bord); border-radius: 10px; color: var(--sg-texte); font-size: 0.76rem; }
+cs-carte-signalements .signal-motif { margin-bottom: 2px; font-weight: 800; }
+cs-carte-signalements .signal-meta { margin-bottom: 4px; color: var(--sg-meta); font-size: 0.68rem; }
+cs-carte-signalements .signal-commentaire { margin-bottom: 6px; font-style: italic; word-break: break-word; }
+cs-carte-signalements .signal-actions { display: flex; gap: 5px; }
+cs-carte-signalements .signal-actions button { padding: 4px 10px; border: none; border-radius: 14px; cursor: pointer; font-size: 0.7rem; font-weight: 700; }
+cs-carte-signalements .signal-actions button:disabled { opacity: 0.6; cursor: default; }
+cs-carte-signalements .sig-voir { background: var(--sg-voir-fond); color: var(--sg-voir-texte); }
+cs-carte-signalements .sig-ok { background: #1e6e3e; color: #fff; }
+cs-carte-signalements .sig-rej { background: var(--sg-rej-fond); color: var(--sg-rej-texte); }
+cs-carte-signalements .signal-erreur { margin-top: 5px; color: var(--alerte-texte); font-size: 0.7rem; font-weight: 700; }
+cs-carte-signalements .signal-vide { padding: 14px 0; text-align: center; color: #999; font-size: 0.78rem; }

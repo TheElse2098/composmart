@@ -17,8 +17,10 @@
 import { api, texteErreur } from '../../socle/api.js';
 import { Composant } from '../../socle/composant.js';
 import { html } from '../../socle/outils.js';
+import { session } from '../../socle/session.js';
 import { informer } from '../../composants/dialogue/dialogue.js';
 import { CarteFiche } from './carte-fiche.js';
+import { CarteSignalements } from './carte-signalements.js';
 import { CLE_VUE, VUE_DEFAUT, distanceLisible, ecrireVue, lireVue, texteCompteur, zoneAutour } from './carte-outils.js';
 import { FondCarte } from './fond-carte.js';
 
@@ -67,6 +69,10 @@ export class Carte extends Composant {
   #clic = null;
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   #rechargement = undefined;
+  /** Qui regarde la carte : décide de l'ajout (compte connecté) et des outils d'administration. @type {Promise<import('../../socle/session.js').Moi> | null} */
+  #moi = null;
+  /** Numéro du dernier clic : le panneau d'ajout d'un clic dépassé ne s'affiche pas en retard. */
+  #jetonClic = 0;
 
   async monter() {
     this.rendre(this.gabarit());
@@ -82,6 +88,8 @@ export class Carte extends Composant {
     this.ecouter('click', '[data-action="proche-clic"]', (b) => this.#procheDuClic(b));
     this.ecouter('click', '[data-action="chercher"]', () => this.#montrerRecherche(true));
     this.ecouter('submit', '.recherche', (_f, e) => { e.preventDefault(); this.#chercherVille(); });
+    this.ecouter('click', '[data-action="rajouter"]', (b) => this.#rajouter(b));
+    this.#ecouterContributions(fond);
     // En plein écran, la carte passe au-dessus du menu du téléphone, qui
     // s'ouvrirait derrière elle, invisible : on sort du plein écran d'abord.
     // Le burger du bandeau garde l'identifiant burgerBtn pour cette raison.
@@ -89,9 +97,41 @@ export class Carte extends Composant {
       if (e.target instanceof Element && e.target.closest('#burgerBtn') && fond.pleinEcran) fond.quitterPleinEcran();
     });
 
+    this.#moi = session.moi();
+    this.#moi.then((moi) => {
+      if (!moi.logged_in || !moi.isAdmin) return;
+      this.#fiche().fixerAdmin(true);
+      this.trouver('cs-carte-signalements', CarteSignalements).activer();
+    });
+
     this.#compteur('Recherche des composteurs…');
     this.#chargerTotal();
     await this.#chargerZone();
+  }
+
+  /**
+   * Ce que la fiche et le panneau des signalements annoncent : la carte suit.
+   * @param {FondCarte} fond
+   */
+  #ecouterContributions(fond) {
+    this.ecouterSur(this, 'compost-propose', () => {
+      fond.retirerClic();
+      this.#clic = null;
+      informer({ titre: 'Merci ! Ta demande a été envoyée.', texte: 'Le composteur apparaîtra sur la carte une fois validé par un administrateur.' });
+    });
+    this.ecouterSur(this, 'compost-modifie', (e) => {
+      const d = /** @type {CustomEvent<{ id: number, conteneur: boolean }>} */ (e).detail;
+      fond.changerType(d.id, d.conteneur);
+    });
+    this.ecouterSur(this, 'compost-supprime', (e) => {
+      fond.retirer(/** @type {CustomEvent<{ id: number }>} */ (e).detail.id);
+      this.#majCompteur();
+    });
+    this.ecouterSur(this, 'voir-compost', (e) => {
+      const p = /** @type {CustomEvent<Point>} */ (e).detail;
+      fond.voler(p.lat, p.lon, 17);
+      this.#ouvrirFiche(p);
+    });
   }
 
   /** @returns {CarteFiche} */
@@ -175,6 +215,8 @@ export class Carte extends Composant {
   #ouvrirFiche(point) {
     this.#fond?.retirerClic();
     this.#clic = null;
+    this.#jetonClic++;
+    this.trouver('.rajouter').hidden = true;
     this.trouver('[data-action="proche-clic"]').hidden = true;
     this.#fiche().ouvrir({ id: point.id, lat: point.lat, lon: point.lon });
   }
@@ -195,6 +237,46 @@ export class Carte extends Composant {
     bouton.hidden = false;
     bouton.disabled = false;
     bouton.textContent = TEXTE_PROCHE;
+    this.#panneauAjout();
+  }
+
+  /**
+   * Le panneau d'ajout sous la carte : un bouton pour un compte connecté, une
+   * invitation à se connecter sinon. Il attend de savoir qui regarde ; si un
+   * autre clic a eu lieu entre-temps, il laisse la place au plus récent.
+   */
+  async #panneauAjout() {
+    const jeton = ++this.#jetonClic;
+    const zone = this.trouver('.rajouter');
+    zone.hidden = false;
+    this.rendre(html`<div class="rajouter-connexion">…</div>`, zone);
+    const moi = this.#moi ? await this.#moi : { logged_in: false };
+    if (jeton !== this.#jetonClic) return;
+    this.rendre(moi.logged_in
+      ? html`<button type="button" data-action="rajouter">📍 Cliquez ici pour rajouter le compost</button>`
+      : html`<div class="rajouter-connexion">Connecte-toi pour proposer un composteur ici. <a href="/login">Se connecter</a></div>`, zone);
+  }
+
+  /**
+   * Vérifie d'abord qu'aucun point n'existe déjà à cet endroit, puis ouvre le
+   * formulaire. Rien n'est écrit en base avant son envoi.
+   * @param {HTMLElement} bouton
+   */
+  async #rajouter(bouton) {
+    const clic = this.#clic;
+    if (!clic || !(bouton instanceof HTMLButtonElement)) return;
+    const zone = this.trouver('.rajouter');
+    bouton.disabled = true;
+    try {
+      await api.carte.post('sites.php', { lat_click: clic[0], lon_click: clic[1] });
+    } catch (erreur) {
+      console.error('<cs-carte> ajout', erreur);
+      zone.textContent = '⚠️ ' + texteErreur(erreur, 'Ajout impossible pour le moment.');
+      return;
+    }
+    zone.hidden = true;
+    this.trouver('[data-action="proche-clic"]').hidden = true;
+    this.#fiche().proposer(clic[0], clic[1]);
   }
 
   /**
@@ -300,6 +382,7 @@ export class Carte extends Composant {
         <div class="info_compost">Cliquez sur un point pour avoir des informations ou cliquez sur la carte pour en rajouter un.</div>
         <button type="button" class="plus-proche-clic" data-action="proche-clic" hidden>${TEXTE_PROCHE}</button>
         <div class="pile-bas">
+          <div class="rajouter" hidden></div>
           <div class="compteur" role="status"></div>
           <form class="recherche" hidden>
             <input type="text" placeholder="Adresse, quartier, ville..." aria-label="Adresse, quartier ou ville">
@@ -311,6 +394,7 @@ export class Carte extends Composant {
         </div>
 
         <cs-carte-fiche></cs-carte-fiche>
+        <cs-carte-signalements></cs-carte-signalements>
       </div>`;
   }
 }

@@ -174,6 +174,29 @@ export class FondCarte {
   }
 
   /**
+   * Un point a changé de type (conteneur ou composteur) : il change d'icône et
+   * de calque.
+   * @param {number} id
+   * @param {boolean} conteneur
+   */
+  changerType(id, conteneur) {
+    const marqueur = this.#marqueurs.get(id);
+    if (!marqueur || marqueur.options.estConteneur === conteneur) return;
+    (marqueur.options.estConteneur ? this.#conteneurs : this.#composteurs).removeLayer(marqueur);
+    marqueur.options.estConteneur = conteneur;
+    marqueur.setIcon(this.#icones[conteneur ? 'conteneur' : 'compost']);
+    (conteneur ? this.#conteneurs : this.#composteurs).addLayer(marqueur);
+  }
+
+  /** Un point supprimé disparaît de la carte. @param {number} id */
+  retirer(id) {
+    const marqueur = this.#marqueurs.get(id);
+    if (!marqueur) return;
+    (marqueur.options.estConteneur ? this.#conteneurs : this.#composteurs).removeLayer(marqueur);
+    this.#marqueurs.delete(id);
+  }
+
+  /**
    * Retire les points sortis du champ, élargi de 50 % : sinon un petit
    * déplacement purgerait des points en bordure, que la requête suivante
    * irait aussitôt rechercher.
