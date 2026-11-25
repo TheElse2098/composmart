@@ -25,6 +25,8 @@ class FauxFond {
     this.reglages = reglages;
     /** @type {[string, ...any[]][]} */
     this.appels = [];
+    /** Ordre des points ajoutés et des déplacements animés. @type {string[]} */
+    this.ordre = [];
     /** @type {Map<number, { point: any, clic: (p: any) => void }>} */
     this.points = new Map();
     this.zoom = vue.zoom;
@@ -42,6 +44,7 @@ class FauxFond {
   get nombre() { return this.points.size; }
   /** @param {any[]} points @param {(p: any) => void} clic */
   ajouter(points, clic) {
+    this.ordre.push('ajouter');
     let n = 0;
     for (const p of points) if (!this.points.has(p.id)) { this.points.set(p.id, { point: p, clic }); n++; }
     this.appels.push(['ajouter', points.length]);
@@ -51,13 +54,18 @@ class FauxFond {
   cliquerPoint(id) { const m = this.points.get(id); if (m) m.clic(m.point); }
   purger() { this.appels.push(['purger']); }
   /** @param {any[]} a */ placer(...a) { this.appels.push(['placer', ...a]); }
-  /** @param {any[]} a */ voler(...a) { this.appels.push(['voler', ...a]); }
+  /** @param {any[]} a */ voler(...a) { this.ordre.push('voler'); this.appels.push(['voler', ...a]); }
   quitterPleinEcran() { this.appels.push(['quitterPleinEcran']); }
   /** @param {any[]} a */ poserClic(...a) { this.appels.push(['poserClic', ...a]); }
   retirerClic() { this.appels.push(['retirerClic']); }
   /** @param {any[]} a */ poserPosition(...a) { this.appels.push(['poserPosition', ...a]); }
-  /** @param {[number, number]} origine @param {any} cible @param {() => void} clic */
-  montrerProche(origine, cible, clic) { this.appels.push(['montrerProche', origine, cible.id]); this.clicProche = clic; }
+  retirerPosition() { this.appels.push(['retirerPosition']); }
+  /** @param {[number, number]} origine @param {any} cible @param {() => void} clic @param {any} [options] */
+  montrerProche(origine, cible, clic, options) {
+    this.ordre.push('montrerProche');
+    this.appels.push(options ? ['montrerProche', origine, cible.id, options] : ['montrerProche', origine, cible.id]);
+    this.clicProche = clic;
+  }
   effacerProche() { this.appels.push(['effacerProche']); }
   /** @param {string} nom */ a(nom) { return this.appels.filter((x) => x[0] === nom); }
 }
@@ -116,6 +124,9 @@ async function monter(reseau = serveur()) {
 /** @param {ReturnType<typeof serveur>} reseau @param {string} fin */
 const envois = (reseau, fin) => reseau.appels.filter((a) => a.adresse.split('?')[0].endsWith(fin));
 
+/** Les champs d'une zone tels qu'ils partent dans le corps de la requête. @param {any} bornes */
+const champsZoneTexte = (bornes) => Object.fromEntries(Object.entries(champsZone(bornes)).map(([k, v]) => [k, String(v)]));
+
 /** La boîte de message la plus récente. */
 const boite = () => dom.document.querySelectorAll('cs-dialogue').at(-1);
 
@@ -171,6 +182,13 @@ test('liens d’itinéraire et de Waze, champs de zone', () => {
   assert.equal(outils.lienWaze(48.1, 2.2), 'https://www.waze.com/ul?ll=48.1%2C2.2&navigate=yes&zoom=17');
   assert.equal(outils.lienItineraire('foot', [48, 2], [48.1, 2.2]), 'https://www.openstreetmap.org/directions?engine=fossgis_osrm_foot&route=48%2C2%3B48.1%2C2.2#');
   assert.deepEqual(champsZone({ nord: 49, sud: 47, est: 3, ouest: 1 }), { france: 'france', north: 49, south: 47, east: 3, west: 1 });
+});
+
+test('zoneAutour : les points englobés, avec une marge (au moins 0,01°)', () => {
+  /** @param {Record<string, number>} b */
+  const arrondi = (b) => Object.fromEntries(Object.entries(b).map(([k, v]) => [k, Math.round(v * 1000) / 1000]));
+  assert.deepEqual(arrondi(outils.zoneAutour([[48, 2], [48.2, 2.4]])), { nord: 48.3, sud: 47.9, est: 2.6, ouest: 1.8 });
+  assert.deepEqual(arrondi(outils.zoneAutour([[48, 2], [48, 2]])), { nord: 48.01, sud: 47.99, est: 2.01, ouest: 1.99 });
 });
 
 // ── La carte ────────────────────────────────────────────────────────────────
@@ -322,6 +340,10 @@ test('clic sur la carte : repère posé, fiche fermée, « plus proche d’ici �
   const demande = envois(reseau, 'sites.php').find((a) => a.options.body.get('plus_proche'));
   assert.deepEqual(Object.fromEntries(demande.options.body), { plus_proche: '1', lat: '48.3', lon: '2.4' });
   assert.deepEqual(fond.a('montrerProche'), [['montrerProche', [48.3, 2.4], 7]]);
+  // Les points entre le clic et le composteur sont chargés AVANT le recadrage.
+  const zone = envois(reseau, 'sites.php').filter((a) => a.options.body.get('north')).at(-1);
+  assert.deepEqual(Object.fromEntries(zone.options.body), champsZoneTexte(outils.zoneAutour([[48.3, 2.4], [48.11, 2.11]])));
+  assert.deepEqual(fond.ordre.slice(-2), ['ajouter', 'montrerProche']);
   assert.equal(carte.querySelector('.compteur').textContent, 'Composteur le plus proche : 120 m.');
   assert.equal(bouton.hidden, true);
   fond.clicProche();
@@ -352,13 +374,26 @@ test('recherche d’une ville : géocodage, puis le plus proche calculé par le 
   assert.match(envois(reseau, 'search')[0].adresse, /q=Rennes&format=json&limit=1&accept-language=fr/);
   const demande = envois(reseau, 'sites.php').find((a) => a.options.body.get('plus_proche'));
   assert.deepEqual(Object.fromEntries(demande.options.body), { plus_proche: '1', lat: '48.117', lon: '-1.677' });
+  // Le lieu cherché (repère bleu), relié au composteur par le même trait qu'un
+  // point cliqué, et un vol qui cadre les deux.
   assert.deepEqual(fond.a('poserPosition'), [['poserPosition', 48.117, -1.677]]);
-  assert.deepEqual(fond.a('voler'), [['voler', 48.11, 2.11, 15]]);
+  assert.deepEqual(fond.a('montrerProche'), [['montrerProche', [48.117, -1.677], 7, { voler: true }]]);
+  // Les points de toute la zone sont chargés AVANT l'animation.
+  const zone = envois(reseau, 'sites.php').filter((a) => a.options.body.get('north')).at(-1);
+  assert.deepEqual(Object.fromEntries(zone.options.body), champsZoneTexte(outils.zoneAutour([[48.117, -1.677], [48.11, 2.11]])));
+  assert.deepEqual(fond.ordre.slice(-2), ['ajouter', 'montrerProche']);
+  fond.clicProche();
+  await stabiliser();
+  assert.equal(carte.querySelector('cs-carte-fiche .tabl').hidden, false);
   assert.equal(carte.querySelector('.compteur').textContent, 'Le compost le plus proche est à 120 m.');
   assert.equal(formulaire.hidden, true);
   assert.equal(carte.querySelector('cs-carte-fiche .tabl').hidden, false);
   assert.equal(envois(reseau, 'sites.php').filter((a) => a.options.body.get('france') && !a.options.body.get('north')).length, 0,
     'plus aucun téléchargement de la liste entière');
+
+  // Un clic sur la carte retire le repère bleu de la recherche.
+  fond.clic(48.5, 2.5);
+  assert.equal(fond.a('retirerPosition').length, 1);
 });
 
 test('recherche d’une ville introuvable : on le dit et le champ revient', async () => {

@@ -65,6 +65,26 @@ export function texteCompteur(total, affiches) {
     : total.toLocaleString('fr-FR') + ' bacs à biodéchets et composteurs recensés · ' + vus + ' affichés';
 }
 
+/**
+ * La zone qui englobe des points, élargie d'une marge (une fraction de sa
+ * taille, au moins 0,01° ≈ 1 km) : de quoi charger ce que montrera la carte
+ * cadrée sur eux, avant qu'elle y aille.
+ * @param {[number, number][]} points
+ * @param {number} [marge]
+ * @returns {import('./fond-carte.js').Bornes}
+ */
+export function zoneAutour(points, marge = 0.5) {
+  const lats = points.map((p) => p[0]);
+  const lons = points.map((p) => p[1]);
+  const nord = Math.max(...lats);
+  const sud = Math.min(...lats);
+  const est = Math.max(...lons);
+  const ouest = Math.min(...lons);
+  const dLat = Math.max((nord - sud) * marge, 0.01);
+  const dLon = Math.max((est - ouest) * marge, 0.01);
+  return { nord: nord + dLat, sud: sud - dLat, est: est + dLon, ouest: ouest - dLon };
+}
+
 /** @param {number} metres */
 export function distanceLisible(metres) {
   return metres < 1000 ? Math.round(metres) + ' m' : (metres / 1000).toFixed(1) + ' km';

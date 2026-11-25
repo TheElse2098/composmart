@@ -45,6 +45,8 @@ export class FondCarte {
   #marqueurs = new Map();
   /** Le point posé par un clic sur la carte. @type {any} */
   #marqueurClic = null;
+  /** Le point d'où part la dernière recherche d'une ville. @type {any} */
+  #marqueurPosition = null;
   /** Résultat de « plus proche » : la cible et le trait qui la relie. @type {any[]} */
   #proche = [];
 
@@ -202,9 +204,19 @@ export class FondCarte {
     this.#marqueurClic = null;
   }
 
-  /** La position d'où part une recherche (ville trouvée). @param {number} lat @param {number} lon */
+  /**
+   * La position d'où part une recherche (ville trouvée). Un seul repère à la
+   * fois : le précédent disparaît.
+   * @param {number} lat @param {number} lon
+   */
   poserPosition(lat, lon) {
-    this.#L.marker([lat, lon], { icon: this.#icones.position }).addTo(this.#carte);
+    this.retirerPosition();
+    this.#marqueurPosition = this.#L.marker([lat, lon], { icon: this.#icones.position }).addTo(this.#carte);
+  }
+
+  retirerPosition() {
+    if (this.#marqueurPosition) this.#carte.removeLayer(this.#marqueurPosition);
+    this.#marqueurPosition = null;
   }
 
   /**
@@ -213,15 +225,19 @@ export class FondCarte {
    * @param {[number, number]} origine
    * @param {Point} cible
    * @param {() => void} surClic
+   * @param {{ voler?: boolean }} [options]  voler : y aller en vol animé (la
+   *   destination peut être loin, une ville cherchée), sinon un simple recadrage
    */
-  montrerProche(origine, cible, surClic) {
+  montrerProche(origine, cible, surClic, { voler = false } = {}) {
     this.effacerProche();
     const L = this.#L;
     const marqueur = L.marker([cible.lat, cible.lon], { icon: this.#icones[cible.t === 'C' ? 'conteneur' : 'compost'] }).addTo(this.#carte);
     marqueur.on('click', surClic);
     const trait = L.polyline([origine, [cible.lat, cible.lon]], { color: '#1e6e3e', weight: 3, dashArray: '6 8', opacity: 0.85 }).addTo(this.#carte);
     this.#proche = [marqueur, trait];
-    this.#carte.fitBounds(trait.getBounds(), { padding: [60, 60], maxZoom: 17 });
+    const cadrage = { padding: [60, 60], maxZoom: 17 };
+    if (voler) this.#carte.flyToBounds(trait.getBounds(), cadrage);
+    else this.#carte.fitBounds(trait.getBounds(), cadrage);
   }
 
   effacerProche() {

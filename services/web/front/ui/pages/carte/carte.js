@@ -19,7 +19,7 @@ import { Composant } from '../../socle/composant.js';
 import { html } from '../../socle/outils.js';
 import { informer } from '../../composants/dialogue/dialogue.js';
 import { CarteFiche } from './carte-fiche.js';
-import { CLE_VUE, VUE_DEFAUT, distanceLisible, ecrireVue, lireVue, texteCompteur } from './carte-outils.js';
+import { CLE_VUE, VUE_DEFAUT, distanceLisible, ecrireVue, lireVue, texteCompteur, zoneAutour } from './carte-outils.js';
 import { FondCarte } from './fond-carte.js';
 
 /**
@@ -131,13 +131,18 @@ export class Carte extends Composant {
     }
   }
 
-  /** Charge les points de la zone visible ; ceux déjà affichés ne sont pas recréés. */
-  async #chargerZone() {
+  /**
+   * Charge les points d'une zone (par défaut, celle qui est visible) ; ceux
+   * déjà affichés ne sont pas recréés. Avant un déplacement animé, on charge
+   * la zone d'arrivée : ses points sont là pendant l'animation.
+   * @param {import('./fond-carte.js').Bornes} [bornes]
+   */
+  async #chargerZone(bornes) {
     const fond = this.#fond;
     if (!fond) return;
     try {
       /** @type {Point[]} */
-      const points = await api.carte.post('sites.php', champsZone(fond.bornes));
+      const points = await api.carte.post('sites.php', champsZone(bornes || fond.bornes));
       if (Array.isArray(points)) fond.ajouter(points, (p) => this.#ouvrirFiche(p));
       this.#majCompteur();
     } catch (erreur) {
@@ -182,7 +187,9 @@ export class Carte extends Composant {
     if (!fond) return;
     this.#clic = [lat, lon];
     this.#fiche().fermer();
+    // Un nouveau clic invalide la recherche précédente, ville comprise.
     fond.effacerProche();
+    fond.retirerPosition();
     fond.poserClic(lat, lon);
     const bouton = this.trouver('[data-action="proche-clic"]', HTMLButtonElement);
     bouton.hidden = false;
@@ -204,6 +211,7 @@ export class Carte extends Composant {
       /** @type {Proche} */
       const d = await api.carte.post('sites.php', { plus_proche: '1', lat: clic[0], lon: clic[1] });
       if (typeof d.lat !== 'number') throw new Error('réponse inattendue');
+      await this.#chargerZone(zoneAutour([clic, [d.lat, d.lon]]));
       fond.montrerProche(clic, d, () => this.#fiche().ouvrir({ id: d.id, lat: d.lat, lon: d.lon }));
       this.#compteur('Composteur le plus proche : ' + distanceLisible(d.distance_m) + '.');
       bouton.hidden = true;
@@ -261,8 +269,13 @@ export class Carte extends Composant {
       /** @type {Proche} */
       const d = await api.carte.post('sites.php', { plus_proche: '1', lat, lon });
       if (typeof d.lat !== 'number') throw new Error('réponse inattendue');
+      // Même dessin que pour un point cliqué : le lieu cherché (repère bleu),
+      // un trait jusqu'au composteur, et un vol qui cadre les deux. Les points
+      // de toute la zone sont chargés avant le départ : ils sont là pendant
+      // l'animation.
       fond.poserPosition(lat, lon);
-      fond.voler(d.lat, d.lon, 15);
+      await this.#chargerZone(zoneAutour([[lat, lon], [d.lat, d.lon]]));
+      fond.montrerProche([lat, lon], d, () => this.#fiche().ouvrir({ id: d.id, lat: d.lat, lon: d.lon }), { voler: true });
       this.#compteur('Le compost le plus proche est à ' + distanceLisible(d.distance_m) + '.');
       this.#ouvrirFiche(d);
     } catch (erreur) {
