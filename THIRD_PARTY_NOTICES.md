@@ -14,7 +14,6 @@ que par un CDN, pour ne transmettre aucune donnée de visiteur à un tiers).
 | [Leaflet](https://leafletjs.com) | 1.9.4 | Volodymyr Agafonkin, CloudMade | BSD 2-Clause |
 | [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) | 1.4.1 | Dave Leaver | MIT |
 | [Leaflet.fullscreen](https://github.com/brunob/leaflet.fullscreen) | 1.4.5 | Bruno Bergot | MIT (fichier `LICENSE` inclus) |
-| [Bootstrap](https://getbootstrap.com) (CSS) | 5.3.7 | The Bootstrap Authors | MIT |
 | [KaTeX](https://katex.org) | 0.18.1 | Khan Academy et contributeurs | MIT |
 | [marked](https://marked.js.org) | 15.0.12 | Christopher Jeffrey et contributeurs | MIT |
 | [DOMPurify](https://github.com/cure53/DOMPurify) | 3.1.6 | Cure53 et contributeurs | Apache 2.0 ou MPL 2.0 |
