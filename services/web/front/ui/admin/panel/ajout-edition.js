@@ -15,7 +15,7 @@
 import { api, texteErreur } from '../../socle/api.js';
 import { Fenetre } from '../../socle/fenetre.js';
 import { html } from '../../socle/outils.js';
-import { ACCES_COMPOSTEUR, TYPES_COMPOSTEUR } from './carte-libelles.js';
+import { ACCES_COMPOSTEUR, TYPES_COMPOSTEUR } from '../../pages/carte/carte-libelles.js';
 
 /**
  * Une demande d'ajout (/api/carte/pending.php?action=liste).

@@ -1,6 +1,7 @@
 /* ============================================================================
-   carte-libelles.js — le vocabulaire de la carte, pour les onglets du panneau
-   qui en parlent (signalements, ajouts, journal).
+   carte-libelles.js — le vocabulaire de la carte : la page /carte et les
+   onglets du panneau d'administration qui en parlent (signalements, ajouts,
+   journal) lisent les mêmes listes.
 
    Les valeurs sont celles que map-api accepte : les changer ici ne suffit
    pas, le serveur refuse ce qu'il ne connaît pas (carte/pending.php,

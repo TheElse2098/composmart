@@ -210,4 +210,8 @@ export const api = Object.freeze({
   carte: new Api('/api/carte'),
   jeux: new Api('/api/jeux'),
   evenements: new Api('/api/evenements'),
+  /** Service tiers : le géocodage d'OpenStreetMap (adresse d'un point,
+   *  recherche d'une ville), appelé par la carte. Il voit l'adresse IP du
+   *  visiteur et la position demandée (cf. /confidentialite). */
+  nominatim: new Api('https://nominatim.openstreetmap.org'),
 });

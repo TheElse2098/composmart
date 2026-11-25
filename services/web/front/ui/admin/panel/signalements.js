@@ -16,7 +16,7 @@ import { informer } from '../../composants/dialogue/dialogue.js';
 import { api, texteErreur } from '../../socle/api.js';
 import { Composant } from '../../socle/composant.js';
 import { html } from '../../socle/outils.js';
-import { libelleMotif } from './carte-libelles.js';
+import { libelleMotif } from '../../pages/carte/carte-libelles.js';
 
 /**
  * @typedef {object} Signalement  /api/carte/signalement.php?action=liste

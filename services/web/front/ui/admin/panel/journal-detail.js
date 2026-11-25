@@ -22,7 +22,7 @@ import { confirmer, informer } from '../../composants/dialogue/dialogue.js';
 import { ErreurApi, api, texteErreur } from '../../socle/api.js';
 import { Fenetre } from '../../socle/fenetre.js';
 import { html } from '../../socle/outils.js';
-import { MOTIFS } from './carte-libelles.js';
+import { MOTIFS } from '../../pages/carte/carte-libelles.js';
 import { changements, diffCoursTexte, diffObjet, diffQuiz, etatElement, ligne, valeur } from './journal-diff.js';
 import { ANNULATIONS, AVEC_AVANT_APRES, PRECISIONS_ANNULATION, annulable, dateJournal, libelleAction } from './journal-libelles.js';
 

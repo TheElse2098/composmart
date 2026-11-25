@@ -13,7 +13,7 @@ const { AdminSignalements } = await import('../../services/web/front/ui/admin/pa
 const { AdminAjouts, lienCarte } = await import('../../services/web/front/ui/admin/panel/ajouts.js');
 const { AdminAjoutEdition } = await import('../../services/web/front/ui/admin/panel/ajout-edition.js');
 const { gabaritPages } = await import('../../services/web/front/ui/admin/panel/communs.js');
-const { libelleMotif } = await import('../../services/web/front/ui/admin/panel/carte-libelles.js');
+const { libelleMotif } = await import('../../services/web/front/ui/pages/carte/carte-libelles.js');
 await import('../../services/web/front/ui/admin/panel/panel.js');
 
 const SIGNALEMENTS = [

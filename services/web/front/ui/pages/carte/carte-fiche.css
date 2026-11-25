@@ -1,0 +1,158 @@
+/* ============================================================================
+   carte-fiche.css — <cs-carte-fiche> : la fiche d'un composteur. Panneau en
+   bas de l'écran sur téléphone (glissé depuis le bas), colonne à droite sur
+   ordinateur. Positionnée par rapport à la zone de carte de <cs-carte>.
+   ============================================================================ */
+
+cs-carte-fiche {
+  display: block;
+
+  --cf-fond: #fff;
+  --cf-ombre: 0 -4px 24px rgba(30, 110, 62, 0.2);
+  --cf-ombre-large: 0 4px 20px rgba(30, 110, 62, 0.18);
+  --cf-poignee: #d0e8d8;
+  --cf-acces-fond: #eef4ec;
+  --cf-acces-texte: #2c6e49;
+  --cf-acces-bord: #c8dfc8;
+  --cf-adresse: #7aaa8a;
+  --cf-ok-fond: #e8f5e9;
+  --cf-ok-texte: #2d6a4f;
+  --cf-ok-bord: #b7dfc4;
+  --cf-nok-fond: #fdecea;
+  --cf-nok-texte: #c0392b;
+  --cf-nok-bord: #f5bdb9;
+  --cf-vide: #bbb;
+  --cf-texte: #1a3a25;
+  --cf-lien: #1e6e3e;
+  --cf-trajet-fond: #1e6e3e;
+  --cf-trajet-texte: #fff;
+  --cf-trajet-survol: #17572f;
+  --cf-signaler: #a8823c;
+  --cf-signaler-survol: #8a6a2c;
+  --cf-champ-fond: #fffdf5;
+  --cf-champ-texte: #1a3a25;
+  --cf-champ-bord: #e0d4b0;
+  --cf-rgpd: #7aaa8a;
+  --cf-rgpd-lien: #1e6e3e;
+}
+html.dark cs-carte-fiche {
+  --cf-fond: #1a2b1e;
+  --cf-ombre: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  --cf-ombre-large: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  --cf-poignee: #2a3d2e;
+  --cf-acces-fond: #243328;
+  --cf-acces-texte: #7ab88e;
+  --cf-acces-bord: #2a3d2e;
+  --cf-adresse: #5a8a6a;
+  --cf-ok-fond: #1a2f20;
+  --cf-ok-texte: #52b788;
+  --cf-ok-bord: #2a4d35;
+  --cf-nok-fond: #2d1a1a;
+  --cf-nok-texte: #e57373;
+  --cf-nok-bord: #4d2a2a;
+  --cf-vide: #4a7a5a;
+  --cf-texte: #c8e6d4;
+  --cf-lien: #52b788;
+  --cf-trajet-fond: #243328;
+  --cf-trajet-texte: #52b788;
+  --cf-trajet-survol: #2d4030;
+  --cf-signaler: #c9a34e;
+  --cf-signaler-survol: #e8b931;
+  --cf-champ-fond: #1e2d22;
+  --cf-champ-texte: #e8f5ee;
+  --cf-champ-bord: #3a5c42;
+  --cf-rgpd: #5a8a6a;
+  --cf-rgpd-lien: #52b788;
+}
+
+cs-carte-fiche .tabl {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 1000; width: 100%; max-height: 60vh;
+  /* overflow-x explicite : avec overflow-y seul, le navigateur passe overflow-x
+     en « auto » et une barre horizontale apparaît au moindre dépassement. */
+  overflow-y: auto; overflow-x: hidden; padding-bottom: 12px;
+  border-radius: 20px 20px 0 0; background: var(--cf-fond); box-shadow: var(--cf-ombre);
+}
+cs-carte-fiche .tabl[hidden] { display: none; }
+cs-carte-fiche .tabl-handle { width: 36px; height: 4px; margin: 10px auto 4px; border-radius: 2px; background: var(--cf-poignee); }
+
+cs-carte-fiche .tabl-header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 16px 0; }
+cs-carte-fiche .tabl-header:empty { display: none; }
+cs-carte-fiche .badge-type {
+  padding: 4px 12px; border-radius: 20px; background: #1e6e3e; color: #fff;
+  font-size: 0.75rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+}
+cs-carte-fiche .badge-acces {
+  padding: 4px 10px; border: 1px solid var(--cf-acces-bord); border-radius: 20px;
+  background: var(--cf-acces-fond); color: var(--cf-acces-texte); font-size: 0.75rem; font-weight: 700;
+}
+cs-carte-fiche .tabl-adresse { padding: 5px 16px 0; color: var(--cf-adresse); font-size: 0.75rem; font-style: italic; }
+
+/* minmax(0, 1fr) et non 1fr : sinon la colonne refuse de passer sous la
+   largeur de son contenu et fait déborder le panneau. */
+cs-carte-fiche .tabl-rules { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding: 10px 16px 0; }
+cs-carte-fiche .rules-title { margin-bottom: 6px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+cs-carte-fiche .rules-title.ok { color: #1e6e3e; }
+cs-carte-fiche .rules-title.nok { color: #c0392b; }
+cs-carte-fiche .rules-list { display: flex; flex-wrap: wrap; gap: 4px; }
+cs-carte-fiche .chip { padding: 2px 8px; border-radius: 12px; font-size: 0.65rem; font-weight: 700; }
+cs-carte-fiche .chip-ok { background: var(--cf-ok-fond); color: var(--cf-ok-texte); border: 1px solid var(--cf-ok-bord); }
+cs-carte-fiche .chip-nok { background: var(--cf-nok-fond); color: var(--cf-nok-texte); border: 1px solid var(--cf-nok-bord); }
+cs-carte-fiche .no-data { color: var(--cf-vide); font-size: 0.72rem; font-style: italic; }
+
+cs-carte-fiche .tabl-info { display: flex; flex-direction: column; gap: 5px; padding: 10px 16px 0; }
+cs-carte-fiche .info-row { display: flex; align-items: flex-start; gap: 8px; }
+cs-carte-fiche .info-icon { flex-shrink: 0; margin-top: 1px; font-size: 0.85rem; }
+cs-carte-fiche .info-val { flex: 1; min-width: 0; color: var(--cf-texte); font-size: 0.8rem; font-weight: 600; }
+cs-carte-fiche .info-val a { color: var(--cf-lien); font-weight: 600; font-size: 0.8rem; }
+
+cs-carte-fiche .tabl-trajet { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 10px 16px 0; }
+cs-carte-fiche .btn-trajet {
+  margin: 4px 2px; padding: 6px 12px; border: none; border-radius: 8px; cursor: pointer;
+  background: var(--cf-trajet-fond); color: var(--cf-trajet-texte); font-size: 0.82rem; font-weight: 700;
+  transition: background 0.15s;
+}
+cs-carte-fiche .btn-trajet:hover { background: var(--cf-trajet-survol); }
+cs-carte-fiche .lien-waze {
+  display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 8px;
+  background: #1e6e3e; color: #fff; font-size: 0.82rem; font-weight: 700; text-decoration: none;
+}
+
+/* Les libellés peuvent être longs : retour à la ligne plutôt que débordement. */
+cs-carte-fiche .tabl-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px 0; }
+/* Action rare et secondaire : un lien discret plutôt qu'un bouton plein, pour
+   ne pas concurrencer les itinéraires. */
+cs-carte-fiche .btn-signaler {
+  margin-left: auto; padding: 6px 2px; border: none; background: none; cursor: pointer;
+  color: var(--cf-signaler); font-size: 0.74rem; font-weight: 600;
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(168, 130, 60, 0.4);
+  transition: color 0.15s;
+}
+cs-carte-fiche .btn-signaler:hover { color: var(--cf-signaler-survol); text-decoration-color: currentColor; }
+
+cs-carte-fiche .signal-zone { display: flex; flex-direction: column; gap: 7px; padding: 10px 16px 0; }
+cs-carte-fiche .signal-zone[hidden] { display: none; }
+cs-carte-fiche .signal-zone select,
+cs-carte-fiche .signal-zone textarea {
+  width: 100%; border: 1.5px solid var(--cf-champ-bord); border-radius: 8px; padding: 6px 8px;
+  background: var(--cf-champ-fond); color: var(--cf-champ-texte); font-size: 0.8rem; outline: none;
+}
+cs-carte-fiche .signal-zone textarea { min-height: 52px; resize: vertical; }
+cs-carte-fiche .rgpd-info { margin: 0; color: var(--cf-rgpd); font-size: 0.7rem; line-height: 1.4; }
+cs-carte-fiche .rgpd-info a { color: var(--cf-rgpd-lien); font-weight: 700; }
+cs-carte-fiche .signal-envoyer {
+  margin: 4px 2px; padding: 6px 12px; border: none; border-radius: 8px; cursor: pointer;
+  background: #b26a00; color: #fff; font-size: 0.82rem; font-weight: 700;
+}
+cs-carte-fiche .signal-envoyer:disabled { opacity: 0.6; cursor: default; }
+cs-carte-fiche .signal-msg { font-size: 0.76rem; font-weight: 700; }
+cs-carte-fiche .signal-msg.ok { color: #1e6e3e; }
+cs-carte-fiche .signal-msg.err { color: #c0392b; }
+
+/* ── Ordinateur : une colonne à droite ── */
+@media (min-width: 700px) {
+  cs-carte-fiche .tabl {
+    top: 70px; right: 16px; bottom: auto; left: auto; width: 290px; max-height: calc(100vh - 120px);
+    border-radius: 16px; box-shadow: var(--cf-ombre-large);
+  }
+  cs-carte-fiche .tabl-handle { display: none; }
+}

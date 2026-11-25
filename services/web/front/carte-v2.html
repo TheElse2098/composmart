@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Adresse provisoire (/carte-v2) le temps de valider la nouvelle carte ;
+       /carte reste servie par carte.html jusqu'à la bascule. -->
+  <meta name="robots" content="noindex">
+  <title>CompoSmart – Carte interactive</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="48x48" href="/assets/img/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16.png">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/apple-touch-icon.png">
+
+  <!-- En-tête type des pages migrées (docs/front.md). -->
+  <script src="/ui/socle/amorce.js"></script>
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <link rel="stylesheet" href="/ui/styles/jetons.css">
+  <link rel="stylesheet" href="/ui/styles/base.css">
+
+  <!-- Leaflet et ses extensions, dans l'en-tête comme avant, et dans cet ordre :
+       les extensions se branchent sur Leaflet en s'exécutant. Le navigateur
+       les charge en même temps que la page, la carte n'attend pas qu'un module
+       les demande (cf. ui/pages/carte/fond-carte.js). -->
+  <link rel="stylesheet" href="/assets/vendor/leaflet-1.9.4/leaflet.css">
+  <link rel="stylesheet" href="/assets/vendor/markercluster-1.4.1/MarkerCluster.css">
+  <link rel="stylesheet" href="/assets/vendor/markercluster-1.4.1/MarkerCluster.Default.css">
+  <link rel="stylesheet" href="/assets/vendor/leaflet-fullscreen-1.4.5/Control.FullScreen.css">
+  <script src="/assets/vendor/leaflet-1.9.4/leaflet.js"></script>
+  <script src="/assets/vendor/markercluster-1.4.1/leaflet.markercluster.js"></script>
+  <script src="/assets/vendor/leaflet-fullscreen-1.4.5/Control.FullScreen.js"></script>
+
+  <!-- Les morceaux de cette page. Pas de pied de page : la carte occupe tout
+       l'écran sous le bandeau. -->
+  <link rel="stylesheet" href="/ui/composants/bandeau/bandeau.css">
+  <link rel="stylesheet" href="/ui/pages/carte/carte.css">
+  <link rel="stylesheet" href="/ui/pages/carte/carte-fiche.css">
+  <script type="module" src="/ui/composants/bandeau/bandeau.js"></script>
+  <script type="module" src="/ui/composants/rappel-email/rappel-email.js"></script>
+  <script type="module" src="/ui/pages/carte/carte.js"></script>
+</head>
+<body>
+  <cs-bandeau></cs-bandeau>
+  <cs-rappel-email></cs-rappel-email>
+  <cs-carte></cs-carte>
+</body>
+</html>

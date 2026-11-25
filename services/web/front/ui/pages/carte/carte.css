@@ -1,0 +1,161 @@
+/* ============================================================================
+   carte.css — <cs-carte> : la carte plein écran sous le bandeau, la consigne,
+   le bouton « plus proche d'ici », la pile du bas (compteur, recherche), et
+   l'habillage des contrôles de Leaflet (dont leur mode sombre, qui vivait dans
+   l'ancienne feuille globale dark.css). La fiche : carte-fiche.css.
+   ============================================================================ */
+
+cs-carte {
+  display: flex; flex-direction: column; flex: 1;
+  /* Police et interligne d'origine de la carte (l'ancienne page les tenait de
+     sa feuille et de Bootstrap). */
+  font-family: 'Segoe UI', Arial, sans-serif;
+  line-height: 1.5;
+
+  --ca-compteur-fond: #eef4ecf2;
+  --ca-compteur-texte: #2c6e49;
+  --ca-champ-fond: #fff;
+  --ca-champ-texte: #1a3a25;
+  --ca-champ-bord: #1e6e3e;
+  /* Contrôles de Leaflet : en clair, ses valeurs d'origine. */
+  --ca-ctrl-fond: #fff;
+  --ca-ctrl-texte: #000;
+  --ca-ctrl-bord: #ccc;
+  --ca-ctrl-survol: #f4f4f4;
+  --ca-calques-fond: #fff;
+  --ca-calques-texte: #212529;
+  --ca-calques-trait: #ddd;
+  --ca-echelle-fond: rgba(255, 255, 255, 0.8);
+  --ca-echelle-texte: #333;
+  --ca-echelle-bord: #777;
+  --ca-tuiles-filtre: none;
+}
+html.dark cs-carte {
+  --ca-compteur-fond: #1a2b1e;
+  --ca-compteur-texte: #c8e6d4;
+  --ca-champ-fond: #1e2d22;
+  --ca-champ-texte: #c8e6d4;
+  --ca-champ-bord: #2d9959;
+  --ca-ctrl-fond: #1e2d22;
+  --ca-ctrl-texte: #c8e6d4;
+  --ca-ctrl-bord: #2a3d2e;
+  --ca-ctrl-survol: #243328;
+  --ca-calques-fond: #1e2d22;
+  --ca-calques-texte: #c8e6d4;
+  --ca-calques-trait: #2a3d2e;
+  --ca-echelle-fond: rgba(30, 45, 34, 0.85);
+  --ca-echelle-texte: #c8e6d4;
+  --ca-echelle-bord: #c8e6d4;
+  /* Tuiles inversées plutôt qu'un fond sombre à part : le relief et les
+     teintes du terrain restent lisibles. Seul le calque des tuiles est filtré. */
+  --ca-tuiles-filtre: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}
+
+/* Les champs et boutons prennent la police de la carte. */
+cs-carte button,
+cs-carte input,
+cs-carte select,
+cs-carte textarea { font-family: inherit; font-size: inherit; line-height: inherit; }
+
+/* ── La carte ── remplit l'écran sous le bandeau, sans défilement de page. */
+cs-carte .map-wrapper { position: relative; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+cs-carte .carte-fond {
+  flex: 1; width: 100%; z-index: 100;
+  /* dvh : la hauteur réellement visible, barre d'adresse du téléphone comprise
+     ou non ; 100vh reste le repli des navigateurs qui ne la connaissent pas. */
+  height: calc(100vh - 52px);
+  height: calc(100dvh - 52px);
+}
+
+/* Groupes de marqueurs : les verts du site. */
+cs-carte .marker-cluster-small { background-color: rgba(100, 175, 75, 0.5); }
+cs-carte .marker-cluster-small div { background-color: rgba(50, 135, 70, 0.75); color: #fff; }
+
+/* ── Contrôles de Leaflet ── */
+cs-carte .leaflet-tile-pane { filter: var(--ca-tuiles-filtre); }
+cs-carte .leaflet-bar a { background-color: var(--ca-ctrl-fond); color: var(--ca-ctrl-texte); border-color: var(--ca-ctrl-bord); }
+cs-carte .leaflet-bar a:hover,
+cs-carte .leaflet-bar a:focus { background-color: var(--ca-ctrl-survol); }
+cs-carte .leaflet-control-layers { background: var(--ca-calques-fond); color: var(--ca-calques-texte); }
+cs-carte .leaflet-control-layers-separator { border-color: var(--ca-calques-trait); }
+cs-carte .leaflet-control-scale-line { background: var(--ca-echelle-fond); color: var(--ca-echelle-texte); border-color: var(--ca-echelle-bord); }
+/* Bouton « vue par défaut » : le cadre .leaflet-bar, on n'ajuste que le glyphe. */
+cs-carte .reset-vue { font-size: 17px; font-weight: 700; }
+/* Icône plein écran : un masque SVG teinté en currentColor, donc toujours
+   accordée à la couleur du bouton, dans les deux thèmes. Le masque est porté
+   par ::after : masquer le lien lui-même découperait aussi son fond. */
+@supports ((mask-image: none) or (-webkit-mask-image: none)) {
+  cs-carte .fullscreen-icon { background-image: none !important; position: relative; }
+  cs-carte .fullscreen-icon::after {
+    content: ''; position: absolute; inset: 0;
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 10 4 4M4 4v5M4 4h5M14 10 20 4M20 4v5M20 4h-5M10 14 4 20M4 20v-5M4 20h5M14 14 20 20M20 20v-5M20 20h-5'/%3E%3C/svg%3E") no-repeat 50% 50%;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 10 4 4M4 4v5M4 4h5M14 10 20 4M20 4v5M20 4h-5M10 14 4 20M4 20v-5M4 20h5M14 14 20 20M20 20v-5M20 20h-5'/%3E%3C/svg%3E") no-repeat 50% 50%;
+    -webkit-mask-size: 17px 17px; mask-size: 17px 17px;
+  }
+}
+
+/* ── Consigne, en haut ── */
+cs-carte .info_compost {
+  position: absolute; top: 10px; left: 40%; transform: translateX(-50%); z-index: 1000;
+  width: auto; max-width: 55%; padding: 8px 14px; border-radius: 20px;
+  background: #1e6e3e; color: #fff; font-size: 0.82rem; font-weight: 600; text-align: center;
+  pointer-events: none; transition: opacity 0.3s;
+}
+
+/* ── « Plus proche d'ici », sous la consigne (à côté, elles se chevauchaient
+   dès que l'écran devenait étroit) ── */
+cs-carte .plus-proche-clic {
+  position: absolute; top: 54px; left: 50%; transform: translateX(-50%); z-index: 999;
+  max-width: calc(100% - 24px); padding: 10px 18px; border: none; border-radius: 50px; cursor: pointer;
+  background: #1e6e3e; color: #fff; font-size: 0.85rem; font-weight: 700;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+cs-carte .plus-proche-clic:hover { opacity: 0.9; }
+cs-carte .plus-proche-clic:disabled { opacity: 0.6; cursor: default; }
+cs-carte .plus-proche-clic[hidden] { display: none; }
+
+/* ── Pile du bas : une ligne par bloc, en pleine largeur sur téléphone ── */
+cs-carte .pile-bas {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 1000;
+  display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 0 12px 12px;
+  /* Les taps entre deux blocs ne traversent pas jusqu'à la carte. */
+  pointer-events: none;
+}
+cs-carte .pile-bas > * { pointer-events: auto; }
+
+cs-carte .compteur {
+  padding: 6px 16px; border-radius: 10px; text-align: center;
+  background: var(--ca-compteur-fond); color: var(--ca-compteur-texte); font-size: 0.82rem; font-weight: 600;
+}
+cs-carte .compteur:empty { display: none; }
+
+cs-carte .recherche {
+  display: flex; justify-content: center; align-items: center; gap: 6px;
+  padding: 6px 16px; border-radius: 10px; background: var(--ca-compteur-fond);
+}
+cs-carte .recherche[hidden] { display: none; }
+cs-carte .recherche input {
+  min-width: 0; padding: 4px 8px; border: 1px solid var(--ca-champ-bord); border-radius: 8px;
+  background: var(--ca-champ-fond); color: var(--ca-champ-texte); font-size: 0.85rem;
+}
+cs-carte .recherche button {
+  padding: 5px 12px; border: none; border-radius: 8px; cursor: pointer;
+  background: #1e6e3e; color: #fff; font-size: 0.85rem;
+}
+
+cs-carte .trouver button {
+  width: 100%; padding: 10px 20px; border: none; border-radius: 50px; cursor: pointer;
+  background: #1e6e3e; color: #fff; font-size: 0.9rem; font-weight: 700; transition: opacity 0.2s;
+}
+cs-carte .trouver button:hover { opacity: 0.85; }
+
+/* ── Ordinateur ── */
+@media (min-width: 700px) {
+  cs-carte .carte-fond { height: calc(100vh - 52px); }
+  cs-carte .info_compost { left: 50%; max-width: 40%; }
+  /* La pile se recentre et reprend une largeur de contenu. */
+  cs-carte .pile-bas { align-items: center; padding: 0 0 12px; }
+  cs-carte .trouver button { width: auto; }
+}

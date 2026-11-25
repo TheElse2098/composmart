@@ -198,7 +198,16 @@ Les bibliothèques de `static scripts` se chargent en parallèle, dans un ordre
 quelconque. Quand l'une dépend d'une autre au moment où elle s'exécute (le
 rendu automatique de KaTeX a besoin de KaTeX), le module qui s'en sert les
 enchaîne lui-même avec `chargerScript()` : c'est ce que fait
-`socle/markdown.js`.
+`socle/markdown.js`. Une bibliothèque lourde dont la page a besoin tout de
+suite peut aussi être citée dans l'en-tête de la page (`<script
+src="/assets/vendor/…">`, dans l'ordre voulu) : c'est le cas de Leaflet et de
+ses extensions sur la carte.
+
+Une bibliothèque qui n'existe pas sous Node se tient derrière une classe à
+elle, que les tests remplacent par une imitation : sur la carte, tout ce qui
+touche à Leaflet passe par `FondCarte` (`ui/pages/carte/fond-carte.js`), et
+`<cs-carte>` la crée par `Carte.fabriquerFond`, que `tests/front/carte.test.mjs`
+redéfinit.
 
 Markdown des cours : `socle/markdown.js`. `await chargerMoteur()` (marked,
 DOMPurify, KaTeX, une fois par page), `markdownEnHtml(texte)` dans le gabarit
@@ -237,7 +246,7 @@ Le panneau d'administration (`ui/admin/panel/`) sert de modèle :
   sous sa balise (`panel.css`, « Communs à tous les onglets » : titre de
   section et son compteur, message « rien à afficher », pagination, couleurs
   des boutons d'action) ; un gabarit commun est une fonction de `communs.js`
-  (`gabaritPages()`), un vocabulaire commun une table (`carte-libelles.js`).
+  (`gabaritPages()`), un vocabulaire commun une table (`ui/pages/carte/carte-libelles.js`, partagée avec la carte).
 
 Un onglet du panneau expose `rafraichir()` : il est créé à sa première
 ouverture, gardé ensuite (ses filtres survivent), et rechargé à chaque retour.
