@@ -46,6 +46,9 @@ if (!est_admin_via_auth((int)$_SESSION['user_id'])) introuvable();
 
 // ── Routage ────────────────────────────────────────────────────────────────
 $chemin = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+// Seulement /evenements-admin et /evenements-admin/… : « /evenements-adminxyz » arrive aussi ici (cf.
+// htaccess-racine) et doit valoir une adresse inexistante.
+if (!preg_match('#^/evenements-admin(/|$)#', (string)$chemin)) introuvable();
 $chemin = trim(preg_replace('#^/evenements-admin#', '', $chemin), '/');
 $seg    = $chemin === '' ? [] : array_map('rawurldecode', explode('/', $chemin));
 

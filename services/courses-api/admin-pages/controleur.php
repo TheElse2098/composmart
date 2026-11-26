@@ -66,6 +66,9 @@ if (!$u || (int)$u['isAdmin'] !== 1) introuvable();
 
 // ── Routage ────────────────────────────────────────────────────────────────
 $chemin = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+// Seulement /admin et /admin/… : « /adminxyz » arrive aussi ici (cf.
+// htaccess-racine) et doit valoir une adresse inexistante.
+if (!preg_match('#^/admin(/|$)#', (string)$chemin)) introuvable();
 $chemin = trim(preg_replace('#^/admin#', '', $chemin), '/');
 $seg    = $chemin === '' ? [] : array_map('rawurldecode', explode('/', $chemin));
 

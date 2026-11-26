@@ -8,4 +8,12 @@
 # Le motif ne touche pas /api/admin/... : la règle porte sur le chemin sans
 # barre initiale, et « api/admin/stats.php » ne commence pas par « admin ».
 RewriteEngine On
-RewriteRule ^admin(/.*)?$ /admin-controleur.php [L,QSA]
+# Tout ce qui COMMENCE par « admin » va au contrôleur, et pas seulement
+# « admin » ou « admin/… » : l'Ingress (Traefik) envoie ici toute adresse
+# qui commence par ce préfixe, « /adminxyz » compris. Sans ça, une telle
+# adresse tombait sur le 404 brut d'Apache au lieu de celui du site, et se
+# distinguait d'une adresse inexistante. Le contrôleur n'accepte que
+# « /admin » et « /admin/… » ; le reste est sa 404 habituelle.
+# La condition évite de réécrire le contrôleur sur lui-même.
+RewriteCond %{REQUEST_URI} !^/admin-controleur\.php$
+RewriteRule ^admin /admin-controleur.php [L,QSA]

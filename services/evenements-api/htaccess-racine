@@ -9,4 +9,12 @@
 # sans barre initiale, et « api/evenements/admin.php » ne commence pas par
 # « evenements-admin ».
 RewriteEngine On
-RewriteRule ^evenements-admin(/.*)?$ /evenements-admin-controleur.php [L,QSA]
+# Tout ce qui COMMENCE par « evenements-admin » va au contrôleur, et pas seulement
+# « evenements-admin » ou « evenements-admin/… » : l'Ingress (Traefik) envoie ici toute adresse
+# qui commence par ce préfixe, « /evenements-adminxyz » compris. Sans ça, une telle
+# adresse tombait sur le 404 brut d'Apache au lieu de celui du site, et se
+# distinguait d'une adresse inexistante. Le contrôleur n'accepte que
+# « /evenements-admin » et « /evenements-admin/… » ; le reste est sa 404 habituelle.
+# La condition évite de réécrire le contrôleur sur lui-même.
+RewriteCond %{REQUEST_URI} !^/evenements-admin-controleur\.php$
+RewriteRule ^evenements-admin /evenements-admin-controleur.php [L,QSA]

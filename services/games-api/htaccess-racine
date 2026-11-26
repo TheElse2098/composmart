@@ -8,4 +8,12 @@
 # Le motif ne touche pas /api/jeux/... : la règle porte sur le chemin sans
 # barre initiale, et « api/jeux/admin.php » ne commence pas par « jeux-admin ».
 RewriteEngine On
-RewriteRule ^jeux-admin(/.*)?$ /jeux-admin-controleur.php [L,QSA]
+# Tout ce qui COMMENCE par « jeux-admin » va au contrôleur, et pas seulement
+# « jeux-admin » ou « jeux-admin/… » : l'Ingress (Traefik) envoie ici toute adresse
+# qui commence par ce préfixe, « /jeux-adminxyz » compris. Sans ça, une telle
+# adresse tombait sur le 404 brut d'Apache au lieu de celui du site, et se
+# distinguait d'une adresse inexistante. Le contrôleur n'accepte que
+# « /jeux-admin » et « /jeux-admin/… » ; le reste est sa 404 habituelle.
+# La condition évite de réécrire le contrôleur sur lui-même.
+RewriteCond %{REQUEST_URI} !^/jeux-admin-controleur\.php$
+RewriteRule ^jeux-admin /jeux-admin-controleur.php [L,QSA]
