@@ -1,0 +1,44 @@
+/* ============================================================================
+   jeu-contenu.css — <cs-admin-jeu-contenu> : la barre d'outils, le résumé et
+   les lignes du contenu. Champs et boutons : jeu.css (l'éditeur qui le contient).
+   ============================================================================ */
+
+cs-admin-jeu-contenu {
+  display: block;
+
+  --jc-doux: #4a7a5a;
+  --jc-pale: #7a9a85;
+  --jc-ligne-fond: #f7fbf8;
+  --jc-ligne-bord: #e3efe6;
+}
+html.dark cs-admin-jeu-contenu {
+  --jc-doux: #b0d4be;
+  --jc-pale: #7ab88e;
+  --jc-ligne-fond: #1a271e;
+  --jc-ligne-bord: #243a2c;
+}
+
+cs-admin-jeu-contenu .outils { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+cs-admin-jeu-contenu .outils .recherche { flex: 1 1 200px; width: auto; }
+cs-admin-jeu-contenu .resume { margin-bottom: 12px; color: var(--jc-doux); font-size: 0.82rem; font-weight: 700; line-height: 1.5; }
+cs-admin-jeu-contenu .resume .ko { color: #c0392b; }
+
+cs-admin-jeu-contenu .lignes { display: flex; flex-direction: column; gap: 8px; }
+cs-admin-jeu-contenu .ligne {
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px 8px; padding: 8px;
+  border: 1px solid var(--jc-ligne-bord); border-radius: 12px; background: var(--jc-ligne-fond);
+}
+cs-admin-jeu-contenu .ligne[hidden] { display: none; }
+cs-admin-jeu-contenu .ligne.neuve { border-color: #52b788; }
+cs-admin-jeu-contenu .ligne-n { flex: 0 0 26px; padding-top: 10px; color: var(--jc-pale); font-size: 0.72rem; font-weight: 800; text-align: right; }
+cs-admin-jeu-contenu .ch { min-width: 0; }
+cs-admin-jeu-contenu .ch-emoji { flex: 0 0 58px; }
+cs-admin-jeu-contenu .ch-emoji input { padding: 8px 4px; text-align: center; }
+cs-admin-jeu-contenu .ch-texte { flex: 1 1 170px; }
+cs-admin-jeu-contenu .ch-mot { flex: 0 0 150px; }
+cs-admin-jeu-contenu .ch-mot input { font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+cs-admin-jeu-contenu .ch-cat { flex: 0 0 150px; }
+cs-admin-jeu-contenu .ch-jours { flex: 0 0 160px; }
+cs-admin-jeu-contenu .ch-jours .aide { margin-top: 3px; padding-left: 4px; color: var(--jc-pale); font-size: 0.72rem; }
+cs-admin-jeu-contenu .ch-zone,
+cs-admin-jeu-contenu .ch-large { flex: 2 1 260px; }

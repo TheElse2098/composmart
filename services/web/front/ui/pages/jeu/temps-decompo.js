@@ -15,6 +15,7 @@
    ============================================================================ */
 import { html, pluriel } from '../../socle/outils.js';
 import { Jeu, melanger } from './jeu.js';
+import { duree } from './durees.js';
 
 /**
  * @typedef {object} Dechet
@@ -50,17 +51,6 @@ const PION = 46;
 export const versJours = (p) => Math.pow(10, p * LOG_MAX);
 /** @param {number} jours @returns {number} position sur la ligne */
 export const versPosition = (jours) => Math.log10(Math.max(1, jours)) / LOG_MAX;
-
-/**
- * Une durée telle qu'on la dit : jours, semaines, mois, puis années.
- * @param {number} jours
- */
-export function duree(jours) {
-  if (jours < 14) return pluriel(Math.round(jours), 'jour', 'jours');
-  if (jours < 60) return pluriel(Math.round(jours / 7), 'semaine', 'semaines');
-  if (jours < 350) return Math.round(jours / 30) + ' mois';
-  return pluriel(Math.round(jours / 365), 'an', 'ans');
-}
 
 /**
  * Le palier atteint pour un écart donné : son rang, ses points, son message.

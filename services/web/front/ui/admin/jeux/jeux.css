@@ -1,0 +1,75 @@
+/* ============================================================================
+   jeux.css — <cs-admin-jeux> (page /jeux-admin) : une carte par mini-jeu.
+   ============================================================================ */
+
+cs-admin-jeux {
+  display: block;
+
+  --jx-nom: #1e6e3e;
+  --jx-doux: #4a7a5a;
+  --jx-maj: #7a9a85;
+  --jx-puce-fond: #eef4ec;
+  --jx-puce-texte: #1e6e3e;
+  --jx-brouillon-fond: #fff3e0;
+  --jx-brouillon-texte: #b26a00;
+  --jx-publie-fond: #e8f5e9;
+  --jx-publie-texte: #2e7d32;
+  --jx-ombre: 0 2px 10px rgba(30, 110, 62, 0.08);
+}
+html.dark cs-admin-jeux {
+  --jx-nom: #7fc99a;
+  --jx-doux: #b0d4be;
+  --jx-puce-fond: #1e2d22;
+  --jx-puce-texte: #7fc99a;
+  --jx-brouillon-fond: #2e2410;
+  --jx-brouillon-texte: #e8b931;
+  --jx-publie-fond: #16291c;
+  --jx-publie-texte: #7fc99a;
+}
+
+cs-admin-jeux .liens { width: 100%; max-width: 1240px; margin: 0 auto; padding: 14px 24px 0; }
+cs-admin-jeux .liens a { color: var(--accent); font-size: 0.84rem; font-weight: 800; text-decoration: none; }
+cs-admin-jeux .liens a:hover { text-decoration: underline; }
+
+cs-admin-jeux .hero { padding: 18px 20px 6px; text-align: center; }
+/* Rouge dans les deux thèmes : elle signale l'administration. */
+cs-admin-jeux .hero-badge {
+  display: inline-block; margin-bottom: 10px; padding: 5px 14px; border-radius: 20px;
+  background: var(--rouge); color: #fff; font-size: 0.78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+}
+cs-admin-jeux h1 { color: var(--texte); font-family: var(--police-titre); font-size: clamp(1.5rem, 5vw, 2.2rem); font-weight: 900; }
+cs-admin-jeux .hero-sous { margin-top: 4px; color: var(--jx-doux); font-size: 0.92rem; font-weight: 600; }
+
+cs-admin-jeux .msg { max-width: 1240px; min-height: 1.2em; margin: 0 auto; padding: 0 24px; color: var(--texte); font-size: 0.88rem; font-weight: 700; }
+cs-admin-jeux .msg.ko { color: var(--alerte-texte); }
+
+cs-admin-jeux .grille { display: grid; grid-template-columns: 1fr; gap: 16px; width: 100%; max-width: 1240px; margin: 0 auto; padding: 20px 16px 56px; }
+@media (min-width: 760px) {
+  cs-admin-jeux .grille { grid-template-columns: 1fr 1fr; padding: 24px 24px 64px; }
+}
+
+cs-admin-jeux .carte { display: flex; align-items: flex-start; gap: 14px; padding: 18px; border-radius: 18px; background: var(--surface); box-shadow: var(--jx-ombre); }
+cs-admin-jeux .carte-emoji { flex-shrink: 0; font-size: 2.3rem; line-height: 1; }
+cs-admin-jeux .carte-corps { flex: 1; min-width: 0; }
+cs-admin-jeux .carte-nom { color: var(--jx-nom); font-family: var(--police-titre); font-size: 1.2rem; font-weight: 900; text-decoration: none; }
+cs-admin-jeux .carte-nom:hover { text-decoration: underline; }
+cs-admin-jeux .carte-desc { margin: 2px 0 8px; color: var(--jx-doux); font-size: 0.86rem; line-height: 1.4; }
+cs-admin-jeux .puces { display: flex; flex-wrap: wrap; gap: 6px; }
+cs-admin-jeux .puce {
+  padding: 3px 9px; border-radius: 10px; white-space: nowrap;
+  background: var(--jx-puce-fond); color: var(--jx-puce-texte); font-size: 0.74rem; font-weight: 800;
+}
+cs-admin-jeux .puce.brouillon { background: var(--jx-brouillon-fond); color: var(--jx-brouillon-texte); }
+cs-admin-jeux .puce.publie { background: var(--jx-publie-fond); color: var(--jx-publie-texte); }
+cs-admin-jeux .carte-maj { margin-top: 8px; color: var(--jx-maj); font-size: 0.75rem; }
+
+cs-admin-jeux .carte-actions { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; gap: 6px; }
+cs-admin-jeux .btn {
+  display: inline-block; padding: 8px 16px; border: none; border-radius: 50px; cursor: pointer; text-align: center; text-decoration: none;
+  font-family: var(--police-titre); font-size: 0.85rem; font-weight: 800;
+}
+cs-admin-jeux .btn-edit { background: var(--action); color: #fff; }
+cs-admin-jeux .btn-edit:hover { background: #17572f; }
+cs-admin-jeux .ordre { display: flex; gap: 4px; }
+cs-admin-jeux .btn-ordre { padding: 6px 11px; background: var(--jx-puce-fond); color: var(--jx-puce-texte); }
+cs-admin-jeux .btn-ordre:disabled { opacity: 0.35; cursor: default; }

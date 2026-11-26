@@ -123,3 +123,20 @@ export function moisAnnee(date) {
 export function pluriel(n, un, plusieurs) {
   return n + ' ' + (n > 1 ? plusieurs : un);
 }
+
+/**
+ * Échange l'élément `i` avec son voisin (`sens` −1 : celui d'avant, +1 : celui
+ * d'après). Sans effet au bord de la liste.
+ * @template T
+ * @param {T[]} liste
+ * @param {number} i
+ * @param {-1 | 1} sens
+ * @returns {T[]}
+ */
+export function echanger(liste, i, sens) {
+  const j = i + sens;
+  if (j < 0 || j >= liste.length || i < 0 || i >= liste.length) return liste.slice();
+  const copie = liste.slice();
+  [copie[i], copie[j]] = [copie[j], copie[i]];
+  return copie;
+}

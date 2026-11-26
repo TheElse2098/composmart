@@ -142,7 +142,7 @@ export class AdminThemes extends Composant {
       // dragleave se déclenche aussi en passant sur un enfant : on ne retire
       // le surlignage que si le curseur quitte vraiment la liste.
       const vers = /** @type {DragEvent} */ (e).relatedTarget;
-      if (!(vers instanceof Node && liste.contains(vers))) liste.classList.remove('survol');
+      if (!(vers instanceof Element && liste.contains(vers))) liste.classList.remove('survol');
     });
     this.ecouter('drop', '.liste', (liste, e) => {
       if (!this.#coursAttrape) return;

@@ -1,0 +1,140 @@
+/* ============================================================================
+   jeu.css — <cs-admin-jeu> : l'éditeur d'un mini-jeu. Aussi ce que ses parties
+   ont en commun (cartes, champs, boutons), y compris dans le contenu
+   (<cs-admin-jeu-contenu>, qui n'a dans sa feuille que ses lignes).
+   ============================================================================ */
+
+cs-admin-jeu {
+  display: block;
+
+  --jj-doux: #4a7a5a;
+  --jj-aide: #5f8a6d;
+  --jj-label: #2c4a34;
+  --jj-pale: #7a9a85;
+  --jj-ombre: 0 2px 10px rgba(30, 110, 62, 0.08);
+  --jj-champ-fond: #f7fbf8;
+  --jj-champ-bord: #c8dfc8;
+  --jj-champ-focus: #fff;
+  --jj-clair-fond: #fff;
+  --jj-clair-texte: #1e6e3e;
+  --jj-clair-bord: #cfe6d6;
+  --jj-creux: #eef4ec;
+  --jj-trait: #e3efe6;
+  --jj-supprimer-survol: #fdecea;
+  --jj-barre-ombre: 0 6px 24px rgba(0, 0, 0, 0.16);
+}
+html.dark cs-admin-jeu {
+  --jj-doux: #b0d4be;
+  --jj-aide: #7ab88e;
+  --jj-label: #7ab88e;
+  --jj-pale: #7ab88e;
+  --jj-champ-fond: #1e2d22;
+  --jj-champ-bord: #2d4030;
+  --jj-champ-focus: #1e2d22;
+  --jj-clair-fond: #16211a;
+  --jj-clair-texte: #7fc99a;
+  --jj-clair-bord: #2d4030;
+  --jj-creux: #1e2d22;
+  --jj-trait: #243a2c;
+  --jj-supprimer-survol: #3d1a1a;
+}
+
+cs-admin-jeu .liens { width: 100%; max-width: 1400px; margin: 0 auto; padding: 14px 16px 0; }
+cs-admin-jeu .liens a { color: var(--accent); font-size: 0.84rem; font-weight: 800; text-decoration: none; }
+cs-admin-jeu .liens a:hover { text-decoration: underline; }
+cs-admin-jeu .liens a + a::before { content: '›'; margin: 0 8px; color: var(--jj-pale); }
+cs-admin-jeu .page-jeu[hidden],
+cs-admin-jeu .chargement[hidden] { display: none; }
+
+/* ── En-tête ── */
+cs-admin-jeu .tete { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; width: 100%; max-width: 1400px; margin: 0 auto; padding: 14px 16px 4px; }
+cs-admin-jeu .tete-emoji { font-size: 2.6rem; line-height: 1; }
+cs-admin-jeu .tete-titre { flex: 1; min-width: 200px; }
+cs-admin-jeu h1 { color: var(--texte); font-family: var(--police-titre); font-size: clamp(1.4rem, 4.5vw, 2rem); font-weight: 900; line-height: 1.1; }
+cs-admin-jeu .tete-stats { margin-top: 2px; color: var(--jj-doux); font-size: 0.82rem; font-weight: 700; }
+
+/* ── Boutons ── */
+cs-admin-jeu .btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: none; border-radius: 50px; cursor: pointer; text-decoration: none;
+  font-family: var(--police-titre); font-size: 0.88rem; font-weight: 800;
+}
+cs-admin-jeu .btn-vert { background: var(--action); color: #fff; }
+cs-admin-jeu .btn-vert:hover { background: #17572f; }
+cs-admin-jeu .btn-vert:disabled { opacity: 0.5; cursor: default; }
+cs-admin-jeu .btn-clair { background: var(--jj-clair-fond); color: var(--jj-clair-texte); border: 1.5px solid var(--jj-clair-bord); }
+cs-admin-jeu .btn-clair:hover { border-color: var(--accent); }
+cs-admin-jeu .btn-mini { padding: 5px 12px; font-size: 0.78rem; }
+cs-admin-jeu .suppr { flex: 0 0 auto; padding: 8px 6px; border: none; border-radius: 8px; background: none; color: #c0392b; font-size: 1rem; cursor: pointer; }
+cs-admin-jeu .suppr:hover { background: var(--jj-supprimer-survol); }
+
+/* ── Disposition : une colonne sur téléphone ; sur ordinateur, les réglages à
+   gauche et le contenu sur toute la largeur restante (c'est la partie qu'on
+   édite le plus). ── */
+cs-admin-jeu .editeur { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; width: 100%; max-width: 1400px; margin: 0 auto; padding: 10px 16px 120px; }
+@media (min-width: 1100px) {
+  cs-admin-jeu .editeur {
+    grid-template-columns: 400px 1fr; padding: 12px 24px 120px;
+    grid-template-areas: "pres contenu" "regles contenu" "messages contenu" "histo contenu";
+  }
+  cs-admin-jeu .carte-pres { grid-area: pres; }
+  cs-admin-jeu .carte-regles { grid-area: regles; }
+  cs-admin-jeu .carte-contenu { grid-area: contenu; }
+  cs-admin-jeu .carte-messages { grid-area: messages; }
+  cs-admin-jeu .carte-histo { grid-area: histo; }
+}
+
+/* ── Cartes et champs ── */
+cs-admin-jeu .carte { padding: 18px; border-radius: 16px; background: var(--surface); box-shadow: var(--jj-ombre); }
+cs-admin-jeu .carte h2 { margin-bottom: 4px; color: var(--texte); font-family: var(--police-titre); font-size: 1.1rem; font-weight: 900; }
+cs-admin-jeu .carte-aide { margin-bottom: 12px; color: var(--jj-aide); font-size: 0.8rem; line-height: 1.45; }
+cs-admin-jeu .field { margin-bottom: 12px; }
+cs-admin-jeu .field label {
+  display: block; margin-bottom: 5px; color: var(--jj-label);
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+}
+cs-admin-jeu .field .aide,
+cs-admin-jeu .aide { margin-top: 4px; color: var(--jj-pale); font-size: 0.75rem; }
+cs-admin-jeu input[type="text"],
+cs-admin-jeu input[type="number"],
+cs-admin-jeu textarea,
+cs-admin-jeu select {
+  width: 100%; padding: 8px 11px; border: 1.5px solid var(--jj-champ-bord); border-radius: 10px; outline: none;
+  background: var(--jj-champ-fond); color: var(--texte); font-family: inherit; font-size: 0.88rem;
+}
+cs-admin-jeu input:focus,
+cs-admin-jeu textarea:focus,
+cs-admin-jeu select:focus { border-color: var(--accent); background: var(--jj-champ-focus); }
+cs-admin-jeu textarea { min-height: 38px; line-height: 1.4; resize: vertical; }
+cs-admin-jeu .rangee { display: flex; flex-wrap: wrap; gap: 10px; }
+cs-admin-jeu .rangee > .field { flex: 1 1 120px; }
+cs-admin-jeu .rangee > .field-emoji { flex: 0 0 auto; }
+
+cs-admin-jeu .score-max { margin-top: 4px; padding: 10px 12px; border-radius: 10px; background: var(--jj-creux); font-size: 0.88rem; font-weight: 800; }
+cs-admin-jeu .score-max .conv { display: block; margin-top: 4px; color: #b26a00; font-size: 0.8rem; font-weight: 600; }
+
+/* ── Messages de fin ── */
+cs-admin-jeu .palier { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+cs-admin-jeu .p-min-wrap { display: flex; flex: 0 0 84px; align-items: center; gap: 4px; color: var(--jj-doux); font-size: 0.85rem; font-weight: 800; }
+cs-admin-jeu .p-emoji { flex: 0 0 auto; }
+cs-admin-jeu .p-emoji input { width: 58px; text-align: center; }
+cs-admin-jeu .p-texte { flex: 1 1 180px; width: auto; }
+
+/* ── Historique ── */
+cs-admin-jeu .version { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--jj-trait); font-size: 0.82rem; }
+cs-admin-jeu .version:first-child { border-top: none; }
+cs-admin-jeu .version-info { flex: 1; min-width: 0; }
+cs-admin-jeu .version-date { font-weight: 800; }
+cs-admin-jeu .version-det,
+cs-admin-jeu .vide { color: var(--jj-pale); font-size: 0.76rem; }
+cs-admin-jeu .vide { font-size: 0.85rem; }
+
+/* ── Barre d'enregistrement, toujours visible ── */
+cs-admin-jeu .barre { position: fixed; left: 0; right: 0; bottom: 6px; z-index: 50; display: flex; justify-content: center; padding: 0 12px 10px; pointer-events: none; }
+cs-admin-jeu .barre-in {
+  display: flex; align-items: center; gap: 12px; width: 100%; max-width: 760px; padding: 8px 8px 8px 18px; pointer-events: auto;
+  border-radius: 50px; background: var(--surface); box-shadow: var(--jj-barre-ombre);
+}
+cs-admin-jeu .barre-etat { flex: 1; min-width: 0; color: var(--jj-pale); font-size: 0.85rem; font-weight: 700; }
+cs-admin-jeu .barre-etat.sale { color: #b26a00; }
+cs-admin-jeu .barre-etat.ko { color: var(--alerte-texte); }
+cs-admin-jeu .barre-etat.ok { color: var(--accent); }

@@ -12,7 +12,8 @@ const { melanger, palier } = await import('../../services/web/front/ui/pages/jeu
 await import('../../services/web/front/ui/pages/jeu/barre-jeu.js');
 const { CATEGORIES } = await import('../../services/web/front/ui/pages/jeu/compost-ou-pas.js');
 const { tuilesDe } = await import('../../services/web/front/ui/pages/jeu/mot-mystere.js');
-const { duree, precision, versJours, versPosition } = await import('../../services/web/front/ui/pages/jeu/temps-decompo.js');
+const { precision, versJours, versPosition } = await import('../../services/web/front/ui/pages/jeu/temps-decompo.js');
+const { duree } = await import('../../services/web/front/ui/pages/jeu/durees.js');
 const { BACS, consigne, dureeManche } = await import('../../services/web/front/ui/pages/jeu/tri-eclair.js');
 
 const MESSAGES = [{ min: 0, emoji: '🌱', texte: 'Continue !' }, { min: 0.8, emoji: '🏆', texte: 'Expert du tri !' }, { min: 0.5, emoji: '👍', texte: 'Pas mal.' }];

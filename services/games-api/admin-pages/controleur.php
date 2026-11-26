@@ -13,6 +13,7 @@
  * Routes :
  *   /jeux-admin          → liste des jeux (statut, activité, ordre)
  *   /jeux-admin/<slug>   → éditeur d'un jeu (textes, règles, contenu, historique)
+ *   /jeux-admin/v2[/<slug>] → les mêmes, refaites en composants (provisoire)
  */
 ob_start();
 error_reporting(0);
@@ -53,15 +54,23 @@ function rendre($vue, $vars = []) {
     exit;
 }
 
+// /jeux-admin/v2[/<slug>] — adresse provisoire des nouvelles pages, faites de
+// composants servis par « web » (services/web/front/ui/admin/jeux/), le temps
+// de les valider. Sous /jeux-admin et non /jeux-admin-v2 : seul ce préfixe
+// est routé vers games-api. Mêmes vérifications ; les nouvelles pages lisent
+// le jeu dans l'adresse.
+$nouvelles = ($seg[0] ?? '') === 'v2';
+if ($nouvelles) array_shift($seg);
+
 // /jeux-admin
-if (count($seg) === 0) rendre('liste.html');
+if (count($seg) === 0) rendre($nouvelles ? 'liste-v2.html' : 'liste.html');
 
 // /jeux-admin/<slug> — le jeu doit exister en base, sinon 404 comme une autre.
 if (count($seg) === 1 && jeux_slug_valide($seg[0])) {
     $c = jeux_connexion();
     if (!$c) { ob_clean(); http_response_code(503); exit; }
     if (!jeux_charger($c, $seg[0])) introuvable();
-    rendre('editeur.html', ['slug' => $seg[0]]);
+    rendre($nouvelles ? 'editeur-v2.html' : 'editeur.html', ['slug' => $seg[0]]);
 }
 
 introuvable();
