@@ -66,7 +66,7 @@ const PALIERS_MAX = 6;
  * @param {string} chemin
  */
 export function slugDe(chemin) {
-  const m = /^\/jeux-admin(?:\/v2)?\/([^/]+)\/?$/.exec(chemin);
+  const m = /^\/jeux-admin\/([^/]+)\/?$/.exec(chemin);
   return m ? decodeURIComponent(m[1]) : '';
 }
 

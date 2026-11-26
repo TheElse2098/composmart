@@ -121,7 +121,8 @@ test('contenu : filtre sans accents (catégorie par son libellé), durée lisibl
 });
 
 test('slugDe, messagesDe', () => {
-  assert.equal(slugDe('/jeux-admin/v2/mot-mystere'), 'mot-mystere');
+  assert.equal(slugDe('/jeux-admin/mot-mystere'), 'mot-mystere');
+  assert.equal(slugDe('/jeux-admin/v2/mot-mystere'), '', 'l’adresse provisoire n’existe plus');
   assert.equal(slugDe('/jeux-admin/tri-eclair'), 'tri-eclair');
   assert.equal(slugDe('/jeux-admin'), '');
   assert.deepEqual(messagesDe([{ min: '80', emoji: '🏆', texte: 'Bravo' }, { min: '', emoji: '', texte: '' }]),

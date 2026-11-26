@@ -13,7 +13,6 @@
  * Routes :
  *   /jeux-admin          → liste des jeux (statut, activité, ordre)
  *   /jeux-admin/<slug>   → éditeur d'un jeu (textes, règles, contenu, historique)
- *   /jeux-admin/v2[/<slug>] → les mêmes, refaites en composants (provisoire)
  */
 ob_start();
 error_reporting(0);
@@ -44,12 +43,12 @@ if (!preg_match('#^/jeux-admin(/|$)#', (string)$chemin)) introuvable();
 $chemin = trim(preg_replace('#^/jeux-admin#', '', $chemin), '/');
 $seg    = $chemin === '' ? [] : array_map('rawurldecode', explode('/', $chemin));
 
-function rendre($vue, $vars = []) {
+// Les vues ne sont que des coquilles de composants (services/web/front/ui/
+// admin/jeux/) : rien à y injecter, l'éditeur lit le jeu dans l'adresse.
+function rendre($vue) {
     $page = VUES . '/' . $vue;
     if (!is_file($page)) introuvable();
     $html = file_get_contents($page);
-    $json = json_encode($vars, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-    $html = str_replace('/*__ROUTE__*/', 'window.ROUTE = ' . $json . ';', $html);
     ob_clean();
     header('Content-Type: text/html; charset=utf-8');
     header('Cache-Control: private, no-store');
@@ -57,23 +56,15 @@ function rendre($vue, $vars = []) {
     exit;
 }
 
-// /jeux-admin/v2[/<slug>] — adresse provisoire des nouvelles pages, faites de
-// composants servis par « web » (services/web/front/ui/admin/jeux/), le temps
-// de les valider. Sous /jeux-admin et non /jeux-admin-v2 : seul ce préfixe
-// est routé vers games-api. Mêmes vérifications ; les nouvelles pages lisent
-// le jeu dans l'adresse.
-$nouvelles = ($seg[0] ?? '') === 'v2';
-if ($nouvelles) array_shift($seg);
-
 // /jeux-admin
-if (count($seg) === 0) rendre($nouvelles ? 'liste-v2.html' : 'liste.html');
+if (count($seg) === 0) rendre('liste.html');
 
 // /jeux-admin/<slug> — le jeu doit exister en base, sinon 404 comme une autre.
 if (count($seg) === 1 && jeux_slug_valide($seg[0])) {
     $c = jeux_connexion();
     if (!$c) { ob_clean(); http_response_code(503); exit; }
     if (!jeux_charger($c, $seg[0])) introuvable();
-    rendre($nouvelles ? 'editeur-v2.html' : 'editeur.html', ['slug' => $seg[0]]);
+    rendre('editeur.html');
 }
 
 introuvable();
