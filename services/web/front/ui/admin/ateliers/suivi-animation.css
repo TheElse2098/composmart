@@ -1,0 +1,87 @@
+/* ============================================================================
+   suivi-animation.css — <cs-admin-suivi-animation> : avancement, aperçu de la
+   slide, barres de réponses, disposition côte à côte sur grand écran. La
+   carte elle-même vient de styles/slides.css ; cartes et listes, de la
+   console (suivi.css).
+   ============================================================================ */
+
+cs-admin-suivi-animation {
+  display: block;
+
+  --an-progress-fond: #e3efe6;
+  --an-titre: #1a3a25;
+  --an-total: #4a7a5a;
+  --an-opt-fond: #f3f8f4;
+  --an-opt-texte: #2c4a34;
+  --an-opt-barre: #d3eadb;
+  --an-juste-texte: #1b5e20;
+  --an-juste-bord: #2e7d32;
+  --an-juste-barre: #b5dfbd;
+  --an-tete-barre: #ffe2a8;
+  --an-nb: #b26a00;
+}
+html.dark cs-admin-suivi-animation {
+  --an-progress-fond: #1e2d22;
+  --an-titre: #e8f5ee;
+  --an-total: #7ab88e;
+  --an-opt-fond: #1e2d22;
+  --an-opt-texte: #c8e6d4;
+  --an-opt-barre: #2a4532;
+  --an-juste-texte: #7fc99a;
+  --an-juste-bord: #43a047;
+  --an-juste-barre: #24502f;
+  --an-tete-barre: #4a3a14;
+  --an-nb: #e8b931;
+}
+
+cs-admin-suivi-animation [hidden] { display: none; }
+cs-admin-suivi-animation .anim-lien-deroule { margin-top: 4px; }
+cs-admin-suivi-animation .anim-deroule .hint { margin: 0 0 12px; }
+
+/* ── Avancement ── */
+cs-admin-suivi-animation .console-barre { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+cs-admin-suivi-animation .progress { flex: 1; min-width: 120px; height: 8px; overflow: hidden; border-radius: 5px; background: var(--an-progress-fond); }
+cs-admin-suivi-animation .progress > div { height: 100%; background: #1e6e3e; transition: width 0.3s; }
+cs-admin-suivi-animation .console-pos { color: #4a7a5a; font-family: var(--police-titre); font-size: 0.88rem; font-weight: 900; }
+cs-admin-suivi-animation .repondu { padding: 4px 12px; border-radius: 12px; background: #e8f5e9; color: #1e6e3e; font-size: 0.82rem; font-weight: 800; }
+
+/* ── Aperçu : la carte s'y pose, centrée ── */
+cs-admin-suivi-animation .apercu { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 6px 0; }
+cs-admin-suivi-animation .apercu > .sl { flex: none; max-width: 100%; }
+cs-admin-suivi-animation .apercu-type { color: #7aaa8a; font-size: 0.72rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+cs-admin-suivi-animation .apercu-titre { margin-top: 6px; color: var(--an-titre); font-family: var(--police-titre); font-size: 1.3rem; font-weight: 900; }
+cs-admin-suivi-animation .console-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+
+/* ── Réponses : une barre par option, remplie à proportion des voix ── */
+cs-admin-suivi-animation .res-total { margin-bottom: 4px; color: var(--an-total); font-size: 0.8rem; font-weight: 800; }
+cs-admin-suivi-animation .res-opt {
+  position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; overflow: hidden;
+  margin-top: 6px; padding: 9px 12px; border-radius: 10px;
+  background: var(--an-opt-fond); color: var(--an-opt-texte); font-size: 0.9rem; font-weight: 700;
+}
+cs-admin-suivi-animation .res-opt::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: var(--pct, 0%);
+  border-radius: inherit; background: var(--an-opt-barre);
+}
+cs-admin-suivi-animation .res-opt > span { position: relative; }
+cs-admin-suivi-animation .res-opt.juste { color: var(--an-juste-texte); box-shadow: inset 0 0 0 2px var(--an-juste-bord); }
+cs-admin-suivi-animation .res-opt.juste::before { background: var(--an-juste-barre); }
+cs-admin-suivi-animation .res-opt.tete::before { background: var(--an-tete-barre); }
+cs-admin-suivi-animation .res-nb { flex: none; color: var(--an-nb); font-weight: 800; white-space: nowrap; }
+cs-admin-suivi-animation .res-nb small { font-weight: 700; opacity: 0.8; }
+
+/* Grande largeur : aperçu et réponses côte à côte, à hauteur d'yeux. */
+@media (min-width: 1100px) {
+  cs-admin-suivi-animation .console-grille {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 0.8fr); gap: 14px; align-items: start;
+  }
+  cs-admin-suivi-animation .console-grille > .card { margin-bottom: 0; }
+}
+
+/* ── Projection (classe posée sur la console) : la slide seule, en grand ── */
+cs-admin-suivi.projection cs-admin-suivi-animation .console-grille { display: block; }
+cs-admin-suivi.projection cs-admin-suivi-animation .console-actions,
+cs-admin-suivi.projection cs-admin-suivi-animation .console-cote,
+cs-admin-suivi.projection cs-admin-suivi-animation .anim-deroule { display: none; }
+cs-admin-suivi.projection cs-admin-suivi-animation .apercu { padding: 2vh 0; }
+cs-admin-suivi.projection cs-admin-suivi-animation .apercu > .sl { width: min(76vh, 94vw); }

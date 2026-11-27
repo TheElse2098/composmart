@@ -1,0 +1,7 @@
+/* ============================================================================
+   suivi-classement.css — <cs-admin-suivi-classement> : l'onglet Classement.
+   Cartes et listes viennent de la console (suivi.css).
+   ============================================================================ */
+
+cs-admin-suivi-classement { display: block; }
+cs-admin-suivi-classement .classement-equipes[hidden] { display: none; }

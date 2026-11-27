@@ -1,0 +1,1054 @@
+/* ============================================================================
+   slides.css — charte visuelle des slides d'événement.
+
+   Reprend la grammaire des gabarits « Modèles de slides pour l'événement »
+   (carte 4:5, kicker en petites capitales, barre d'accent, pastilles de
+   section, compteur, encart verdict, lecteur audio) en la câblant sur les
+   couleurs de Composmart plutôt que sur la palette d'origine.
+
+   Partagée par l'écran participant (web) et la console d'animation
+   (evenements-api) : les deux doivent se ressembler, et dupliquer 400 lignes
+   de CSS garantissait qu'elles finiraient par diverger.
+
+   Le dimensionnement repose sur une unité de carte, --u, posée sur .sl : la
+   même carte rend en grand sur un vidéoprojecteur et en petit sur un
+   téléphone, sans classe de variante ni media query. Bornes via clamp() pour
+   éviter les extrêmes.
+
+   --u vaut 1cqw (1 % de la largeur de la carte) tant que seule la largeur de
+   la carte est connue. Quand la carte a une hauteur imposée (.sl--fixe, ou
+   posée dans un .sl-cadre), elle vaut min(1cqw, 1.25cqh) : une carte plus
+   large que haute — PC, téléphone couché — dimensionne alors son contenu sur
+   sa HAUTEUR, au lieu de grossir un texte qui finissait hors du cadre.
+
+   Reprise de assets/css/slides.css (phase 10 de la refonte), au même rendu.
+   Changements de forme, imposés par le contrôle du front : le mode sombre ne
+   passe plus que par des variables (réponse juste ou fausse, verdict, ombre
+   des cadres papier et simpliste), et les variables posées en ligne par le
+   rendu (--x, --dist…, cf. composants/slide/rendu-slide.js) ont une valeur
+   par défaut sur la carte.
+   ============================================================================ */
+
+:root {
+  --sl-fond1:   #145228;   /* dégradé de fond, reprise du hero d'accueil */
+  --sl-fond2:   #1e6e3e;
+  --sl-fond3:   #2d9959;
+  --sl-carte:   #ffffff;
+  --sl-encre:   #1a3a25;
+  --sl-doux:    #4a7a5a;   /* texte secondaire */
+  --sl-accent:  #b26a00;   /* accent chaud — déjà la couleur des points du site */
+  --sl-accent2: #fff9c4;   /* fond de l'accent */
+  --sl-tendre:  #e8f5e9;   /* pastilles, encarts */
+  --sl-trait:   rgba(26, 58, 37, 0.12);
+  --sl-rad:     26px;
+
+  /* La scène : le décor sur lequel repose la carte. Volontairement dans la
+     famille claire de la charte (celle de .score-bar et des pastilles) plutôt
+     que dans le vert profond du hero : la carte est blanche, un fond sombre
+     l'écrase et fatigue au bout d'un atelier entier de vidéoprojection. */
+  --sl-scene1:  #cbeada;
+  --sl-scene2:  #9ad5b4;
+  --sl-scene3:  #6dbf91;
+  --sl-scene-motif: url('/assets/img/motif-branchage-vert.svg');
+
+  /* Couleur dominante de la gerbe de confettis. Distincte de --sl-accent :
+     en simpliste l'accent est un vert lisible sur blanc, trop sourd pour des
+     confettis sur fond vert foncé. */
+  --sl-conf1:   var(--sl-accent);
+
+  /* Réponse juste ou fausse, titre du verdict. */
+  --sl-juste-fond:   #e8f5e9;
+  --sl-juste-texte:  #1b5e20;
+  --sl-juste-bord:   #2e7d32;
+  --sl-fausse-fond:  #fdecea;
+  --sl-fausse-texte: #922b21;
+  --sl-fausse-bord:  #c0392b;
+  --sl-verdict-bon:  #1b5e20;
+  --sl-verdict-rate: #922b21;
+}
+
+html.dark {
+  --sl-fond1:   #0d2f18;
+  --sl-fond2:   #12401f;
+  --sl-fond3:   #1a5c33;
+  --sl-carte:   #16211a;
+  --sl-encre:   #e8f5ee;
+  --sl-doux:    #7ab88e;
+  --sl-accent:  #e8b931;
+  --sl-accent2: #2e2410;
+  --sl-tendre:  #16291c;
+  --sl-trait:   rgba(232, 245, 238, 0.14);
+  /* En sombre la carte est sombre elle aussi : le décor doit rester en dessous
+     d'elle en luminosité, sans quoi la hiérarchie s'inverse. */
+  --sl-scene1:  #0d2f18;
+  --sl-scene2:  #12401f;
+  --sl-scene3:  #1a5c33;
+  --sl-scene-motif: url('/assets/img/motif-branchage-dark.svg');
+
+  --sl-juste-fond:   #16291c;
+  --sl-juste-texte:  #7fc99a;
+  --sl-juste-bord:   #43a047;
+  --sl-fausse-fond:  #3d1a1a;
+  --sl-fausse-texte: #ef9a9a;
+  --sl-fausse-bord:  #e53935;
+  --sl-verdict-bon:  #7fc99a;
+  --sl-verdict-rate: #ef9a9a;
+}
+
+/* ── Décor de fond (la « scène » où repose la carte) ──────────────────────
+   Une seule définition, pilotée par les jetons --sl-scene*. La page participant
+   et la projection de l'animateur la partagent : l'écrire deux fois, c'est
+   garantir qu'elles finiront par diverger. */
+.sl-scene {
+  background-color: var(--sl-scene2);
+  background-image: var(--sl-scene-motif),
+                    linear-gradient(160deg, var(--sl-scene1) 0%, var(--sl-scene2) 55%, var(--sl-scene3) 100%);
+  background-repeat: repeat, no-repeat;
+  background-size: var(--sl-scene-motif-taille, 220px 220px), cover;
+}
+
+/* ── La carte ───────────────────────────────────────────────────────────── */
+.sl {
+  container-type: inline-size;          /* socle de l'unité --u ci-dessous */
+  --u: 1cqw;
+  /* Valeurs par défaut des variables que le rendu pose en ligne sur les
+     confettis (rendu-slide.js, confettis()). Une valeur en ligne sur un
+     descendant l'emporte toujours, pour lui et ses enfants. */
+  --x: 0; --y: 0; --a: 0deg; --dist: 0; --dur: 1s; --del: 0s;
+  --w: 0; --h: 0; --r: 0; --c: transparent;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--sl-rad);
+  background: var(--sl-carte);
+  box-shadow: 0 26px 60px -18px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Nunito', Arial, sans-serif;
+  color: var(--sl-encre);
+}
+
+/* Format imposé 4:5 — utilisé en projection, où la carte est posée dans une
+   scène plus grande. Sur téléphone la carte suit la hauteur disponible. */
+.sl--fixe { aspect-ratio: 4 / 5; width: min(560px, 92vw); }
+
+/* Hauteur connue d'avance (ratio imposé, ou cadre qui fixe les deux
+   dimensions) : la carte peut contenir sa taille dans les deux axes, et --u
+   tient compte de la hauteur. Jamais par défaut : une carte dont la hauteur
+   dépendrait de son contenu s'effondrerait à zéro sous size. */
+.sl--fixe,
+.sl-cadre > .sl { container-type: size; --u: min(1cqw, 1.25cqh); }
+
+/* ── Le cadre : la zone d'écran où la carte doit tenir ────────────────────
+   Il connaît ses deux dimensions (container: size) ; la carte s'y loge
+   entière, centrée. En portrait elle prend tout. En paysage elle s'élargit
+   mais reste bornée par la hauteur : une question passe alors sur deux
+   colonnes (ci-dessous), les autres slides gardent une ligne de texte
+   raisonnable. La première déclaration de largeur sert de repli aux
+   navigateurs qui ignorent les unités de conteneur. */
+.sl-cadre { container: sl-cadre / size; }
+.sl-cadre > .sl {
+  flex: none; align-self: center; height: 100%;
+  width: 100%;
+  width: min(100%, 140cqh, 880px);
+  /* Plafond de --u : sur un grand écran, les textes butent déjà sur le
+     maximum de leur clamp(), mais les marges et les pastilles, elles, n'en
+     ont pas et grossissaient sans fin. 6,5 px ≈ une carte de 650 px de large. */
+  --u: min(1cqw, 1.25cqh, 6.5px);
+}
+.sl-cadre > .sl--q,
+.sl-cadre > .sl[data-type="media"] { width: min(100%, 200cqh, 1180px); }
+
+/* Question en paysage : en-tête (consigne) à gauche, réponses à droite,
+   bouton d'action sous les réponses. La hauteur d'un écran couché ne suffit
+   pas à empiler les deux — c'était le défilement assuré. */
+@container sl-cadre (orientation: landscape) and (min-width: 520px) {
+  .sl--q {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .sl--q > .sl__entete {
+    grid-column: 1; grid-row: 1 / span 2;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .sl--q > .sl__corps    { grid-column: 2; grid-row: 1; }
+  .sl--q > .sl__actions  { grid-column: 2; grid-row: 2; }
+  /* Centrage vertical des réponses par marges automatiques : contrairement à
+     justify-content:center, elles retombent à zéro quand le contenu déborde,
+     et le haut de la liste reste atteignable au défilement. */
+  .sl--q > .sl__corps > :first-child { margin-top: auto; }
+  .sl--q > .sl__corps > :last-child  { margin-bottom: auto; }
+  /* L'illustration passe à droite : à gauche elle couvrirait l'en-tête. */
+  [data-theme-slide="simpliste"] .sl--q .sl__illu { left: auto; right: calc(var(--u) * 4); object-position: right bottom; }
+}
+
+/* Variante « fond plein » : carte de titre, texte en blanc sur le vert. */
+.sl--plein {
+  background: linear-gradient(155deg, var(--sl-fond1), var(--sl-fond2));
+  color: #fff;
+  justify-content: space-between;
+  padding: calc(var(--u) * 8) calc(var(--u) * 7);
+}
+.sl--plein .sl__titre { color: #fff; }
+.sl--plein .sl__texte,
+.sl--plein .sl__sous  { color: rgba(255, 255, 255, 0.74); }
+.sl--plein .sl__kicker { color: rgba(255, 255, 255, 0.6); }
+.sl--plein .sl__filet  { background: rgba(255, 255, 255, 0.22); }
+
+/* Formes organiques en filigrane, reprises du gabarit d'origine. */
+.sl__deco {
+  position: absolute; border-radius: 50% 6% 50% 6%;
+  background: rgba(255, 255, 255, 0.05); pointer-events: none;
+}
+.sl__deco--haut  { right: -16%; top: -16%; width: 50%; aspect-ratio: 1; }
+.sl__deco--bas   { right: -11%; bottom: -13%; width: 36%; aspect-ratio: 1; background: rgba(255, 255, 255, 0.06); }
+.sl__grain {
+  position: absolute; inset: 0; opacity: 0.5; pointer-events: none;
+  background-image: radial-gradient(ellipse 14px 5px at 20% 25%, rgba(255,255,255,.13) 0 70%, transparent 71%),
+                    radial-gradient(ellipse 5px 14px at 70% 65%, rgba(255,255,255,.10) 0 70%, transparent 71%);
+  background-size: 150px 150px, 190px 190px;
+}
+
+/* ── Ossature interne ───────────────────────────────────────────────────── */
+.sl__bandeau { height: calc(var(--u) * 1.4); min-height: 6px; background: linear-gradient(90deg, var(--sl-accent), var(--sl-fond2)); flex: none; }
+
+.sl__entete {
+  position: relative; overflow: hidden; flex: none;
+  padding: calc(var(--u) * 6) calc(var(--u) * 7) calc(var(--u) * 5.5);
+  background: linear-gradient(150deg, var(--sl-fond1), var(--sl-fond2));
+  color: #fff;
+}
+.sl__entete .sl__titre  { color: #fff; }
+.sl__entete .sl__kicker { color: rgba(255, 255, 255, 0.62); }
+
+.sl__corps { flex: 1; min-height: 0; overflow-y: auto; padding: calc(var(--u) * 5) calc(var(--u) * 7) calc(var(--u) * 6); display: flex; flex-direction: column; gap: calc(var(--u) * 3.4); }
+.sl--plein .sl__corps { padding: 0; overflow: visible; }
+
+/* ── Éléments de texte ──────────────────────────────────────────────────── */
+.sl__kicker {
+  font-size: clamp(10px, calc(var(--u) * 2.1), 13px); letter-spacing: 0.24em; text-transform: uppercase;
+  color: var(--sl-doux); font-weight: 700;
+}
+.sl__ligne  { display: flex; align-items: center; gap: calc(var(--u) * 2.2); }
+.sl__filet  { flex: 1; height: 1px; background: var(--sl-trait); }
+
+.sl__barre  { width: calc(var(--u) * 10); max-width: 56px; height: 4px; border-radius: 2px; background: var(--sl-accent); flex: none; }
+
+.sl__titre {
+  margin: 0; font-family: 'Baloo 2', cursive; font-weight: 900; line-height: 1.1;
+  font-size: clamp(21px, calc(var(--u) * 6.4), 46px); text-wrap: pretty; color: var(--sl-encre);
+}
+.sl__titre--geant { font-size: clamp(26px, calc(var(--u) * 10.4), 62px); line-height: 1.02; }
+.sl__sous  { margin: 0; font-size: clamp(15px, calc(var(--u) * 3.6), 21px); line-height: 1.5; color: var(--sl-doux); font-weight: 600; }
+.sl__texte { margin: 0; font-size: clamp(14px, calc(var(--u) * 3.3), 19px); line-height: 1.62; color: var(--sl-doux); text-wrap: pretty; white-space: pre-wrap; }
+
+.sl__pastille {
+  padding: calc(var(--u) * 1.1) calc(var(--u) * 2.6); border-radius: 999px; background: var(--sl-tendre); color: var(--sl-encre);
+  font-family: 'Baloo 2', cursive; font-weight: 900;
+  font-size: clamp(10px, calc(var(--u) * 2.1), 12px); letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap;
+}
+.sl__badge-pts {
+  padding: calc(var(--u) * 0.9) calc(var(--u) * 2.2); border-radius: 999px; background: rgba(255, 255, 255, 0.16); color: #fff;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(10px, calc(var(--u) * 2.1), 13px); white-space: nowrap;
+}
+
+.sl__pied {
+  display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 2);
+  font-size: clamp(11px, calc(var(--u) * 2.4), 14px); color: var(--sl-doux);
+  padding-top: calc(var(--u) * 2); border-top: 1px solid var(--sl-trait);
+}
+.sl--plein .sl__pied { border-top: none; color: rgba(255, 255, 255, 0.55); }
+.sl__num { font-family: 'Baloo 2', cursive; font-weight: 900; }
+.sl--plein .sl__num { color: rgba(255, 255, 255, 0.82); }
+
+/* ── Liste numérotée ────────────────────────────────────────────────────── */
+.sl__liste { list-style: none; display: flex; flex-direction: column; gap: calc(var(--u) * 2.4); margin: 0; padding: 0; }
+.sl__liste li { display: flex; gap: calc(var(--u) * 2.6); align-items: flex-start; font-size: clamp(13px, calc(var(--u) * 3), 17px); line-height: 1.5; color: var(--sl-encre); }
+.sl__puce {
+  flex: none; width: calc(var(--u) * 4.8); min-width: 24px; aspect-ratio: 1; border-radius: 50%;
+  background: var(--sl-tendre); color: var(--sl-encre);
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(11px, calc(var(--u) * 2.4), 13px);
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Boutons de réponse ─────────────────────────────────────────────────── */
+.sl__reps { display: flex; flex-direction: column; gap: calc(var(--u) * 2.2); }
+.sl__rep {
+  appearance: none; text-align: left; cursor: pointer; width: 100%;
+  display: flex; align-items: center; gap: calc(var(--u) * 2.8);
+  padding: calc(var(--u) * 3.2) calc(var(--u) * 4); border-radius: 18px;
+  font-family: 'Nunito', Arial, sans-serif; font-size: clamp(14px, calc(var(--u) * 3.4), 19px); font-weight: 600;
+  background: var(--sl-carte); border: 2px solid var(--sl-trait); color: var(--sl-encre);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.sl__rep:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 22px -12px rgba(26, 58, 37, 0.45); border-color: var(--sl-fond2); }
+.sl__rep:disabled { cursor: default; }
+.sl__rep-marque {
+  flex: none; width: calc(var(--u) * 6); min-width: 30px; aspect-ratio: 1; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(12px, calc(var(--u) * 2.8), 16px);
+  background: var(--sl-tendre); color: var(--sl-encre);
+}
+.sl__rep--choisie { border-color: var(--sl-fond2); background: var(--sl-tendre); }
+/* Réponse juste ou fausse. « html .sl » donne à la règle la précision de
+   l'ancienne règle de mode sombre (html.dark .sl__rep--juste) : comme elle,
+   elle l'emporte sur l'habillage des réponses d'un thème
+   ([data-theme-slide] .sl__rep) et cède au survol. Chaque thème choisit ses
+   couleurs par les variables, posées sur la réponse (plus bas). */
+html .sl .sl__rep--juste  { border-color: var(--sl-juste-bord); background: var(--sl-juste-fond); color: var(--sl-juste-texte); }
+.sl__rep--juste .sl__rep-marque   { background: #2e7d32; color: #fff; }
+html .sl .sl__rep--fausse { border-color: var(--sl-fausse-bord); background: var(--sl-fausse-fond); color: var(--sl-fausse-texte); }
+.sl__rep--fausse .sl__rep-marque  { background: #c0392b; color: #fff; }
+
+/* ── Pied d'action (Valider, Envoyer, Suivant) ──────────────────────────
+   Hors de .sl__corps, qui défile : le bouton reste à l'écran quelle que soit
+   la longueur de la slide, sans pour autant flotter par-dessus comme le
+   faisait l'ancienne barre fixée au bas de la fenêtre. Les couleurs passent
+   par deux jetons pour que chaque fond de carte (clair, plein, fête) n'ait
+   qu'eux à redéfinir. */
+.sl__actions {
+  flex: none; display: flex; justify-content: center; gap: calc(var(--u) * 2.4); flex-wrap: wrap;
+  padding: calc(var(--u) * 3) calc(var(--u) * 7) calc(var(--u) * 5);
+  position: relative; z-index: 1;
+}
+.sl--plein .sl__actions { padding: calc(var(--u) * 4) 0 0; }
+.sl__action {
+  appearance: none; cursor: pointer; border: none;
+  min-width: min(100%, calc(var(--u) * 46), 280px); padding: calc(var(--u) * 2.6) calc(var(--u) * 6); border-radius: 999px;
+  background: var(--sl-act-fond, var(--sl-fond2)); color: var(--sl-act-encre, #fff);
+  font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 900;
+  font-size: clamp(14px, calc(var(--u) * 3.6), 19px); line-height: 1.2;
+  box-shadow: 0 8px 18px -10px rgba(26, 58, 37, 0.55);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.sl__action:hover:not(:disabled) { transform: translateY(-2px); }
+.sl__action:focus-visible { outline: 3px solid var(--sl-accent); outline-offset: 2px; }
+.sl__action:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+/* Carte pleine (fond vert) : bouton clair, sinon vert sur vert. */
+.sl--plein { --sl-act-fond: #fff; --sl-act-encre: var(--sl-fond1); }
+
+/* ── Mot-mystère (extrait de jeu) : mêmes cases + tuiles que jeu-mot-mystere.html,
+   redimensionnées en cqw pour vivre dans la carte de slide. ── */
+.sl__mm { display: flex; flex-direction: column; gap: calc(var(--u) * 2.4); padding: calc(var(--u) * 3.2) calc(var(--u) * 4); border-radius: 18px; background: var(--sl-carte); border: 2px solid var(--sl-trait); }
+.sl__mm-indice { display: flex; align-items: center; gap: calc(var(--u) * 2.8); font-size: clamp(13px, calc(var(--u) * 3.2), 17px); font-weight: 700; color: var(--sl-doux); }
+.sl__mm-slots, .sl__mm-tiles { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 1.6); }
+.sl__mm-slots { justify-content: center; }
+.sl__mm-slot {
+  width: calc(var(--u) * 9); height: calc(var(--u) * 10); min-width: 30px; min-height: 34px; max-width: 42px; max-height: 48px;
+  border-radius: 9px; border: 2px dashed var(--sl-trait); background: var(--sl-tendre);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(14px, calc(var(--u) * 3.6), 20px); color: var(--sl-encre);
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.sl__mm-slot.filled { border-style: solid; border-color: var(--sl-fond2); }
+.sl__mm-slots.good .sl__mm-slot { border-color: var(--sl-fond2); background: #c8e6c9; }
+.sl__mm-slots.bad .sl__mm-slot { border-color: #e53935; background: #fdecea; animation: sl-mm-shake 0.4s; }
+@keyframes sl-mm-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.sl__mm-tiles { justify-content: center; }
+.sl__mm-tile {
+  appearance: none; cursor: pointer; border: none; border-radius: 9px;
+  width: calc(var(--u) * 9); height: calc(var(--u) * 10.5); min-width: 30px; min-height: 36px; max-width: 42px; max-height: 48px;
+  background: var(--sl-fond2); color: #fff;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(14px, calc(var(--u) * 3.6), 20px);
+  box-shadow: 0 3px 0 var(--sl-fond1); transition: opacity 0.15s, transform 0.15s;
+}
+.sl__mm-tile:hover:not(:disabled) { transform: translateY(-2px); }
+.sl__mm-tile:disabled { opacity: 0.25; cursor: default; box-shadow: none; }
+
+/* ── Encart de verdict ──────────────────────────────────────────────────── */
+@keyframes sl-monte { from { transform: translateY(6px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+.sl__verdict {
+  margin-top: auto; padding: calc(var(--u) * 3.6) calc(var(--u) * 4); border-radius: 20px;
+  background: var(--sl-tendre); border: 1px dashed var(--sl-trait);
+  display: flex; flex-direction: column; gap: calc(var(--u) * 1.4); animation: sl-monte 0.3s ease both;
+}
+.sl__verdict-tete { display: flex; align-items: center; gap: calc(var(--u) * 2.2); flex-wrap: wrap; }
+.sl__verdict-titre { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(16px, calc(var(--u) * 4), 22px); }
+.sl__verdict--bon .sl__verdict-titre     { color: var(--sl-verdict-bon); }
+.sl__verdict--rate .sl__verdict-titre    { color: var(--sl-verdict-rate); }
+.sl__verdict--neutre .sl__verdict-titre  { color: var(--sl-encre); }
+.sl__verdict-pts { font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(12px, calc(var(--u) * 2.8), 15px); color: var(--sl-accent); }
+.sl__verdict-txt { margin: 0; font-size: clamp(13px, calc(var(--u) * 3), 16px); line-height: 1.55; color: var(--sl-doux); }
+
+/* ── Média plein cadre ──────────────────────────────────────────────────── */
+/* Le cadre reçoit ses proportions réelles par JS (ajusterMedias) ; en
+   attendant la mesure il occupe la place disponible. Le plafond de hauteur
+   est ce qui garantit qu'un média vertical n'engloutit pas le texte placé
+   dessous — la mesure fixe le ratio, le plafond arbitre les cas extrêmes. */
+.sl__media {
+  flex: 1; min-height: 0; max-height: 62%;
+  position: relative; display: flex; align-items: center; justify-content: center;
+  background-color: #10261a; overflow: hidden;
+}
+/* contain et non cover : une photo n'est jamais rognée, elle se loge en
+   entier dans le cadre qu'on vient de dimensionner pour elle. */
+.sl__media img, .sl__media video { width: 100%; height: 100%; object-fit: contain; border: 0; display: block; }
+.sl__media iframe { width: 100%; height: 100%; border: 0; display: block; }
+.sl__media .slide-embed { width: 100%; padding-bottom: 0; height: 100%; margin: 0; border-radius: 0; }
+.sl__media-etiq {
+  position: absolute; top: calc(var(--u) * 4); left: calc(var(--u) * 4); padding: calc(var(--u) * 1.3) calc(var(--u) * 2.6); border-radius: 999px;
+  background: rgba(12, 47, 33, 0.78); color: #fff;
+  font-family: 'Baloo 2', cursive; font-weight: 900;
+  font-size: clamp(10px, calc(var(--u) * 2.1), 12px); letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+/* ── Lecteur audio ──────────────────────────────────────────────────────── */
+.sl__lecteur {
+  padding: calc(var(--u) * 5) calc(var(--u) * 5); border-radius: 24px;
+  background: linear-gradient(150deg, var(--sl-fond1), var(--sl-fond2));
+  display: flex; align-items: center; gap: calc(var(--u) * 4);
+}
+.sl__play {
+  appearance: none; border: none; cursor: pointer; flex: none;
+  width: calc(var(--u) * 12); min-width: 52px; aspect-ratio: 1; border-radius: 50%;
+  background: var(--sl-accent); color: #fff;
+  font-family: 'Baloo 2', cursive; font-weight: 900; font-size: clamp(16px, calc(var(--u) * 4), 22px);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.6);
+}
+.sl__ondes { flex: 1; display: flex; align-items: center; gap: 3px; height: calc(var(--u) * 9); max-height: 52px; }
+.sl__onde  { flex: 1; border-radius: 2px; background: rgba(255, 255, 255, 0.55); }
+
+/* ── Chips de proposition ───────────────────────────────────────────────── */
+.sl__chips { display: flex; gap: calc(var(--u) * 2.2); flex-wrap: wrap; }
+.sl__chip {
+  padding: calc(var(--u) * 2.2) calc(var(--u) * 3.6); border-radius: 14px; border: 2px solid var(--sl-trait);
+  font-family: 'Baloo 2', cursive; font-weight: 700; font-size: clamp(13px, calc(var(--u) * 3), 16px); color: var(--sl-encre);
+}
+
+/* ── Sommaire (parties passées / en cours / à venir) ────────────────────── */
+.sl__somm { list-style: none; display: flex; flex-direction: column; gap: calc(var(--u) * 1.8); margin: 0; padding: 0; }
+.sl__somm li {
+  display: flex; align-items: center; gap: calc(var(--u) * 2.6);
+  padding: calc(var(--u) * 2.6) calc(var(--u) * 3.4); border-left: 4px solid var(--sl-trait); border-radius: 0 12px 12px 0;
+  background: var(--sl-tendre); font-weight: 700; font-size: clamp(13px, calc(var(--u) * 3), 17px); color: var(--sl-encre);
+  transition: all 0.2s;
+}
+.sl__somm li.passee   { opacity: 0.42; }
+.sl__somm li.courante { border-left-color: var(--sl-fond2); font-weight: 900; transform: scale(1.02); box-shadow: 0 2px 10px rgba(26, 58, 37, 0.14); }
+.sl__somm li.avenir   { opacity: 0.78; }
+.sl__somm-puce { flex: none; opacity: 0.7; font-size: 0.85em; }
+.sl__somm li.courante .sl__somm-puce { opacity: 1; }
+
+/* ── Classement ─────────────────────────────────────────────────────────── */
+.sl__clst { list-style: none; display: flex; flex-direction: column; gap: calc(var(--u) * 1.6); margin: 0; padding: 0; }
+.sl__clst li {
+  display: flex; align-items: center; gap: calc(var(--u) * 2.6);
+  padding: calc(var(--u) * 2.4) calc(var(--u) * 3.2); border-radius: 12px; background: var(--sl-tendre);
+  font-size: clamp(13px, calc(var(--u) * 3), 17px); color: var(--sl-encre);
+}
+.sl__clst .rang { font-family: 'Baloo 2', cursive; font-weight: 900; color: var(--sl-doux); min-width: calc(var(--u) * 5); }
+.sl__clst .nom  { flex: 1; font-weight: 700; }
+.sl__clst .pts  { font-family: 'Baloo 2', cursive; font-weight: 900; color: var(--sl-accent); }
+.sl__clst li.moi { outline: 2px solid var(--sl-fond2); }
+.sl__clst-toi { font-weight: 600; color: var(--sl-doux); }
+.sl__clst-blocs { display: flex; flex-direction: column; gap: calc(var(--u) * 3); }
+.sl__clst-bloc  { display: flex; flex-direction: column; gap: calc(var(--u) * 1.6); min-width: 0; }
+/* Séparateur entre la tête du classement et la ligne du participant. Le .sl
+   en tête de sélecteur l'emporte sur les fonds de ligne propres aux thèmes. */
+.sl .sl__clst li.sl__clst-ecart {
+  background: none; justify-content: center; padding: 0;
+  color: var(--sl-doux); font-weight: 900; letter-spacing: 0.3em; line-height: 1;
+}
+.sl__clst-reste { margin: calc(var(--u) * 1.4) 0 0; text-align: center; font-size: clamp(11px, calc(var(--u) * 2.4), 14px); color: var(--sl-doux); font-weight: 700; }
+.sl--plein .sl__clst-reste,
+.sl.sl--plein .sl__clst li.sl__clst-ecart { color: rgba(255, 255, 255, 0.7); }
+/* Écran couché : participants et équipes côte à côte, plutôt qu'empilés
+   au-delà du bas de la carte. */
+@container sl-cadre (orientation: landscape) and (min-width: 520px) {
+  .sl__clst-blocs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: start; gap: calc(var(--u) * 5); }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THÈME « PAPIER » (variante B)
+
+   Seconde piste graphique : fond papier crème piqué de pois, cartes cernées
+   d'un trait olive épais et posées sur une ombre dure (décalée, sans flou),
+   numéro de section en gros caractères terracotta, et un motif géométrique
+   par famille de carte.
+
+   Tout passe par les mêmes classes que le thème par défaut : seuls les jetons
+   et quelques traits de forme changent. Un parcours bascule d'un thème à
+   l'autre sans qu'une seule ligne de rendu ne bouge.
+
+   Les verts sont ceux de Composmart ; le terracotta est conservé tel quel,
+   c'est lui qui distingue les deux thèmes au premier regard.
+   ══════════════════════════════════════════════════════════════════════════ */
+[data-theme-slide="papier"] {
+  --sl-ombre-cadre: 14px 14px 0 rgba(20, 82, 40, 0.18);
+  --sl-fond1:   #145228;
+  --sl-fond2:   #1e6e3e;
+  --sl-fond3:   #2d9959;
+  --sl-carte:   #fdfaf1;   /* papier */
+  --sl-encre:   #22331f;
+  --sl-doux:    #6b7a63;
+  --sl-accent:  #c04f2e;   /* terracotta */
+  --sl-accent2: #f7e3d8;
+  --sl-tendre:  #efe8d8;
+  --sl-trait:   rgba(30, 110, 62, 0.28);
+  --sl-rad:     20px;
+
+  /* La scène abandonne le dégradé feuillage pour un papier à pois. Le motif
+     n'est plus une image mais un dégradé : --sl-scene-motif accepte les deux,
+     le canal reste le même. */
+  --sl-scene1:  #f5f0e4;
+  --sl-scene2:  #efe8d8;
+  --sl-scene3:  #e5dbc5;
+  --sl-scene-motif: radial-gradient(circle, rgba(47, 74, 43, 0.10) 1.4px, transparent 1.5px);
+  --sl-scene-motif-taille: 22px 22px;
+}
+html.dark [data-theme-slide="papier"] {
+  --sl-ombre-cadre: 14px 14px 0 rgba(0, 0, 0, 0.45);
+  --sl-carte:   #1b2418;
+  --sl-encre:   #ecebdd;
+  --sl-doux:    #9fae96;
+  --sl-accent:  #e8825e;
+  --sl-accent2: #3a251c;
+  --sl-tendre:  #232d1f;
+  --sl-trait:   rgba(236, 235, 221, 0.22);
+  --sl-scene1:  #171d13;
+  --sl-scene2:  #12180f;
+  --sl-scene3:  #0e130c;
+  --sl-scene-motif: radial-gradient(circle, rgba(236, 235, 221, 0.09) 1.4px, transparent 1.5px);
+  --sl-scene-motif-taille: 22px 22px;
+}
+
+/* Cadre épais + ombre dure : la signature du thème. */
+[data-theme-slide="papier"] .sl {
+  border: 3px solid var(--sl-fond1);
+  box-shadow: var(--sl-ombre-cadre);
+}
+
+/* Bandeau de tête : arcs concentriques plutôt qu'un dégradé. */
+[data-theme-slide="papier"] .sl__entete {
+  background: var(--sl-fond1);
+  border-bottom: 3px solid var(--sl-fond1);
+}
+[data-theme-slide="papier"] .sl__entete::before {
+  content: ''; position: absolute; inset: -40px -40px auto -40px; height: 400px; pointer-events: none;
+  background-image: repeating-radial-gradient(circle at 50% 100%, transparent 0 44px, rgba(253, 250, 241, 0.16) 44px 47px);
+}
+[data-theme-slide="papier"] .sl--plein {
+  background: var(--sl-carte); color: var(--sl-encre);
+}
+[data-theme-slide="papier"] .sl--plein .sl__titre { color: var(--sl-encre); }
+[data-theme-slide="papier"] .sl--plein .sl__sous,
+[data-theme-slide="papier"] .sl--plein .sl__texte { color: var(--sl-doux); }
+[data-theme-slide="papier"] .sl--plein .sl__kicker { color: var(--sl-accent); }
+[data-theme-slide="papier"] .sl--plein .sl__filet { background: var(--sl-fond1); height: 3px; }
+[data-theme-slide="papier"] .sl--plein .sl__pied { color: var(--sl-encre); border-top: 3px solid var(--sl-fond1); }
+[data-theme-slide="papier"] .sl--plein .sl__num { color: var(--sl-accent); }
+/* Les formes organiques du thème forêt n'ont pas cours ici. */
+[data-theme-slide="papier"] .sl__deco,
+[data-theme-slide="papier"] .sl__grain { display: none; }
+
+/* Barre d'accent : un carré franc plutôt qu'un trait arrondi. */
+[data-theme-slide="papier"] .sl__barre { height: 12px; width: 34px; border-radius: 0; }
+/* Bandeau supérieur : hachures obliques. */
+[data-theme-slide="papier"] .sl__bandeau {
+  height: 14px; background: var(--sl-fond1);
+  background-image: repeating-linear-gradient(135deg, rgba(253, 250, 241, 0.24) 0 2px, transparent 2px 11px);
+}
+/* Pastilles et boutons : angles nets, trait franc. */
+[data-theme-slide="papier"] .sl__pastille { border-radius: 6px; background: var(--sl-accent); color: #fff; }
+[data-theme-slide="papier"] .sl__badge-pts { border-radius: 6px; background: var(--sl-accent); color: #fff; }
+[data-theme-slide="papier"] .sl__rep { border-radius: 10px; border-width: 3px; border-color: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__rep--juste,
+[data-theme-slide="papier"] .sl__rep--fausse { --sl-juste-bord: var(--sl-fond1); --sl-fausse-bord: var(--sl-fond1); }
+html.dark [data-theme-slide="papier"] .sl__rep--juste,
+html.dark [data-theme-slide="papier"] .sl__rep--fausse { --sl-juste-bord: #43a047; --sl-fausse-bord: #e53935; }
+[data-theme-slide="papier"] .sl__rep:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 rgba(20, 82, 40, 0.22); }
+[data-theme-slide="papier"] .sl__rep-marque { border-radius: 6px; background: var(--sl-fond1); color: var(--sl-carte); }
+[data-theme-slide="papier"] .sl__verdict { border-radius: 10px; border: 3px dashed var(--sl-fond1); background: var(--sl-tendre); }
+[data-theme-slide="papier"] .sl__chip { border-radius: 6px; border-width: 3px; border-color: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__puce { border-radius: 6px; background: var(--sl-accent); color: #fff; }
+[data-theme-slide="papier"] .sl__somm li { border-radius: 0 6px 6px 0; background: var(--sl-tendre); }
+[data-theme-slide="papier"] .sl__somm li.courante { border-left-color: var(--sl-accent); }
+[data-theme-slide="papier"] .sl__clst li { border-radius: 6px; background: var(--sl-tendre); }
+[data-theme-slide="papier"] .sl__lecteur { border-radius: 10px; background: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__play { border-radius: 8px; }
+[data-theme-slide="papier"] .sl__media-etiq { border-radius: 6px; background: var(--sl-accent); }
+[data-theme-slide="papier"] .sl__action {
+  border-radius: 10px; border: 3px solid var(--sl-fond1);
+  box-shadow: 4px 4px 0 rgba(20, 82, 40, 0.22);
+}
+[data-theme-slide="papier"] .sl__action:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(20, 82, 40, 0.22); }
+/* La carte pleine du papier est crème : le bouton reprend le vert. */
+[data-theme-slide="papier"] .sl--plein { --sl-act-fond: var(--sl-fond2); --sl-act-encre: #fff; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THÈME « SIMPLISTE » — cadre vert Composmart, carte blanche
+
+   La variante sobre : un cadre vert plein tout autour, une carte blanche
+   dedans, des titres centrés, et rien d'autre. Pas de dégradé, pas de motif,
+   pas de forme organique en filigrane — les deux autres thèmes ont chacun leur
+   ornement, celui-ci n'en a aucun. C'est ce qui le rend utilisable chez un
+   client qui a déjà sa propre identité visuelle et n'en veut pas une seconde.
+
+   Le cadre est une simple bordure : avec border-radius, le rayon intérieur vaut
+   automatiquement rayon − épaisseur, ce qui reproduit exactement la carte
+   blanche encastrée du gabarit sans imbriquer un élément de plus.
+
+   Les titres abandonnent Baloo 2 pour la graisse 800 de Nunito, resserrée :
+   c'est la seule chose qui distingue vraiment le ton « sobre » du ton « jeu ».
+   ══════════════════════════════════════════════════════════════════════════ */
+[data-theme-slide="simpliste"] {
+  --sl-ombre-cadre: 0 18px 40px -22px rgba(29, 44, 34, 0.4);
+  --sl-fond1:   #2e7442;   /* vert foncé — blocs média, carte de fête */
+  --sl-fond2:   #00a34e;   /* vert lisible sur blanc — textes, traits */
+  --sl-fond3:   #00c25f;   /* vert vif — le cadre */
+  --sl-carte:   #ffffff;
+  --sl-encre:   #1d2c22;
+  --sl-doux:    #6c7a70;
+  --sl-accent:  #00a34e;
+  --sl-accent2: #e3f6e9;
+  --sl-tendre:  #e3f6e9;
+  --sl-trait:   rgba(29, 44, 34, 0.12);
+  --sl-rad:     26px;
+
+  /* La scène est un gris-vert neutre, sans motif : le cadre vert suffit à
+     détacher la carte, un décor de plus ferait redondance. */
+  --sl-scene1:  #f7f9f5;
+  --sl-scene2:  #f2f5f0;
+  --sl-scene3:  #e5ebe1;
+  --sl-scene-motif: none;
+}
+html.dark [data-theme-slide="simpliste"] {
+  --sl-ombre-cadre: 0 18px 40px -22px rgba(0, 0, 0, 0.6);
+  --sl-fond1:   #16351f;
+  --sl-fond2:   #2ea862;
+  --sl-fond3:   #1f8a4a;
+  --sl-carte:   #141a16;
+  --sl-encre:   #e9f3ec;
+  --sl-doux:    #8ea395;
+  --sl-accent:  #35c273;
+  --sl-accent2: #12241a;
+  --sl-tendre:  #17241b;
+  --sl-trait:   rgba(233, 243, 236, 0.16);
+  --sl-scene1:  #12180f;
+  --sl-scene2:  #0e130c;
+  --sl-scene3:  #0a0f09;
+  --sl-scene-motif: none;
+}
+
+/* Le cadre vert. Le rayon intérieur découle de la bordure, aucun élément
+   supplémentaire n'est nécessaire. */
+[data-theme-slide="simpliste"] .sl {
+  border: clamp(9px, calc(var(--u) * 2.9), 16px) solid var(--sl-fond3);
+  box-shadow: var(--sl-ombre-cadre);
+}
+
+/* Aucun ornement : ni bandeau, ni formes organiques, ni grain. */
+[data-theme-slide="simpliste"] .sl__bandeau,
+[data-theme-slide="simpliste"] .sl__deco,
+[data-theme-slide="simpliste"] .sl__grain,
+[data-theme-slide="simpliste"] .sl__filet,
+[data-theme-slide="simpliste"] .sl__barre { display: none; }
+
+/* Titres : Nunito 800 resserré, centré. */
+[data-theme-slide="simpliste"] .sl__titre,
+[data-theme-slide="simpliste"] .sl__verdict-titre,
+[data-theme-slide="simpliste"] .sl__num,
+[data-theme-slide="simpliste"] .sl__verdict-pts,
+[data-theme-slide="simpliste"] .sl__badge-pts,
+[data-theme-slide="simpliste"] .sl__pastille {
+  font-family: 'Nunito', Arial, sans-serif; font-weight: 800; letter-spacing: -0.02em;
+}
+[data-theme-slide="simpliste"] .sl__titre { text-align: center; }
+[data-theme-slide="simpliste"] .sl__sous  { text-align: center; }
+
+/* Kicker et pastille : du texte vert en petites capitales, pas une gélule. */
+[data-theme-slide="simpliste"] .sl__pastille {
+  background: none; color: var(--sl-fond2); padding: 0;
+  letter-spacing: 0.2em; text-transform: uppercase;
+}
+[data-theme-slide="simpliste"] .sl__kicker { color: var(--sl-fond2); letter-spacing: 0.2em; }
+/* Sauf sur l'en-tête vert foncé des questions, où ce vert devenait illisible. */
+[data-theme-slide="simpliste"] .sl__entete .sl__kicker { color: rgba(255, 255, 255, 0.72); }
+[data-theme-slide="simpliste"] .sl__ligne { justify-content: space-between; }
+[data-theme-slide="simpliste"] .sl__badge-pts { background: var(--sl-tendre); color: var(--sl-fond2); }
+
+/* Carte de titre : blanche et centrée, pas de fond plein. */
+[data-theme-slide="simpliste"] .sl--plein {
+  background: var(--sl-carte); color: var(--sl-encre);
+  justify-content: center; text-align: center;
+}
+[data-theme-slide="simpliste"] .sl--plein .sl__titre { color: var(--sl-encre); }
+[data-theme-slide="simpliste"] .sl--plein .sl__sous,
+[data-theme-slide="simpliste"] .sl--plein .sl__texte { color: var(--sl-doux); }
+[data-theme-slide="simpliste"] .sl--plein .sl__kicker { color: var(--sl-fond2); }
+[data-theme-slide="simpliste"] .sl--plein .sl__pied { color: var(--sl-doux); border-top: 1px solid var(--sl-trait); }
+[data-theme-slide="simpliste"] .sl--plein .sl__num { color: var(--sl-fond2); }
+[data-theme-slide="simpliste"] .sl__entete { background: var(--sl-fond1); }
+
+/* Réponses : carte blanche cerclée, pastille ronde en vert tendre. */
+[data-theme-slide="simpliste"] .sl__rep {
+  border-radius: 16px; border-width: 2px; border-color: var(--sl-trait);
+  background: var(--sl-carte);
+}
+[data-theme-slide="simpliste"] .sl__rep:hover:not(:disabled) {
+  transform: translateY(-2px); box-shadow: none; border-color: var(--sl-fond2);
+}
+[data-theme-slide="simpliste"] .sl__rep-marque {
+  border-radius: 50%; background: var(--sl-tendre); color: var(--sl-encre);
+}
+[data-theme-slide="simpliste"] .sl__rep--juste { --sl-juste-bord: var(--sl-fond3); --sl-juste-fond: var(--sl-tendre); --sl-juste-texte: var(--sl-encre); }
+[data-theme-slide="simpliste"] .sl__rep--fausse { --sl-fausse-bord: var(--sl-trait); --sl-fausse-fond: var(--sl-carte); }
+html.dark [data-theme-slide="simpliste"] .sl__rep--juste { --sl-juste-bord: #43a047; --sl-juste-fond: #16291c; --sl-juste-texte: #7fc99a; }
+html.dark [data-theme-slide="simpliste"] .sl__rep--fausse { --sl-fausse-bord: #e53935; --sl-fausse-fond: #3d1a1a; }
+[data-theme-slide="simpliste"] .sl__rep--juste .sl__rep-marque { background: var(--sl-fond3); color: #fff; }
+[data-theme-slide="simpliste"] .sl__action {
+  font-family: 'Nunito', Arial, sans-serif; font-weight: 800; letter-spacing: -0.02em;
+  box-shadow: none;
+}
+/* Carte pleine blanche en simpliste : bouton vert comme ailleurs. */
+[data-theme-slide="simpliste"] .sl--plein { --sl-act-fond: var(--sl-fond2); --sl-act-encre: #fff; }
+
+/* Verdict, puces, sommaire, classement : même gélule verte tendre partout. */
+[data-theme-slide="simpliste"] .sl__verdict {
+  border-radius: 16px; border: none; background: var(--sl-tendre);
+}
+[data-theme-slide="simpliste"] .sl__somm li { border-radius: 0 12px 12px 0; background: var(--sl-tendre); }
+[data-theme-slide="simpliste"] .sl__somm li.courante { border-left-color: var(--sl-fond3); }
+[data-theme-slide="simpliste"] .sl__clst li { border-radius: 12px; background: var(--sl-tendre); }
+
+/* ── Illustration tirée de la banque d'images ──────────────────────────────
+   Bloc de TAILLE FIXE, posé en bas de carte, hors du flux : le texte de la
+   slide garde ainsi exactement la même mise en page qu'une carte sans image,
+   et une illustration plus haute que prévu ne peut pas pousser le contenu
+   hors du cadre. C'est la carte qui réserve la place, via .sl--illu.
+
+   object-fit:contain plutôt que cover : la banque accueille aussi bien des
+   photos que des pictogrammes détourés, et rogner un pictogramme le mutile. */
+[data-theme-slide="simpliste"] .sl__illu {
+  position: absolute; left: calc(var(--u) * 7); bottom: calc(var(--u) * 4);
+  width: calc(var(--u) * 22); max-width: 118px; height: calc(var(--u) * 22); max-height: 118px;
+  object-fit: contain; object-position: left bottom;
+  pointer-events: none; user-select: none;
+}
+/* La place réservée en bas du corps, pour que le texte ne passe pas dessous. */
+[data-theme-slide="simpliste"] .sl--illu .sl__corps { padding-bottom: calc(var(--u) * 28); }
+[data-theme-slide="simpliste"] .sl--illu.sl--plein { padding-bottom: calc(var(--u) * 28); }
+/* Le pied d'action partage le bas de carte avec l'illustration : le bouton
+   se range à droite, l'image garde son coin gauche. */
+[data-theme-slide="simpliste"] .sl--illu:not(.sl--plein) .sl__actions { justify-content: flex-end; padding-left: calc(var(--u) * 32); }
+/* Sur la carte de gerbe, fond sombre : l'illustration passe à droite pour ne
+   pas se superposer au bandeau de score. */
+[data-theme-slide="simpliste"] .sl--fete .sl__illu { left: auto; right: calc(var(--u) * 7); object-position: right bottom; }
+
+/* Les autres thèmes n'affichent pas d'illustration — le serveur n'en pose pas,
+   cette règle n'est qu'un garde-fou si un contenu en gardait une trace. */
+.sl__illu { display: none; }
+[data-theme-slide="simpliste"] .sl__illu { display: block; }
+
+/* Médias : bloc vert foncé à coins largement arrondis. */
+[data-theme-slide="simpliste"] .sl__media,
+[data-theme-slide="simpliste"] .sl__lecteur { border-radius: 22px; background: var(--sl-fond1); }
+[data-theme-slide="simpliste"] .sl__media-etiq { border-radius: 999px; background: var(--sl-fond2); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SLIDE D'ENCOURAGEMENT — deux animations au choix
+
+   1. LA POUSSE. Une plante qui se construit en boucle : la tige se DESSINE
+      d'elle-même (tracé avec pathLength="100" et stroke-dashoffset qui remonte
+      de 100 à 0), puis trois feuilles éclosent chacune à son tour depuis son
+      point d'attache réel sur le tracé, puis la fleur s'ouvre. Le tout ondule
+      lentement (sway) et repart au bout d'un cycle.
+
+      Les feuilles sont ancrées par transform-box:fill-box + transform-origin
+      posé sur le bord collé à la tige : c'est ce qui les empêche de flotter
+      détachées, faute qu'avait la première version.
+
+   2. LES CONFETTIS. Une gerbe radiale. Chaque pièce est un empilement de trois
+      éléments : le rayon fixe la direction (rotate), le vol translate la pièce
+      vers l'extérieur (translateX 100 % d'une largeur = sa portée), la pièce
+      culbute et retombe. Deux anneaux d'impact marquent le point de départ.
+
+   Durées pilotées par --sl-dur (pousse) et --sl-burst (gerbe), posées au rendu.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Bouton de relance, dans la ligne d'en-tête de la carte. */
+.sl__rejouer {
+  flex: none; appearance: none; cursor: pointer;
+  padding: calc(var(--u) * 1.1) calc(var(--u) * 2.6); border-radius: 999px;
+  background: transparent; border: 1.5px solid var(--sl-trait);
+  font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 800;
+  font-size: clamp(10px, calc(var(--u) * 2.1), 12px); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--sl-encre); transition: border-color 0.15s, background 0.15s;
+}
+.sl__rejouer:hover { border-color: var(--sl-encre); }
+.sl__rejouer:focus-visible { outline: 3px solid var(--sl-accent); outline-offset: 2px; }
+.sl--plein .sl__rejouer { border-color: rgba(255, 255, 255, 0.32); color: #fff; }
+.sl--plein .sl__rejouer:hover { border-color: #fff; }
+[data-theme-slide="papier"] .sl__rejouer { border-radius: 6px; border-width: 3px; border-color: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl--fete .sl__rejouer { border-color: rgba(253, 250, 241, 0.5); color: #fdfaf1; }
+
+/* ── La pousse ─────────────────────────────────────────────────────────── */
+.sl__pousse {
+  position: relative; flex: 1; min-height: calc(var(--u) * 42);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: sl-cycle var(--sl-dur, 6.4s) linear infinite;
+}
+@keyframes sl-cycle { 0% { opacity: 0 } 6%, 88% { opacity: 1 } 100% { opacity: 0 } }
+
+/* Halo chaud derrière la plante (thème forêt) — devient une onde au sol en papier. */
+.sl__halo {
+  position: absolute; bottom: 14%; width: calc(var(--u) * 44); aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle, rgba(178, 106, 0, 0.22), transparent 68%);
+  animation: sl-halo var(--sl-dur, 6.4s) ease-out infinite backwards;
+}
+@keyframes sl-halo {
+  0%, 10%   { transform: scale(.3);  opacity: 0 }
+  30%       { transform: scale(1);   opacity: .5 }
+  64%, 100% { transform: scale(1.45); opacity: 0 }
+}
+@keyframes sl-ripple {
+  0%, 10%   { transform: scale(.2);  opacity: 0 }
+  28%       { transform: scale(1);   opacity: .55 }
+  60%, 100% { transform: scale(1.5); opacity: 0 }
+}
+
+.sl__plante {
+  position: relative; display: block; width: calc(var(--u) * 62); max-width: 330px; height: auto; overflow: visible;
+  transform-origin: 50% 100%;
+  animation: sl-sway 4.4s ease-in-out infinite alternate;
+}
+@keyframes sl-sway { 0%, 100% { transform: rotate(-1.6deg) } 50% { transform: rotate(1.6deg) } }
+
+.sl__tige {
+  fill: none; stroke: var(--sl-fond2); stroke-width: 9; stroke-linecap: round;
+  stroke-dasharray: 100;
+  animation: sl-tige var(--sl-dur, 6.4s) cubic-bezier(.22,.72,.3,1) infinite;
+}
+@keyframes sl-tige { 0% { stroke-dashoffset: 100 } 46%, 100% { stroke-dashoffset: 0 } }
+
+.sl__feuille {
+  fill: var(--sl-fond2); transform-box: fill-box;
+  animation-duration: var(--sl-dur, 6.4s);
+  animation-timing-function: cubic-bezier(.2,.8,.3,1);
+  animation-iteration-count: infinite;
+  animation-fill-mode: backwards;
+}
+.sl__feuille--a { opacity: .9;  transform-origin: 100% 30%; animation-name: sl-feuille-a; }
+.sl__feuille--b { opacity: .76; transform-origin: 0% 30%;   animation-name: sl-feuille-b; }
+.sl__feuille--c { opacity: .6;  transform-origin: 100% 30%; animation-name: sl-feuille-c; }
+@keyframes sl-feuille-a {
+  0%, 15%   { transform: scale(.04) rotate(-16deg); opacity: 0 }
+  23%       { transform: scale(1.1) rotate(3deg);   opacity: 1 }
+  28%, 100% { transform: scale(1)   rotate(0deg);   opacity: 1 }
+}
+@keyframes sl-feuille-b {
+  0%, 26%   { transform: scale(.04) rotate(16deg);  opacity: 0 }
+  34%       { transform: scale(1.1) rotate(-3deg);  opacity: 1 }
+  39%, 100% { transform: scale(1)   rotate(0deg);   opacity: 1 }
+}
+@keyframes sl-feuille-c {
+  0%, 36%   { transform: scale(.04) rotate(-16deg); opacity: 0 }
+  44%       { transform: scale(1.1) rotate(3deg);   opacity: 1 }
+  49%, 100% { transform: scale(1)   rotate(0deg);   opacity: 1 }
+}
+
+.sl__fleur {
+  transform-origin: 0 0;
+  animation: sl-fleur var(--sl-dur, 6.4s) cubic-bezier(.2,.8,.3,1) infinite backwards;
+}
+@keyframes sl-fleur {
+  0%, 47%   { transform: scale(0)    rotate(-40deg); opacity: 0 }
+  58%       { transform: scale(1.16) rotate(6deg);   opacity: 1 }
+  65%       { transform: scale(.94)  rotate(-2deg) }
+  72%, 100% { transform: scale(1)    rotate(0deg);   opacity: 1 }
+}
+.sl__petales {
+  transform-origin: 0 0;
+  animation: sl-petale var(--sl-dur, 6.4s) ease-in-out infinite backwards;
+}
+@keyframes sl-petale { 0%, 72% { transform: scale(1) } 86% { transform: scale(1.05) } 100% { transform: scale(1) } }
+.sl__petale { fill: var(--sl-accent); }
+.sl__coeur  { fill: var(--sl-carte); }
+.sl__pistil { fill: var(--sl-fond2); opacity: .5; }
+
+/* Mot d'ambiance, posé dans le coin de la scène. */
+.sl__mot {
+  position: absolute; bottom: calc(var(--u) * 3); left: calc(var(--u) * 4);
+  animation: sl-mot var(--sl-dur, 6.4s) ease-out infinite backwards;
+}
+.sl__mot span {
+  display: inline-block; padding: calc(var(--u) * 2) calc(var(--u) * 3.4); border-radius: 18px;
+  background: var(--sl-tendre); color: var(--sl-encre);
+  font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 800;
+  font-size: clamp(15px, calc(var(--u) * 5.2), 30px); line-height: 1.1;
+}
+@keyframes sl-mot {
+  0%, 46% { transform: translateY(12px); opacity: 0 }
+  62%     { transform: translateY(0);    opacity: 1 }
+  88%     { opacity: 1 }
+  100%    { opacity: 0 }
+}
+
+/* ── La gerbe de confettis ─────────────────────────────────────────────── */
+.sl__fete { position: relative; flex: 1; min-height: calc(var(--u) * 44); pointer-events: none; }
+.sl__anneau {
+  position: absolute; left: var(--x); top: var(--y);
+  width: calc(var(--u) * 28); aspect-ratio: 1; margin: calc(var(--u) * -14) 0 0 calc(var(--u) * -14);
+  border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.4);
+  animation: sl-anneau var(--sl-burst, 3.4s) ease-out infinite;
+}
+.sl__anneau--accent { border-color: var(--sl-accent); animation-delay: .16s; }
+@keyframes sl-anneau {
+  0%   { transform: scale(.1);  opacity: .85 }
+  70%  { opacity: 0 }
+  100% { transform: scale(2.6); opacity: 0 }
+}
+
+.sl__rayon { position: absolute; left: var(--x); top: var(--y); height: 0; transform: rotate(var(--a)); }
+.sl__vol {
+  display: block; width: var(--dist);
+  animation: sl-vol var(--dur) cubic-bezier(.16,.7,.3,1) infinite backwards;
+  animation-delay: var(--del);
+}
+@keyframes sl-vol { 0% { transform: translateX(0) } 100% { transform: translateX(100%) } }
+.sl__piece {
+  display: block; margin-left: var(--dist);
+  width: var(--w); height: var(--h); border-radius: var(--r); background: var(--c);
+  animation: sl-piece var(--dur) cubic-bezier(.16,.7,.3,1) infinite backwards;
+  animation-delay: var(--del);
+}
+@keyframes sl-piece {
+  0%   { transform: rotate(0deg)   translateY(0)     scale(.2); opacity: 0 }
+  12%  { transform: rotate(90deg)  translateY(-10px) scale(1);  opacity: 1 }
+  70%  { opacity: 1 }
+  100% { transform: rotate(760deg) translateY(130px) scale(.7); opacity: 0 }
+}
+
+.sl__bravo {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: 'Baloo 2', 'Nunito', sans-serif; font-weight: 900; letter-spacing: -.01em;
+  font-size: clamp(38px, calc(var(--u) * 13.6), 76px); color: #fff;
+  animation: sl-bravo var(--sl-burst, 3.4s) cubic-bezier(.2,.8,.3,1) infinite;
+}
+@keyframes sl-bravo {
+  0%        { transform: scale(.4)  rotate(-6deg); opacity: 0 }
+  18%       { transform: scale(1.12) rotate(2deg); opacity: 1 }
+  30%       { transform: scale(.97) rotate(-1deg) }
+  40%, 84%  { transform: scale(1)   rotate(0deg);  opacity: 1 }
+  100%      { transform: scale(1.04); opacity: 0 }
+}
+
+/* ── Barre d'avancement (indépendante de l'animation) ──────────────────── */
+.sl__jauge { height: 10px; border-radius: 6px; background: var(--sl-tendre); overflow: hidden; }
+.sl__jauge > span {
+  display: block; height: 100%; border-radius: 6px; background: var(--sl-fond2);
+  width: calc(var(--pousse, 0.5) * 100%);
+  animation: sl-jauge 1.25s cubic-bezier(.25,.9,.3,1) both;
+}
+@keyframes sl-jauge { from { width: 0 } }
+.sl__jauge-txt { font-size: clamp(11px, calc(var(--u) * 2.4), 14px); color: var(--sl-doux); font-weight: 700; text-align: center; }
+
+/* Sur carte inversée (gerbe), la jauge doit rester lisible sur fond sombre. */
+.sl--plein .sl__jauge { background: rgba(255, 255, 255, 0.16); }
+.sl--plein .sl__jauge > span { background: var(--sl-accent); }
+.sl--plein .sl__jauge-txt { color: rgba(255, 255, 255, 0.72); }
+
+/* ── Thème papier : trait franc, angles nets, onde au sol au lieu du halo ── */
+[data-theme-slide="papier"] .sl__jauge { border-radius: 0; border: 2px solid var(--sl-fond1); height: 14px; }
+[data-theme-slide="papier"] .sl__jauge > span { border-radius: 0; background: var(--sl-accent); }
+[data-theme-slide="papier"] .sl__tige { stroke: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__feuille { fill: var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__pistil { fill: var(--sl-fond1); opacity: .55; }
+[data-theme-slide="papier"] .sl__halo {
+  background: none; border: 3px solid var(--sl-accent); bottom: 12%;
+  animation-name: sl-ripple;
+}
+[data-theme-slide="papier"] .sl__mot span { border-radius: 6px; border: 3px solid var(--sl-fond1); }
+[data-theme-slide="papier"] .sl__piece { border-radius: 0 !important; }
+
+/* Carte de la gerbe. En forêt, .sl--plein donne le dégradé vert attendu ; en
+   papier il rend une carte crème sur laquelle des confettis clairs seraient
+   invisibles — d'où ce fond olive plein, damier en filigrane, encre claire. */
+[data-theme-slide="papier"] .sl--fete {
+  background: var(--sl-fond1); color: #fdfaf1;
+  background-image: conic-gradient(from 45deg, rgba(253, 250, 241, 0.18) 0 25%,
+                                   transparent 0 50%, rgba(253, 250, 241, 0.18) 0 75%, transparent 0);
+  background-size: 46px 46px;
+}
+[data-theme-slide="papier"] .sl--fete .sl__titre { color: #fdfaf1; }
+[data-theme-slide="papier"] .sl--fete .sl__texte,
+[data-theme-slide="papier"] .sl--fete .sl__verdict-pts { color: rgba(253, 250, 241, 0.78); }
+[data-theme-slide="papier"] .sl--fete .sl__anneau { border-color: rgba(253, 250, 241, 0.42); }
+[data-theme-slide="papier"] .sl--fete .sl__anneau--accent { border-color: var(--sl-accent); }
+[data-theme-slide="papier"] .sl--fete .sl__jauge {
+  border-color: rgba(253, 250, 241, 0.4); background: rgba(253, 250, 241, 0.14);
+}
+[data-theme-slide="papier"] .sl--fete .sl__jauge-txt { color: rgba(253, 250, 241, 0.72); }
+[data-theme-slide="papier"] .sl--fete { --sl-act-fond: #fdfaf1; --sl-act-encre: var(--sl-fond1); }
+
+/* ── Encouragement, thème simpliste ────────────────────────────────────────
+   La plante reprend le vert foncé pour la tige et les feuilles, le vert vif
+   pour les pétales : c'est le contraste du gabarit. Pas de halo — ce thème
+   n'a d'ornement nulle part ailleurs, en poser un ici jurerait. */
+[data-theme-slide="simpliste"] { --sl-conf1: var(--sl-fond3); }
+[data-theme-slide="simpliste"] .sl__halo { display: none; }
+[data-theme-slide="simpliste"] .sl__tige { stroke: var(--sl-fond1); }
+[data-theme-slide="simpliste"] .sl__feuille { fill: var(--sl-fond1); }
+[data-theme-slide="simpliste"] .sl__petale { fill: var(--sl-fond3); }
+[data-theme-slide="simpliste"] .sl__pistil { fill: var(--sl-fond1); }
+[data-theme-slide="simpliste"] .sl__mot span { border-radius: 16px; }
+[data-theme-slide="simpliste"] .sl__bravo {
+  font-family: 'Nunito', Arial, sans-serif; font-weight: 800; letter-spacing: -0.03em;
+}
+
+/* Carte de la gerbe : le cadre vert reste, l'intérieur passe au vert foncé.
+   Doit venir après la règle .sl--plein du thème (même spécificité). */
+[data-theme-slide="simpliste"] .sl--fete { background: var(--sl-fond1); color: #fff; }
+[data-theme-slide="simpliste"] .sl--fete .sl__titre { color: #fff; }
+[data-theme-slide="simpliste"] .sl--fete .sl__texte,
+[data-theme-slide="simpliste"] .sl--fete .sl__verdict-pts { color: rgba(255, 255, 255, 0.82); }
+[data-theme-slide="simpliste"] .sl--fete .sl__pastille { color: rgba(255, 255, 255, 0.72); }
+[data-theme-slide="simpliste"] .sl--fete .sl__anneau--accent { border-color: var(--sl-fond3); }
+[data-theme-slide="simpliste"] .sl--fete .sl__jauge-txt { color: rgba(255, 255, 255, 0.72); }
+[data-theme-slide="simpliste"] .sl--fete { --sl-act-fond: #fff; --sl-act-encre: var(--sl-fond1); }
+
+/* Accessibilité — la slide d'encouragement est un cas à part.
+
+   Ailleurs, neutraliser le mouvement laisse le contenu intact. Ici l'animation
+   EST le contenu : une pousse figée et des confettis à opacité zéro donnent une
+   carte vide, ce qui n'est pas une dégradation gracieuse mais une panne. La
+   séquence tourne donc dans tous les cas.
+
+   Ce qui est réellement retiré sous prefers-reduced-motion, c'est le seul
+   mouvement PERPÉTUEL et sans fin utile : l'oscillation de la plante (sway),
+   qui continue indéfiniment une fois la fleur ouverte. C'est celui qui gêne
+   les personnes sensibles au mouvement ; la pousse et la gerbe, elles, racontent
+   quelque chose et s'achèvent.
+
+   Le bouton « Rejouer » pose [data-anime] : une demande explicite de mouvement
+   restaure l'oscillation. */
+@media (prefers-reduced-motion: reduce) {
+  .sl:not([data-anime]) .sl__plante { animation: none; }
+  .sl:not([data-anime]) .sl__jauge > span { animation-duration: 0.01ms !important; }
+}
+
+/* Repli des navigateurs sans unités de conteneur (Safari < 16, Chrome < 105) :
+   --u n'y a aucun sens et chaque taille qui l'emploie tomberait à sa valeur
+   initiale. Le pour-cent de largeur d'écran en tient lieu — sur téléphone la
+   carte occupe presque toute la largeur, l'écart est minime. */
+@supports not (container-type: inline-size) {
+  .sl, .sl--fixe, .sl-cadre > .sl { --u: min(1vw, 5.6px); }
+}
+
+/* ── Médias des slides : cadre 16/9 et façade vidéo ────────────────────────
+   Injectés jusqu'ici par assets/js/media-embed.js (injecterStylesMedia), à la
+   fin de la page : ils restent donc en fin de feuille, au même rang dans la
+   cascade. La façade remplit son cadre 16/9 ; aucune requête ne part vers la
+   plateforme avant le clic (cf. composants/slide/media-slide.js). */
+.slide-embed { position: relative; width: 100%; padding-bottom: 56.25%; border-radius: 14px; overflow: hidden; margin: 8px 0; background: #000; }
+.slide-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.slide-media { width: 100%; border-radius: 14px; margin: 8px 0; display: block; }
+.video-facade {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  padding: 16px; background: #123d20; color: #e8f5ee; text-align: center;
+}
+.video-facade-btn { width: 68px; height: 68px; border-radius: 50%; border: 0; background: #52b788; color: #fff; font-size: 1.7rem; cursor: pointer; padding-left: 5px; }
+.video-facade-btn:hover { background: #40a072; }
+.video-facade-txt { max-width: 46ch; font-size: .8rem; line-height: 1.4; opacity: .85; margin: 0; }
+.video-facade-txt a { color: #a8e6bf; }

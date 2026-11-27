@@ -425,6 +425,7 @@ test('éditeur : flèches, glisser-déposer, suppression ; un ordre refusé revi
   depot.clientY = 5;
   lignes[0].dispatchEvent(depot);
   assert.deepEqual(ordre(), ['<b>x</b>', 'Quiz (QCM)', 'Bienvenue']);
+  assert.equal(page.querySelectorAll('.slide-row.cible-avant, .slide-row.cible-apres, .slide-row.glisse').length, 0, 'plus de liseré après le dépôt');
   await stabiliser();
   envoi = reseau.appels.filter((a) => a.adresse.includes('slide_reordonner')).at(-1);
   assert.deepEqual(jsonDe(envoi.options).ordre, [72, 71, 70]);

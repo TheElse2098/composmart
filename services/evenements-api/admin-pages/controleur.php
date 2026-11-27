@@ -79,6 +79,8 @@ if ($seg[0] === 'v2') {
     // L'éditeur lit lui-même dans l'adresse ce qu'il édite (plus de window.ROUTE).
     if (count($seg) === 3 && $seg[1] === 'parcours' && ctype_digit($seg[2])) rendre('parcours-edition-v2.html');
     if (count($seg) === 3 && ctype_digit($seg[1]) && $seg[2] === 'deroule') rendre('parcours-edition-v2.html');
+    // La console lit elle aussi l'événement dans l'adresse.
+    if (count($seg) === 2 && ctype_digit($seg[1])) rendre('suivi-v2.html');
     introuvable();
 }
 

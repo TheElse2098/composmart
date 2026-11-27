@@ -1,0 +1,125 @@
+/* ============================================================================
+   suivi.css — <cs-admin-suivi> : la console d'un atelier — carte d'accueil,
+   onglets, listes communes aux onglets, largeur, projection. Le reste vient
+   de ateliers.css ; chaque onglet a sa feuille.
+   ============================================================================ */
+
+cs-admin-suivi {
+  display: block;
+
+  --su-ombre-carte: 0 4px 24px rgba(30, 110, 62, 0.10);
+  --su-lien-fond: #f7fbf8;
+  --su-lien-texte: #4a7a5a;
+  --su-ligne-fond: #f7fbf8;
+  --su-ligne-texte: inherit;
+  --su-onglet-texte: #4a7a5a;
+  --su-onglet-actif: #1e6e3e;
+  --su-courante: #1e6e3e;
+  --su-avis-fond: #fff3e0;
+  --su-avis-texte: #8a5300;
+  --su-prevu-fond: #fff3e0;    --su-prevu-texte: #b26a00;
+  --su-ouvert-fond: #e8f5e9;   --su-ouvert-texte: #1e6e3e;
+  --su-cours-fond: #e3f2fd;    --su-cours-texte: #1565c0;
+  --su-termine-fond: #ede7f6;  --su-termine-texte: #5e35b1;
+  --su-annule-fond: #fff3e0;   --su-annule-texte: #e65100;
+  --su-sup-fond: #fdecea;      --su-sup-texte: #c0392b;
+}
+html.dark cs-admin-suivi {
+  --su-lien-fond: #1e2d22;
+  --su-lien-texte: #c8e6d4;
+  --su-ligne-fond: #1e2d22;
+  --su-ligne-texte: #c8e6d4;
+  --su-onglet-texte: #7ab88e;
+  --su-onglet-actif: #2d9959;
+  --su-avis-fond: #2e2410;
+  --su-avis-texte: #e8b931;
+  --su-prevu-fond: #2e2410;    --su-prevu-texte: #e8b931;
+  --su-cours-fond: #16283d;    --su-cours-texte: #7ab3e6;
+  --su-termine-fond: #241b3d;  --su-termine-texte: #b39ddb;
+  --su-annule-fond: #2e2410;   --su-annule-texte: #e0b95f;
+  --su-sup-fond: #3d1a1a;      --su-sup-texte: #ef9a9a;
+}
+
+/* La carte d'accueil tient lieu d'en-tête de page. */
+cs-admin-suivi .hero { display: none; }
+cs-admin-suivi .page-content { max-width: 900px; padding: 18px 16px; }
+cs-admin-suivi [hidden] { display: none; }
+cs-admin-suivi .suivi-avis {
+  margin-bottom: 14px; padding: 10px 13px; border-radius: 10px;
+  background: var(--su-avis-fond); color: var(--su-avis-texte); font-size: 0.85rem; font-weight: 700;
+}
+cs-admin-suivi .suivi-avis a { color: inherit; }
+
+/* ── Carte d'accueil : code, QR, lien ── */
+cs-admin-suivi .join-card {
+  margin-bottom: 18px; padding: 24px; border-radius: 20px;
+  background: var(--surface); box-shadow: var(--su-ombre-carte); text-align: center;
+}
+cs-admin-suivi .join-titre { margin: 0; color: var(--texte); font-family: var(--police-titre); font-size: 1.5rem; font-weight: 900; }
+cs-admin-suivi .join-meta { margin-top: 6px; color: #4a7a5a; font-size: 0.9rem; font-weight: 700; }
+cs-admin-suivi .join-code { margin: 14px 0 4px; color: #1e6e3e; font-family: var(--police-titre); font-size: 2.6rem; font-weight: 900; letter-spacing: 10px; }
+cs-admin-suivi .join-qr { display: block; margin: 8px auto; border-radius: 12px; image-rendering: pixelated; }
+cs-admin-suivi .join-qr:not([src]) { visibility: hidden; }
+cs-admin-suivi .join-link {
+  display: inline-block; padding: 7px 11px; border-radius: 10px; word-break: break-all;
+  background: var(--su-lien-fond); color: var(--su-lien-texte); font-size: 0.8rem;
+}
+cs-admin-suivi .join-statut {
+  display: inline-block; margin-top: 12px; padding: 4px 12px; border-radius: 12px;
+  font-size: 0.7rem; font-weight: 900; text-transform: uppercase;
+}
+cs-admin-suivi .join-statut + .join-statut { margin-left: 6px; }
+cs-admin-suivi .join-statut.prevu { background: var(--su-prevu-fond); color: var(--su-prevu-texte); }
+cs-admin-suivi .join-statut.ouvert { background: var(--su-ouvert-fond); color: var(--su-ouvert-texte); }
+cs-admin-suivi .join-statut.en_cours { background: var(--su-cours-fond); color: var(--su-cours-texte); }
+cs-admin-suivi .join-statut.termine { background: var(--su-termine-fond); color: var(--su-termine-texte); }
+cs-admin-suivi .join-statut.annule { background: var(--su-annule-fond); color: var(--su-annule-texte); }
+cs-admin-suivi .join-statut.supprime { background: var(--su-sup-fond); color: var(--su-sup-texte); }
+cs-admin-suivi .lecture-seule-msg { margin-top: 12px; color: #888; font-size: 0.82rem; font-weight: 700; }
+
+/* ── Onglets ── */
+cs-admin-suivi .suivi-onglets { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
+cs-admin-suivi .suivi-onglets::-webkit-scrollbar { display: none; }
+cs-admin-suivi .suivi-onglet {
+  flex-shrink: 0; padding: 10px 16px; border: 2px solid transparent; border-radius: 20px; cursor: pointer; white-space: nowrap;
+  background: var(--surface); color: var(--su-onglet-texte); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  font-family: var(--police-titre); font-size: 0.85rem; font-weight: 900;
+}
+cs-admin-suivi .suivi-onglet.actif { background: var(--su-onglet-actif); border-color: var(--su-onglet-actif); color: #fff; }
+cs-admin-suivi .suivi-onglet:hover:not(.actif) { border-color: #1e6e3e; color: #1e6e3e; }
+
+/* ── Ce que les onglets ont en commun : cartes, titres, listes ── */
+cs-admin-suivi .card { margin-bottom: 14px; }
+cs-admin-suivi .card .section-titre { gap: 10px; margin: 0 0 10px; }
+cs-admin-suivi .liste { margin: 0; padding: 0; list-style: none; }
+cs-admin-suivi .liste li {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 6px; padding: 9px 12px; border-radius: 10px;
+  background: var(--su-ligne-fond); color: var(--su-ligne-texte); font-size: 0.9rem;
+}
+cs-admin-suivi .liste li.courante { outline: 2px solid var(--su-courante); }
+cs-admin-suivi .liste .rang { min-width: 24px; color: #7aaa8a; font-family: var(--police-titre); font-weight: 900; }
+cs-admin-suivi .liste .nom { flex: 1; color: var(--texte); font-weight: 700; }
+cs-admin-suivi .liste .pts { color: #b26a00; font-weight: 800; }
+cs-admin-suivi .liste .eq { color: #7aaa8a; font-size: 0.74rem; font-weight: 700; }
+/* Repère de type de largeur fixe : les emojis n'ont pas tous la même chasse. */
+cs-admin-suivi .liste .ic { flex: 0 0 auto; width: 22px; font-size: 0.95rem; line-height: 1; text-align: center; }
+cs-admin-suivi a.btn-p { display: inline-block; text-decoration: none; }
+
+/* Grande largeur : la page s'élargit pour l'onglet Animation seulement. */
+@media (min-width: 1100px) {
+  cs-admin-suivi.onglet-animation .page-content { max-width: 1240px; }
+}
+
+/* ── Projection, pour l'écran de la salle ──
+   La page couvre l'écran, sur la scène verte du thème (.sl-scene,
+   styles/slides.css) : la carte d'accueil, l'avancement et la slide, rien de
+   ce qui ne sert qu'à l'animateur. */
+cs-admin-suivi.projection { position: fixed; inset: 0; z-index: 1000; overflow-y: auto; }
+cs-admin-suivi.projection .liens,
+cs-admin-suivi.projection .suivi-avis,
+cs-admin-suivi.projection .msg-page,
+cs-admin-suivi.projection .suivi-onglets { display: none; }
+cs-admin-suivi.projection .page-content { max-width: none; padding: 0; }
+cs-admin-suivi.projection .join-card { margin: 2vh auto 0; max-width: 900px; }
+cs-admin-suivi.projection .join-code { font-size: clamp(3rem, 12vw, 6rem); }
+cs-admin-suivi.projection .card { margin: 0; padding: 0; background: none; box-shadow: none; }

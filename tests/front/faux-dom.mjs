@@ -134,8 +134,9 @@ export class FauxElement {
     const ecrire = (classes) => { this.className = classes.join(' '); };
     return {
       contains: (/** @type {string} */ c) => lire().includes(c),
-      add: (/** @type {string} */ c) => { if (!lire().includes(c)) ecrire([...lire(), c]); },
-      remove: (/** @type {string} */ c) => { ecrire(lire().filter((x) => x !== c)); },
+      // Plusieurs classes d'un coup, comme dans un navigateur : add('a', 'b').
+      add: (/** @type {string[]} */ ...cs) => { ecrire([...new Set([...lire(), ...cs])]); },
+      remove: (/** @type {string[]} */ ...cs) => { ecrire(lire().filter((x) => !cs.includes(x))); },
       toggle: (/** @type {string} */ c, /** @type {boolean} */ forcer) => {
         const mettre = forcer === undefined ? !lire().includes(c) : forcer;
         ecrire(mettre ? [...new Set([...lire(), c])] : lire().filter((x) => x !== c));
