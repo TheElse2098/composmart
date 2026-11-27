@@ -541,6 +541,22 @@ enregistrée sans changement garde exactement son contenu, contre une copie
 gelée de l'ancien éditeur (`tests/front/reference/`) : ajouter un cas à `CAS`
 pour chaque nouveau type.
 
+La charte des cartes de slide est `ui/styles/slides.css`, partagée par la
+console d'animation et l'écran des participants ; le thème se choisit par
+l'attribut `data-theme-slide` d'un ancêtre de la carte. Le mode sombre n'y
+passe que par des variables ; `tests/front/slides-css.test.mjs` refait la
+cascade pour vérifier qu'une règle réécrite rend toujours pareil dans les
+trois thèmes, en clair et en sombre (à compléter si on réécrit d'autres
+règles de thème).
+
+La console d'un atelier (`ui/admin/ateliers/suivi.js`) sonde le serveur
+toutes les 3 s : un tour ne commence pas tant que le précédent n'est pas
+fini, et chaque zone passe par `rendreSiChange()` — la carte de la slide
+garde son animation, une liste ouverte ne se referme pas. La page tient
+l'en-tête et le sondage ; chaque onglet est un composant
+(`suivi-animation.js`, `suivi-participants.js`, `suivi-classement.js`) qui se
+met à jour par `rafraichir()`.
+
 Exemple de page découpée en parties : `ui/pages/compte/` — la page
 (`compte.js`) n'affiche que ce qui est simple ; chaque partie qui a son propre
 comportement (`compte-tickets.js`, `compte-reglages.js`, `compte-sortie.js`)

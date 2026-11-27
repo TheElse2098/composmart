@@ -107,7 +107,7 @@ cs-admin-suivi a.btn-p { display: inline-block; text-decoration: none; }
 
 /* Grande largeur : la page s'élargit pour l'onglet Animation seulement. */
 @media (min-width: 1100px) {
-  cs-admin-suivi.onglet-animation .page-content { max-width: 1240px; }
+  cs-admin-suivi.large .page-content { max-width: 1240px; }
 }
 
 /* ── Projection, pour l'écran de la salle ──

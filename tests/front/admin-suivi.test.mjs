@@ -300,7 +300,7 @@ test('participants et classement : chargés à l’ouverture de l’onglet, coul
   await stabiliser();
   assert.equal(page.querySelector('.onglet-participants').hidden, false);
   assert.equal(page.querySelector('.onglet-animation').hidden, true);
-  assert.equal(page.classList.contains('onglet-animation'), false, 'la page reprend sa largeur');
+  assert.equal(page.classList.contains('large'), false, 'la page reprend sa largeur');
   const part = page.querySelector('cs-admin-suivi-participants');
   const equipes = part.querySelectorAll('.equipes li');
   assert.equal(equipes[0].querySelector('.rang').getAttribute('style'), 'color: #e53935');

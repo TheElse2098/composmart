@@ -62,8 +62,8 @@ export class AdminSuiviAnimation extends Composant {
    * @param {import('./suivi.js').EvenementSuivi} evt
    */
   poserEvenement(evt) {
+    this.#evenement = evt;
     this.apresMontage(() => {
-      this.#evenement = evt;
       const avecSlides = evt.nb_slides > 0;
       this.trouver('.anim-sans-parcours').hidden = avecSlides;
       this.trouver('.anim-console').hidden = !avecSlides;
@@ -76,6 +76,14 @@ export class AdminSuiviAnimation extends Composant {
 
   /** Met l'onglet à jour. Une erreur remonte à la page, qui la signale. */
   async rafraichir() {
+    // Le premier tour peut arriver avant la feuille de style de l'onglet :
+    // on l'attend, plutôt que de laisser l'onglet vide jusqu'au tour suivant.
+    // Pas plus de 10 s : un onglet qui ne se monte pas ne doit pas figer la
+    // console entière (l'erreur remonte alors à la page, qui la signale).
+    await new Promise((pret) => {
+      const delai = setTimeout(() => pret(undefined), 10000);
+      this.apresMontage(() => { clearTimeout(delai); pret(undefined); });
+    });
     const evt = this.#evenement;
     if (!evt || evt.nb_slides <= 0) return;
     if (!this.#registre) {

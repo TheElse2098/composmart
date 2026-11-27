@@ -80,7 +80,7 @@ export class AdminSuivi extends PageAteliers {
       titre: 'Suivi de l’atelier',
       corps: this.gabarit(id),
     });
-    this.classList.add('onglet-animation');
+    this.classList.add('large');
     if (!id) {
       this.afficherErreur('Adresse inconnue.', this.trouver('.suivi-contenu'));
       return;
@@ -179,7 +179,7 @@ export class AdminSuivi extends PageAteliers {
     }
     for (const o of ONGLETS) this.trouver('.onglet-' + o.cle).hidden = o.cle !== onglet;
     // La page s'élargit pour l'animation seulement (aperçu et réponses côte à côte).
-    this.classList.toggle('onglet-animation', onglet === 'animation');
+    this.classList.toggle('large', onglet === 'animation');
     this.#tour();
   }
 
