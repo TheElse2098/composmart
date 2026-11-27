@@ -1,0 +1,53 @@
+/* ============================================================================
+   choix-tags.css — <cs-choix-tags> : les pastilles, le (+), « Tous / Aucun »,
+   le champ de création.
+   ============================================================================ */
+
+cs-choix-tags {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+
+  --tg-fond: #fff;
+  --tg-bord: #d4e6d8;
+  --tg-texte: #4a7a5a;
+  --tg-on: #1e6e3e;
+  --tg-plus-bord: #b7d3bd;
+  --tg-lien: #1e6e3e;
+  --tg-champ-fond: #fff;
+  --tg-champ-bord: #1e6e3e;
+  --tg-champ-texte: #1a3a25;
+}
+html.dark cs-choix-tags {
+  --tg-fond: #16211a;
+  --tg-bord: #2d4030;
+  --tg-texte: #7ab88e;
+  --tg-on: #2d9959;
+  --tg-plus-bord: #2d4030;
+  --tg-lien: #7fc99a;
+  --tg-champ-fond: #1e2d22;
+  --tg-champ-bord: #2d9959;
+  --tg-champ-texte: #e8f5ee;
+}
+
+cs-choix-tags .tgp-chip {
+  padding: 5px 13px; border: 1.5px solid var(--tg-bord); border-radius: 20px; cursor: pointer;
+  background: var(--tg-fond); color: var(--tg-texte); font-family: inherit; font-size: 0.79rem; font-weight: 700; line-height: 1.3;
+}
+cs-choix-tags .tgp-chip:hover { border-color: var(--accent); color: var(--accent); }
+cs-choix-tags .tgp-chip.on { background: var(--tg-on); border-color: var(--tg-on); color: #fff; }
+cs-choix-tags .tgp-chip .n { opacity: 0.6; font-weight: 800; }
+cs-choix-tags .tgp-plus {
+  padding: 5px 13px; border: 1.5px dashed var(--tg-plus-bord); border-radius: 20px; cursor: pointer;
+  background: transparent; color: var(--tg-lien); font-family: inherit; font-size: 0.82rem; font-weight: 900; line-height: 1.3;
+}
+cs-choix-tags .tgp-plus:hover { border-style: solid; }
+cs-choix-tags .tgp-tout {
+  padding: 4px 6px; border: none; background: none; cursor: pointer;
+  color: var(--tg-lien); font-family: inherit; font-size: 0.76rem; font-weight: 800; text-decoration: underline;
+}
+cs-choix-tags .tgp-sep { align-self: stretch; width: 1px; margin: 2px; background: var(--tg-bord); }
+cs-choix-tags .tgp-neuf { display: flex; align-items: center; gap: 6px; width: 100%; margin-top: 2px; }
+cs-choix-tags .tgp-neuf input {
+  flex: 1; min-width: 0; padding: 7px 11px; border: 1.5px solid var(--tg-champ-bord); border-radius: 10px; outline: none;
+  background: var(--tg-champ-fond); color: var(--tg-champ-texte); font-family: inherit; font-size: 0.85rem;
+}
+cs-choix-tags .tgp-vide { color: #888; font-size: 0.78rem; }

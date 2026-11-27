@@ -1,0 +1,45 @@
+/* ============================================================================
+   anecdotes.css — <cs-admin-anecdotes> : les deux lignes de filtres et les
+   anecdotes. Le reste vient de ateliers.css.
+   ============================================================================ */
+
+cs-admin-anecdotes {
+  display: block;
+
+  --anec-ombre: 0 1px 6px rgba(0, 0, 0, 0.05);
+
+  --anec-texte: #2c4a34;
+  --anec-theme-fond: #eef4ec;
+  --anec-theme-texte: #4a7a5a;
+  --anec-ligne-titre: #7aaa8a;
+}
+html.dark cs-admin-anecdotes {
+  --anec-texte: #c8e6d4;
+  --anec-theme-fond: #1e2d22;
+  --anec-theme-texte: #7ab88e;
+  --anec-ligne-titre: #5d8a6d;
+}
+
+cs-admin-anecdotes .anec-boutons { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Deux axes de filtre l'un sous l'autre : sans le libellé à gauche, deux
+   rangées de pastilles identiques ne diraient pas laquelle filtre quoi. */
+cs-admin-anecdotes .anec-ligne { display: flex; align-items: baseline; gap: 10px; }
+cs-admin-anecdotes .anec-ligne[hidden] { display: none; }
+cs-admin-anecdotes .anec-ligne-titre {
+  flex: 0 0 auto; padding-top: 7px; color: var(--anec-ligne-titre);
+  font-size: 0.7rem; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase;
+}
+
+cs-admin-anecdotes .anec {
+  display: flex; align-items: flex-start; gap: 12px; margin-bottom: 9px; padding: 13px 15px;
+  border-radius: 14px; background: var(--surface); box-shadow: var(--anec-ombre);
+}
+cs-admin-anecdotes .anec-emoji { font-size: 1.5rem; line-height: 1.2; }
+cs-admin-anecdotes .anec-main { flex: 1; min-width: 0; }
+cs-admin-anecdotes .anec-texte { color: var(--anec-texte); font-size: 0.92rem; line-height: 1.5; }
+cs-admin-anecdotes .anec-theme {
+  display: inline-block; margin-top: 6px; margin-right: 4px; padding: 2px 9px; border-radius: 10px;
+  background: var(--anec-theme-fond); color: var(--anec-theme-texte); font-size: 0.68rem; font-weight: 800;
+}
+cs-admin-anecdotes .anec-btns { display: flex; flex-shrink: 0; gap: 5px; }

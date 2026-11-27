@@ -1,0 +1,43 @@
+/* ============================================================================
+   images.css — <cs-admin-images> : l'aperçu du fichier choisi et la grille
+   de vignettes. Le reste vient de ateliers.css.
+   ============================================================================ */
+
+cs-admin-images {
+  display: block;
+
+  --img-ombre: 0 1px 6px rgba(0, 0, 0, 0.05);
+
+  --img-damier-fond: #f7fbf8;
+  --img-damier: #e6efe8;
+}
+html.dark cs-admin-images {
+  --img-damier-fond: #1e2d22;
+  --img-damier: #23342a;
+}
+
+cs-admin-images .img-apercu { margin-top: 10px; }
+cs-admin-images .img-apercu[hidden] { display: none; }
+cs-admin-images .img-apercu .img-vue { max-width: 220px; }
+
+/* Grille de vignettes. Le damier en fond révèle la transparence d'un PNG
+   détouré, qu'un fond uni ferait passer pour un aplat. */
+cs-admin-images .img-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+cs-admin-images .img-grille > .empty-msg,
+cs-admin-images .img-grille > .cs-etat { grid-column: 1 / -1; }
+cs-admin-images .img-carte {
+  display: flex; flex-direction: column; gap: 8px; padding: 10px;
+  border-radius: 14px; background: var(--surface); box-shadow: var(--img-ombre);
+}
+cs-admin-images .img-vue {
+  display: block; width: 100%; aspect-ratio: 1; border-radius: 10px; object-fit: contain;
+  background-color: var(--img-damier-fond);
+  background-image: linear-gradient(45deg, var(--img-damier) 25%, transparent 25%, transparent 75%, var(--img-damier) 75%),
+                    linear-gradient(45deg, var(--img-damier) 25%, transparent 25%, transparent 75%, var(--img-damier) 75%);
+  background-position: 0 0, 8px 8px; background-size: 16px 16px;
+}
+cs-admin-images .img-nom { overflow: hidden; color: var(--texte); font-size: 0.78rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+cs-admin-images .img-meta { color: #888; font-size: 0.7rem; }
+cs-admin-images .img-carte .pastille { margin: 0 4px 4px 0; }
+cs-admin-images .img-btns { display: flex; gap: 5px; }
+cs-admin-images .img-btns button { flex: 1; }

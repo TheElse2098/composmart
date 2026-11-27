@@ -517,7 +517,19 @@ de passe) et ne gardent que leur formulaire et leurs envois. Les quatre
 mini-jeux (`ui/pages/jeu/`) héritent de `Jeu` (`jeu.js` : chargement du jeu,
 en-tête, écran de fin, score enregistré, top 5, attentes annulées si la page
 est quittée) et n'écrivent que leur mécanique : `gabaritZone()`,
-`preparer()`, `nouvellePartie()`, puis `this.terminer(score)`.
+`preparer()`, `nouvellePartie()`, puis `this.terminer(score)`. Les pages
+d'administration des ateliers (`ui/admin/ateliers/`) héritent de
+`PageAteliers` (`page-ateliers.js` : lien de retour, en-tête, message de
+page qui s'efface seul s'il confirme, bouton occupé pendant un envoi, et la
+feuille commune `ateliers.css`, sous la classe `.ateliers` posée sur la
+balise).
+
+Une slide d'atelier se dessine par `rendreSlide()` de
+`composants/slide/rendu-slide.js` (une seule source pour la console, la page
+participant et l'aperçu de l'éditeur) ; `tests/front/slide.test.mjs` la
+compare à une copie gelée de l'ancien `slide-render.js`. Les tags se
+choisissent par pastilles avec `<cs-choix-tags>` (`composants/choix-tags/`),
+normalisés comme côté serveur.
 
 Exemple de page découpée en parties : `ui/pages/compte/` — la page
 (`compte.js`) n'affiche que ce qui est simple ; chaque partie qui a son propre

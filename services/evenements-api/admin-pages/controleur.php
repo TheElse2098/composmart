@@ -68,6 +68,16 @@ function rendre($vue, $vars = []) {
 // /evenements-admin
 if (count($seg) === 0) rendre('liste.html');
 
+// Provisoire (refonte du front, phase 10) : les pages migrées, servies à côté
+// des anciennes jusqu'à la bascule. « v2 » n'est jamais un identifiant
+// d'événement (ctype_digit plus bas), aucune adresse existante n'est masquée.
+if ($seg[0] === 'v2') {
+    if (count($seg) === 1) rendre('liste-v2.html');
+    if (count($seg) === 2 && $seg[1] === 'anecdotes') rendre('anecdotes-v2.html');
+    if (count($seg) === 2 && $seg[1] === 'images') rendre('images-v2.html');
+    introuvable();
+}
+
 // /evenements-admin/parcours — bibliothèque, et /parcours/<id> — éditeur.
 // Une seule vue pour les deux : window.ROUTE.parcours_id distingue le mode,
 // comme cours.html côté courses-api (mode 'nouveau' / 'edition').

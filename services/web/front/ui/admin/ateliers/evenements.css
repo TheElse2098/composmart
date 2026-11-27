@@ -1,0 +1,100 @@
+/* ============================================================================
+   evenements.css — <cs-admin-evenements> : liens vers les bibliothèques,
+   onglets de statut, lignes d'événement. Le reste vient de ateliers.css.
+   ============================================================================ */
+
+cs-admin-evenements {
+  display: block;
+
+  --evt-ombre-ligne: 0 1px 6px rgba(0, 0, 0, 0.05);
+  --evt-onglet-texte: #4a7a5a;
+  --evt-actif: #1e6e3e;
+  --evt-suivi-fond: #eef4ec;     --evt-suivi-texte: #1e6e3e;
+  --evt-sup-fond: #fdecea;       --evt-sup-texte: #c0392b;
+
+  --evt-lien: #1e6e3e;
+  --evt-lien-survol: #17572f;
+  --evt-onglet-ombre: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --evt-onglet-survol: #1e6e3e;
+  --evt-rouge: #c0392b;
+  --evt-rouge-pale: #c0392b;
+  --evt-prevu-fond: #fff3e0;     --evt-prevu-texte: #b26a00;
+  --evt-ouvert-fond: #e8f5e9;    --evt-ouvert-texte: #1e6e3e;
+  --evt-cours-fond: #e3f2fd;     --evt-cours-texte: #1565c0;
+  --evt-termine-fond: #ede7f6;   --evt-termine-texte: #5e35b1;
+  --evt-annule-fond: #fff3e0;    --evt-annule-texte: #e65100;
+  --evt-vert-fond: #e8f5e9;      --evt-vert-texte: #1e6e3e;
+  --evt-gris-fond: #eceff1;      --evt-gris-texte: #607d8b;
+}
+html.dark cs-admin-evenements {
+  --evt-onglet-texte: #7ab88e;
+  --evt-actif: #2d9959;
+  --evt-suivi-fond: #16291c;     --evt-suivi-texte: #7fc99a;
+  --evt-sup-fond: #3d1a1a;       --evt-sup-texte: #ef9a9a;
+  --evt-lien: #2d9959;
+  --evt-lien-survol: #268050;
+  --evt-onglet-survol: #52b788;
+  --evt-rouge-pale: #ef9a9a;
+  --evt-prevu-fond: #2e2410;     --evt-prevu-texte: #e8b931;
+  --evt-ouvert-fond: #e8f5e9;    --evt-ouvert-texte: #1e6e3e;
+  --evt-cours-fond: #16283d;     --evt-cours-texte: #7ab3e6;
+  --evt-termine-fond: #241b3d;   --evt-termine-texte: #b39ddb;
+  --evt-annule-fond: #2e2410;    --evt-annule-texte: #e0b95f;
+  --evt-vert-fond: #16291c;      --evt-vert-texte: #7fc99a;
+  --evt-gris-fond: #1e2d22;      --evt-gris-texte: #9fb0a5;
+}
+
+/* ── Liens vers les bibliothèques ── */
+cs-admin-evenements .evt-liens { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 12px; }
+cs-admin-evenements .hero-lien {
+  display: inline-block; padding: 9px 20px; border-radius: 50px; background: var(--evt-lien); color: #fff;
+  font-family: var(--police-titre); font-size: 0.88rem; font-weight: 800; text-decoration: none;
+}
+cs-admin-evenements .hero-lien:hover { background: var(--evt-lien-survol); }
+
+/* ── Onglets de statut (même allure que ceux du panneau d'administration) ── */
+cs-admin-evenements .evt-onglets {
+  display: flex; gap: 8px; margin-bottom: 18px; padding: 0 0 4px;
+  overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+cs-admin-evenements .evt-onglets::-webkit-scrollbar { display: none; }
+cs-admin-evenements .evt-onglet {
+  display: flex; flex-shrink: 0; align-items: center; gap: 6px; padding: 10px 16px; border: 2px solid transparent; border-radius: 20px; cursor: pointer;
+  background: var(--surface); color: var(--evt-onglet-texte); box-shadow: var(--evt-onglet-ombre);
+  font-family: var(--police-titre); font-size: 0.85rem; font-weight: 900; white-space: nowrap; transition: all 0.2s;
+}
+cs-admin-evenements .evt-onglet.actif { background: var(--evt-actif); border-color: var(--evt-actif); color: #fff; }
+cs-admin-evenements .evt-onglet:hover:not(.actif) { border-color: var(--evt-onglet-survol); color: var(--evt-onglet-survol); }
+cs-admin-evenements .evt-onglet.supprimes { margin-left: auto; }
+cs-admin-evenements .evt-onglet.supprimes:not(.actif) { color: var(--evt-rouge-pale); }
+cs-admin-evenements .evt-onglet.supprimes.actif { background: var(--evt-rouge); border-color: var(--evt-rouge); }
+
+/* ── Un événement ── */
+cs-admin-evenements .evt-item {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 10px; padding: 14px 16px;
+  border-radius: 14px; background: var(--surface); box-shadow: var(--evt-ombre-ligne);
+}
+cs-admin-evenements .evt-main { flex: 1; min-width: 200px; }
+cs-admin-evenements .evt-titre { color: var(--texte); font-size: 0.95rem; font-weight: 800; }
+cs-admin-evenements .evt-meta { margin-top: 3px; color: #888; font-size: 0.78rem; }
+cs-admin-evenements .evt-code { color: var(--evt-suivi-texte); font-family: var(--police-titre); font-weight: 900; letter-spacing: 2px; }
+
+cs-admin-evenements .evt-statut { padding: 3px 10px; border-radius: 10px; font-size: 0.66rem; font-weight: 900; text-transform: uppercase; }
+cs-admin-evenements .evt-statut.prevu { background: var(--evt-prevu-fond); color: var(--evt-prevu-texte); }
+cs-admin-evenements .evt-statut.ouvert { background: var(--evt-ouvert-fond); color: var(--evt-ouvert-texte); }
+cs-admin-evenements .evt-statut.en_cours { background: var(--evt-cours-fond); color: var(--evt-cours-texte); }
+cs-admin-evenements .evt-statut.termine { background: var(--evt-termine-fond); color: var(--evt-termine-texte); }
+cs-admin-evenements .evt-statut.annule { background: var(--evt-annule-fond); color: var(--evt-annule-texte); }
+cs-admin-evenements .evt-statut.supprime { background: var(--evt-sup-fond); color: var(--evt-sup-texte); }
+
+cs-admin-evenements .evt-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+cs-admin-evenements .evt-actions a,
+cs-admin-evenements .evt-actions button {
+  padding: 6px 12px; border: none; border-radius: 12px; cursor: pointer;
+  font-family: inherit; font-size: 0.75rem; font-weight: 800; text-decoration: none;
+}
+cs-admin-evenements .evt-actions .suivi { background: var(--evt-suivi-fond); color: var(--evt-suivi-texte); }
+cs-admin-evenements .evt-actions .vert { background: var(--evt-vert-fond); color: var(--evt-vert-texte); }
+cs-admin-evenements .evt-actions .gris { background: var(--evt-gris-fond); color: var(--evt-gris-texte); }
+cs-admin-evenements .evt-actions .orange { background: var(--evt-annule-fond); color: var(--evt-annule-texte); }
+cs-admin-evenements .evt-actions .rouge { background: var(--evt-sup-fond); color: var(--evt-sup-texte); }

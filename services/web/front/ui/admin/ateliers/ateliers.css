@@ -1,0 +1,139 @@
+/* ============================================================================
+   ateliers.css — ce que les pages d'administration des ateliers ont en
+   commun : en-tête, cartes, champs, boutons, filtres, messages. Chaque page
+   pose la classe `ateliers` sur sa balise et cite cette feuille avant la
+   sienne (`static styles`) ; toutes les règles sont sous `.ateliers`.
+   ============================================================================ */
+
+.ateliers {
+  display: block;
+  width: 100%;
+
+  --at-ombre: 0 2px 10px rgba(30, 110, 62, 0.08);
+  --at-label: #2c4a34;
+  --at-champ-fond: #f7fbf8;
+  --at-champ-bord: #c8dfc8;
+  --at-champ-focus: #fff;
+  --at-second-fond: #eceff1;
+  --at-second-texte: #607d8b;
+  --at-mini-fond: #eef4ec;
+  --at-mini-texte: #1e6e3e;
+  --at-sup-fond: #fdecea;
+  --at-sup-texte: #c0392b;
+  --at-filtre-bord: #d4e6d8;
+  --at-filtre-texte: #4a7a5a;
+  --at-filtre-actif: #1e6e3e;
+  --at-pastille-fond: #fff3e0;
+  --at-pastille-texte: #b26a00;
+  --at-ok-fond: #e8f5e9;
+  --at-ok-texte: #1e6e3e;
+}
+html.dark .ateliers {
+  --at-label: #7ab88e;
+  --at-champ-fond: #1e2d22;
+  --at-champ-bord: #2d4030;
+  --at-champ-focus: #1e2d22;
+  --at-second-fond: #1e2d22;
+  --at-second-texte: #9fb0a5;
+  --at-mini-fond: #16291c;
+  --at-mini-texte: #7fc99a;
+  --at-sup-fond: #3d1a1a;
+  --at-sup-texte: #ef9a9a;
+  --at-filtre-bord: #2d4030;
+  --at-filtre-texte: #7ab88e;
+  --at-filtre-actif: #2d9959;
+  --at-pastille-fond: #2e2410;
+  --at-pastille-texte: #e8b931;
+  --at-ok-fond: #16291c;
+  --at-ok-texte: #7fc99a;
+}
+
+/* ── En-tête ── */
+.ateliers .liens { width: 100%; max-width: 820px; margin: 0 auto; padding: 14px 16px 0; }
+.ateliers .liens a { color: var(--accent); font-size: 0.84rem; font-weight: 800; text-decoration: none; }
+.ateliers .liens a:hover { text-decoration: underline; }
+.ateliers .hero { padding: 24px 20px 8px; text-align: center; }
+/* Rouge dans les deux thèmes : elle signale l'administration. */
+.ateliers .hero-badge {
+  display: inline-block; margin-bottom: 10px; padding: 5px 14px; border-radius: 20px;
+  background: var(--rouge); color: #fff; font-size: 0.78rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase;
+}
+.ateliers h1 { color: var(--texte); font-family: var(--police-titre); font-size: clamp(1.4rem, 5vw, 2.1rem); font-weight: 900; }
+.ateliers .hero-sub { margin-top: 5px; color: var(--texte-doux); font-size: 0.9rem; font-weight: 600; }
+
+.ateliers .page-content { width: 100%; max-width: 820px; margin: 0 auto; padding: 16px; }
+.ateliers .section-titre {
+  display: flex; justify-content: space-between; align-items: center; margin: 14px 4px 10px;
+  color: var(--texte); font-family: var(--police-titre); font-size: 1.05rem; font-weight: 900;
+}
+.ateliers .compteur { color: var(--texte-doux); font-size: 0.82rem; font-weight: 700; }
+.ateliers .card { margin-bottom: 16px; padding: 18px; border-radius: 16px; background: var(--surface); box-shadow: var(--at-ombre); }
+
+/* ── Champs ── */
+.ateliers .field { margin-bottom: 12px; }
+.ateliers .field > label,
+.ateliers .field .field-titre {
+  display: block; margin-bottom: 5px; color: var(--at-label);
+  font-size: 0.74rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+}
+/* L'habillage vaut pour tous les champs, celui de <cs-choix-emoji> compris ;
+   la pleine largeur, seulement pour ceux posés directement dans le bloc —
+   le champ emoji garde la sienne. */
+.ateliers .field input[type="text"],
+.ateliers .field input[type="datetime-local"],
+.ateliers .field textarea,
+.ateliers .field select {
+  padding: 9px 12px; border: 1.5px solid var(--at-champ-bord); border-radius: 10px; outline: none;
+  background: var(--at-champ-fond); color: var(--texte); font-family: inherit; font-size: 0.9rem;
+}
+.ateliers .field > input[type="text"],
+.ateliers .field > input[type="datetime-local"],
+.ateliers .field > textarea,
+.ateliers .field > select { display: block; width: 100%; }
+.ateliers .field textarea { min-height: 80px; resize: vertical; }
+.ateliers .field input:focus,
+.ateliers .field textarea:focus,
+.ateliers .field select:focus { border-color: var(--accent); background: var(--at-champ-focus); }
+.ateliers .field input[type="file"] { color: var(--at-filtre-texte); font-family: inherit; font-size: 0.85rem; }
+.ateliers .duo { display: flex; gap: 10px; }
+.ateliers .duo > * { flex: 1; }
+.ateliers .hint { margin-top: 6px; color: #888; font-size: 0.78rem; }
+
+/* ── Boutons ── */
+.ateliers .btn-p,
+.ateliers .btn-s {
+  padding: 10px 20px; border: none; border-radius: 50px; cursor: pointer;
+  font-family: var(--police-titre); font-size: 0.86rem; font-weight: 800;
+}
+.ateliers .btn-p { background: #1e6e3e; color: #fff; }
+.ateliers .btn-s { background: var(--at-second-fond); color: var(--at-second-texte); }
+.ateliers .btn-p:disabled,
+.ateliers .btn-s:disabled { opacity: 0.5; cursor: default; }
+.ateliers .btn-mini {
+  padding: 5px 11px; border: none; border-radius: 10px; cursor: pointer;
+  background: var(--at-mini-fond); color: var(--at-mini-texte); font-family: inherit; font-size: 0.74rem; font-weight: 800;
+}
+.ateliers .btn-mini.sup { background: var(--at-sup-fond); color: var(--at-sup-texte); }
+
+/* ── Filtres en pastilles ── */
+.ateliers .filtres { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+.ateliers .filtre {
+  padding: 6px 14px; border: 1.5px solid var(--at-filtre-bord); border-radius: 20px; cursor: pointer;
+  background: var(--surface); color: var(--at-filtre-texte); font-family: inherit; font-size: 0.79rem; font-weight: 700;
+}
+.ateliers .filtre.actif { background: var(--at-filtre-actif); border-color: var(--at-filtre-actif); color: #fff; }
+.ateliers .filtre .n { opacity: 0.6; }
+.ateliers .pastille {
+  display: inline-block; margin: 6px 4px 0 0; padding: 2px 9px; border: none; border-radius: 10px;
+  background: var(--at-pastille-fond); color: var(--at-pastille-texte); font-family: inherit; font-size: 0.68rem; font-weight: 800;
+}
+.ateliers button.pastille { cursor: pointer; }
+.ateliers .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.ateliers .chips:empty { display: none; }
+
+/* ── États et messages ── */
+.ateliers .empty-msg { padding: 16px; border-radius: 12px; background: var(--surface); color: #999; font-size: 0.85rem; text-align: center; }
+.ateliers .msg { margin-bottom: 12px; padding: 10px 13px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; }
+.ateliers .msg[hidden] { display: none; }
+.ateliers .msg.error { background: var(--alerte-fond); color: var(--alerte-texte); }
+.ateliers .msg.ok { background: var(--at-ok-fond); color: var(--at-ok-texte); }
