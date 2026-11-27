@@ -56,11 +56,13 @@ test('outils : poids lisible, mots-clés comme le serveur les enregistre, date a
   assert.equal(TAILLE_MAX_IMAGE, 8 * 1024 * 1024);
 });
 
-test('adresses : pages migrées sous /evenements-admin/v2, parcours et suivi encore en service', () => {
+test('adresses : pages migrées sous /evenements-admin/v2, console de suivi encore en service', () => {
   assert.equal(ADRESSES.liste, '/evenements-admin/v2');
   assert.equal(ADRESSES.anecdotes, '/evenements-admin/v2/anecdotes');
   assert.equal(ADRESSES.images, '/evenements-admin/v2/images');
-  assert.equal(ADRESSES.parcours, '/evenements-admin/parcours');
+  assert.equal(ADRESSES.parcours, '/evenements-admin/v2/parcours');
+  assert.equal(ADRESSES.parcoursEdition(3), '/evenements-admin/v2/parcours/3');
+  assert.equal(ADRESSES.deroule(12), '/evenements-admin/v2/12/deroule');
   assert.equal(ADRESSES.suivi(12), '/evenements-admin/12');
 });
 
@@ -94,7 +96,7 @@ test('événements : liste, actions proposées selon le statut, texte échappé'
   for (const liste of Object.values(ACTIONS_PAR_STATUT)) for (const a of liste) assert.ok(a.action in CONFIRMATIONS);
   // Les liens vers les bibliothèques.
   assert.deepEqual(page.querySelectorAll('.hero-lien').map((/** @type {any} */ a) => a.getAttribute('href')),
-    ['/evenements-admin/parcours', '/evenements-admin/v2/anecdotes', '/evenements-admin/v2/images']);
+    ['/evenements-admin/v2/parcours', '/evenements-admin/v2/anecdotes', '/evenements-admin/v2/images']);
 });
 
 test('événements : les onglets filtrent, celui des supprimés ne propose que la restauration', async () => {

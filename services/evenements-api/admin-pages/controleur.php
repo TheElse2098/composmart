@@ -75,6 +75,10 @@ if ($seg[0] === 'v2') {
     if (count($seg) === 1) rendre('liste-v2.html');
     if (count($seg) === 2 && $seg[1] === 'anecdotes') rendre('anecdotes-v2.html');
     if (count($seg) === 2 && $seg[1] === 'images') rendre('images-v2.html');
+    if (count($seg) === 2 && $seg[1] === 'parcours') rendre('parcours-v2.html');
+    // L'éditeur lit lui-même dans l'adresse ce qu'il édite (plus de window.ROUTE).
+    if (count($seg) === 3 && $seg[1] === 'parcours' && ctype_digit($seg[2])) rendre('parcours-edition-v2.html');
+    if (count($seg) === 3 && ctype_digit($seg[1]) && $seg[2] === 'deroule') rendre('parcours-edition-v2.html');
     introuvable();
 }
 

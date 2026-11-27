@@ -1,0 +1,38 @@
+/* ============================================================================
+   parcours.css — <cs-admin-parcours> : les parcours de la bibliothèque et
+   leurs boutons. Le reste vient de ateliers.css.
+   ============================================================================ */
+
+cs-admin-parcours {
+  display: block;
+
+  --parcours-ombre: 0 1px 6px rgba(0, 0, 0, 0.05);
+  --parcours-ouvrir: #1e6e3e;
+  --parcours-second-fond: #eceff1;
+  --parcours-second-texte: #607d8b;
+  --parcours-sup-fond: #fdecea;
+  --parcours-sup-texte: #c0392b;
+}
+html.dark cs-admin-parcours {
+  --parcours-second-fond: #1e2d22;
+  --parcours-second-texte: #9fb0a5;
+  --parcours-sup-fond: #3d1a1a;
+  --parcours-sup-texte: #ef9a9a;
+}
+
+cs-admin-parcours .p-item {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 10px; padding: 14px 16px;
+  border-radius: 14px; background: var(--surface); box-shadow: var(--parcours-ombre);
+}
+cs-admin-parcours .p-main { flex: 1; min-width: 180px; }
+cs-admin-parcours .p-nom { color: var(--texte); font-size: 0.95rem; font-weight: 800; }
+cs-admin-parcours .p-meta { margin-top: 3px; color: #888; font-size: 0.76rem; }
+cs-admin-parcours .p-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+cs-admin-parcours .p-bouton {
+  display: inline-block; padding: 5px 11px; border: none; border-radius: 10px; cursor: pointer;
+  font-family: inherit; font-size: 0.74rem; font-weight: 800; text-decoration: none;
+}
+cs-admin-parcours .p-bouton:disabled { opacity: 0.5; cursor: default; }
+cs-admin-parcours .p-bouton.ouvrir { background: var(--parcours-ouvrir); color: #fff; }
+cs-admin-parcours .p-bouton.dupliquer { background: var(--parcours-second-fond); color: var(--parcours-second-texte); }
+cs-admin-parcours .p-bouton.supprimer { background: var(--parcours-sup-fond); color: var(--parcours-sup-texte); }

@@ -1,0 +1,78 @@
+/* ============================================================================
+   parcours-edition.css — <cs-admin-parcours-edition> : les lignes de slides,
+   leur poignée de glissement et leurs boutons. Le reste vient de
+   ateliers.css ; la fenêtre d'une slide a sa propre feuille.
+   ============================================================================ */
+
+cs-admin-parcours-edition {
+  display: block;
+
+  --pe-ombre: 0 1px 5px rgba(0, 0, 0, 0.05);
+  --pe-rang: #7aaa8a;
+  --pe-poignee: #b9d0c0;
+  --pe-depot: #1e6e3e;
+  --pe-icone-fond: #eef4ec;
+  --pe-pts-fond: #fff9c4;
+  --pe-pts-texte: #b26a00;
+  --pe-bouton-fond: #eef4ec;
+  --pe-bouton-texte: #1e6e3e;
+  --pe-sup-fond: #fdecea;
+  --pe-sup-texte: #c0392b;
+}
+html.dark cs-admin-parcours-edition {
+  --pe-poignee: #3d5544;
+  --pe-depot: #52b788;
+  --pe-icone-fond: #16291c;
+  --pe-pts-fond: #2e2410;
+  --pe-pts-texte: #e8b931;
+  --pe-bouton-fond: #16291c;
+  --pe-bouton-texte: #7fc99a;
+  --pe-sup-fond: #3d1a1a;
+  --pe-sup-texte: #ef9a9a;
+}
+
+cs-admin-parcours-edition .pe-retour a { color: var(--accent); font-weight: 800; }
+cs-admin-parcours-edition .pe-retour { margin-top: 8px; }
+cs-admin-parcours-edition .pe-ajout { margin-top: 12px; }
+cs-admin-parcours-edition .pe-ajout[hidden],
+cs-admin-parcours-edition .pe-verrou[hidden] { display: none; }
+cs-admin-parcours-edition .card { margin-bottom: 18px; }
+
+/* ── Une slide ── */
+cs-admin-parcours-edition .slide-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 11px 14px;
+  border-radius: 12px; background: var(--surface); box-shadow: var(--pe-ombre);
+}
+cs-admin-parcours-edition .slide-rang { min-width: 22px; color: var(--pe-rang); font-family: var(--police-titre); font-weight: 900; }
+/* La ligne entière se glisse ; la poignée n'est qu'un repère, mais elle porte
+   le curseur qui annonce le geste. */
+cs-admin-parcours-edition .slide-poignee {
+  flex: 0 0 auto; color: var(--pe-poignee); cursor: grab; font-size: 1.05rem; letter-spacing: -2px; line-height: 1; user-select: none;
+}
+cs-admin-parcours-edition .slide-row:active .slide-poignee { cursor: grabbing; }
+/* La ligne déplacée s'efface ; le liseré marque où elle ira. Une ombre
+   intérieure et non une bordure : une bordure changerait la hauteur de la
+   ligne, et toute la liste sursauterait au survol. */
+cs-admin-parcours-edition .slide-row.glisse { opacity: 0.4; }
+cs-admin-parcours-edition .slide-row.cible-avant { box-shadow: inset 0 3px 0 var(--pe-depot); }
+cs-admin-parcours-edition .slide-row.cible-apres { box-shadow: inset 0 -3px 0 var(--pe-depot); }
+/* Repère de type de taille fixe : les emojis n'ont pas tous la même chasse,
+   sans largeur imposée les titres ne s'aligneraient plus. */
+cs-admin-parcours-edition .slide-icone {
+  display: flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 30px; height: 30px;
+  border-radius: 9px; background: var(--pe-icone-fond); font-size: 1rem; line-height: 1;
+}
+cs-admin-parcours-edition .slide-info { flex: 1; min-width: 0; }
+cs-admin-parcours-edition .slide-titre { overflow: hidden; color: var(--texte); font-size: 0.9rem; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+cs-admin-parcours-edition .slide-type { color: #888; font-size: 0.72rem; }
+cs-admin-parcours-edition .slide-pts {
+  padding: 2px 8px; border-radius: 10px; background: var(--pe-pts-fond); color: var(--pe-pts-texte);
+  font-size: 0.7rem; font-weight: 800; white-space: nowrap;
+}
+cs-admin-parcours-edition .slide-btns { display: flex; gap: 4px; }
+cs-admin-parcours-edition .slide-btns button {
+  padding: 4px 9px; border: none; border-radius: 8px; cursor: pointer;
+  background: var(--pe-bouton-fond); color: var(--pe-bouton-texte); font-family: inherit; font-size: 0.75rem; font-weight: 800;
+}
+cs-admin-parcours-edition .slide-btns button.sup { background: var(--pe-sup-fond); color: var(--pe-sup-texte); }
+cs-admin-parcours-edition .slide-btns button:disabled { opacity: 0.5; cursor: default; }

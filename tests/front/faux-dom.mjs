@@ -39,14 +39,15 @@ const decoder = (texte) => texte.replace(/&(lt|gt|amp|quot|#39);/g, (_, nom) => 
  * @returns {Simple}
  */
 function lireSimple(texte) {
-  const m = texte.match(/^([a-zA-Z][\w-]*|\*)?((?:\.[\w-]+|#[\w-]+|\[[\w-]+(?:="[^"]*")?\])*)$/);
+  const m = texte.match(/^([a-zA-Z][\w-]*|\*)?((?:\.[\w-]+|#[\w-]+|\[[\w-]+(?:="[^"]*"|=[\w-]+)?\])*)$/);
   if (!m) throw new Error('faux DOM : sélecteur non pris en charge « ' + texte + ' »');
   /** @type {Simple} */
   const simple = { nom: m[1] && m[1] !== '*' ? m[1].toLowerCase() : '', classes: [], id: '', attributs: [] };
-  for (const partie of m[2].matchAll(/\.([\w-]+)|#([\w-]+)|\[([\w-]+)(?:="([^"]*)")?\]/g)) {
+  // Valeur d'attribut entre guillemets (`[type="text"]`) ou sans (`[type=text]`).
+  for (const partie of m[2].matchAll(/\.([\w-]+)|#([\w-]+)|\[([\w-]+)(?:="([^"]*)"|=([\w-]+))?\]/g)) {
     if (partie[1]) simple.classes.push(partie[1]);
     else if (partie[2]) simple.id = partie[2];
-    else simple.attributs.push({ nom: partie[3], valeur: partie[4] ?? null });
+    else simple.attributs.push({ nom: partie[3], valeur: partie[4] ?? partie[5] ?? null });
   }
   return simple;
 }
@@ -143,14 +144,22 @@ export class FauxElement {
     };
   }
 
-  /** `data-periode="jour"` se lit `dataset.periode`. @returns {Record<string, string>} */
+  /** `data-periode="jour"` se lit `dataset.periode`, et `dataset.periode = 'mois'`
+   *  écrit l'attribut, comme dans un navigateur. @returns {Record<string, string>} */
   get dataset() {
     /** @type {Record<string, string>} */
     const donnees = {};
     for (const [nom, valeur] of this.attributs) {
       if (nom.startsWith('data-')) donnees[nom.slice(5).replace(/-([a-z])/g, (_, l) => l.toUpperCase())] = valeur;
     }
-    return donnees;
+    return new Proxy(donnees, {
+      set: (cible, cle, valeur) => {
+        const nom = 'data-' + String(cle).replace(/[A-Z]/g, (l) => '-' + l.toLowerCase());
+        this.setAttribute(nom, valeur);
+        cible[/** @type {string} */ (cle)] = String(valeur);
+        return true;
+      },
+    });
   }
 
   // Contenu
@@ -161,7 +170,9 @@ export class FauxElement {
 
   set textContent(texte) {
     this.#vider();
-    this.#ecrit = '';
+    // Relu par innerHTML comme un navigateur le sérialise : &, < et >
+    // échappés, les guillemets non (l'ancien echap() des pages s'y fiait).
+    this.#ecrit = String(texte).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     this.noeuds = [String(texte)];
   }
 

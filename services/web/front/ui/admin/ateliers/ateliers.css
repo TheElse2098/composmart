@@ -80,6 +80,7 @@ html.dark .ateliers {
    la pleine largeur, seulement pour ceux posés directement dans le bloc —
    le champ emoji garde la sienne. */
 .ateliers .field input[type="text"],
+.ateliers .field input[type="number"],
 .ateliers .field input[type="datetime-local"],
 .ateliers .field textarea,
 .ateliers .field select {
@@ -87,6 +88,7 @@ html.dark .ateliers {
   background: var(--at-champ-fond); color: var(--texte); font-family: inherit; font-size: 0.9rem;
 }
 .ateliers .field > input[type="text"],
+.ateliers .field > input[type="number"],
 .ateliers .field > input[type="datetime-local"],
 .ateliers .field > textarea,
 .ateliers .field > select { display: block; width: 100%; }

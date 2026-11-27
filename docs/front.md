@@ -531,6 +531,16 @@ compare à une copie gelée de l'ancien `slide-render.js`. Les tags se
 choisissent par pastilles avec `<cs-choix-tags>` (`composants/choix-tags/`),
 normalisés comme côté serveur.
 
+L'éditeur de parcours (`ui/admin/ateliers/parcours-edition.js`) sert aussi
+au déroulé d'un événement : il lit dans l'adresse ce qu'il édite
+(`cibleDe()`). Le formulaire de chaque type de slide est déclaré dans
+`formulaire-slide.js` (`CHAMPS`) ; ajouter un type, c'est une entrée là et sa
+validation dans `evenements-api/evenements/_slides.php`.
+`tests/front/admin-parcours.test.mjs` vérifie qu'une slide ouverte puis
+enregistrée sans changement garde exactement son contenu, contre une copie
+gelée de l'ancien éditeur (`tests/front/reference/`) : ajouter un cas à `CAS`
+pour chaque nouveau type.
+
 Exemple de page découpée en parties : `ui/pages/compte/` — la page
 (`compte.js`) n'affiche que ce qui est simple ; chaque partie qui a son propre
 comportement (`compte-tickets.js`, `compte-reglages.js`, `compte-sortie.js`)

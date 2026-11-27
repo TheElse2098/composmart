@@ -60,3 +60,35 @@ export function dateEvenement(sql) {
 export function dateVersServeur(valeur) {
   return String(valeur || '').replace('T', ' ');
 }
+
+/**
+ * Où atterrit une ligne lâchée sur une autre (glisser-déposer) : avant ou
+ * après la ligne survolée, selon la moitié visée. Retirer la ligne déplacée
+ * décale tout ce qui la suit : la place visée recule d'un cran quand on
+ * descend dans la liste.
+ * @param {number} depart   rang de la ligne déplacée
+ * @param {number} survol   rang de la ligne sous le curseur
+ * @param {boolean} avant   le curseur est dans sa moitié haute
+ * @returns {number | null} le nouveau rang, ou null si rien ne bouge
+ */
+export function rangDepot(depart, survol, avant) {
+  if (depart === survol) return null;
+  let cible = avant ? survol : survol + 1;
+  if (depart < cible) cible--;
+  return cible === depart ? null : cible;
+}
+
+/**
+ * La liste avec un élément déplacé d'un rang à un autre.
+ * @template T
+ * @param {T[]} liste
+ * @param {number} depart
+ * @param {number} arrivee
+ * @returns {T[]}
+ */
+export function deplacer(liste, depart, arrivee) {
+  const copie = liste.slice();
+  const [element] = copie.splice(depart, 1);
+  copie.splice(arrivee, 0, element);
+  return copie;
+}

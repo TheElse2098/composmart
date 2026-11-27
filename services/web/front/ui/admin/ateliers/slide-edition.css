@@ -1,0 +1,57 @@
+/* ============================================================================
+   slide-edition.css — <cs-admin-slide-edition> : la fenêtre d'une slide, plus
+   large que les autres, et ses lignes répétables (réponses, éléments de jeu).
+   Le cadre vient de styles/fenetre.css ; les champs de ateliers.css (la
+   fenêtre est posée dans une page d'ateliers).
+   ============================================================================ */
+
+cs-admin-slide-edition {
+  display: block;
+
+  --se-ajout-fond: #eef4ec;
+  --se-ajout-texte: #1e6e3e;
+  --se-retrait-fond: #fdecea;
+  --se-retrait-texte: #c0392b;
+  --se-coche: #4a7a5a;
+  --se-label: #2c4a34;
+}
+html.dark cs-admin-slide-edition {
+  --se-ajout-fond: #16291c;
+  --se-ajout-texte: #7fc99a;
+  --se-retrait-fond: #3d1a1a;
+  --se-retrait-texte: #ef9a9a;
+  --se-coche: #7ab88e;
+  --se-label: #7ab88e;
+}
+
+cs-admin-slide-edition .fenetre__boite { max-width: 560px; }
+cs-admin-slide-edition .field[hidden] { display: none; }
+cs-admin-slide-edition .field textarea { min-height: 90px; }
+
+/* Case à cocher et son libellé, sur une ligne. */
+cs-admin-slide-edition .field > label.check {
+  display: flex; align-items: center; gap: 8px; color: var(--se-label); font-size: 0.88rem; font-weight: 700;
+}
+
+/* ── Lignes répétables ── */
+cs-admin-slide-edition .rep-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+cs-admin-slide-edition .rep-row input[type="text"],
+cs-admin-slide-edition .rep-row input[type="number"],
+cs-admin-slide-edition .rep-row select { flex: 1; min-width: 0; }
+cs-admin-slide-edition .rep-row .rep-emoji { max-width: 70px; }
+cs-admin-slide-edition .rep-row .rep-cat { max-width: 120px; }
+cs-admin-slide-edition .rep-row .rep-jours { max-width: 100px; }
+cs-admin-slide-edition .rep-row .rep-mot { max-width: 130px; }
+cs-admin-slide-edition .rep-del {
+  flex: 0 0 auto; padding: 6px 10px; border: none; border-radius: 8px; cursor: pointer;
+  background: var(--se-retrait-fond); color: var(--se-retrait-texte); font-family: inherit; font-size: 0.75rem; font-weight: 800;
+}
+cs-admin-slide-edition .rep-add {
+  margin-top: 2px; padding: 6px 13px; border: none; border-radius: 10px; cursor: pointer;
+  background: var(--se-ajout-fond); color: var(--se-ajout-texte); font-family: inherit; font-size: 0.76rem; font-weight: 800;
+}
+cs-admin-slide-edition .rep-correct {
+  display: flex; flex: 0 0 auto; align-items: center; gap: 5px; color: var(--se-coche);
+  font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+}
+cs-admin-slide-edition .hint { margin-top: 4px; font-size: 0.74rem; }
